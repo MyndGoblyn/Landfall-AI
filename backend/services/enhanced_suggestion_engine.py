@@ -1,0 +1,2044 @@
+from typing import Dict, List, Optional
+import logging
+import re
+from collections import Counter, defaultdict
+from services.scryfall_service import ScryfallService
+
+logger = logging.getLogger(__name__)
+
+class EnhancedSuggestionEngine:
+    """Enhanced deterministic Commander deck suggestion engine with commander synergy"""
+    
+    def __init__(self, scryfall_service: ScryfallService):
+        self.scryfall = scryfall_service
+        
+        # Role targets
+        self.role_targets = {
+            'draw': (10, 12),
+            'ramp': (10, 12),
+            'removal': (7, 10),
+            'sweeper': (2, 4),
+            'interaction': (5, 8),
+            'protection': (3, 5)
+        }
+        
+        # Commander synergy keywords
+        self.synergy_keywords = {
+            'enchantment': ['enchantment', 'aura', 'enchant'],
+            'artifact': ['artifact', 'equipment'],
+            'creature': ['creatures you control', 'creature spell', 'nontoken creature', 'creature card'],
+            'instant_sorcery': ['instant', 'sorcery', 'spell'],
+            'graveyard': ['graveyard', 'dies', 'death', 'reanimate', 'from your graveyard'],
+            'lifegain': ['gain life', 'gains life', 'you gain'],
+            'counters': ['+1/+1 counter', '-1/-1 counter', 'counter on', 'put a counter', 'put one or more counters', 'proliferate'],
+            'tokens': ['create', 'token'],
+            'artifact_tokens': ['treasure token', 'clue token', 'food token', 'blood token', 'artifact token'],
+            'exile': ['exile'],
+            'blink': ['exile it, then return', 'exile another target', 'return it to the battlefield', 'flicker'],
+            'landfall': ['landfall', 'land enters', 'additional land'],
+            'sacrifice': ['sacrifice', 'dies'],
+            'voltron': ['equipment', 'aura', 'attach']
+        }
+    
+    async def analyze_deck(self, deck: Dict, categories: Optional[List[str]] = None) -> Dict:
+        """Main analysis entry point with commander synergy and category filtering"""
+        cards = deck.get('cards', [])
+        commander = deck.get('commander')
+        color_identity = deck.get('color_identity', [])
+        
+        # Get commander card data for synergy analysis
+        commander_data = None
+        commander_synergies = []
+        commander_constraints = {}
+        if commander:
+            commander_data = await self.scryfall.search_card(commander)
+            if commander_data:
+                commander_synergies = self._detect_commander_synergies(commander_data)
+                commander_constraints = self._get_commander_constraints(commander_data)
+        
+        # Calculate deck statistics
+        stats = self._calculate_stats(cards, commander, commander_synergies)
+        
+        # Detect deck themes and combos
+        detected_themes = self._detect_deck_themes(cards, commander_synergies)
+        
+        # Identify gaps and issues
+        gaps = self._identify_gaps(stats, color_identity, commander_synergies)
+        
+        # Generate suggestions with commander synergy and category filter
+        suggestions_add = await self._generate_additions(
+            gaps, commander, color_identity, cards, commander_synergies, commander_data, categories, commander_constraints
+        )
+        suggestions_cut = await self._generate_cuts(cards, gaps, stats, commander_synergies, detected_themes)
+        
+        # Generate playstyle tips
+        playstyle_tips = self._generate_playstyle_tips(stats, commander_synergies, detected_themes, commander, color_identity)
+        
+        # Generate combo suggestions
+        combo_suggestions = self._generate_combo_suggestions(commander, commander_synergies, cards)
+        
+        return {
+            'suggestions_add': suggestions_add[:10],
+            'suggestions_cut': suggestions_cut[:10],
+            'stats': stats,
+            'commander_synergies': commander_synergies,
+            'detected_themes': detected_themes,
+            'playstyle_tips': playstyle_tips,
+            'combo_suggestions': combo_suggestions
+        }
+    
+    def _detect_commander_synergies(self, commander_card: Dict) -> List[str]:
+        """Detect what synergies the commander cares about"""
+        oracle_text = commander_card.get('oracle_text', '').lower()
+        type_line = commander_card.get('type_line', '').lower()
+        
+        synergies = []
+
+        def add_once(synergy_type: str):
+            if synergy_type not in synergies:
+                synergies.append(synergy_type)
+
+        if 'enchantment' in oracle_text or 'aura' in oracle_text or 'enchant' in oracle_text or 'enchantment' in type_line:
+            add_once('enchantment')
+        if 'artifact' in oracle_text or 'equipment' in oracle_text or 'artifact' in type_line:
+            add_once('artifact')
+        if any(phrase in oracle_text for phrase in ['creatures you control', 'creature spell', 'nontoken creature', 'creature card']):
+            add_once('creature')
+        spell_theme_phrases = [
+            'instant or sorcery',
+            'instant and sorcery',
+            'instant card',
+            'sorcery card',
+            'instant spell',
+            'sorcery spell',
+            'whenever you cast a spell',
+            'whenever you cast an instant',
+            'whenever you cast a sorcery',
+            'noncreature spell',
+        ]
+        if any(phrase in oracle_text for phrase in spell_theme_phrases):
+            add_once('instant_sorcery')
+        if (
+            'graveyard' in oracle_text or
+            re.search(r'\b(dies|dying|death)\b', oracle_text) or
+            'reanimate' in oracle_text or
+            'put into a graveyard' in oracle_text
+        ):
+            add_once('graveyard')
+        if self._has_lifegain_reward_text(oracle_text):
+            add_once('lifegain')
+        if '+1/+1 counter' in oracle_text or 'proliferate' in oracle_text or 'counter on' in oracle_text:
+            add_once('counters')
+        if 'token' in oracle_text and any(phrase in oracle_text for phrase in ['create', 'populate', 'copy']):
+            if self._has_artifact_token_text(oracle_text) and 'creature token' not in oracle_text:
+                add_once('artifact_tokens')
+            else:
+                add_once('tokens')
+        if 'landfall' in oracle_text or 'additional land' in oracle_text or 'land you control enters' in oracle_text:
+            add_once('landfall')
+        if 'sacrifice' in oracle_text or re.search(r'\b(dies|dying|death)\b', oracle_text):
+            add_once('sacrifice')
+        if any(phrase in oracle_text for phrase in ['exile it, then return', 'exile another target', 'return it to the battlefield', 'flicker']):
+            add_once('blink')
+        elif 'exile' in oracle_text:
+            add_once('exile')
+        if any(phrase in oracle_text for phrase in ['equipment', 'aura', 'attach', 'equipped', 'enchanted']):
+            add_once('voltron')
+        
+        return synergies
+    
+    def _get_commander_constraints(self, commander_card: Dict) -> Dict:
+        """Extract specific constraints from commander abilities"""
+        if not commander_card:
+            return {}
+        
+        oracle_text = commander_card.get('oracle_text', '').lower()
+        name = commander_card.get('name', '').lower()
+        constraints = {}
+        
+        # Store commander's color identity for validation
+        constraints['commander_color_identity'] = commander_card.get('color_identity', [])
+        
+        # Zur the Enchanter: "mana value 3 or less"
+        if 'zur' in name and 'enchant' in name.lower():
+            if 'mana value 3 or less' in oracle_text or 'mana cost 3 or less' in oracle_text:
+                constraints['max_enchantment_cmc'] = 3
+        
+        # Brago, King Eternal: only targets permanents you control
+        if 'brago' in name:
+            constraints['own_permanents_only'] = True
+        
+        # Yisan: fetches creatures based on verse counters
+        if 'yisan' in name:
+            constraints['creature_cmc_progressive'] = True
+        
+        # Sisay: legendary matters
+        if 'sisay' in name:
+            constraints['legendary_only'] = True
+        
+        # Atla Palani: only creatures with no abilities
+        if 'atla' in name:
+            constraints['vanilla_creatures'] = True
+        
+        # Match "mana value X or less" patterns
+        mana_value_match = re.search(r'mana (?:value|cost) (\d+) or less', oracle_text)
+        if mana_value_match:
+            constraints['max_tutor_cmc'] = int(mana_value_match.group(1))
+        
+        # Match "power X or less" for creature tutors
+        power_match = re.search(r'power (\d+) or less', oracle_text)
+        if power_match:
+            constraints['max_power'] = int(power_match.group(1))
+        
+        return constraints
+    
+    def _calculate_effective_cmc(self, card: Dict) -> int:
+        """
+        Calculate effective CMC, treating X as minimum 1.
+        Scryfall reports X=0 in CMC, but for deck building X should be treated as at least 1.
+        """
+        cmc = card.get('cmc', 0)
+        mana_cost = card.get('mana_cost', '')
+        
+        # If mana cost contains X, add 1 to CMC (X cannot be 0)
+        if 'X' in mana_cost.upper():
+            return cmc + 1
+        
+        return cmc
+    
+    def _get_correct_face_for_validation(self, card: Dict, target_type: str = 'enchantment') -> Dict:
+        """For double-faced cards, get the correct face for validation"""
+        # Check if card has multiple faces
+        card_faces = card.get('card_faces', [])
+        
+        if not card_faces or len(card_faces) < 2:
+            # Single-faced card, return as is
+            return card
+        
+        # For double-faced cards, check which face matches the target type
+        for face in card_faces:
+            type_line = face.get('type_line', '').lower()
+            if target_type.lower() in type_line:
+                # Return a modified card dict with this face's properties
+                return {
+                    **card,
+                    'type_line': face.get('type_line'),
+                    'oracle_text': face.get('oracle_text', ''),
+                    'mana_cost': face.get('mana_cost', ''),
+                    'cmc': face.get('cmc', card.get('cmc', 0)),
+                    'colors': face.get('colors', card.get('colors', [])),
+                    # Color identity must be checked from the full card
+                    'color_identity': card.get('color_identity', [])
+                }
+        
+        # If no matching face found, return the first face
+        return {
+            **card,
+            'type_line': card_faces[0].get('type_line'),
+            'oracle_text': card_faces[0].get('oracle_text', ''),
+            'mana_cost': card_faces[0].get('mana_cost', ''),
+            'cmc': card_faces[0].get('cmc', card.get('cmc', 0)),
+            'colors': card_faces[0].get('colors', card.get('colors', [])),
+            'color_identity': card.get('color_identity', [])
+        }
+    
+    def _is_legal_for_deck(self, card: Dict, commander_color_identity: List[str]) -> bool:
+        """Check if a card is legal for the deck based on color identity"""
+        card_color_identity = card.get('color_identity', [])
+        
+        # A card is legal if all its colors are in the commander's color identity
+        for color in card_color_identity:
+            if color not in commander_color_identity:
+                return False
+        
+        return True
+    
+    def _calculate_stats(self, cards: List[Dict], commander: Optional[str], 
+                        commander_synergies: List[str]) -> Dict:
+        """Calculate enhanced deck statistics"""
+        stats = {
+            'total_cards': 0,
+            'unique_cards': len(cards),
+            'lands': 0,
+            'nonlands': 0,
+            'avg_cmc': 0,
+            'cmc_distribution': defaultdict(int),
+            'color_distribution': defaultdict(int),
+            'role_counts': defaultdict(int),
+            'etb_tapped_lands': 0,
+            'total_lands': 0,
+            'synergy_tags': defaultdict(int),
+            'synergy_score': 0,
+            'commander_synergy_cards': 0
+        }
+        
+        total_cmc = 0
+        cmc_count = 0
+        
+        for card in cards:
+            qty = card.get('qty', 1)
+            stats['total_cards'] += qty
+            
+            card_name = card.get('name', '')
+            type_line = card.get('type_line', '')
+            oracle_text = card.get('oracle_text', '').lower()
+            cmc = card.get('cmc', 0)
+            colors = card.get('colors', [])
+            tags = card.get('tags', [])
+            
+            # Count lands
+            if 'Land' in type_line:
+                stats['lands'] += qty
+                stats['total_lands'] += qty
+                
+                if 'enters the battlefield tapped' in oracle_text or 'enters tapped' in oracle_text:
+                    stats['etb_tapped_lands'] += qty
+            else:
+                stats['nonlands'] += qty
+                total_cmc += cmc * qty
+                cmc_count += qty
+            
+            # CMC distribution
+            if cmc <= 1:
+                stats['cmc_distribution']['0-1'] += qty
+            elif cmc == 2:
+                stats['cmc_distribution']['2'] += qty
+            elif cmc == 3:
+                stats['cmc_distribution']['3'] += qty
+            elif cmc == 4:
+                stats['cmc_distribution']['4'] += qty
+            elif cmc == 5:
+                stats['cmc_distribution']['5'] += qty
+            else:
+                stats['cmc_distribution']['6+'] += qty
+            
+            # Color distribution
+            for color in colors:
+                stats['color_distribution'][color] += qty
+            
+            # Role detection
+            roles = self._detect_roles(oracle_text, type_line, card_name)
+            for role in roles:
+                stats['role_counts'][role] += qty
+            
+            # Synergy tags
+            for tag in tags:
+                stats['synergy_tags'][tag] += 1
+            
+            # Commander synergy score
+            card_synergies = self._detect_card_synergies(oracle_text, type_line)
+            matching_synergies = set(card_synergies) & set(commander_synergies)
+            if matching_synergies:
+                stats['commander_synergy_cards'] += 1
+                stats['synergy_score'] += len(matching_synergies)
+        
+        # Average CMC
+        if cmc_count > 0:
+            stats['avg_cmc'] = round(total_cmc / cmc_count, 2)
+        
+        return stats
+    
+    def _detect_card_synergies(self, oracle_text: str, type_line: str) -> List[str]:
+        """Detect what synergies a card provides"""
+        synergies = []
+        for synergy_type, keywords in self.synergy_keywords.items():
+            if any(keyword in oracle_text or keyword in type_line for keyword in keywords):
+                synergies.append(synergy_type)
+        return synergies
+    
+    def _detect_roles(self, oracle_text: str, type_line: str, card_name: str) -> List[str]:
+        """Detect card roles from oracle text"""
+        roles = []
+        
+        # Draw
+        if self._has_card_draw_text(oracle_text):
+            roles.append('draw')
+        
+        # Ramp
+        if any(word in oracle_text for word in ['search your library for', 'add', 'treasure']) and \
+           ('land' in oracle_text or 'mana' in oracle_text):
+            roles.append('ramp')
+        
+        # Removal
+        if any(word in oracle_text for word in ['destroy target', 'exile target']):
+            roles.append('removal')
+        
+        # Sweeper
+        if any(word in oracle_text for word in ['destroy all', 'exile all', '-x/-x']):
+            roles.append('sweeper')
+        
+        # Interaction. Avoid counting +1/+1 or -1/-1 counters as stack interaction.
+        if (
+            'counter target spell' in oracle_text or
+            'counter target activated' in oracle_text or
+            'counter target triggered' in oracle_text or
+            'counter target ability' in oracle_text or
+            'prevent all damage' in oracle_text or
+            'prevent the next' in oracle_text
+        ):
+            roles.append('interaction')
+        
+        # Protection
+        if any(word in oracle_text for word in ['protection', 'hexproof', 'indestructible', 'ward']):
+            roles.append('protection')
+        
+        return roles
+    
+    def _identify_gaps(self, stats: Dict, color_identity: List[str], 
+                      commander_synergies: List[str]) -> Dict:
+        """Identify deck weaknesses and gaps"""
+        gaps = {
+            'roles': {},
+            'cmc': {},
+            'lands': {},
+            'colors': [],
+            'synergy': []
+        }
+        
+        # Role gaps
+        for role, (min_target, max_target) in self.role_targets.items():
+            current = stats['role_counts'].get(role, 0)
+            if current < min_target:
+                gaps['roles'][role] = min_target - current
+        
+        # Land count
+        if stats['total_lands'] < 36:
+            gaps['lands']['count'] = 36 - stats['total_lands']
+        
+        # ETB tapped ratio
+        if stats['total_lands'] > 0:
+            tapped_ratio = stats['etb_tapped_lands'] / stats['total_lands']
+            if tapped_ratio > 0.3:
+                gaps['lands']['too_many_tapped'] = True
+        
+        # Synergy gaps - prioritize commander synergies
+        if commander_synergies:
+            gaps['synergy'] = commander_synergies
+        
+        return gaps
+    
+    def _detect_deck_themes(self, cards: List[Dict], commander_synergies: List[str]) -> List[str]:
+        """Detect prominent mechanical themes in the deck"""
+        theme_counts = defaultdict(int)
+        
+        for card in cards:
+            oracle_text = card.get('oracle_text', '').lower()
+            type_line = card.get('type_line', '').lower()
+            
+            # Count theme occurrences
+            if 'enchantment' in type_line and any(phrase in oracle_text for phrase in [
+                'whenever an enchantment',
+                'whenever you cast an enchantment',
+                'enchantress',
+                'enchantment card',
+                'enchantment spell',
+            ]):
+                theme_counts['enchantress'] += 1
+            if 'artifact' in type_line:
+                theme_counts['artifacts'] += 1
+            if 'equipment' in type_line or 'equip' in oracle_text:
+                theme_counts['voltron'] += 1
+            if any(w in oracle_text for w in ['graveyard', 'dies', 'reanimate']):
+                theme_counts['graveyard'] += 1
+            if '+1/+1 counter' in oracle_text or '-1/-1 counter' in oracle_text or 'proliferate' in oracle_text or 'put a counter' in oracle_text:
+                theme_counts['counters'] += 1
+            if 'token' in oracle_text and ('create' in oracle_text or 'double' in oracle_text or 'twice' in oracle_text):
+                theme_counts['tokens'] += 1
+            if 'landfall' in oracle_text:
+                theme_counts['landfall'] += 1
+            if 'sacrifice' in oracle_text:
+                theme_counts['aristocrats'] += 1
+            if any(w in oracle_text for w in ['instant', 'sorcery']) and 'cast' in oracle_text:
+                theme_counts['spellslinger'] += 1
+        
+        theme_thresholds = {
+            'enchantress': 3,
+            'artifacts': 8,
+            'voltron': 4,
+            'graveyard': 5,
+            'counters': 4,
+            'tokens': 4,
+            'landfall': 4,
+            'aristocrats': 4,
+            'spellslinger': 5,
+        }
+        return [
+            theme for theme, count in theme_counts.items()
+            if count >= theme_thresholds.get(theme, 5)
+        ]
+    
+    def _generate_playstyle_tips(self, stats: Dict, commander_synergies: List[str], 
+                                  detected_themes: List[str], commander: Optional[str],
+                                  color_identity: Optional[List[str]] = None) -> List[str]:
+        """Generate specific playstyle tips based on deck analysis"""
+        tips = []
+        
+        # Mana base tips
+        land_count = stats.get('total_lands', 0)
+        if land_count < 36:
+            tips.append(f"Your land count ({land_count}) is below the recommended 36-38. Consider adding {36 - land_count} more lands or mana rocks.")
+        elif land_count > 38:
+            tips.append(f"You're running {land_count} lands. Consider cutting {land_count - 38} for more action spells.")
+        
+        # Draw engine tips
+        draw_count = stats.get('role_counts', {}).get('draw', 0)
+        if draw_count < 8:
+            if 'enchantment' in commander_synergies:
+                tips.append(f"Add more card draw! Try: Argothian Enchantress, Enchantress's Presence, or Eidolon of Blossoms for enchantment synergy.")
+            elif 'artifact' in commander_synergies:
+                tips.append(f"Boost card draw with artifact synergies: The One Ring, Esper Sentinel, or Mystic Remora.")
+            else:
+                tips.append(f"Your deck needs {8 - draw_count} more draw sources. Consider: Rhystic Study, Mystic Remora, or Phyrexian Arena.")
+        
+        # Ramp tips
+        ramp_count = stats.get('role_counts', {}).get('ramp', 0)
+        if ramp_count < 10:
+            if 'artifact' in commander_synergies:
+                tips.append(f"Increase ramp with mana rocks: Sol Ring, Arcane Signet, Fellwar Stone, and Talisman of Progress.")
+            else:
+                tips.append(f"Add {10 - ramp_count} more ramp pieces. Prioritize 2-CMC rocks like Arcane Signet and Talisman cycle.")
+        
+        # Theme-specific tips
+        if 'counters' in detected_themes or 'counters' in commander_synergies:
+            tips.append(
+                f"Counter Strategy: Make sure the deck places counters before it proliferates. For {commander}, -1/-1 counters from blight and repeatable proliferate payoffs are stronger than generic combat tricks."
+            )
+
+        if 'tokens' in detected_themes:
+            tips.append(
+                f"Token Strategy: Keep token makers that produce real bodies. They trigger {commander} if they are Elves, help pay tap costs, and give proliferate engines time to take over the board."
+            )
+
+        if 'aristocrats' in detected_themes:
+            tips.append(
+                "Aristocrats Strategy: Death triggers and sacrifice outlets are most useful when they convert expendable creatures into cards, drain, or recursion. Prioritize repeatable outlets over one-shot effects."
+            )
+
+        if 'enchantress' in detected_themes:
+            tips.append(f"Enchantress Strategy: Maximize value with Sterling Grove (protection), Serra's Sanctum (ramp), and Aura Shards (removal).")
+        
+        if 'voltron' in detected_themes:
+            tips.append(f"Voltron Strategy: Protect {commander} with Swiftfoot Boots, Lightning Greaves. Add Sword of Feast and Famine for value.")
+        
+        if 'graveyard' in detected_themes:
+            tips.append(f"Graveyard Strategy: Your recursion package can help rebuild after wipes, but it also means graveyard hate is a real pressure point. Keep a few ways to recover key creatures or shuffle important cards back.")
+        
+        # Interaction tips
+        interaction_count = stats.get('role_counts', {}).get('interaction', 0)
+        if interaction_count < 5:
+            if color_identity and 'U' in color_identity:
+                tips.append("Add stack interaction like Counterspell, Arcane Denial, or Swan Song so you can protect your engine from wipes and combo turns.")
+            elif color_identity and 'G' in color_identity:
+                tips.append("Add cheap protection or disruption that fits your colors, such as Heroic Intervention, Veil of Summer, or Tamiyo's Safekeeping, so your board survives removal-heavy tables.")
+            else:
+                tips.append("Add a few low-cost protection or disruption pieces that fit your colors so your main engine can survive removal-heavy tables.")
+        
+        return tips
+    
+    def _generate_combo_suggestions(self, commander: Optional[str], 
+                                     commander_synergies: List[str], cards: List[Dict]) -> List[Dict]:
+        """Suggest specific combos based on commander and deck contents"""
+        combos = []
+        
+        card_names = {card['name'].lower() for card in cards}
+        
+        # Enchantment combos
+        if 'enchantment' in commander_synergies:
+            if commander and 'zur' in commander.lower():
+                combos.append({
+                    'name': 'Zur Lock',
+                    'cards': ['Zur the Enchanter', 'Steel of the Godhead', 'Diplomatic Immunity'],
+                    'description': 'Make Zur unblockable and give him shroud. Tutor protective enchantments.',
+                    'power_level': 'High'
+                })
+                combos.append({
+                    'name': 'Shimmer Zur',
+                    'cards': ['Zur the Enchanter', 'Shimmer Myr', 'Any 3-CMC Enchantment'],
+                    'description': 'Flash in Zur on opponent\'s end step, attack immediately on your turn.',
+                    'power_level': 'Medium'
+                })
+        
+        # Generic powerful combos by color
+        if any(c in commander_synergies for c in ['artifact', 'creature']):
+            combos.append({
+                'name': 'Dramatic Scepter',
+                'cards': ['Isochron Scepter', 'Dramatic Reversal', 'Any Mana Rock'],
+                'description': 'Infinite mana combo. Imprint Dramatic Reversal on Scepter with 2+ mana in rocks.',
+                'power_level': 'High'
+            })
+        
+        return combos
+    
+    async def _generate_additions(self, gaps: Dict, commander: Optional[str], 
+                                   color_identity: List[str], current_cards: List[Dict],
+                                   commander_synergies: List[str], commander_data: Optional[Dict],
+                                   categories: Optional[List[str]] = None,
+                                   commander_constraints: Optional[Dict] = None) -> List[Dict]:
+        """Generate enhanced card addition suggestions with commander synergy and categories"""
+        suggestions = []
+        current_card_names = {card['name'].lower() for card in current_cards}
+        suggested_names = set()
+        
+        # Build prioritized search queries based on categories or gaps
+        queries = []
+        
+        # If categories specified, filter by those
+        if categories:
+            color_filter = self._color_identity_filter(color_identity)
+            category_map = {
+                'ramp': ('ramp', f"(o:search o:land OR o:treasure OR t:mana) {color_filter} f:commander"),
+                'draw': ('draw', f"o:draw {color_filter} f:commander"),
+                'removal': ('removal', f"(o:destroy o:target OR o:exile o:target) {color_filter} f:commander"),
+                'counter': ('counter', f"o:counter o:target o:spell {color_filter} f:commander"),
+                'recursion': ('recursion', f"(o:return o:graveyard OR o:reanimate) {color_filter} f:commander"),
+                'tutor': ('tutor', f"(o:search o:library OR o:tutor) {color_filter} f:commander"),
+                'protection': ('protection', f"(o:protection OR o:hexproof OR o:indestructible) {color_filter} f:commander"),
+                'sweeper': ('sweeper', f"(o:destroy o:all OR o:exile o:all) {color_filter} f:commander")
+            }
+            for cat in categories:
+                if cat.lower() in category_map:
+                    role, query = category_map[cat.lower()]
+                    queries.append((role, query))
+        else:
+            # Priority 1: Commander synergy cards with constraints
+            if commander_data and commander_synergies:
+                for synergy in commander_synergies:
+                    query = self._build_query_for_synergy(synergy, color_identity, commander_constraints)
+                    if query:
+                        queries.append((f'synergy:{synergy}', query))
+        
+            # Priority 2: Role gaps
+            if 'draw' in gaps['roles']:
+                queries.append((
+                    'draw',
+                    f"o:draw {self._color_identity_filter(color_identity)} f:commander"
+                ))
+            
+            if 'ramp' in gaps['roles']:
+                queries.append((
+                    'ramp',
+                    f"(o:search o:land OR o:treasure OR t:mana) {self._color_identity_filter(color_identity)} f:commander"
+                ))
+            
+            if 'protection' in gaps['roles']:
+                queries.append((
+                    'protection',
+                    f"(o:protection OR o:hexproof OR o:indestructible) {self._color_identity_filter(color_identity)} f:commander"
+                ))
+
+            if 'removal' in gaps['roles']:
+                queries.append((
+                    'removal',
+                    f"(o:destroy o:target OR o:exile o:target) {self._color_identity_filter(color_identity)} f:commander"
+                ))
+
+            if 'sweeper' in gaps['roles']:
+                queries.append((
+                    'sweeper',
+                    f"(o:destroy o:all OR o:exile o:all OR o:-x/-x) {self._color_identity_filter(color_identity)} f:commander"
+                ))
+            
+            if 'interaction' in gaps['roles']:
+                queries.append((
+                    'interaction',
+                    f"o:counter {self._color_identity_filter(color_identity)} f:commander"
+                ))
+            
+        # Execute searches
+        for role, query in queries:
+            try:
+                results = await self.scryfall.search_cards_by_criteria(query, limit=20)
+                requested_synergy = role.split(':', 1)[1] if role.startswith('synergy:') else None
+                display_role = requested_synergy or role
+                cards_added_for_query = 0
+                max_cards_for_query = 5 if requested_synergy else 2
+                for card in results:
+                    if cards_added_for_query >= max_cards_for_query:
+                        break
+                    card_name = card.get('name', '').lower()
+                    if card_name in current_card_names or card_name in suggested_names:
+                        continue
+                    
+                    # CRITICAL COLOR IDENTITY CHECK: Must be legal for deck
+                    commander_colors = commander_constraints.get('commander_color_identity', color_identity)
+                    if not self._is_legal_for_deck(card, commander_colors):
+                        continue  # Skip cards with colors outside commander's identity
+                    
+                    # For double-faced cards, always get the correct face for validation
+                    card_to_validate = card
+                    # Check if card has multiple faces
+                    if card.get('card_faces') and len(card.get('card_faces', [])) > 1:
+                        # For enchantment-focused commanders with CMC constraints
+                        if commander_constraints.get('max_enchantment_cmc'):
+                            card_to_validate = self._get_correct_face_for_validation(card, 'enchantment')
+                        # For any tutor with CMC constraints, check based on role
+                        elif commander_constraints.get('max_tutor_cmc'):
+                            if 'enchantment' in role:
+                                card_to_validate = self._get_correct_face_for_validation(card, 'enchantment')
+                            elif 'artifact' in role:
+                                card_to_validate = self._get_correct_face_for_validation(card, 'artifact')
+                            elif 'creature' in role:
+                                card_to_validate = self._get_correct_face_for_validation(card, 'creature')
+                    
+                    extracted = self.scryfall.extract_card_data(card_to_validate)
+                    extracted_name = extracted['name'].lower()
+                    if extracted_name in current_card_names or extracted_name in suggested_names:
+                        continue
+                    if requested_synergy:
+                        if not self._card_matches_synergy(extracted, requested_synergy):
+                            continue
+                        if commander_data and not self._card_matches_commander_context(extracted, requested_synergy, commander_data):
+                            continue
+                        if self._is_generic_mana_card(extracted):
+                            continue
+                    elif not self._card_matches_role(extracted, display_role):
+                        continue
+                    
+                    # Calculate effective CMC (handles X costs)
+                    effective_cmc = self._calculate_effective_cmc(card_to_validate)
+                    
+                    # CRITICAL: Apply commander-specific constraints
+                    if commander_constraints:
+                        # Check CMC constraints (e.g., Zur can only tutor CMC 3 or less)
+                        if 'max_enchantment_cmc' in commander_constraints:
+                            if 'enchantment' in extracted['type_line'].lower():
+                                if effective_cmc > commander_constraints['max_enchantment_cmc']:
+                                    continue  # Skip this card, it violates constraints
+                        
+                        if 'max_tutor_cmc' in commander_constraints:
+                            if effective_cmc > commander_constraints['max_tutor_cmc']:
+                                continue
+                        
+                        # Check legendary constraint
+                        if commander_constraints.get('legendary_only'):
+                            if 'legendary' not in extracted['type_line'].lower():
+                                continue
+                        
+                        # Check power constraint
+                        if 'max_power' in commander_constraints:
+                            card_power = card_to_validate.get('power')
+                            if card_power and card_power.isdigit():
+                                if int(card_power) > commander_constraints['max_power']:
+                                    continue
+                    
+                    price = self._extract_price(extracted['prices'])
+                    
+                    # Get card images (handles double-faced cards)
+                    image_data = self._get_card_images(card)
+                    
+                    # Generate specific, contextual reasoning with constraints
+                    if requested_synergy and commander_data:
+                        reason = self._generate_commander_recommendation_reason(
+                            extracted,
+                            commander or "your commander",
+                            requested_synergy,
+                            commander_data
+                        )
+                    else:
+                        reason = self._generate_card_reasoning(
+                            extracted, display_role, commander, commander_synergies, gaps, commander_constraints
+                        )
+                    
+                    suggestion = {
+                        'card_name': extracted['name'],
+                        'reason': reason,
+                        'role_tag': display_role,
+                        'cmc': effective_cmc,  # Use effective CMC that accounts for X costs
+                        'price': price,
+                        'synergy_tags': self._detect_card_synergies(
+                            extracted['oracle_text'].lower(), 
+                            extracted['type_line'].lower()
+                        ),
+                        'confidence': 0.9 if requested_synergy else 0.8,
+                        'image_url': image_data['front'],
+                        'image_url_back': image_data['back']
+                    }
+                    suggestions.append(suggestion)
+                    suggested_names.add(extracted_name)
+                    cards_added_for_query += 1
+                    
+                    if len(suggestions) >= 15:
+                        break
+                
+                if len(suggestions) >= 15:
+                    break
+            except Exception as e:
+                logger.error(f"Error generating additions for {role}: {str(e)}")
+        
+        # Sort by priority: synergy first, then by role importance
+        priority_order = {
+            'counters': 0,
+            'tokens': 1,
+            'creature': 2,
+            'graveyard': 3,
+            'draw': 4,
+            'ramp': 5,
+            'removal': 6,
+            'sweeper': 7,
+            'protection': 8,
+            'interaction': 9
+        }
+        suggestions.sort(key=lambda x: (priority_order.get(x['role_tag'], 99), -x['confidence']))
+        
+        return suggestions[:10]
+    
+    async def _generate_cuts(self, cards: List[Dict], gaps: Dict, stats: Dict, 
+                       commander_synergies: List[str], detected_themes: Optional[List[str]] = None) -> List[Dict]:
+        """Generate intelligent cut suggestions with images"""
+        suggestions = []
+        suggested_names = set()
+        protected_themes = set(commander_synergies) | set(detected_themes or [])
+        
+        # Expand cards for analysis (don't cut basics with qty > 1)
+        expanded_cards = []
+        for card in cards:
+            if 'Basic Land' in card.get('type_line', ''):
+                expanded_cards.append(card)  # Keep as single entry
+            else:
+                expanded_cards.append(card)
+        
+        # Priority 1: High CMC cards (6+) with weak synergy
+        high_cmc_cards = [c for c in expanded_cards 
+                         if c.get('cmc', 0) >= 6 
+                         and 'Land' not in c.get('type_line', '')
+                         and not self._card_supports_themes(c, protected_themes)]
+        
+        high_cmc_cards.sort(key=lambda x: x.get('cmc', 0), reverse=True)
+        
+        for card in high_cmc_cards[:3]:
+            card_key = card.get('name', '').lower()
+            if card_key in suggested_names:
+                continue
+            # Fetch card image
+            scryfall_card = await self.scryfall.search_card(card['name'])
+            image_data = self._get_card_images(scryfall_card) if scryfall_card else {'front': None, 'back': None}
+            
+            suggestions.append({
+                'card_name': card['name'],
+                'reason': self._generate_cut_reason(card, 'curve_optimization', protected_themes),
+                'role_tag': 'curve_optimization',
+                'cmc': card.get('cmc', 0),
+                'price': 0,
+                'synergy_tags': card.get('tags', []),
+                'confidence': 0.75,
+                'image_url': image_data['front'],
+                'image_url_back': image_data['back']
+            })
+            suggested_names.add(card_key)
+        
+        # Priority 2: ETB tapped lands
+        if gaps.get('lands', {}).get('too_many_tapped'):
+            tapped_lands = [c for c in expanded_cards 
+                           if 'Land' in c.get('type_line', '') 
+                           and 'Basic' not in c.get('type_line', '')
+                           and 'enters the battlefield tapped' in c.get('oracle_text', '').lower()]
+            
+            for card in tapped_lands[:2]:
+                card_key = card.get('name', '').lower()
+                if card_key in suggested_names:
+                    continue
+                scryfall_card = await self.scryfall.search_card(card['name'])
+                image_data = self._get_card_images(scryfall_card) if scryfall_card else {'front': None, 'back': None}
+                
+                suggestions.append({
+                    'card_name': card['name'],
+                    'reason': "Enters tapped, slowing your tempo. Replace with untapped alternatives for faster plays.",
+                    'role_tag': 'mana_base_optimization',
+                    'cmc': 0,
+                    'price': 0,
+                    'synergy_tags': [],
+                    'confidence': 0.8,
+                    'image_url': image_data['front'],
+                    'image_url_back': image_data['back']
+                })
+                suggested_names.add(card_key)
+        
+        # Priority 3: Cards with no synergy or weak roles
+        weak_cards = [
+            c for c in expanded_cards
+            if not self._card_supports_themes(c, protected_themes)
+            and not self._fills_needed_role(c, stats)
+            and 'Land' not in c.get('type_line', '')
+            and 'Basic' not in c.get('type_line', '')
+            and c.get('cmc', 0) > 3
+        ]
+        
+        for card in weak_cards[:(10 - len(suggestions))]:
+            card_key = card.get('name', '').lower()
+            if card_key in suggested_names:
+                continue
+            scryfall_card = await self.scryfall.search_card(card['name'])
+            image_data = self._get_card_images(scryfall_card) if scryfall_card else {'front': None, 'back': None}
+            
+            suggestions.append({
+                'card_name': card['name'],
+                'reason': self._generate_cut_reason(card, 'synergy_optimization', protected_themes),
+                'role_tag': 'synergy_optimization',
+                'cmc': card.get('cmc', 0),
+                'price': 0,
+                'synergy_tags': card.get('tags', []),
+                'confidence': 0.6,
+                'image_url': image_data['front'],
+                'image_url_back': image_data['back']
+            })
+            suggested_names.add(card_key)
+        
+        return suggestions[:10]
+
+    def _card_supports_themes(self, card: Dict, themes: set) -> bool:
+        """Check whether a card supports commander synergies or detected deck themes."""
+        oracle_text = card.get('oracle_text', '').lower()
+        type_line = card.get('type_line', '').lower()
+        tags = set(card.get('tags', []))
+        synergies = set(self._detect_card_synergies(oracle_text, type_line))
+
+        if tags & themes or synergies & themes:
+            return True
+        if 'counters' in themes and (
+            '+1/+1 counter' in oracle_text or
+            '-1/-1 counter' in oracle_text or
+            'proliferate' in oracle_text or
+            'put one or more counters' in oracle_text or
+            'twice that many of those counters' in oracle_text
+        ):
+            return True
+        if 'tokens' in themes and self._is_creature_token_support(oracle_text, type_line):
+            return True
+        if 'aristocrats' in themes and any(phrase in oracle_text for phrase in ['sacrifice', 'dies', 'whenever another creature dies']):
+            return True
+        if 'graveyard' in themes and self._is_graveyard_value_card(oracle_text, type_line):
+            return True
+        return False
+
+    def _fills_needed_role(self, card: Dict, stats: Dict) -> bool:
+        """Avoid cutting scarce utility roles the deck is currently short on."""
+        oracle_text = card.get('oracle_text', '').lower()
+        type_line = card.get('type_line', '').lower()
+        roles = self._detect_roles(oracle_text, type_line, card.get('name', ''))
+
+        for role in roles:
+            target = self.role_targets.get(role)
+            if target and stats.get('role_counts', {}).get(role, 0) <= target[0]:
+                return True
+        return False
+
+    def _card_matches_role(self, card_data: Dict, role: str) -> bool:
+        """Validate that a search result is a meaningful fit for a role query."""
+        name = card_data.get('name', '').lower()
+        oracle_text = card_data.get('oracle_text', '').lower()
+        type_line = card_data.get('type_line', '').lower()
+
+        if role == 'draw':
+            if 'add' in oracle_text and 'mana' in oracle_text and 'artifact' in type_line:
+                return False
+            if name in {'solemn simulacrum', 'commanders sphere', "commander's sphere", 'mind stone'}:
+                return False
+            return self._has_card_draw_text(oracle_text)
+        if role == 'ramp':
+            return (
+                'search your library for' in oracle_text and 'land' in oracle_text
+            ) or (
+                'add' in oracle_text and ('mana' in oracle_text or '{' in oracle_text)
+            ) or 'treasure token' in oracle_text
+        if role == 'removal':
+            if self._is_graveyard_hate(oracle_text):
+                return False
+            return any(phrase in oracle_text for phrase in [
+                'destroy target',
+                'exile target creature',
+                'exile target artifact',
+                'exile target enchantment',
+                'exile target permanent',
+                'exile target nonland',
+            ])
+        if role == 'sweeper':
+            return any(phrase in oracle_text for phrase in ['destroy all', 'exile all', '-x/-x'])
+        if role == 'protection':
+            return any(phrase in oracle_text for phrase in ['hexproof', 'indestructible', 'protection from', 'ward'])
+        if role == 'interaction':
+            return any(phrase in oracle_text for phrase in [
+                'counter target spell',
+                'counter target activated',
+                'counter target triggered',
+                'counter target ability',
+                'prevent all damage',
+            ])
+        return True
+
+    def _generate_cut_reason(self, card: Dict, cut_type: str, protected_themes: set) -> str:
+        """Generate a more concrete explanation for a cut suggestion."""
+        name = card.get('name', 'This card')
+        cmc = card.get('cmc', 0)
+        oracle_text = card.get('oracle_text', '').lower()
+        type_line = card.get('type_line', '').lower()
+        theme_text = ', '.join(sorted(protected_themes)[:3]) if protected_themes else 'the deck plan'
+
+        if cut_type == 'curve_optimization':
+            return (
+                f"{name} costs {cmc} mana and does not clearly advance {theme_text}. "
+                "Cutting this kind of expensive off-plan card lowers clunky opening hands while keeping room for engines that affect the board sooner."
+            )
+        if 'elf' in oracle_text or 'elf' in type_line:
+            return (
+                f"{name} is on-tribe, but its impact is slow for its mana compared with pieces that create multiple Elves, add counters, or proliferate immediately."
+            )
+        return (
+            f"{name} is a reasonable card in isolation, but it is not one of the stronger payoffs for {theme_text}. "
+            "This is a good flex slot to upgrade before trimming cards that directly feed the commander or the deck's main engines."
+        )
+    
+    def _generate_card_reasoning(self, card_data: Dict, role: str, commander: Optional[str],
+                                 commander_synergies: List[str], gaps: Dict, 
+                                 commander_constraints: Optional[Dict] = None) -> str:
+        """Generate highly detailed, specific reasoning for why a card fits the deck"""
+        card_name = card_data['name']
+        oracle_text = card_data['oracle_text']
+        oracle_lower = oracle_text.lower()
+        type_line = card_data['type_line']
+        cmc = card_data['cmc']
+        
+        # Build ultra-specific contextual reasoning with actual card analysis
+        reasons = []
+        
+        # Commander-specific synergy analysis
+        if role == 'synergy':
+            if 'enchantment' in commander_synergies and 'enchantment' in type_line.lower():
+                # Check if commander can actually tutor this (e.g., Zur's CMC 3 limit)
+                can_tutor = True
+                tutor_note = ""
+                if commander_constraints and 'max_enchantment_cmc' in commander_constraints:
+                    max_cmc = commander_constraints['max_enchantment_cmc']
+                    if cmc <= max_cmc:
+                        tutor_note = f"{commander} can DIRECTLY TUTOR this (CMC {cmc} ≤ {max_cmc} limit). "
+                    else:
+                        can_tutor = False
+                        tutor_note = f"Note: At CMC {cmc}, this is above {commander}'s tutor limit ({max_cmc}), but still strong enchantment synergy. "
+                
+                if 'draw' in oracle_lower and 'enchantment' in oracle_lower:
+                    # Find the specific draw trigger
+                    if 'whenever you cast' in oracle_lower or 'whenever an enchantment enters' in oracle_lower:
+                        reasons.append(f"{tutor_note}This enchantment provides REPEATABLE card draw every time you cast an enchantment, which synergizes perfectly with {commander}'s enchantment-focused strategy. Creates a self-sustaining card advantage engine")
+                    else:
+                        reasons.append(f"{tutor_note}Enchantment-based card draw that triggers off your deck's primary theme. Ensures you never run out of gas in your enchantment strategy")
+                elif 'search' in oracle_lower or 'tutor' in oracle_lower:
+                    reasons.append(f"{tutor_note}Tutors enchantments from your library, creating redundancy for finding your key pieces like Necropotence, Rhystic Study, or combo enablers. Consistency is key in Commander")
+                elif 'aura' in oracle_lower or 'attach' in oracle_lower:
+                    reasons.append(f"{tutor_note}Aura that directly enhances {commander}, making them a more lethal threat. In a voltron-style build, this stacks with other auras to create an overwhelming board presence")
+                else:
+                    if can_tutor:
+                        reasons.append(f"{tutor_note}Core enchantment that fits your strategy perfectly. Acts as both a threat and value engine in your enchantress theme")
+                    else:
+                        reasons.append(f"{tutor_note}Strong enchantment for your deck's theme, providing significant value even if it must be cast from hand")
+            elif 'artifact' in commander_synergies:
+                reasons.append(f"Artifact that synergizes with {commander}'s ability to manipulate or benefit from artifacts. Provides utility while feeding into your commander's core strategy, creating multiplicative value")
+        
+        # Ultra-detailed role analysis
+        if role == 'draw':
+            # Analyze the specific draw mechanism
+            if 'skullclamp' in card_name.lower():
+                reasons.append(f"{card_name} is excellent with expendable creatures and tokens: it turns small bodies into two fresh cards, which keeps a creature-heavy engine from running out of material.")
+            elif 'phyrexian arena' in card_name.lower():
+                reasons.append("A steady black draw engine that adds an extra card each turn with a manageable life cost. It is best when the deck wants reliable long-game fuel over explosive one-shot draw.")
+            elif 'rhystic study' in card_name.lower():
+                reasons.append("THE most powerful draw engine in Commander. Opponents either pay 1 mana for EVERY spell (slowing them down significantly) or you draw cards. In a 4-player game, this draws 5-10 cards per turn cycle")
+            elif 'mystic remora' in card_name.lower():
+                reasons.append("Extremely efficient early-game draw engine. For just 1 mana, this draws you 3-5 cards in the first few turns when opponents are ramping and playing rocks. Drop this turn 1-2 for maximum value")
+            elif 'whenever' in oracle_lower and 'draw' in oracle_lower:
+                if 'dies' in oracle_lower or 'is put into a graveyard' in oracle_lower:
+                    reasons.append(f"{card_name} rewards creatures dying, which pairs well with token and aristocrat patterns while turning trades or sacrifice outlets into cards.")
+                elif 'power 4 or greater' in oracle_lower:
+                    reasons.append(f"{card_name} is a creature-based draw payoff for larger threats, and its extra combat text can help a board of counters close games once creatures grow.")
+                elif 'creature' in oracle_lower:
+                    reasons.append(f"{card_name} turns creature deployment into card flow, helping a creature-heavy deck keep pressure on the table without emptying its hand.")
+                else:
+                    reasons.append(f"{card_name} provides repeatable card draw tied to board development, which is stronger here than a one-shot draw spell.")
+            elif 'at the beginning' in oracle_lower and 'upkeep' in oracle_lower:
+                reasons.append(f"{card_name} is a passive draw engine that keeps cards coming without requiring more mana after it resolves.")
+            else:
+                reasons.append(f"{card_name} adds card advantage in a deck that is still short about {gaps.get('roles', {}).get('draw', 0)} draw sources.")
+        
+        elif role == 'ramp':
+            if 'sol ring' in card_name.lower():
+                reasons.append("THE most powerful mana rock in Commander. Turn 1 Sol Ring is basically an auto-win - you're 2 turns ahead of everyone else. This card is banned in Legacy for a reason. Always include it")
+            elif 'arcane signet' in card_name.lower():
+                reasons.append(f"Perfect 2-mana rock that produces ANY color in your commander's identity. No color restrictions, no ETB tapped drawback. This is as efficient as mana acceleration gets in Commander")
+            elif 'treasure' in oracle_lower:
+                reasons.append(f"Creates Treasure tokens for FLEXIBLE mana. Unlike rocks, treasures can be sacrificed when needed for a burst of mana, enabling huge turns. They also dodge artifact removal and work around Null Rod effects")
+            elif 'search' in oracle_lower and 'land' in oracle_lower:
+                if 'basic' in oracle_lower:
+                    reasons.append(f"Land ramp that puts basics directly onto the battlefield, PERMANENTLY accelerating your mana. Unlike artifacts, lands don't die to Vandalblast or Austere Command. This also thins your deck, improving draw quality")
+                else:
+                    reasons.append(f"Fetches ANY land from your library - including utility lands like Reliquary Tower, Ancient Tomb, or dual lands. Provides both ramp AND color fixing in one package")
+            elif 'mana' in oracle_lower and ('add' in oracle_lower or 'produce' in oracle_lower):
+                reasons.append(f"Efficient mana rock at {cmc} CMC. Gets you ahead on mana to deploy threats faster. Your deck needs {gaps.get('roles', {}).get('ramp', 0)} more ramp sources to consistently cast your high-impact spells")
+        
+        elif role == 'removal':
+            if 'swords to plowshares' in card_name.lower():
+                reasons.append("THE most efficient removal spell in Magic. For just 1 white mana, permanently exile ANY creature at instant speed. The life gain is negligible in Commander. This answers everything from mana dorks to Blightsteel Colossus")
+            elif 'path to exile' in card_name.lower():
+                reasons.append("Instant-speed exile removal for 1 mana - incredibly efficient. Yes, they get a land, but in late game that's irrelevant. Answers indestructible threats, recursive creatures, and commanders permanently")
+            elif 'beast within' in card_name.lower():
+                reasons.append("Most FLEXIBLE removal in Commander. Destroys literally ANY permanent - creatures, enchantments, artifacts, even lands. The 3/3 beast token is a small price for answering any threat at instant speed")
+            elif 'exile' in oracle_lower:
+                reasons.append(f"EXILE-based removal that permanently deals with threats. This is crucial in Commander where graveyard recursion (Reanimate, Living Death, Muldrotha) is common. Destroy effects just delay problems; exile solves them")
+            elif 'destroy' in oracle_lower and ('artifact' in oracle_lower or 'enchantment' in oracle_lower):
+                reasons.append(f"Flexible removal hitting multiple permanent types. Can answer problem artifacts (Rhystic Study, Necropotence) AND enchantments (Smothering Tithe). Versatility is key in Commander's varied meta")
+            else:
+                reasons.append(f"Spot removal to answer problematic permanents. Your deck currently lacks sufficient removal ({gaps.get('roles', {}).get('removal', 0)} pieces short), leaving you vulnerable to opposing threats")
+
+        elif role == 'sweeper':
+            if '-x/-x' in oracle_lower or 'toxic deluge' in card_name.lower():
+                reasons.append(f"{card_name} is a flexible board reset that can clear creature-heavy tables while letting you choose how much life to spend. It helps recover when the board grows faster than your counters or tokens can control.")
+            elif 'destroy all' in oracle_lower or 'exile all' in oracle_lower:
+                reasons.append(f"{card_name} gives the deck a reset button for boards that go wider or taller than your engine. A few sweepers keep you from relying only on spot removal.")
+            else:
+                reasons.append(f"{card_name} fills the sweeper slot, giving the deck a way to reset multiple threats at once when incremental interaction is not enough.")
+        
+        elif role == 'counter':
+            if 'counterspell' in card_name.lower():
+                reasons.append("The original and still one of the best. 2 mana to counter ANY spell - no restrictions, no conditions. Instant speed protection against game-ending threats. Stop combos, board wipes, or opposing win conditions")
+            elif 'arcane denial' in card_name.lower():
+                reasons.append("Ultra-efficient 2-mana counter that hits ANY spell. Yes they draw cards, but in a multiplayer game you're trading 1-for-1 while the other 2 players get nothing. The political implications are valuable")
+            elif 'swan song' in card_name.lower():
+                reasons.append("1-mana counterspell for noncreature spells. Counters most game-winning plays (combos, board wipes, big enchantments) for minimal investment. The 2/2 bird is irrelevant compared to stopping a Cyclonic Rift")
+            elif 'negate' in card_name.lower():
+                reasons.append("2-mana counter for noncreature spells. In Commander, the scariest threats are often instants/sorceries/enchantments (board wipes, combos, Rhystic Study). This stops all of them efficiently")
+            else:
+                reasons.append(f"Stack interaction to protect your board state and disrupt opposing strategies. Commander games are often won by the player who can STOP the winning play, not just make their own")
+        
+        elif role == 'protection':
+            if 'lightning greaves' in card_name.lower():
+                reasons.append(f"THE best protection equipment. Gives {commander} haste AND hexproof for 0 equip cost. Drop this, immediately equip, and your commander is untouchable. Free to re-equip each turn to protect any creature")
+            elif 'swiftfoot boots' in card_name.lower():
+                reasons.append(f"Protection equipment giving {commander} hexproof and haste. Unlike Lightning Greaves, this costs 1 to equip but doesn't cause targeting issues with your own auras/equipment. More reliable for voltron strategies")
+            elif 'heroic intervention' in card_name.lower():
+                reasons.append("Instant-speed protection for your ENTIRE board. For 2 mana, make everything hexproof and indestructible. Blank board wipes, protect against targeted removal, save combo pieces. One of green's best cards")
+            elif 'teferi\'s protection' in card_name.lower():
+                reasons.append("The ULTIMATE protection spell. Phase out your entire board, make yourself immune to damage/loss effects. Completely blank board wipes, combo kills, or anything targeting you. Arguably white's best instant")
+            elif 'hexproof' in oracle_lower or 'shroud' in oracle_lower:
+                reasons.append(f"Grants hexproof/shroud to {commander}, making them untargetable by opponents' removal. In a format where commanders get removed 3-4 times per game, this protection is invaluable for maintaining board presence")
+            elif 'indestructible' in oracle_lower:
+                reasons.append(f"Makes permanents indestructible, surviving board wipes like Wrath of God, Blasphemous Act, and Vandalblast. This ensures your key pieces survive mass removal, maintaining your advantage")
+        
+        elif role == 'recursion':
+            if 'reanimate' in card_name.lower():
+                reasons.append("THE most efficient reanimation spell. For just 1 black mana, return ANY creature from ANY graveyard. This can steal opponents' threats OR recur your own. Turn 2 Reanimate on a discarded Eldrazi is game-winning")
+            elif 'living death' in card_name.lower():
+                reasons.append("Board wipe + mass reanimation in one spell. Wipes opponents' boards while bringing back ALL your creatures. In graveyard-focused decks, this is an instant win - they get nothing, you get everything")
+            elif 'return' in oracle_lower and 'hand' in oracle_lower:
+                reasons.append(f"Returns cards from graveyard to hand, enabling reuse of key pieces. Unlike reanimation, this lets you re-cast cards (triggering ETB effects again). Provides card advantage and recovery from removal")
+            else:
+                reasons.append(f"Graveyard recursion to recover threats and value pieces. In Commander where everyone has removal, the ability to bring back your best cards is crucial for grinding out victories")
+        
+        elif role == 'tutor':
+            if 'demonic tutor' in card_name.lower():
+                reasons.append("THE gold standard for tutors. 2 mana to search for literally ANY card and put it in hand. Want your combo piece? Your answer? Your win condition? This finds it. Banned in Legacy for good reason")
+            elif 'vampiric tutor' in card_name.lower():
+                reasons.append("1-mana instant-speed tutor to topdeck. Cast this end-of-turn before your draw step to effectively draw ANY card. The life loss is negligible. This consistency is why it's a $100+ card")
+            elif 'enlightened tutor' in card_name.lower():
+                reasons.append("Efficiently finds ANY enchantment or artifact for just 1 white mana. In enchantment-heavy strategies, this finds your win conditions, answers, or value engines. Instant speed lets you respond to threats")
+            elif 'search' in oracle_lower and 'hand' in oracle_lower:
+                reasons.append(f"Searches your library for specific cards, dramatically increasing consistency. Commander is about assembling your strategy reliably - tutors ensure you find your key pieces when needed")
+        
+        # CMC efficiency note
+        if cmc <= 2:
+            reasons.append(f"At {cmc} mana, it is easy to deploy while still developing the rest of your turn.")
+        elif cmc >= 6:
+            reasons.append(f"At {cmc} mana, it needs to be a deliberate top-end inclusion rather than a card you expect to cast early.")
+        
+        # Combine all detailed reasons
+        if reasons:
+            return ' '.join(reasons)
+        else:
+            return f"{card_name} provides {role} support for your strategy. Consider it for filling gaps in your deck's game plan."
+
+    def _has_lifegain_reward_text(self, oracle_text: str) -> bool:
+        """Detect commanders/cards that actively reward gaining life."""
+        return bool(
+            re.search(r'whenever (?:you|one or more players) gain life', oracle_text) or
+            re.search(r'whenever .* gains life', oracle_text) or
+            re.search(r'(?:if|when|whenever) you gained life', oracle_text) or
+            'each time you gain life' in oracle_text or
+            'you gain that much life' in oracle_text or
+            'life you gained' in oracle_text or
+            'life total' in oracle_text
+        )
+
+    def _has_card_draw_text(self, oracle_text: str) -> bool:
+        """Detect actual card draw without matching phrases like draw step."""
+        return bool(
+            re.search(r'\bdraw (?:a card|two cards|three cards|four cards|x cards|that many cards|cards equal|cards?)\b', oracle_text) or
+            re.search(r'\bdraws? (?:a card|two cards|three cards|cards?)\b', oracle_text) or
+            'investigate' in oracle_text
+        )
+
+    def _has_artifact_token_text(self, oracle_text: str) -> bool:
+        """Detect noncreature token economies such as Treasure, Clue, Food, and Blood."""
+        return any(phrase in oracle_text for phrase in [
+            'treasure token',
+            'clue token',
+            'food token',
+            'blood token',
+            'artifact token',
+        ])
+
+    def _is_creature_token_support(self, oracle_text: str, type_line: str) -> bool:
+        """Identify cards that support creature-token plans instead of incidental Treasure ramp."""
+        if any(phrase in oracle_text for phrase in [
+            'creature token',
+            'creature tokens',
+            'populate',
+            'token creatures',
+            'tokens you control get',
+            'tokens you control have',
+            'creatures you control get',
+            'creatures you control have',
+            'double the number of each kind of token',
+            'twice that many of those tokens',
+            'one or more tokens under your control',
+        ]):
+            return True
+        if 'enchantment' in type_line and any(phrase in oracle_text for phrase in [
+            'one or more tokens',
+            'twice that many tokens',
+        ]):
+            return True
+        return False
+
+    def _is_artifact_token_support(self, oracle_text: str) -> bool:
+        """Identify cards that make or spend artifact tokens as an engine."""
+        return self._has_artifact_token_text(oracle_text) or any(phrase in oracle_text for phrase in [
+            'sacrifice an artifact',
+            'whenever you sacrifice',
+            'artifacts you control',
+            'for each artifact you control',
+        ])
+
+    def _is_graveyard_hate(self, oracle_text: str) -> bool:
+        """Filter out graveyard hate from graveyard-value recommendations."""
+        hate_patterns = [
+            'exile all cards from',
+            "exile target player's graveyard",
+            "exile target opponent's graveyard",
+            'exile all graveyards',
+            'from all graveyards',
+            "each opponent's graveyard",
+            "target player's graveyard",
+            "target opponent's graveyard",
+            'cards in graveyards lose',
+            "graveyards can't",
+            'graveyards cannot',
+        ]
+        return any(pattern in oracle_text for pattern in hate_patterns)
+
+    def _is_graveyard_value_card(self, oracle_text: str, type_line: str) -> bool:
+        """Confirm graveyard cards advance recursion, death, self-mill, or reusable resources."""
+        if self._is_graveyard_hate(oracle_text):
+            return False
+        value_patterns = [
+            'from your graveyard',
+            'from a graveyard',
+            'return target',
+            'return up to',
+            'return a card',
+            'return that card',
+            'cast target',
+            'cast cards',
+            'cast spells from your graveyard',
+            'play lands from your graveyard',
+            'you may play lands',
+            'put into your graveyard',
+            'put into a graveyard',
+            'mill',
+            'dies',
+            'whenever another creature dies',
+            'whenever a creature dies',
+            'when this creature dies',
+            'sacrifice',
+            'reanimate',
+            'escape',
+            'flashback',
+            'unearth',
+            'delirium',
+            'descend',
+        ]
+        if any(pattern in oracle_text for pattern in value_patterns):
+            return True
+        return 'land' in type_line and 'graveyard' in oracle_text
+
+    def _is_exile_value_card(self, oracle_text: str) -> bool:
+        """Confirm exile cards support impulse draw/casting from exile rather than hate/removal."""
+        if self._is_graveyard_hate(oracle_text):
+            return False
+        value_patterns = [
+            'exile the top',
+            'play that card',
+            'play those cards',
+            'cast that card',
+            'cast those cards',
+            'from exile',
+            'until end of your next turn',
+            'until the end of your next turn',
+            'you may play it this turn',
+            'you may cast it this turn',
+        ]
+        return any(pattern in oracle_text for pattern in value_patterns)
+
+    def _is_generic_mana_card(self, card_data: Dict) -> bool:
+        """Identify mana-only staples that should not dominate commander theme recommendations."""
+        name = card_data.get('name', '').lower()
+        type_line = card_data.get('type_line', '').lower()
+        oracle_text = card_data.get('oracle_text', '').lower()
+
+        known_mana_staples = {
+            'arcane signet',
+            'chromatic lantern',
+            'command sphere',
+            'everflowing chalice',
+            'fellwar stone',
+            'gilded lotus',
+            'mind stone',
+            'mana crypt',
+            'mana vault',
+            'sol ring',
+            'thran dynamo',
+            'thought vessel',
+        }
+        if name in known_mana_staples:
+            return True
+
+        if 'artifact' not in type_line:
+            return False
+
+        mana_text = 'add' in oracle_text and ('mana' in oracle_text or '{' in oracle_text)
+        if mana_text and any(term in name for term in ['signet', 'talisman', 'locket', 'cluestone', 'keyrune']):
+            return True
+        if mana_text and re.search(r'\{t\}:\s*add|add \{[wubrgc]', oracle_text):
+            return True
+
+        has_theme_text = any(phrase in oracle_text for phrase in [
+            'draw',
+            'create',
+            'sacrifice',
+            'graveyard',
+            'dies',
+            'token',
+            '+1/+1 counter',
+            'proliferate',
+            'copy',
+            'whenever',
+            'cast',
+            'return',
+            'equipment',
+            'equipped',
+            'attach',
+        ])
+        return mana_text and not has_theme_text
+
+    def _card_matches_synergy(self, card_data: Dict, synergy: str) -> bool:
+        """Confirm a candidate card genuinely supports the requested synergy."""
+        oracle_text = card_data.get('oracle_text', '').lower()
+        type_line = card_data.get('type_line', '').lower()
+        detected = set(self._detect_card_synergies(oracle_text, type_line))
+
+        if synergy == 'graveyard':
+            return self._is_graveyard_value_card(oracle_text, type_line)
+        if synergy == 'tokens':
+            return self._is_creature_token_support(oracle_text, type_line)
+        if synergy == 'artifact_tokens':
+            return self._is_artifact_token_support(oracle_text)
+        if synergy == 'exile':
+            return self._is_exile_value_card(oracle_text)
+        if synergy == 'lifegain':
+            return self._has_lifegain_reward_text(oracle_text) or re.search(r'\bgain(?:s|ed)? life\b', oracle_text) is not None
+        if synergy in detected:
+            return True
+        if synergy == 'artifact' and 'artifact' in type_line:
+            return True
+        if synergy == 'enchantment' and 'enchantment' in type_line:
+            return True
+        if synergy == 'creature' and 'creature' in type_line:
+            return True
+        if synergy == 'voltron' and ('equipment' in type_line or 'aura' in type_line):
+            return True
+        if synergy == 'landfall' and (
+            'landfall' in oracle_text or
+            'additional land' in oracle_text or
+            'land you control enters' in oracle_text
+        ):
+            return True
+
+        return False
+
+    def _card_matches_commander_context(self, card_data: Dict, synergy: str, commander_card: Dict) -> bool:
+        """Confirm the candidate matches the commander's specific version of a broad theme."""
+        commander_text = commander_card.get('oracle_text', '').lower()
+        oracle_text = card_data.get('oracle_text', '').lower()
+        type_line = card_data.get('type_line', '').lower()
+
+        if synergy == 'graveyard':
+            if self._is_graveyard_hate(oracle_text) or not self._is_graveyard_value_card(oracle_text, type_line):
+                return False
+            if 'artifact card in your graveyard' in commander_text:
+                return 'artifact' in type_line
+            if 'creature card' in commander_text and 'graveyard' in commander_text:
+                return 'creature' in type_line or 'creature card' in oracle_text
+            if 'enchantment card' in commander_text and 'graveyard' in commander_text:
+                return 'enchantment' in type_line or 'enchantment card' in oracle_text
+
+        if synergy == 'artifact' and 'artifact card in your graveyard' in commander_text:
+            return 'artifact' in type_line
+
+        if synergy == 'tokens':
+            if any(phrase in oracle_text for phrase in ['its controller creates', 'that player creates', 'target opponent creates']):
+                return False
+            if 'creature token' in commander_text or 'populate' in commander_text:
+                return self._is_creature_token_support(oracle_text, type_line)
+            if self._has_artifact_token_text(oracle_text) and not self._is_creature_token_support(oracle_text, type_line):
+                return False
+
+        if synergy == 'artifact_tokens':
+            if any(phrase in oracle_text for phrase in ['its controller creates', 'that player creates', 'target opponent creates']):
+                return False
+            return self._is_artifact_token_support(oracle_text)
+
+        if synergy == 'exile':
+            if 'from exile' in commander_text or 'play a card from exile' in commander_text:
+                return self._is_exile_value_card(oracle_text)
+            if self._is_graveyard_hate(oracle_text):
+                return False
+
+        if synergy == 'landfall':
+            if 'landfall' in commander_text or 'land you control enters' in commander_text:
+                return (
+                    'landfall' in oracle_text or
+                    'additional land' in oracle_text or
+                    'land you control enters' in oracle_text or
+                    'you may play lands' in oracle_text
+                )
+
+        return True
+
+    def _generate_commander_recommendation_reason(
+        self,
+        card_data: Dict,
+        commander_name: str,
+        synergy: str,
+        commander_card: Dict
+    ) -> str:
+        """Generate concise, commander-specific recommendation copy."""
+        card_name = card_data.get('name', 'This card')
+        oracle_text = card_data.get('oracle_text', '')
+        oracle_lower = oracle_text.lower()
+        type_line = card_data.get('type_line', '').lower()
+        commander_text = commander_card.get('oracle_text', '').lower()
+        commander_constraints = self._get_commander_constraints(commander_card)
+        cmc = card_data.get('cmc', 0)
+
+        reasons = []
+
+        if synergy == 'artifact':
+            if 'equipment' in type_line and any(word in oracle_lower for word in ['haste', 'hexproof', 'shroud', 'ward']):
+                reasons.append(f"{card_name} protects {commander_name} and can help the commander start generating value sooner. Because it is also an artifact, it still contributes to the deck's artifact density rather than being a disconnected protection piece.")
+            elif 'artifact card' in oracle_lower and 'graveyard' in oracle_lower:
+                reasons.append(f"{card_name} directly extends {commander_name}'s artifact-recursion plan by getting important artifacts back after they are milled, sacrificed, or removed.")
+            elif 'when' in oracle_lower and ('dies' in oracle_lower or 'put into a graveyard' in oracle_lower):
+                reasons.append(f"{card_name} is useful because it is an artifact you do not mind losing. It creates value when it dies, which pairs well with {commander_name}'s ability to reuse artifacts.")
+            elif 'draw' in oracle_lower and 'artifact' in type_line:
+                reasons.append(f"{card_name} gives the artifact package card flow instead of only board presence, helping {commander_name} keep finding artifacts worth casting or recurring.")
+            elif 'sacrifice' in oracle_lower and 'artifact' in type_line:
+                reasons.append(f"{card_name} gives you an artifact-based sacrifice outlet or payoff, which turns expendable artifacts into decisions rather than dead permanents.")
+            elif 'graveyard' in commander_text and ('artifact' in type_line or 'artifact' in oracle_lower):
+                reasons.append(f"{card_name} raises your artifact count while giving {commander_name} more material to reuse or care about from the graveyard.")
+            elif 'sacrifice' in commander_text and 'artifact' in type_line:
+                reasons.append(f"{card_name} is an artifact that can feed {commander_name}'s sacrifice or artifact-counting plan instead of sitting outside the engine.")
+            else:
+                reasons.append(f"{card_name} supports {commander_name}'s artifact theme as a real engine piece, not just generic acceleration.")
+        elif synergy == 'graveyard':
+            if 'artifact card' in oracle_lower and 'graveyard' in oracle_lower:
+                reasons.append(f"{card_name} is a strong fit because it recovers artifacts that {commander_name} mills, sacrifices, or trades off, giving the deck more staying power.")
+            elif 'return' in oracle_lower and 'graveyard' in oracle_lower:
+                reasons.append(f"{card_name} gives {commander_name} another way to reclaim important cards from the graveyard, which makes self-mill and normal removal less costly.")
+            elif 'play' in oracle_lower and 'land' in oracle_lower and 'graveyard' in oracle_lower:
+                reasons.append(f"{card_name} turns self-mill into mana consistency by letting you reuse lands that end up in the graveyard while setting up {commander_name}.")
+            elif 'when' in oracle_lower and ('dies' in oracle_lower or 'put into a graveyard' in oracle_lower):
+                death_subject = 'creatures' if 'creature' in type_line or 'creature' in oracle_lower else 'permanents'
+                reasons.append(f"{card_name} rewards the deck when {death_subject} die, which makes sacrifice lines, board wipes, and combat trades feed {commander_name}'s long game instead of only costing resources.")
+            elif 'draw' in oracle_lower:
+                reasons.append(f"{card_name} keeps cards moving while interacting with the graveyard, which is exactly what a recursive {commander_name} deck wants.")
+            else:
+                reasons.append(f"{card_name} gives {commander_name} a useful graveyard-facing role, helping the deck turn milled, sacrificed, or removed cards into future advantage.")
+        elif synergy == 'tokens':
+            if 'populate' in oracle_lower:
+                reasons.append(f"{card_name} is strong with {commander_name} because populate copies an existing creature token, turning the commander's token output into repeatable board growth.")
+            elif 'creature token' in oracle_lower or 'creature tokens' in oracle_lower:
+                reasons.append(f"{card_name} adds real bodies to {commander_name}'s creature-token plan, giving the deck more material to copy, pump, sacrifice, or turn sideways.")
+            elif 'tokens you control' in oracle_lower:
+                reasons.append(f"{card_name} rewards the tokens {commander_name} is already making, so the deck gets paid for going wide instead of only adding more small bodies.")
+            elif 'one or more tokens' in oracle_lower or 'twice that many' in oracle_lower:
+                reasons.append(f"{card_name} multiplies {commander_name}'s token output, making each activation scale into a much wider board than the commander could produce alone.")
+            else:
+                reasons.append(f"{card_name} strengthens {commander_name}'s token plan by making repeated token creation more valuable.")
+        elif synergy == 'artifact_tokens':
+            if 'treasure token' in oracle_lower:
+                reasons.append(f"{card_name} supports {commander_name}'s artifact-token economy by making Treasures that can become mana, sacrifice fodder, or artifact-count payoffs.")
+            elif self._has_artifact_token_text(oracle_lower):
+                reasons.append(f"{card_name} gives {commander_name} more artifact tokens to convert into cards, mana, or sacrifice value instead of just adding generic board presence.")
+            else:
+                reasons.append(f"{card_name} rewards the artifact tokens {commander_name} creates, turning temporary resources into a more durable engine.")
+        elif synergy == 'counters':
+            if 'proliferate' in oracle_lower:
+                reasons.append(f"{card_name} gives {commander_name} another proliferate effect, which turns each blight counter and every other counter on the table into repeatable scaling.")
+            elif '-1/-1 counter' in oracle_lower:
+                reasons.append(f"{card_name} adds more -1/-1 counter pressure, so {commander_name}'s blight plan has extra ways to shrink boards before proliferate compounds the damage.")
+            elif '+1/+1 counter' in oracle_lower:
+                reasons.append(f"{card_name} adds +1/+1 counter scaling, giving your creatures counters that {commander_name}'s proliferate ability can keep growing.")
+            else:
+                reasons.append(f"{card_name} supports the counter plan by giving {commander_name} more counters to multiply or more payoffs for proliferating.")
+        elif synergy == 'sacrifice':
+            reasons.append(f"{card_name} gives the deck more sacrifice texture, so {commander_name}'s death and resource-conversion lines happen more reliably.")
+        elif synergy == 'enchantment':
+            tutor_note = ""
+            if commander_constraints.get('max_enchantment_cmc') and 'enchantment' in type_line:
+                max_cmc = commander_constraints['max_enchantment_cmc']
+                if cmc <= max_cmc:
+                    tutor_note = f"{commander_name} can find it directly because its mana value is {cmc}, inside the {max_cmc}-mana tutor limit. "
+                else:
+                    tutor_note = f"It sits above {commander_name}'s tutor limit, so it is more of a hand-cast payoff than a direct attack trigger target. "
+
+            if 'draw' in oracle_lower:
+                if 'opponent' in oracle_lower or 'unless' in oracle_lower or 'pay' in oracle_lower:
+                    reasons.append(f"{tutor_note}{card_name} pressures opponents while feeding you cards, which is ideal for {commander_name}: you advance the enchantment count and keep the hand stocked for follow-up protection or interaction.")
+                else:
+                    reasons.append(f"{tutor_note}{card_name} turns the enchantment package into card flow, helping {commander_name} keep chaining value pieces instead of relying on one attack trigger.")
+            elif any(phrase in oracle_lower for phrase in ["can't attack", 'cannot attack', 'prevent all combat damage', 'attacks you', 'attacks a planeswalker you control']):
+                reasons.append(f"{tutor_note}{card_name} protects your life total and makes combat awkward for opponents, buying {commander_name} more turns to attack and tutor.")
+            elif 'aura' in type_line or 'enchanted creature' in oracle_lower or 'enchant creature' in oracle_lower:
+                if any(phrase in oracle_lower for phrase in ['unblockable', "can't be blocked", 'lifelink', 'hexproof', 'shroud']):
+                    reasons.append(f"{tutor_note}{card_name} is an Aura that helps {commander_name} survive or connect in combat, which matters because the commander has to attack to generate value.")
+                else:
+                    reasons.append(f"{tutor_note}{card_name} gives the deck a tutorable Aura role player that can turn a creature into a better threat or utility piece.")
+            elif 'search your library' in oracle_lower or 'tutor' in oracle_lower:
+                reasons.append(f"{tutor_note}{card_name} adds redundancy to the enchantment toolbox, making it easier for {commander_name} to assemble the right protection, value, or lock piece.")
+            elif 'opponent' in oracle_lower and any(phrase in oracle_lower for phrase in ['pay', 'tax', "can't", 'cannot']):
+                reasons.append(f"{tutor_note}{card_name} taxes opposing plays while staying inside the enchantment theme, slowing the table enough for {commander_name} to keep attacking safely.")
+            else:
+                reasons.append(f"{tutor_note}{card_name} gives {commander_name} another enchantment-based tool, raising the density of permanents the deck can tutor, protect, and build around.")
+        elif synergy == 'instant_sorcery':
+            reasons.append(f"{card_name} supports {commander_name}'s spell-based game plan by rewarding or enabling repeated instant and sorcery casts.")
+        elif synergy == 'lifegain':
+            reasons.append(f"{card_name} turns life gain into a resource, helping {commander_name} convert incidental life swings into pressure or cards.")
+        elif synergy == 'exile':
+            if 'exile the top' in oracle_lower or 'play that card' in oracle_lower or 'cast that card' in oracle_lower:
+                reasons.append(f"{card_name} gives {commander_name} more cards to play from exile, which keeps the trigger chain moving instead of waiting for the commander to do all the work.")
+            elif 'from exile' in oracle_lower:
+                reasons.append(f"{card_name} connects directly to {commander_name}'s exile zone plan by rewarding or enabling cards cast from exile.")
+            else:
+                reasons.append(f"{card_name} supports {commander_name}'s exile plan with card access that can turn into extra triggers and Treasures.")
+        elif synergy == 'landfall':
+            if 'additional land' in oracle_lower or 'you may play lands' in oracle_lower:
+                reasons.append(f"{card_name} helps {commander_name} make more land drops, which means more landfall draw triggers and a faster path to high-mana turns.")
+            elif 'landfall' in oracle_lower or 'land you control enters' in oracle_lower:
+                reasons.append(f"{card_name} adds another payoff for the land drops {commander_name} already wants to make, so each fetch land or extra land play produces more value.")
+            else:
+                reasons.append(f"{card_name} supports {commander_name}'s landfall plan by making land drops more frequent or more rewarding.")
+        elif synergy == 'voltron':
+            reasons.append(f"{card_name} helps {commander_name} win through commander damage by adding protection, evasion, or repeatable combat pressure.")
+        else:
+            reasons.append(f"{card_name} connects to {commander_name}'s {synergy.replace('_', ' ')} theme in a way that advances the deck's core plan.")
+
+        effect_notes = []
+        if self._has_card_draw_text(oracle_lower):
+            effect_notes.append("It also adds card flow, which helps the deck keep finding action instead of running out of pressure.")
+        if 'create' in oracle_lower and 'token' in oracle_lower:
+            effect_notes.append("Its token production gives you extra permanents to build around, sacrifice, or convert into value.")
+        if 'sacrifice' in oracle_lower:
+            effect_notes.append("The sacrifice text matters because it gives you agency over when your permanents become resources.")
+        if 'graveyard' in oracle_lower or 'dies' in oracle_lower:
+            effect_notes.append("The graveyard text makes it useful after removal and improves your ability to grind.")
+        if '+1/+1 counter' in oracle_lower or 'proliferate' in oracle_lower:
+            effect_notes.append("Its counter text gives the commander or board a clearer path from small advantages into a real clock.")
+        if 'copy' in oracle_lower:
+            effect_notes.append("Copy effects are especially strong here because they multiply the best permanent or trigger you already assembled.")
+
+        if effect_notes:
+            reasons.append(effect_notes[0])
+
+        return " ".join(reasons)
+    
+    def _get_card_images(self, scryfall_card: Dict) -> Dict[str, Optional[str]]:
+        """Extract card image URLs from Scryfall data, handling double-faced cards"""
+        if not scryfall_card:
+            return {'front': None, 'back': None}
+        
+        # Check if it's a double-faced card (has card_faces)
+        if 'card_faces' in scryfall_card:
+            faces = scryfall_card['card_faces']
+            front_image = faces[0].get('image_uris', {}).get('normal') or faces[0].get('image_uris', {}).get('large')
+            back_image = faces[1].get('image_uris', {}).get('normal') or faces[1].get('image_uris', {}).get('large') if len(faces) > 1 else None
+            return {'front': front_image, 'back': back_image}
+        else:
+            # Single-faced card
+            image_uris = scryfall_card.get('image_uris', {})
+            front_image = image_uris.get('normal') or image_uris.get('large') or image_uris.get('small')
+            return {'front': front_image, 'back': None}
+    
+    def _get_card_image(self, scryfall_card: Dict) -> Optional[str]:
+        """Legacy method - returns only front image"""
+        images = self._get_card_images(scryfall_card)
+        return images['front']
+    
+    def _colors_to_query(self, color_identity: List[str]) -> str:
+        """Convert color identity to Scryfall query format"""
+        if not color_identity:
+            return "c:c"
+        return "".join(color_identity).lower()
+
+    def _color_identity_filter(self, color_identity: List[str]) -> str:
+        """Build a Scryfall Commander legality filter for card color identity."""
+        if not color_identity:
+            return "id:c"
+        return f"id<={''.join(color_identity).lower()}"
+
+    def _build_query_for_synergy(
+        self,
+        synergy: str,
+        color_identity: List[str],
+        commander_constraints: Optional[Dict] = None
+    ) -> Optional[str]:
+        """Build a Scryfall query for a commander synergy theme."""
+        color_filter = self._color_identity_filter(color_identity)
+        commander_constraints = commander_constraints or {}
+
+        if synergy == 'enchantment':
+            cmc_filter = ""
+            if 'max_enchantment_cmc' in commander_constraints:
+                cmc_filter = f" cmc<={commander_constraints['max_enchantment_cmc']}"
+            return f"t:enchantment{cmc_filter} {color_filter} f:commander"
+
+        synergy_queries = {
+            'artifact': "t:artifact",
+            'blink': "(o:exile o:return)",
+            'counters': '(o:"+1/+1 counter" OR o:"-1/-1 counter" OR o:proliferate OR o:"put one or more counters")',
+            'creature': "t:creature",
+            'exile': '(o:"exile the top" OR o:"play that card" OR o:"cast that card" OR o:"from exile" OR o:"until end of your next turn")',
+            'graveyard': '(o:"from your graveyard" OR o:"put into your graveyard" OR o:dies OR o:reanimate OR o:flashback OR o:escape OR o:unearth)',
+            'instant_sorcery': '(t:instant OR t:sorcery OR o:"instant or sorcery")',
+            'landfall': '(o:landfall OR o:"additional land" OR o:"land you control enters")',
+            'lifegain': '(o:"whenever you gain life" OR o:"if you gained life" OR o:"life total" OR o:"life you gained")',
+            'sacrifice': "(o:sacrifice OR o:dies)",
+            'tokens': '(o:"creature token" OR o:"creature tokens" OR o:populate OR o:"tokens you control" OR o:"one or more tokens" OR o:"twice that many")',
+            'artifact_tokens': '(o:"Treasure token" OR o:"Clue token" OR o:"Food token" OR o:"Blood token" OR o:"artifact token")',
+            'voltron': "(t:equipment OR t:aura OR o:equip OR o:attach)",
+        }
+
+        base_query = synergy_queries.get(synergy)
+        if not base_query:
+            return None
+
+        return f"{base_query} {color_filter} f:commander"
+    
+    def _extract_price(self, prices: Dict) -> Optional[float]:
+        """Extract USD price from Scryfall prices"""
+        try:
+            if prices.get('usd'):
+                return float(prices['usd'])
+            elif prices.get('usd_foil'):
+                return float(prices['usd_foil'])
+        except (ValueError, TypeError):
+            pass
+        return None
+    
+    async def analyze_commander(self, commander_card: Dict) -> Dict:
+        """Analyze a commander and provide strategy tips"""
+        extracted = self.scryfall.extract_card_data(commander_card)
+        
+        # Detect synergies
+        synergies = self._detect_commander_synergies(commander_card)
+        
+        # Generate strategy tips
+        tips = []
+        oracle_text = commander_card.get('oracle_text', '').lower()
+        
+        if 'enchantment' in synergies:
+            tips.append(f"Build around enchantments with cards like Argothian Enchantress, Enchantress's Presence, and Sterling Grove for card advantage and protection.")
+        if 'artifact' in synergies:
+            tips.append(f"Focus on artifact synergies with Urza, Lord High Artificer, Etherium Sculptor, and Mystic Forge for consistent value.")
+        if 'graveyard' in synergies:
+            tips.append(f"Leverage graveyard strategies with Living Death, Reanimate, and Animate Dead to recur threats.")
+        if 'tokens' in synergies:
+            tips.append(f"Go wide with token strategies using Doubling Season, Parallel Lives, and Anointed Procession.")
+        if 'artifact_tokens' in synergies:
+            tips.append(f"Use Treasure, Clue, Food, or Blood token engines with sacrifice payoffs and artifact-count rewards so temporary resources become lasting value.")
+        if 'counters' in synergies:
+            tips.append(f"Build a +1/+1 counter theme with Ozolith, Hardened Scales, and Doubling Season for exponential growth.")
+        if 'instant_sorcery' in synergies:
+            tips.append(f"Lean into spellslinger payoffs with efficient cantrips, cheap interaction, and magecraft-style rewards.")
+        if 'lifegain' in synergies:
+            tips.append(f"Pair lifegain triggers with repeatable payoffs like Well of Lost Dreams, Heliod, Sun-Crowned, and life-drain effects.")
+        if 'sacrifice' in synergies:
+            tips.append(f"Use recursive creatures, sacrifice outlets, and death-trigger payoffs so every creature can become value.")
+        if 'voltron' in synergies:
+            tips.append(f"Protect and enhance your commander with haste, hexproof, evasion, and efficient Auras or Equipment.")
+        
+        # Generic tips
+        tips.append(f"Include 36-38 lands and 10-12 ramp sources for consistent mana.")
+        tips.append(f"Run 8-10 card draw engines to maintain hand advantage.")
+        tips.append(f"Pack 7-10 removal spells to answer threats efficiently.")
+        
+        # Get suggested cards with proper validation
+        color_identity = extracted['color_identity']
+        commander_constraints = self._get_commander_constraints(commander_card)
+        suggested_cards = []
+        suggested_names = set()
+        
+        for synergy in synergies:
+            query = self._build_query_for_synergy(synergy, color_identity, commander_constraints)
+            
+            if query:
+                results = await self.scryfall.search_cards_by_criteria(query, limit=25)
+                cards_added = 0
+                for card in results:
+                    if cards_added >= 4 or len(suggested_cards) >= 12:
+                        break
+                    
+                    card_name = card.get('name', '').lower()
+                    if card_name in suggested_names or card_name == extracted['name'].lower():
+                        continue
+
+                    # CRITICAL: Validate color identity
+                    if not self._is_legal_for_deck(card, color_identity):
+                        continue
+                    
+                    # Handle double-faced cards
+                    card_to_validate = card
+                    if card.get('card_faces') and len(card.get('card_faces', [])) > 1:
+                        if synergy == 'enchantment':
+                            card_to_validate = self._get_correct_face_for_validation(card, 'enchantment')
+                        elif synergy == 'artifact':
+                            card_to_validate = self._get_correct_face_for_validation(card, 'artifact')
+                        elif synergy == 'creature':
+                            card_to_validate = self._get_correct_face_for_validation(card, 'creature')
+                    
+                    card_extracted = self.scryfall.extract_card_data(card_to_validate)
+                    effective_cmc = self._calculate_effective_cmc(card_to_validate)
+                    extracted_name = card_extracted['name'].lower()
+                    if extracted_name in suggested_names:
+                        continue
+                    if not self._card_matches_synergy(card_extracted, synergy):
+                        continue
+                    if not self._card_matches_commander_context(card_extracted, synergy, commander_card):
+                        continue
+                    if self._is_generic_mana_card(card_extracted):
+                        continue
+                    
+                    # Apply commander constraints
+                    if commander_constraints:
+                        if 'max_enchantment_cmc' in commander_constraints:
+                            if 'enchantment' in card_extracted['type_line'].lower():
+                                if effective_cmc > commander_constraints['max_enchantment_cmc']:
+                                    continue
+                        
+                        if 'max_tutor_cmc' in commander_constraints:
+                            if effective_cmc > commander_constraints['max_tutor_cmc']:
+                                continue
+                    
+                    # Get images (handles double-faced cards)
+                    image_data = self._get_card_images(card)
+                    reason = self._generate_commander_recommendation_reason(
+                        card_extracted,
+                        extracted['name'],
+                        synergy,
+                        commander_card
+                    )
+                    
+                    suggested_cards.append({
+                        'name': card_extracted['name'],
+                        'cmc': effective_cmc,
+                        'role': synergy,
+                        'reason': reason,
+                        'image_url': image_data['front'],
+                        'image_url_back': image_data['back']
+                    })
+                    suggested_names.add(extracted_name)
+                    cards_added += 1
+            
+            if len(suggested_cards) >= 12:
+                break
+        
+        # Generate combos
+        combos = self._generate_combo_suggestions(extracted['name'], synergies, [])
+        
+        return {
+            'name': extracted['name'],
+            'type_line': extracted['type_line'],
+            'oracle_text': extracted['oracle_text'],
+            'cmc': extracted['cmc'],
+            'color_identity': extracted['color_identity'],
+            'power': commander_card.get('power'),
+            'toughness': commander_card.get('toughness'),
+            'image_url': self._get_card_image(commander_card),
+            'synergies': synergies,
+            'strategy_tips': tips,
+            'suggested_cards': suggested_cards,
+            'combos': combos
+        }
+    
+    async def get_random_commander(self, colors: Optional[List[str]] = None,
+                                   keywords: Optional[List[str]] = None,
+                                   max_cmc: Optional[int] = None) -> Dict:
+        """Get a random commander with filters"""
+        # Build search query
+        query_parts = ["is:commander", "f:commander"]
+        
+        if colors:
+            color_str = "".join(colors).lower()
+            query_parts.append(f"id:{color_str}")
+        
+        if keywords:
+            keyword_query = " OR ".join([f"o:{kw.lower()}" for kw in keywords])
+            query_parts.append(f"({keyword_query})")
+        
+        if max_cmc:
+            query_parts.append(f"cmc<={max_cmc}")
+        
+        query = " ".join(query_parts)
+        
+        try:
+            results = await self.scryfall.search_cards_by_criteria(query, limit=100)
+            if not results:
+                # Fallback to any commander
+                results = await self.scryfall.search_cards_by_criteria("is:commander f:commander", limit=100)
+            
+            # Pick random
+            import random
+            commander_card = random.choice(results) if results else None
+            
+            if commander_card:
+                return await self.analyze_commander(commander_card)
+            else:
+                raise ValueError("No commanders found matching criteria")
+        except Exception as e:
+            logger.error(f"Random commander error: {str(e)}")
+            raise
+    
+    async def get_replacement_suggestion(
+        self, 
+        deck: Dict, 
+        dismissed_cards: List[str],
+        role_tag: Optional[str] = None
+    ) -> Optional[Dict]:
+        """
+        Generate a single replacement suggestion, excluding dismissed cards.
+        This is used when a user wants to see different suggestions.
+        """
+        cards = deck.get('cards', [])
+        commander = deck.get('commander')
+        color_identity = deck.get('color_identity', [])
+        
+        # Get commander constraints
+        commander_data = None
+        commander_synergies = []
+        commander_constraints = {}
+        if commander:
+            commander_data = await self.scryfall.search_card(commander)
+            if commander_data:
+                commander_synergies = self._detect_commander_synergies(commander_data)
+                commander_constraints = self._get_commander_constraints(commander_data)
+        
+        # Calculate stats and gaps
+        stats = self._calculate_stats(cards, commander, commander_synergies)
+        gaps = self._identify_gaps(stats, color_identity, commander_synergies)
+        
+        # Get current card names (including dismissed cards)
+        current_card_names = {card['name'].lower() for card in cards}
+        dismissed_card_names = {card.lower() for card in dismissed_cards}
+        all_excluded_names = current_card_names | dismissed_card_names
+        
+        # Determine which role to search for
+        search_roles = []
+        if role_tag:
+            search_roles = [role_tag]
+        else:
+            # Try roles in priority order
+            if 'draw' in gaps['roles']:
+                search_roles.append('draw')
+            if 'ramp' in gaps['roles']:
+                search_roles.append('ramp')
+            if 'removal' in gaps['roles']:
+                search_roles.append('removal')
+            if commander_synergies:
+                search_roles.append('synergy')
+        
+        # Search for a replacement
+        for role in search_roles:
+            query = self._build_query_for_role(role, color_identity, commander_synergies, commander_constraints)
+            if not query:
+                continue
+            
+            try:
+                results = await self.scryfall.search_cards_by_criteria(query, limit=50)
+                for card in results:
+                    card_name = card.get('name', '').lower()
+                    if card_name in all_excluded_names:
+                        continue
+                    
+                    # Validate color identity
+                    commander_colors = commander_constraints.get('commander_color_identity', color_identity)
+                    if not self._is_legal_for_deck(card, commander_colors):
+                        continue
+                    
+                    # Handle double-faced cards
+                    card_to_validate = card
+                    if card.get('card_faces') and len(card.get('card_faces', [])) > 1:
+                        if commander_constraints.get('max_enchantment_cmc'):
+                            card_to_validate = self._get_correct_face_for_validation(card, 'enchantment')
+                        elif commander_constraints.get('max_tutor_cmc'):
+                            if 'enchantment' in role:
+                                card_to_validate = self._get_correct_face_for_validation(card, 'enchantment')
+                            elif 'artifact' in role:
+                                card_to_validate = self._get_correct_face_for_validation(card, 'artifact')
+                            elif 'creature' in role:
+                                card_to_validate = self._get_correct_face_for_validation(card, 'creature')
+                    
+                    extracted = self.scryfall.extract_card_data(card_to_validate)
+                    effective_cmc = self._calculate_effective_cmc(card_to_validate)
+                    
+                    # Apply commander constraints
+                    if commander_constraints:
+                        if 'max_enchantment_cmc' in commander_constraints:
+                            if 'enchantment' in extracted['type_line'].lower():
+                                if effective_cmc > commander_constraints['max_enchantment_cmc']:
+                                    continue
+                        
+                        if 'max_tutor_cmc' in commander_constraints:
+                            if effective_cmc > commander_constraints['max_tutor_cmc']:
+                                continue
+                        
+                        if commander_constraints.get('legendary_only'):
+                            if 'legendary' not in extracted['type_line'].lower():
+                                continue
+                        
+                        if 'max_power' in commander_constraints:
+                            card_power = card_to_validate.get('power')
+                            if card_power and card_power.isdigit():
+                                if int(card_power) > commander_constraints['max_power']:
+                                    continue
+                    
+                    # Found a valid replacement!
+                    price = self._extract_price(extracted['prices'])
+                    image_data = self._get_card_images(card)
+                    reason = self._generate_card_reasoning(
+                        extracted, role, commander, commander_synergies, gaps, commander_constraints
+                    )
+                    
+                    return {
+                        'card_name': extracted['name'],
+                        'reason': reason,
+                        'role_tag': role,
+                        'cmc': effective_cmc,
+                        'price': price,
+                        'synergy_tags': self._detect_card_synergies(
+                            extracted['oracle_text'].lower(),
+                            extracted['type_line'].lower()
+                        ),
+                        'confidence': 0.9 if role == 'synergy' else 0.8,
+                        'image_url': image_data['front'],
+                        'image_url_back': image_data['back']
+                    }
+            except Exception as e:
+                logger.error(f"Error finding replacement for {role}: {str(e)}")
+                continue
+        
+        # No replacement found
+        return None
+    
+    def _build_query_for_role(
+        self, 
+        role: str, 
+        color_identity: List[str],
+        commander_synergies: List[str],
+        commander_constraints: Dict
+    ) -> Optional[str]:
+        """Build Scryfall query for a specific role"""
+        color_query = self._color_identity_filter(color_identity)
+        
+        if role == 'draw':
+            return f"o:draw {color_query} f:commander"
+        elif role == 'ramp':
+            return f"(o:search o:land OR o:treasure OR t:mana) {color_query} f:commander"
+        elif role == 'removal':
+            return f"(o:destroy o:target OR o:exile o:target) {color_query} f:commander"
+        elif role == 'sweeper':
+            return f"(o:destroy o:all OR o:exile o:all OR o:-x/-x) {color_query} f:commander"
+        elif role == 'interaction':
+            return f"o:counter {color_query} f:commander"
+        elif role == 'protection':
+            return f"(o:protection OR o:hexproof OR o:indestructible) {color_query} f:commander"
+        elif role == 'synergy':
+            for synergy in commander_synergies:
+                query = self._build_query_for_synergy(synergy, color_identity, commander_constraints)
+                if query:
+                    return query
+        
+        return None
+    
+    def export_to_markdown(self, deck: Dict, analysis: Dict) -> str:
+        """Export analysis to Markdown format"""
+        lines = []
+        
+        lines.append(f"# Commander Deck Analysis: {deck.get('name', 'Unnamed Deck')}")
+        lines.append("")
+        lines.append(f"**Commander:** {deck.get('commander', 'N/A')}")
+        lines.append(f"**Format:** Commander (EDH)")
+        lines.append(f"**Color Identity:** {', '.join(deck.get('color_identity', []))}")
+        lines.append("")
+        
+        stats = analysis.get('stats', {})
+        lines.append("## Deck Statistics")
+        lines.append("")
+        lines.append(f"- Total Cards: {stats.get('total_cards', 0)}")
+        lines.append(f"- Lands: {stats.get('total_lands', 0)}")
+        lines.append(f"- Average CMC: {stats.get('avg_cmc', 0)}")
+        lines.append(f"- Commander Synergy Score: {stats.get('synergy_score', 0)}")
+        lines.append("")
+        
+        lines.append("### CMC Distribution")
+        lines.append("")
+        cmc_dist = stats.get('cmc_distribution', {})
+        for bracket in ['0-1', '2', '3', '4', '5', '6+']:
+            count = cmc_dist.get(bracket, 0)
+            lines.append(f"- CMC {bracket}: {count} cards")
+        lines.append("")
+        
+        lines.append("### Role Distribution")
+        lines.append("")
+        role_counts = stats.get('role_counts', {})
+        for role, count in role_counts.items():
+            lines.append(f"- {role.capitalize()}: {count} cards")
+        lines.append("")
+        
+        # Suggestions
+        lines.append("## Suggested Additions (10 Cards)")
+        lines.append("")
+        lines.append("| Card Name | Role | CMC | Price | Reason |")
+        lines.append("|-----------|------|-----|-------|--------|")
+        
+        for sugg in analysis.get('suggestions_add', [])[:10]:
+            price_str = f"${sugg.get('price', 0):.2f}" if sugg.get('price') else "N/A"
+            lines.append(f"| {sugg['card_name']} | {sugg['role_tag']} | {sugg['cmc']} | {price_str} | {sugg['reason']} |")
+        
+        lines.append("")
+        lines.append("## Suggested Cuts (10 Cards)")
+        lines.append("")
+        lines.append("| Card Name | Role | CMC | Reason |")
+        lines.append("|-----------|------|-----|--------|")
+        
+        for sugg in analysis.get('suggestions_cut', [])[:10]:
+            lines.append(f"| {sugg['card_name']} | {sugg['role_tag']} | {sugg['cmc']} | {sugg['reason']} |")
+        
+        lines.append("")
+        lines.append("---")
+        lines.append("*Generated by LandFall AI - Enhanced Suggestion Engine*")
+        
+        return "\n".join(lines)
