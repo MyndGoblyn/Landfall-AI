@@ -5,6 +5,20 @@ Use this guide when launching the app on Render. The project has two Render serv
 - Backend: Python FastAPI web service from `backend`
 - Frontend: React static site from `frontend`
 
+The primary public URL for the app is:
+
+```text
+https://landfallai.live
+```
+
+Recommended production domains:
+
+```text
+Frontend: https://landfallai.live
+Optional www alias: https://www.landfallai.live
+Backend API: https://api.landfallai.live
+```
+
 Do the setup in this order so each later step has the URLs and keys it needs.
 
 ## 1. Create MongoDB Atlas Database
@@ -51,8 +65,8 @@ ENVIRONMENT=production
 MONGO_URL=<from MongoDB Atlas>
 DB_NAME=landfall_ai
 JWT_SECRET=<generated secret>
-CORS_ORIGINS=<temporary frontend URL for now>
-APP_PUBLIC_URL=<temporary frontend URL for now>
+CORS_ORIGINS=https://landfallai.live,https://www.landfallai.live
+APP_PUBLIC_URL=https://landfallai.live
 USE_IN_MEMORY_DB=false
 ```
 
@@ -62,14 +76,14 @@ Generate `JWT_SECRET` with PowerShell:
 [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Max 256 }))
 ```
 
-If you do not have the frontend URL yet, temporarily use:
+If you do not have the custom domain connected yet, temporarily use your frontend Render URL:
 
 ```text
-CORS_ORIGINS=http://localhost:3000
-APP_PUBLIC_URL=http://localhost:3000
+CORS_ORIGINS=https://<your-frontend-service>.onrender.com
+APP_PUBLIC_URL=https://<your-frontend-service>.onrender.com
 ```
 
-Update both after creating the frontend service.
+Update both to `https://landfallai.live` after the custom domain is verified.
 
 ## 3. Create Cloudflare Turnstile CAPTCHA
 
@@ -80,7 +94,13 @@ Turnstile gives you two values:
 
 1. Go to Cloudflare Turnstile.
 2. Create a new widget.
-3. Add your frontend Render hostname once you have it.
+3. Add these hostnames:
+
+```text
+landfallai.live
+www.landfallai.live
+```
+
 4. Copy the site key and secret key.
 
 Backend Render variables:
@@ -136,8 +156,8 @@ Publish Directory: build
 4. Add frontend variables:
 
 ```text
-REACT_APP_API_URL=https://<your-backend-service>.onrender.com
-REACT_APP_BACKEND_URL=https://<your-backend-service>.onrender.com
+REACT_APP_API_URL=https://api.landfallai.live
+REACT_APP_BACKEND_URL=https://api.landfallai.live
 REACT_APP_TURNSTILE_SITE_KEY=<site key from Cloudflare>
 ```
 
@@ -151,29 +171,66 @@ Action: Rewrite
 
 ## 6. Update Backend URLs After Frontend Exists
 
-Once the frontend Render site has its final URL, go back to the backend service and update:
+Once the frontend custom domain is verified, go back to the backend service and update:
 
 ```text
-CORS_ORIGINS=https://<your-frontend-service>.onrender.com
-APP_PUBLIC_URL=https://<your-frontend-service>.onrender.com
+CORS_ORIGINS=https://landfallai.live,https://www.landfallai.live
+APP_PUBLIC_URL=https://landfallai.live
 ```
 
 Then redeploy the backend.
 
+## 6.5. Configure Custom Domains
+
+In Render, add custom domains to both services.
+
+Frontend static site custom domain:
+
+```text
+landfallai.live
+```
+
+Render automatically adds the corresponding `www.landfallai.live` domain and redirects it to the root domain when you add `landfallai.live`.
+
+Backend web service custom domain:
+
+```text
+api.landfallai.live
+```
+
+At your DNS provider, create the DNS records Render asks for. Render will show the exact target values in each service's Custom Domains tab. Render also creates TLS certificates for verified custom domains and redirects HTTP traffic to HTTPS.
+
+Typical DNS shape:
+
+```text
+landfallai.live      ALIAS/ANAME/CNAME flattening -> frontend Render target
+www.landfallai.live  CNAME                         -> frontend Render target
+api.landfallai.live  CNAME                         -> backend Render target
+```
+
+If your DNS provider does not support ALIAS, ANAME, or CNAME flattening for the root domain, use `www.landfallai.live` as the DNS target and set up a registrar-level redirect from `landfallai.live` to `www.landfallai.live`, or move DNS to a provider that supports apex flattening.
+
+After Render verifies the custom domains and issues certificates, use:
+
+```text
+Primary app URL: https://landfallai.live
+Backend API URL: https://api.landfallai.live
+```
+
 ## 7. Cookie Settings
 
-For the normal two-service Render setup, use:
+For the custom-domain setup with `landfallai.live` and `api.landfallai.live`, use:
 
 ```text
 AUTH_COOKIE_NAME=landfall_session
 AUTH_COOKIE_SECURE=true
-AUTH_COOKIE_SAMESITE=none
+AUTH_COOKIE_SAMESITE=lax
 ```
 
-Leave this unset unless you later use a custom domain shared by frontend and backend:
+Set this so the session cookie is scoped to your domain family:
 
 ```text
-AUTH_COOKIE_DOMAIN=
+AUTH_COOKIE_DOMAIN=.landfallai.live
 ```
 
 ## 8. Rate Limit Settings
@@ -196,8 +253,8 @@ ENVIRONMENT=production
 MONGO_URL=<mongodb atlas connection string>
 DB_NAME=landfall_ai
 JWT_SECRET=<32+ character generated secret>
-CORS_ORIGINS=https://<frontend>.onrender.com
-APP_PUBLIC_URL=https://<frontend>.onrender.com
+CORS_ORIGINS=https://landfallai.live,https://www.landfallai.live
+APP_PUBLIC_URL=https://landfallai.live
 USE_IN_MEMORY_DB=false
 REQUIRE_EMAIL_VERIFICATION=true
 CAPTCHA_REQUIRED=true
@@ -210,7 +267,8 @@ SMTP_FROM_EMAIL=<verified sender email>
 SMTP_USE_TLS=true
 AUTH_COOKIE_NAME=landfall_session
 AUTH_COOKIE_SECURE=true
-AUTH_COOKIE_SAMESITE=none
+AUTH_COOKIE_SAMESITE=lax
+AUTH_COOKIE_DOMAIN=.landfallai.live
 LOGIN_ATTEMPT_LIMIT=5
 LOGIN_ATTEMPT_WINDOW_MINUTES=15
 AUTH_ACTION_ATTEMPT_LIMIT=5
@@ -224,8 +282,8 @@ Do not manually set `PORT`; Render provides it.
 Your frontend Render static site should have:
 
 ```text
-REACT_APP_API_URL=https://<backend>.onrender.com
-REACT_APP_BACKEND_URL=https://<backend>.onrender.com
+REACT_APP_API_URL=https://api.landfallai.live
+REACT_APP_BACKEND_URL=https://api.landfallai.live
 REACT_APP_TURNSTILE_SITE_KEY=<cloudflare site key>
 ```
 
@@ -234,6 +292,7 @@ REACT_APP_TURNSTILE_SITE_KEY=<cloudflare site key>
 After both services deploy:
 
 1. Open the frontend URL.
+   - Use `https://landfallai.live`.
 2. Register with a real email address.
 3. Confirm the Turnstile widget appears.
 4. Confirm the verification email arrives.
@@ -249,4 +308,5 @@ If login fails after verification, check:
 - `APP_PUBLIC_URL` exactly matches the frontend origin.
 - `REACT_APP_API_URL` exactly matches the backend origin.
 - `AUTH_COOKIE_SECURE=true`
-- `AUTH_COOKIE_SAMESITE=none`
+- `AUTH_COOKIE_SAMESITE=lax`
+- `AUTH_COOKIE_DOMAIN=.landfallai.live`

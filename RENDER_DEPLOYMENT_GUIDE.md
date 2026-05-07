@@ -2,6 +2,18 @@
 
 This project is a two-service Render deployment: a Python FastAPI backend and a React static frontend.
 
+Primary production URL:
+
+```text
+https://landfallai.live
+```
+
+Recommended backend API URL:
+
+```text
+https://api.landfallai.live
+```
+
 ## Backend Web Service
 
 - Root directory: `backend`
@@ -18,13 +30,14 @@ PORT=<Render provides this automatically>
 MONGO_URL=<your MongoDB connection string>
 DB_NAME=landfall_ai
 JWT_SECRET=<32+ character random secret>
-CORS_ORIGINS=https://<your-frontend-service>.onrender.com
-APP_PUBLIC_URL=https://<your-frontend-service>.onrender.com
+CORS_ORIGINS=https://landfallai.live,https://www.landfallai.live
+APP_PUBLIC_URL=https://landfallai.live
 USE_IN_MEMORY_DB=false
 REQUIRE_EMAIL_VERIFICATION=true
 AUTH_COOKIE_NAME=landfall_session
 AUTH_COOKIE_SECURE=true
-AUTH_COOKIE_SAMESITE=none
+AUTH_COOKIE_SAMESITE=lax
+AUTH_COOKIE_DOMAIN=.landfallai.live
 CAPTCHA_REQUIRED=true
 TURNSTILE_SECRET_KEY=<cloudflare-turnstile-secret-key>
 SMTP_HOST=<smtp host>
@@ -50,8 +63,8 @@ Use a managed MongoDB provider such as MongoDB Atlas. Do not use the in-memory d
 Set this frontend environment variable in Render:
 
 ```text
-REACT_APP_API_URL=https://<your-backend-service>.onrender.com
-REACT_APP_BACKEND_URL=https://<your-backend-service>.onrender.com
+REACT_APP_API_URL=https://api.landfallai.live
+REACT_APP_BACKEND_URL=https://api.landfallai.live
 REACT_APP_TURNSTILE_SITE_KEY=<cloudflare-turnstile-site-key>
 ```
 
@@ -63,7 +76,16 @@ Destination Path: /index.html
 Action: Rewrite
 ```
 
-After Render gives you the final frontend URL, update the backend `CORS_ORIGINS` value to that exact HTTPS origin and redeploy the backend.
+Add custom domains in Render:
+
+```text
+Frontend static site: landfallai.live
+Backend web service: api.landfallai.live
+```
+
+When you add the root domain `landfallai.live`, Render automatically adds the matching `www.landfallai.live` domain and redirects it to the root domain.
+
+After Render verifies the custom domains, keep `landfallai.live` as the primary URL and redeploy both services.
 
 ## Prelaunch Checklist
 
