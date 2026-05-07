@@ -310,3 +310,28 @@ If login fails after verification, check:
 - `AUTH_COOKIE_SECURE=true`
 - `AUTH_COOKIE_SAMESITE=lax`
 - `AUTH_COOKIE_DOMAIN=.landfallai.live`
+
+## 12. Reset All Accounts
+
+Use this only when you intentionally want to wipe all current users and their data.
+
+This deletes:
+
+- `users`
+- `decks`
+- `analysis_runs`
+- `auth_tokens`
+- `rate_limits`
+
+From the Render backend service shell, run:
+
+```bash
+RESET_ACCOUNTS_CONFIRM=delete-all-accounts python scripts/reset_accounts.py
+```
+
+From local PowerShell, run this only if your shell has the production `MONGO_URL` and `DB_NAME` set:
+
+```powershell
+$env:RESET_ACCOUNTS_CONFIRM="delete-all-accounts"
+python backend/scripts/reset_accounts.py
+```
