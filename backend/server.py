@@ -445,6 +445,23 @@ def send_email(to_email: str, subject: str, body: str) -> bool:
         smtp.send_message(message)
     return True
 
+async def send_required_email(to_email: str, subject: str, body: str) -> bool:
+    try:
+        sent = await asyncio.to_thread(send_email, to_email, subject, body)
+    except Exception as exc:
+        logger.error("Email delivery failed for %s: %s", to_email, exc)
+        raise HTTPException(
+            status_code=502,
+            detail="Email delivery failed. Please check SMTP settings and try again."
+        )
+
+    if not sent:
+        raise HTTPException(
+            status_code=502,
+            detail="Email delivery is not configured. Please check SMTP settings."
+        )
+    return True
+
 async def send_verification_email(user: User) -> Optional[str]:
     token = await create_auth_token(
         user.id,
@@ -458,7 +475,7 @@ async def send_verification_email(user: User) -> Optional[str]:
         f"{link}\n\n"
         f"This link expires in {TOKEN_EXPIRATION_HOURS} hours."
     )
-    await asyncio.to_thread(send_email, user.email, "Verify your LandFall AI account", body)
+    await send_required_email(user.email, "Verify your LandFall AI account", body)
     return link if ENVIRONMENT != "production" else None
 
 async def send_password_reset_email(user: User) -> Optional[str]:
@@ -475,7 +492,7 @@ async def send_password_reset_email(user: User) -> Optional[str]:
         f"This link expires in {PASSWORD_RESET_EXPIRATION_MINUTES} minutes. "
         "If you did not request this, you can ignore this email."
     )
-    await asyncio.to_thread(send_email, user.email, "Reset your LandFall AI password", body)
+    await send_required_email(user.email, "Reset your LandFall AI password", body)
     return link if ENVIRONMENT != "production" else None
 
 # ==================== AUTH ROUTES ====================
@@ -504,7 +521,12 @@ async def register(user_data: UserCreate, request: Request, response: Response):
     await db.users.insert_one(user_dict)
 
     if REQUIRE_EMAIL_VERIFICATION:
-        dev_link = await send_verification_email(user)
+        try:
+            dev_link = await send_verification_email(user)
+        except HTTPException:
+            await db.users.delete_one({"id": user.id})
+            await db.auth_tokens.delete_many({"user_id": user.id})
+            raise
         return AuthResponse(
             message="Account created. Check your email to verify your account before logging in.",
             user=None,
@@ -544,6 +566,19 @@ async def login(login_data: UserLogin, request: Request, response: Response):
 async def logout(response: Response):
     clear_auth_cookie(response)
     return {"message": "Logged out"}
+
+@api_router.get("/auth/diagnostics")
+async def auth_diagnostics():
+    return {
+        "environment": ENVIRONMENT,
+        "captcha_required": CAPTCHA_REQUIRED,
+        "turnstile_secret_configured": bool(TURNSTILE_SECRET_KEY),
+        "email_verification_required": REQUIRE_EMAIL_VERIFICATION,
+        "smtp_host_configured": bool(SMTP_HOST),
+        "smtp_from_configured": bool(SMTP_FROM_EMAIL),
+        "app_public_url": APP_PUBLIC_URL,
+        "cors_origins": cors_origins,
+    }
 
 @api_router.post("/auth/email/resend", response_model=AuthResponse)
 async def resend_verification(request_data: ResendVerificationRequest, request: Request):
