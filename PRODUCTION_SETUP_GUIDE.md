@@ -323,11 +323,41 @@ This deletes:
 - `auth_tokens`
 - `rate_limits`
 
-From the Render backend service shell, run:
+Preferred method if your Render plan includes shell access:
 
 ```bash
 RESET_ACCOUNTS_CONFIRM=delete-all-accounts python scripts/reset_accounts.py
 ```
+
+If your Render plan does not include shell access, use the guarded reset endpoint:
+
+1. Generate a temporary secret locally:
+
+```powershell
+[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+```
+
+2. In the Render backend service env vars, set:
+
+```text
+RESET_ACCOUNTS_KEY=<the temporary secret>
+```
+
+3. Redeploy the backend.
+
+4. From local PowerShell, call the endpoint:
+
+```powershell
+$resetKey="<the temporary secret>"
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "https://api.landfallai.live/api/admin/reset-accounts" `
+  -Headers @{ "X-Reset-Key" = $resetKey }
+```
+
+5. Confirm the response shows documents deleted.
+
+6. Remove `RESET_ACCOUNTS_KEY` from Render and redeploy the backend. This disables the endpoint again.
 
 From local PowerShell, run this only if your shell has the production `MONGO_URL` and `DB_NAME` set:
 

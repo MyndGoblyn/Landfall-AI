@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, Response, status
+from fastapi import FastAPI, APIRouter, Header, HTTPException, Depends, Request, Response, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.responses import JSONResponse
@@ -79,6 +79,14 @@ LOGIN_ATTEMPT_LIMIT = int(os.environ.get('LOGIN_ATTEMPT_LIMIT', '5'))
 LOGIN_ATTEMPT_WINDOW_MINUTES = int(os.environ.get('LOGIN_ATTEMPT_WINDOW_MINUTES', '15'))
 AUTH_ACTION_ATTEMPT_LIMIT = int(os.environ.get('AUTH_ACTION_ATTEMPT_LIMIT', '5'))
 AUTH_ACTION_WINDOW_MINUTES = int(os.environ.get('AUTH_ACTION_WINDOW_MINUTES', '15'))
+RESET_ACCOUNTS_KEY = os.environ.get('RESET_ACCOUNTS_KEY')
+RESET_ACCOUNT_COLLECTIONS = [
+    "users",
+    "decks",
+    "analysis_runs",
+    "auth_tokens",
+    "rate_limits",
+]
 
 if CAPTCHA_REQUIRED and not TURNSTILE_SECRET_KEY:
     raise RuntimeError('TURNSTILE_SECRET_KEY is required when CAPTCHA_REQUIRED=true')
@@ -127,6 +135,10 @@ class AuthResponse(BaseModel):
     message: str
     user: Optional[User] = None
     dev_link: Optional[str] = None
+
+class ResetAccountsResponse(BaseModel):
+    message: str
+    deleted: Dict[str, int]
 
 class PasswordForgotRequest(BaseModel):
     email: EmailStr
@@ -613,6 +625,24 @@ async def reset_password(request_data: PasswordResetRequest, request: Request, r
     token = create_token(user.id, user.email)
     set_auth_cookie(response, token)
     return AuthResponse(message="Password updated", user=user)
+
+@api_router.post("/admin/reset-accounts", response_model=ResetAccountsResponse)
+async def reset_accounts(x_reset_key: Optional[str] = Header(default=None, alias="X-Reset-Key")):
+    if not RESET_ACCOUNTS_KEY:
+        raise HTTPException(status_code=404, detail="Reset endpoint is disabled")
+    if not x_reset_key or not secrets.compare_digest(x_reset_key, RESET_ACCOUNTS_KEY):
+        raise HTTPException(status_code=403, detail="Invalid reset key")
+
+    deleted_counts = {}
+    for collection_name in RESET_ACCOUNT_COLLECTIONS:
+        collection = getattr(db, collection_name)
+        result = await collection.delete_many({})
+        deleted_counts[collection_name] = result.deleted_count
+
+    return ResetAccountsResponse(
+        message="Account reset complete. Remove RESET_ACCOUNTS_KEY and redeploy now.",
+        deleted=deleted_counts,
+    )
 
 @api_router.get("/auth/me", response_model=User)
 async def get_me(current_user: Dict = Depends(get_current_user)):
