@@ -73,6 +73,8 @@ SMTP_USERNAME = os.environ.get('SMTP_USERNAME')
 SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD')
 SMTP_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL') or SMTP_USERNAME
 SMTP_USE_TLS = os.environ.get('SMTP_USE_TLS', 'true').lower() == 'true'
+SMTP_USE_SSL = os.environ.get('SMTP_USE_SSL', 'false').lower() == 'true'
+SMTP_TIMEOUT_SECONDS = int(os.environ.get('SMTP_TIMEOUT_SECONDS', '20'))
 TOKEN_EXPIRATION_HOURS = int(os.environ.get('AUTH_TOKEN_EXPIRATION_HOURS', '24'))
 PASSWORD_RESET_EXPIRATION_MINUTES = int(os.environ.get('PASSWORD_RESET_EXPIRATION_MINUTES', '30'))
 LOGIN_ATTEMPT_LIMIT = int(os.environ.get('LOGIN_ATTEMPT_LIMIT', '5'))
@@ -440,8 +442,9 @@ def send_email(to_email: str, subject: str, body: str) -> bool:
     message["Subject"] = subject
     message.set_content(body)
 
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:
-        if SMTP_USE_TLS:
+    smtp_class = smtplib.SMTP_SSL if SMTP_USE_SSL else smtplib.SMTP
+    with smtp_class(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT_SECONDS) as smtp:
+        if SMTP_USE_TLS and not SMTP_USE_SSL:
             smtp.starttls()
         if SMTP_USERNAME and SMTP_PASSWORD:
             smtp.login(SMTP_USERNAME, SMTP_PASSWORD)

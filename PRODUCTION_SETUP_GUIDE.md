@@ -137,6 +137,8 @@ SMTP_USERNAME=<smtp username>
 SMTP_PASSWORD=<smtp password or API key>
 SMTP_FROM_EMAIL=<verified sender email>
 SMTP_USE_TLS=true
+SMTP_USE_SSL=false
+SMTP_TIMEOUT_SECONDS=20
 ```
 
 Make sure `SMTP_FROM_EMAIL` is a sender address verified by your provider. If your provider gives you an API key for SMTP, it usually goes in `SMTP_PASSWORD`.
@@ -265,6 +267,8 @@ SMTP_USERNAME=<smtp username>
 SMTP_PASSWORD=<smtp password or api key>
 SMTP_FROM_EMAIL=<verified sender email>
 SMTP_USE_TLS=true
+SMTP_USE_SSL=false
+SMTP_TIMEOUT_SECONDS=20
 AUTH_COOKIE_NAME=landfall_session
 AUTH_COOKIE_SECURE=true
 AUTH_COOKIE_SAMESITE=lax
