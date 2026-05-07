@@ -383,7 +383,10 @@ async def verify_captcha(captcha_token: Optional[str], request: Request) -> None
         raise HTTPException(status_code=400, detail="CAPTCHA verification failed")
 
     if not result.get("success"):
-        raise HTTPException(status_code=400, detail="CAPTCHA verification failed")
+        error_codes = result.get("error-codes") or []
+        logger.warning("CAPTCHA verification rejected: %s", error_codes)
+        suffix = f": {', '.join(error_codes)}" if error_codes else ""
+        raise HTTPException(status_code=400, detail=f"CAPTCHA verification failed{suffix}")
 
 def hash_auth_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()

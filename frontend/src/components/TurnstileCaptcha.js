@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 const TURNSTILE_SCRIPT_ID = 'turnstile-script';
 
-export default function TurnstileCaptcha({ onVerify, onExpire, resetKey }) {
+export default function TurnstileCaptcha({ onVerify, onExpire, onError, resetKey }) {
   const containerRef = useRef(null);
   const widgetRef = useRef(null);
   const siteKey = process.env.REACT_APP_TURNSTILE_SITE_KEY;
@@ -21,7 +21,12 @@ export default function TurnstileCaptcha({ onVerify, onExpire, resetKey }) {
         sitekey: siteKey,
         callback: onVerify,
         'expired-callback': onExpire,
-        'error-callback': onExpire,
+        'error-callback': (errorCode) => {
+          onExpire();
+          if (onError) {
+            onError(errorCode);
+          }
+        },
         theme: 'dark',
       });
     };
@@ -50,7 +55,7 @@ export default function TurnstileCaptcha({ onVerify, onExpire, resetKey }) {
         widgetRef.current = null;
       }
     };
-  }, [siteKey, onVerify, onExpire, resetKey]);
+  }, [siteKey, onVerify, onExpire, onError, resetKey]);
 
   if (!siteKey) return null;
 

@@ -4,6 +4,26 @@ import { API } from '../lib/api';
 
 const AuthContext = createContext();
 
+const getApiError = (error, fallback) => {
+  const detail = error.response?.data?.detail;
+  if (typeof detail === 'string') {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    return detail.map((item) => item.msg || JSON.stringify(item)).join(', ');
+  }
+  if (detail && typeof detail === 'object') {
+    return detail.message || JSON.stringify(detail);
+  }
+  if (error.response?.status) {
+    return `${fallback} (${error.response.status})`;
+  }
+  if (error.request) {
+    return `${fallback}: unable to reach the API. Check the frontend API URL and backend CORS settings.`;
+  }
+  return fallback;
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -41,7 +61,7 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data.user);
       return { success: true, message: response.data.message };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Login failed' };
+      return { success: false, error: getApiError(error, 'Login failed') };
     }
   };
 
@@ -62,7 +82,7 @@ export const AuthProvider = ({ children }) => {
         devLink: response.data.dev_link
       };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Registration failed' };
+      return { success: false, error: getApiError(error, 'Registration failed') };
     }
   };
 
@@ -83,7 +103,7 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: true, message: response.data.message, devLink: response.data.dev_link };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Could not resend verification email' };
+      return { success: false, error: getApiError(error, 'Could not resend verification email') };
     }
   };
 
@@ -93,7 +113,7 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data.user);
       return { success: true, message: response.data.message };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Email verification failed' };
+      return { success: false, error: getApiError(error, 'Email verification failed') };
     }
   };
 
@@ -105,7 +125,7 @@ export const AuthProvider = ({ children }) => {
       });
       return { success: true, message: response.data.message, devLink: response.data.dev_link };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Password reset request failed' };
+      return { success: false, error: getApiError(error, 'Password reset request failed') };
     }
   };
 
@@ -119,7 +139,7 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data.user);
       return { success: true, message: response.data.message };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Password reset failed' };
+      return { success: false, error: getApiError(error, 'Password reset failed') };
     }
   };
 

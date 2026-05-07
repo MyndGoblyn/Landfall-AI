@@ -18,6 +18,7 @@ export default function Auth() {
   const { login, register, resendVerification, forgotPassword } = useAuth();
   const navigate = useNavigate();
   const captchaEnabled = Boolean(process.env.REACT_APP_TURNSTILE_SITE_KEY);
+  const requiresCaptchaToken = captchaEnabled && !captchaToken;
 
   const resetCaptcha = () => {
     setCaptchaToken('');
@@ -32,8 +33,16 @@ export default function Auth() {
     setCaptchaToken('');
   }, []);
 
+  const handleCaptchaError = useCallback((errorCode) => {
+    toast.error(errorCode ? `CAPTCHA error: ${errorCode}` : 'CAPTCHA verification failed.');
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (requiresCaptchaToken) {
+      toast.error('Please complete the CAPTCHA before continuing.');
+      return;
+    }
     setLoading(true);
     setDevLink('');
 
@@ -64,6 +73,10 @@ export default function Auth() {
   };
 
   const handleResendVerification = async () => {
+    if (requiresCaptchaToken) {
+      toast.error('Please complete the CAPTCHA before resending verification.');
+      return;
+    }
     setLoading(true);
     setDevLink('');
     const result = await resendVerification(email, captchaToken);
@@ -161,6 +174,7 @@ export default function Auth() {
               <TurnstileCaptcha
                 onVerify={handleCaptchaVerify}
                 onExpire={handleCaptchaExpire}
+                onError={handleCaptchaError}
                 resetKey={captchaResetKey}
               />
             )}
@@ -171,8 +185,12 @@ export default function Auth() {
               </a>
             )}
 
-            <button data-testid="submit-btn" type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Processing...' : (isForgotPassword ? 'Send Reset Link' : isLogin ? 'Enter Dashboard' : 'Create Account')}
+            <button data-testid="submit-btn" type="submit" disabled={loading || requiresCaptchaToken} className="btn-primary w-full">
+              {loading
+                ? 'Processing...'
+                : requiresCaptchaToken
+                  ? 'Complete CAPTCHA'
+                  : (isForgotPassword ? 'Send Reset Link' : isLogin ? 'Enter Dashboard' : 'Create Account')}
             </button>
           </form>
 
