@@ -142,6 +142,13 @@ class ResetAccountsResponse(BaseModel):
     message: str
     deleted: Dict[str, int]
 
+class TestEmailRequest(BaseModel):
+    to_email: EmailStr
+
+class TestEmailResponse(BaseModel):
+    message: str
+    smtp: Dict[str, Any]
+
 class PasswordForgotRequest(BaseModel):
     email: EmailStr
     captcha_token: Optional[str] = None
@@ -683,6 +690,44 @@ async def reset_accounts(x_reset_key: Optional[str] = Header(default=None, alias
     return ResetAccountsResponse(
         message="Account reset complete. Remove RESET_ACCOUNTS_KEY and redeploy now.",
         deleted=deleted_counts,
+    )
+
+@api_router.post("/admin/test-email", response_model=TestEmailResponse)
+async def test_email(
+    request_data: TestEmailRequest,
+    x_reset_key: Optional[str] = Header(default=None, alias="X-Reset-Key")
+):
+    if not RESET_ACCOUNTS_KEY:
+        raise HTTPException(status_code=404, detail="Admin test endpoint is disabled")
+    if not x_reset_key or not secrets.compare_digest(x_reset_key, RESET_ACCOUNTS_KEY):
+        raise HTTPException(status_code=403, detail="Invalid admin key")
+
+    smtp_summary = {
+        "host": SMTP_HOST,
+        "port": SMTP_PORT,
+        "username_configured": bool(SMTP_USERNAME),
+        "password_configured": bool(SMTP_PASSWORD),
+        "from_email": SMTP_FROM_EMAIL,
+        "use_tls": SMTP_USE_TLS,
+        "use_ssl": SMTP_USE_SSL,
+        "timeout_seconds": SMTP_TIMEOUT_SECONDS,
+    }
+
+    try:
+        await send_required_email(
+            request_data.to_email,
+            "LandFall AI SMTP test",
+            "This is a LandFall AI SMTP test email. If you received it, backend email delivery is working."
+        )
+    except HTTPException as exc:
+        detail = exc.detail
+        if isinstance(detail, str):
+            detail = f"{detail} Check Render backend logs for the provider error."
+        raise HTTPException(status_code=exc.status_code, detail=detail)
+
+    return TestEmailResponse(
+        message="SMTP test email sent.",
+        smtp=smtp_summary,
     )
 
 @api_router.get("/auth/me", response_model=User)
