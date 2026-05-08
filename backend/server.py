@@ -142,6 +142,7 @@ class UserLogin(BaseModel):
 class AuthResponse(BaseModel):
     message: str
     user: Optional[User] = None
+    access_token: Optional[str] = None
     dev_link: Optional[str] = None
 
 class ResetAccountsResponse(BaseModel):
@@ -585,7 +586,7 @@ async def register(user_data: UserCreate, request: Request, response: Response):
 
     token = create_token(user.id, user.email)
     set_auth_cookie(response, token)
-    return AuthResponse(message="Account created", user=user)
+    return AuthResponse(message="Account created", user=user, access_token=token)
 
 @api_router.post("/auth/login", response_model=AuthResponse)
 async def login(login_data: UserLogin, request: Request, response: Response):
@@ -610,7 +611,7 @@ async def login(login_data: UserLogin, request: Request, response: Response):
     
     token = create_token(user.id, user.email)
     set_auth_cookie(response, token)
-    return AuthResponse(message="Login successful", user=user)
+    return AuthResponse(message="Login successful", user=user, access_token=token)
 
 @api_router.post("/auth/logout")
 async def logout(response: Response):
@@ -664,7 +665,7 @@ async def verify_email(request_data: VerifyEmailRequest, response: Response):
 
     token = create_token(user.id, user.email)
     set_auth_cookie(response, token)
-    return AuthResponse(message="Email verified", user=user)
+    return AuthResponse(message="Email verified", user=user, access_token=token)
 
 @api_router.post("/auth/password/forgot", response_model=AuthResponse)
 async def forgot_password(request_data: PasswordForgotRequest, request: Request):
@@ -709,7 +710,7 @@ async def reset_password(request_data: PasswordResetRequest, request: Request, r
 
     token = create_token(user.id, user.email)
     set_auth_cookie(response, token)
-    return AuthResponse(message="Password updated", user=user)
+    return AuthResponse(message="Password updated", user=user, access_token=token)
 
 @api_router.post("/admin/reset-accounts", response_model=ResetAccountsResponse)
 async def reset_accounts(x_reset_key: Optional[str] = Header(default=None, alias="X-Reset-Key")):

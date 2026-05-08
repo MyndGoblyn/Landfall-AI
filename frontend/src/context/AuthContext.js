@@ -3,6 +3,37 @@ import axios from 'axios';
 import { API } from '../lib/api';
 
 const AuthContext = createContext();
+const AUTH_TOKEN_KEY = 'landfall_auth_token';
+
+const getStoredToken = () => {
+  try {
+    return sessionStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const storeToken = (token) => {
+  if (!token) return;
+  try {
+    sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+  } catch {
+    // Session storage can be unavailable in some privacy modes; the HttpOnly cookie remains the fallback.
+  }
+};
+
+const clearStoredToken = () => {
+  try {
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
+  } catch {
+    // Ignore storage cleanup failures.
+  }
+};
+
+const buildAuthHeaders = () => {
+  const token = getStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 const getApiError = (error, fallback) => {
   const detail = error.response?.data?.detail;
@@ -42,9 +73,14 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get(`${API}/auth/me`);
+      const response = await axios.get(`${API}/auth/me`, {
+        headers: buildAuthHeaders()
+      });
       setUser(response.data);
     } catch (error) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        clearStoredToken();
+      }
       setUser(null);
     } finally {
       setLoading(false);
@@ -58,6 +94,7 @@ export const AuthProvider = ({ children }) => {
         password,
         captcha_token: captchaToken
       });
+      storeToken(response.data.access_token);
       setUser(response.data.user);
       return { success: true, message: response.data.message };
     } catch (error) {
@@ -73,6 +110,7 @@ export const AuthProvider = ({ children }) => {
         captcha_token: captchaToken
       });
       if (response.data.user) {
+        storeToken(response.data.access_token);
         setUser(response.data.user);
       }
       return {
@@ -92,6 +130,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+    clearStoredToken();
     setUser(null);
   };
 
@@ -110,6 +149,7 @@ export const AuthProvider = ({ children }) => {
   const verifyEmail = async (verificationToken) => {
     try {
       const response = await axios.post(`${API}/auth/email/verify`, { token: verificationToken });
+      storeToken(response.data.access_token);
       setUser(response.data.user);
       return { success: true, message: response.data.message };
     } catch (error) {
@@ -136,6 +176,7 @@ export const AuthProvider = ({ children }) => {
         password,
         captcha_token: captchaToken
       });
+      storeToken(response.data.access_token);
       setUser(response.data.user);
       return { success: true, message: response.data.message };
     } catch (error) {
@@ -143,7 +184,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const getAuthHeaders = () => ({});
+  const getAuthHeaders = () => buildAuthHeaders();
 
   return (
     <AuthContext.Provider value={{
