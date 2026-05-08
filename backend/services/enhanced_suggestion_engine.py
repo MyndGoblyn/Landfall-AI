@@ -64,6 +64,14 @@ class EnhancedSuggestionEngine:
             return is_legendary_creature
 
         return is_legendary_creature or 'can be your commander' in oracle_text
+
+    def _has_creature_spell_text(self, text: str) -> bool:
+        """Match creature-spell text without treating noncreature spells as creatures."""
+        return re.search(r'(?<!non)creature spell', text) is not None
+
+    def _has_creature_card_text(self, text: str) -> bool:
+        """Match creature-card text without treating noncreature cards as creatures."""
+        return re.search(r'(?<!non)creature card', text) is not None
     
     async def analyze_deck(self, deck: Dict, categories: Optional[List[str]] = None, deep: bool = False) -> Dict:
         """Main analysis entry point with commander synergy and category filtering"""
@@ -144,9 +152,7 @@ class EnhancedSuggestionEngine:
             add_once('artifact')
         creature_theme_phrases = [
             'creatures you control',
-            'creature spell',
             'nontoken creature',
-            'creature card',
             'whenever another creature',
             'whenever a creature enters',
             'whenever one or more creatures',
@@ -155,7 +161,11 @@ class EnhancedSuggestionEngine:
             'creatures get',
             'creatures have',
         ]
-        if any(phrase in oracle_text for phrase in creature_theme_phrases):
+        if (
+            any(phrase in oracle_text for phrase in creature_theme_phrases) or
+            self._has_creature_spell_text(oracle_text) or
+            self._has_creature_card_text(oracle_text)
+        ):
             add_once('creature')
         spell_theme_phrases = [
             'instant or sorcery',
@@ -395,6 +405,18 @@ class EnhancedSuggestionEngine:
         """Detect what synergies a card provides"""
         synergies = []
         for synergy_type, keywords in self.synergy_keywords.items():
+            if synergy_type == 'creature':
+                creature_keywords = [
+                    keyword for keyword in keywords
+                    if keyword not in ['creature spell', 'creature card']
+                ]
+                if (
+                    any(keyword in oracle_text or keyword in type_line for keyword in creature_keywords) or
+                    self._has_creature_spell_text(oracle_text) or
+                    self._has_creature_card_text(oracle_text)
+                ):
+                    synergies.append(synergy_type)
+                continue
             if any(keyword in oracle_text or keyword in type_line for keyword in keywords):
                 synergies.append(synergy_type)
         return synergies
@@ -1542,8 +1564,6 @@ class EnhancedSuggestionEngine:
             return any(phrase in oracle_text for phrase in enchantment_support) or 'aura' in type_line
         if synergy == 'creature':
             creature_support = [
-                'creature spell',
-                'creature card',
                 'creatures you control',
                 'whenever another creature',
                 'whenever a creature',
@@ -1552,7 +1572,11 @@ class EnhancedSuggestionEngine:
                 'nontoken creature',
                 'creature token',
             ]
-            return any(phrase in oracle_text for phrase in creature_support)
+            return (
+                any(phrase in oracle_text for phrase in creature_support) or
+                self._has_creature_spell_text(oracle_text) or
+                self._has_creature_card_text(oracle_text)
+            )
         if synergy in detected:
             return True
         if synergy == 'voltron' and ('equipment' in type_line or 'aura' in type_line):
@@ -1577,7 +1601,7 @@ class EnhancedSuggestionEngine:
                 return False
             if 'artifact card in your graveyard' in commander_text:
                 return 'artifact' in type_line
-            if 'creature card' in commander_text and 'graveyard' in commander_text:
+            if self._has_creature_card_text(commander_text) and 'graveyard' in commander_text:
                 return 'creature' in type_line or 'creature card' in oracle_text
             if 'enchantment card' in commander_text and 'graveyard' in commander_text:
                 return 'enchantment' in type_line or 'enchantment card' in oracle_text
@@ -1597,8 +1621,8 @@ class EnhancedSuggestionEngine:
                 return 'aura' in type_line or any(term in oracle_text for term in ['aura', 'enchant ', 'enchanted'])
 
         if synergy == 'creature':
-            if 'creature spell' in commander_text:
-                return 'creature' in type_line or 'creature spell' in oracle_text
+            if self._has_creature_spell_text(commander_text):
+                return 'creature' in type_line or self._has_creature_spell_text(oracle_text)
             if any(term in commander_text for term in ['enters the battlefield', 'creature enters']):
                 return any(term in oracle_text for term in [
                     'enters the battlefield',
@@ -1685,7 +1709,7 @@ class EnhancedSuggestionEngine:
             else:
                 reasons.append(f"{card_name} supports {commander_name}'s artifact theme as a real engine piece, not just generic acceleration.")
         elif synergy == 'graveyard':
-            if 'artifact card' in oracle_lower and 'graveyard' in oracle_lower:
+            if 'artifact card' in oracle_lower and 'graveyard' in oracle_lower and 'artifact' in commander_text:
                 reasons.append(f"{card_name} is a strong fit because it recovers artifacts that {commander_name} mills, sacrifices, or trades off, giving the deck more staying power.")
             elif 'return' in oracle_lower and 'graveyard' in oracle_lower:
                 reasons.append(f"{card_name} gives {commander_name} another way to reclaim important cards from the graveyard, which makes self-mill and normal removal less costly.")
@@ -1718,13 +1742,16 @@ class EnhancedSuggestionEngine:
                 reasons.append(f"{card_name} rewards the artifact tokens {commander_name} creates, turning temporary resources into a more durable engine.")
         elif synergy == 'counters':
             if 'proliferate' in oracle_lower:
-                reasons.append(f"{card_name} gives {commander_name} another proliferate effect, which turns each blight counter and every other counter on the table into repeatable scaling.")
+                if 'proliferate' in commander_text:
+                    reasons.append(f"{card_name} gives {commander_name} another proliferate effect, making every counter already on the table scale harder.")
+                else:
+                    reasons.append(f"{card_name} can multiply counters after {commander_name} starts placing them, turning one counter trigger into a larger board advantage.")
             elif '-1/-1 counter' in oracle_lower:
-                reasons.append(f"{card_name} adds more -1/-1 counter pressure, so {commander_name}'s blight plan has extra ways to shrink boards before proliferate compounds the damage.")
+                reasons.append(f"{card_name} adds -1/-1 counter pressure, giving {commander_name} a way to shrink or pick off creatures while staying inside a counter-focused plan.")
             elif '+1/+1 counter' in oracle_lower:
-                reasons.append(f"{card_name} adds +1/+1 counter scaling, giving your creatures counters that {commander_name}'s proliferate ability can keep growing.")
+                reasons.append(f"{card_name} adds +1/+1 counter scaling, which pairs with {commander_name}'s counter plan without depending on a separate combat-only payoff.")
             else:
-                reasons.append(f"{card_name} supports the counter plan by giving {commander_name} more counters to multiply or more payoffs for proliferating.")
+                reasons.append(f"{card_name} supports the counter plan by adding either more counter placement or a payoff for creatures that already have counters.")
         elif synergy == 'sacrifice':
             reasons.append(f"{card_name} gives the deck more sacrifice texture, so {commander_name}'s death and resource-conversion lines happen more reliably.")
         elif synergy == 'enchantment':
@@ -1913,7 +1940,7 @@ class EnhancedSuggestionEngine:
                 tips.append(f"Keep the artifact package purposeful: ramp early, then convert artifact count into cards, sacrifice value, or a clear finisher instead of filling slots with generic rocks.")
 
         if 'creature' in synergies:
-            if 'creature spell' in oracle_text:
+            if self._has_creature_spell_text(oracle_text):
                 tips.append(f"{commander_name} rewards casting creatures, so use a curve with enough low and mid-cost creatures to double-spell. ETB creatures are especially useful because they still matter if the commander is removed.")
             elif 'enters the battlefield' in oracle_text or 'enters' in oracle_text:
                 tips.append(f"{commander_name} wants creatures that create value when they enter or when other creatures enter. Prioritize ETB creatures, token makers, and ways to reuse those triggers over vanilla bodies.")
@@ -1923,7 +1950,7 @@ class EnhancedSuggestionEngine:
                 tips.append(f"Keep the creature package synergistic: bodies should draw cards, ramp, recur, remove threats, or multiply the commander's main trigger rather than only filling the curve.")
 
         if 'graveyard' in synergies:
-            if 'creature card' in oracle_text and 'graveyard' in oracle_text:
+            if self._has_creature_card_text(oracle_text) and 'graveyard' in oracle_text:
                 tips.append(f"{commander_name} wants creatures that are useful both on board and in the graveyard. Self-mill, discard outlets, and recursion are strongest when the creatures have ETB, death, or cast value.")
             elif 'artifact card' in oracle_text and 'graveyard' in oracle_text:
                 tips.append(f"Stock the graveyard with artifacts deliberately. Self-mill and sacrifice outlets become card advantage when the artifact package includes reusable value pieces.")
@@ -2013,7 +2040,7 @@ class EnhancedSuggestionEngine:
             else:
                 notes.append("Deep Strategy - Artifact Density: Count only artifacts that feed the commander's trigger or convert into cards, damage, or recursion. Raw artifact count should serve a payoff.")
         if 'creature' in synergies:
-            if 'creature spell' in oracle_text:
+            if self._has_creature_spell_text(oracle_text):
                 notes.append("Deep Strategy - Creature Casting: Bias toward creatures that replace themselves, ramp, or interact when cast. That keeps the commander trigger productive even when the table removes the first board.")
             elif 'enters the battlefield' in oracle_text or 'creature enters' in oracle_text:
                 notes.append("Deep Strategy - ETB Texture: Mix token makers with individually strong ETB creatures, then add blink or bounce only when there are enough targets that immediately create cards, mana, or removal.")

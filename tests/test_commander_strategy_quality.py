@@ -200,6 +200,51 @@ def test_artifact_synergy_rejects_generic_artifact_without_rules_support():
     assert engine._card_matches_synergy(artifact_engine, "artifact")
 
 
+def test_noncreature_spell_text_does_not_trigger_creature_theme():
+    engine = make_engine()
+    vivi_card = {
+        "name": "Vivi Ornitier",
+        "type_line": "Legendary Creature - Wizard",
+        "oracle_text": (
+            "Whenever you cast a noncreature spell, put a +1/+1 counter on Vivi Ornitier "
+            "and it deals 1 damage to each opponent."
+        ),
+        "color_identity": ["U", "R"],
+    }
+
+    synergies = engine._detect_commander_synergies(vivi_card)
+    tips = engine._generate_commander_strategy_tips(
+        vivi_card,
+        synergies,
+        engine._get_commander_constraints(vivi_card),
+    )
+    joined = " ".join(tips).lower()
+
+    assert "creature" not in synergies
+    assert "instant_sorcery" in synergies
+    assert "rewards casting creatures" not in joined
+
+
+def test_counter_reasons_do_not_invent_proliferate_or_blight_language():
+    engine = make_engine()
+    commander = {
+        "name": "Counter Commander",
+        "type_line": "Legendary Creature",
+        "oracle_text": "Whenever another creature you control dies, put a +1/+1 counter on this creature.",
+    }
+    card = {
+        "name": "Hardened Scales",
+        "type_line": "Enchantment",
+        "oracle_text": "If one or more +1/+1 counters would be put on a creature you control, that many plus one are put on it instead.",
+        "cmc": 1,
+    }
+
+    reason = engine._generate_commander_recommendation_reason(card, commander["name"], "counters", commander)
+
+    assert "proliferate ability" not in reason
+    assert "blight" not in reason.lower()
+
+
 def test_commander_analysis_uses_larger_search_budget_only_for_deep_mode():
     fake_scryfall = FakeScryfall()
     engine = EnhancedSuggestionEngine(fake_scryfall)
