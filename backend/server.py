@@ -75,6 +75,9 @@ SMTP_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL') or SMTP_USERNAME
 SMTP_USE_TLS = os.environ.get('SMTP_USE_TLS', 'true').lower() == 'true'
 SMTP_USE_SSL = os.environ.get('SMTP_USE_SSL', 'false').lower() == 'true'
 SMTP_TIMEOUT_SECONDS = int(os.environ.get('SMTP_TIMEOUT_SECONDS', '20'))
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY')
+EMAIL_PROVIDER = os.environ.get('EMAIL_PROVIDER', 'smtp').lower()
+EMAIL_FROM_NAME = os.environ.get('EMAIL_FROM_NAME', 'LandFall AI')
 TOKEN_EXPIRATION_HOURS = int(os.environ.get('AUTH_TOKEN_EXPIRATION_HOURS', '24'))
 PASSWORD_RESET_EXPIRATION_MINUTES = int(os.environ.get('PASSWORD_RESET_EXPIRATION_MINUTES', '30'))
 LOGIN_ATTEMPT_LIMIT = int(os.environ.get('LOGIN_ATTEMPT_LIMIT', '5'))
@@ -92,8 +95,11 @@ RESET_ACCOUNT_COLLECTIONS = [
 
 if CAPTCHA_REQUIRED and not TURNSTILE_SECRET_KEY:
     raise RuntimeError('TURNSTILE_SECRET_KEY is required when CAPTCHA_REQUIRED=true')
-if ENVIRONMENT == 'production' and REQUIRE_EMAIL_VERIFICATION and (not SMTP_HOST or not SMTP_FROM_EMAIL):
-    raise RuntimeError('SMTP_HOST and SMTP_FROM_EMAIL are required for email verification in production')
+if ENVIRONMENT == 'production' and REQUIRE_EMAIL_VERIFICATION:
+    if EMAIL_PROVIDER == 'brevo_api' and (not BREVO_API_KEY or not SMTP_FROM_EMAIL):
+        raise RuntimeError('BREVO_API_KEY and SMTP_FROM_EMAIL are required when EMAIL_PROVIDER=brevo_api')
+    if EMAIL_PROVIDER != 'brevo_api' and (not SMTP_HOST or not SMTP_FROM_EMAIL):
+        raise RuntimeError('SMTP_HOST and SMTP_FROM_EMAIL are required for email verification in production')
 
 security = HTTPBearer(auto_error=False)
 
@@ -439,6 +445,31 @@ def build_auth_link(path: str, token: str) -> str:
     return f"{APP_PUBLIC_URL}{path}?token={token}"
 
 def send_email(to_email: str, subject: str, body: str) -> bool:
+    if EMAIL_PROVIDER == 'brevo_api':
+        if not BREVO_API_KEY or not SMTP_FROM_EMAIL:
+            logger.warning("Brevo API email is not configured; email to %s was not sent", to_email)
+            return False
+
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "accept": "application/json",
+                "api-key": BREVO_API_KEY,
+                "content-type": "application/json",
+            },
+            json={
+                "sender": {"name": EMAIL_FROM_NAME, "email": SMTP_FROM_EMAIL},
+                "to": [{"email": to_email}],
+                "subject": subject,
+                "textContent": body,
+            },
+            timeout=SMTP_TIMEOUT_SECONDS,
+        )
+        if response.status_code >= 400:
+            logger.error("Brevo API email failed: %s %s", response.status_code, response.text)
+            response.raise_for_status()
+        return True
+
     if not SMTP_HOST or not SMTP_FROM_EMAIL:
         logger.warning("SMTP is not configured; email to %s was not sent", to_email)
         return False
@@ -703,6 +734,8 @@ async def test_email(
         raise HTTPException(status_code=403, detail="Invalid admin key")
 
     smtp_summary = {
+        "provider": EMAIL_PROVIDER,
+        "brevo_api_key_configured": bool(BREVO_API_KEY),
         "host": SMTP_HOST,
         "port": SMTP_PORT,
         "username_configured": bool(SMTP_USERNAME),

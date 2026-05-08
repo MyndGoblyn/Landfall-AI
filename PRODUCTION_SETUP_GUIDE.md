@@ -139,9 +139,23 @@ SMTP_FROM_EMAIL=<verified sender email>
 SMTP_USE_TLS=true
 SMTP_USE_SSL=false
 SMTP_TIMEOUT_SECONDS=20
+EMAIL_PROVIDER=smtp
+EMAIL_FROM_NAME=LandFall AI
+BREVO_API_KEY=
 ```
 
 Make sure `SMTP_FROM_EMAIL` is a sender address verified by your provider. If your provider gives you an API key for SMTP, it usually goes in `SMTP_PASSWORD`.
+
+On Render free tier, use Brevo's HTTP API if SMTP delivery fails:
+
+```text
+EMAIL_PROVIDER=brevo_api
+BREVO_API_KEY=<Brevo API v3 key>
+SMTP_FROM_EMAIL=<verified Brevo sender email>
+EMAIL_FROM_NAME=LandFall AI
+```
+
+Keep the SMTP variables in place if you want, but when `EMAIL_PROVIDER=brevo_api`, the app sends verification and reset emails through Brevo's HTTPS API instead of SMTP.
 
 ## 5. Create Render Frontend Static Site
 
@@ -269,6 +283,9 @@ SMTP_FROM_EMAIL=<verified sender email>
 SMTP_USE_TLS=true
 SMTP_USE_SSL=false
 SMTP_TIMEOUT_SECONDS=20
+EMAIL_PROVIDER=brevo_api
+EMAIL_FROM_NAME=LandFall AI
+BREVO_API_KEY=<Brevo API v3 key>
 AUTH_COOKIE_NAME=landfall_session
 AUTH_COOKIE_SECURE=true
 AUTH_COOKIE_SAMESITE=lax
