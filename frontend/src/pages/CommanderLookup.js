@@ -11,27 +11,33 @@ import { API } from '../lib/api';
 export default function CommanderLookup() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [deepLoading, setDeepLoading] = useState(false);
   const [commanderData, setCommanderData] = useState(null);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
 
-  const handleSearch = async (e) => {
+  const handleSearch = async (e, deep = false) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    setLoading(true);
+    if (deep) {
+      setDeepLoading(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const response = await axios.post(
-        `${API}/commander/lookup`,
+        `${API}/commander/lookup${deep ? '/deep' : ''}`,
         { commander_name: searchQuery },
         { headers: getAuthHeaders() }
       );
       setCommanderData(response.data);
-      toast.success('Commander found!');
+      toast.success(deep ? 'Deep strategy complete!' : 'Commander found!');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Commander not found');
     } finally {
       setLoading(false);
+      setDeepLoading(false);
     }
   };
 
@@ -76,7 +82,7 @@ export default function CommanderLookup() {
             />
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || deepLoading}
               className="btn-primary px-8"
               data-testid="search-commander-btn"
             >
@@ -89,6 +95,25 @@ export default function CommanderLookup() {
                 <span className="flex items-center gap-2">
                   <Search className="w-5 h-5" />
                   Search
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              disabled={loading || deepLoading}
+              onClick={(e) => handleSearch(e, true)}
+              className="btn-secondary px-8"
+              data-testid="deep-search-commander-btn"
+            >
+              {deepLoading ? (
+                <span className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Deep Searching...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Deep Strategy
                 </span>
               )}
             </button>

@@ -219,6 +219,7 @@ export default function AnalysisResults() {
   const [deck, setDeck] = useState(null);
   const [commanderCard, setCommanderCard] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deepLoading, setDeepLoading] = useState(false);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
 
@@ -295,6 +296,25 @@ export default function AnalysisResults() {
     }
   };
 
+  const handleDeepAnalysis = async () => {
+    if (!deck?.id) return;
+
+    setDeepLoading(true);
+    try {
+      const response = await axios.post(
+        `${API}/decks/${deck.id}/analyze/deep`,
+        {},
+        { headers: getAuthHeaders() }
+      );
+      toast.success('Deep analysis complete!');
+      navigate(`/analysis/${response.data.id}`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Deep analysis failed');
+    } finally {
+      setDeepLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="analysis-shell min-h-screen flex items-center justify-center">
@@ -331,14 +351,34 @@ export default function AnalysisResults() {
             <ArrowLeft className="w-4 h-4 inline mr-2" />
             Back to Dashboard
           </button>
-          <button
-            data-testid="export-btn"
-            onClick={handleExport}
-            className="btn-primary py-2 px-4"
-          >
-            <Download className="w-4 h-4 inline mr-2" />
-            Export Markdown
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              data-testid="deep-analysis-btn"
+              onClick={handleDeepAnalysis}
+              disabled={deepLoading}
+              className="btn-secondary py-2 px-4"
+            >
+              {deepLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-2"></div>
+                  Deep Analysis...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 inline mr-2" />
+                  Deep Analysis
+                </>
+              )}
+            </button>
+            <button
+              data-testid="export-btn"
+              onClick={handleExport}
+              className="btn-primary py-2 px-4"
+            >
+              <Download className="w-4 h-4 inline mr-2" />
+              Export Markdown
+            </button>
+          </div>
         </div>
       </header>
 

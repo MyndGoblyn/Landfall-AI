@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 
 export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -24,8 +24,8 @@ export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
     }
   };
 
-  const handleAnalyze = () => {
-    onAnalyze(selectedCategories.length > 0 ? selectedCategories : null);
+  const handleAnalyze = (deep = false) => {
+    onAnalyze(selectedCategories.length > 0 ? selectedCategories : null, deep);
     onClose();
   };
 
@@ -86,7 +86,7 @@ export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
           </div>
         )}
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={onClose}
             className="btn-secondary flex-1"
@@ -95,10 +95,18 @@ export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
           </button>
           <button
             data-testid="confirm-analyze-btn"
-            onClick={handleAnalyze}
+            onClick={() => handleAnalyze(false)}
             className="btn-primary flex-1"
           >
             Analyze Deck
+          </button>
+          <button
+            data-testid="confirm-deep-analyze-btn"
+            onClick={() => handleAnalyze(true)}
+            className="btn-secondary flex-1"
+          >
+            <Sparkles className="w-4 h-4 inline mr-2" />
+            Deep Analysis
           </button>
         </div>
       </div>

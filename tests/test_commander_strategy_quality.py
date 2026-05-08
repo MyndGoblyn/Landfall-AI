@@ -1,0 +1,249 @@
+import sys
+from pathlib import Path
+import asyncio
+
+import pytest
+
+
+BACKEND_PATH = Path(__file__).resolve().parents[1] / "backend"
+if str(BACKEND_PATH) not in sys.path:
+    sys.path.insert(0, str(BACKEND_PATH))
+
+from services.enhanced_suggestion_engine import EnhancedSuggestionEngine
+
+
+def make_engine():
+    return EnhancedSuggestionEngine(scryfall_service=None)
+
+
+class FakeScryfall:
+    def __init__(self):
+        self.queries = []
+
+    def extract_card_data(self, scryfall_card):
+        return {
+            "name": scryfall_card.get("name"),
+            "type_line": scryfall_card.get("type_line"),
+            "oracle_text": scryfall_card.get("oracle_text", ""),
+            "cmc": scryfall_card.get("cmc", 0),
+            "colors": scryfall_card.get("colors", []),
+            "color_identity": scryfall_card.get("color_identity", []),
+            "set_code": scryfall_card.get("set"),
+            "collector_number": scryfall_card.get("collector_number"),
+            "prices": scryfall_card.get("prices", {}),
+            "keywords": scryfall_card.get("keywords", []),
+            "legalities": scryfall_card.get("legalities", {}),
+        }
+
+    async def search_cards_by_criteria(self, query, limit=20):
+        self.queries.append((query, limit))
+        return []
+
+
+def test_playstyle_tips_do_not_assume_specific_unrelated_counter_or_token_plans():
+    engine = make_engine()
+    stats = {
+        "total_lands": 36,
+        "role_counts": {
+            "draw": 8,
+            "ramp": 10,
+            "interaction": 5,
+        },
+    }
+    commander_card = {
+        "name": "Test Counter Commander",
+        "oracle_text": "Whenever one or more +1/+1 counters are put on a creature you control, proliferate.",
+        "type_line": "Legendary Creature",
+    }
+
+    tips = engine._generate_playstyle_tips(
+        stats,
+        commander_synergies=["counters"],
+        detected_themes=["counters", "tokens"],
+        commander="Test Counter Commander",
+        color_identity=["G", "W"],
+        commander_card=commander_card,
+    )
+    joined = " ".join(tips).lower()
+
+    assert "blight" not in joined
+    assert "elf" not in joined
+    assert "+1/+1 counters" in joined
+
+
+def test_zur_strategy_tips_are_tutor_limit_specific_and_color_legal():
+    engine = make_engine()
+    zur_card = {
+        "name": "Zur the Enchanter",
+        "oracle_text": (
+            "Flying. Whenever Zur the Enchanter attacks, you may search your library "
+            "for an enchantment card with mana value 3 or less, put it onto the battlefield, then shuffle."
+        ),
+        "type_line": "Legendary Creature - Human Wizard",
+        "color_identity": ["W", "U", "B"],
+    }
+    synergies = engine._detect_commander_synergies(zur_card)
+    constraints = engine._get_commander_constraints(zur_card)
+
+    tips = engine._generate_commander_strategy_tips(zur_card, synergies, constraints)
+    joined = " ".join(tips)
+
+    assert "mana value 3 or less" in joined
+    assert "Enchantress's Presence" not in joined
+    assert "Eidolon of Blossoms" not in joined
+    assert any(name in joined for name in ["Mystic Remora", "Rhystic Study", "Necropotence"])
+
+
+def test_role_examples_respect_color_identity():
+    engine = make_engine()
+
+    examples = engine._role_examples("draw", ["G"], [])
+
+    assert "Rhystic Study" not in examples
+    assert "Mystic Remora" not in examples
+    assert "Phyrexian Arena" not in examples
+    assert "Toski, Bearer of Secrets" in examples
+
+
+def test_random_commander_query_translates_freeform_terms_to_scryfall_syntax():
+    engine = make_engine()
+
+    query = engine._build_random_commander_query(
+        colors=["B", "G"],
+        max_cmc=4,
+        search_text="artifact graveyard lifegain counters zombies",
+    )
+
+    assert query.startswith("is:commander f:commander")
+    assert "id:bg" in query
+    assert "cmc<=4" in query
+    assert "otag:lifegain" in query
+    assert "o:graveyard" in query
+    assert 'o:"+1/+1 counter"' in query
+    assert "t:zombie" in query
+
+
+def test_random_commander_query_supports_keyword_abilities_and_sanitizes_text():
+    engine = make_engine()
+
+    query = engine._build_random_commander_query(
+        search_text='double strike weird<>term',
+    )
+
+    assert 'kw:"double strike"' in query
+    assert "<" not in query
+    assert ">" not in query
+
+
+def test_commander_analysis_uses_larger_search_budget_only_for_deep_mode():
+    fake_scryfall = FakeScryfall()
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    commander_card = {
+        "name": "Many Themes Commander",
+        "oracle_text": (
+            "Whenever you cast an instant or sorcery spell, create a creature token. "
+            "Whenever you gain life, put a +1/+1 counter on each creature you control. "
+            "You may play cards from exile. Landfall. Sacrifice an artifact: return target card from your graveyard."
+        ),
+        "type_line": "Legendary Artifact Enchantment Creature",
+        "color_identity": ["W", "U", "B", "R", "G"],
+        "legalities": {"commander": "legal"},
+    }
+
+    asyncio.run(engine.analyze_commander(commander_card, deep=False))
+    fast_query_count = len(fake_scryfall.queries)
+    fake_scryfall.queries.clear()
+
+    asyncio.run(engine.analyze_commander(commander_card, deep=True))
+    deep_query_count = len(fake_scryfall.queries)
+
+    assert fast_query_count == 3
+    assert deep_query_count > fast_query_count
+    assert deep_query_count <= 8
+
+
+@pytest.mark.parametrize(
+    ("commander_card", "expected_synergies", "expected_tip_terms"),
+    [
+        (
+            {
+                "name": "Artifact Recursion Commander",
+                "oracle_text": "Whenever an artifact card is put into your graveyard from anywhere, you may return another target artifact card from your graveyard to your hand.",
+                "type_line": "Legendary Artifact Creature",
+                "color_identity": ["U", "B"],
+            },
+            {"artifact", "graveyard"},
+            ["artifacts", "graveyard"],
+        ),
+        (
+            {
+                "name": "Creature ETB Commander",
+                "oracle_text": "Whenever another creature enters the battlefield under your control, draw a card.",
+                "type_line": "Legendary Creature",
+                "color_identity": ["G", "U"],
+            },
+            {"creature"},
+            ["etb", "creatures"],
+        ),
+        (
+            {
+                "name": "Blink Commander",
+                "oracle_text": "Exile another target creature you control, then return it to the battlefield under its owner's control.",
+                "type_line": "Legendary Creature",
+                "color_identity": ["W", "U"],
+            },
+            {"blink"},
+            ["blink", "etb"],
+        ),
+        (
+            {
+                "name": "Exile Value Commander",
+                "oracle_text": "Whenever you play a card from exile, create a Treasure token.",
+                "type_line": "Legendary Creature",
+                "color_identity": ["B", "R"],
+            },
+            {"exile", "artifact_tokens"},
+            ["exile", "treasure"],
+        ),
+        (
+            {
+                "name": "Lifegain Commander",
+                "oracle_text": "Whenever you gain life, put a +1/+1 counter on each creature you control.",
+                "type_line": "Legendary Creature",
+                "color_identity": ["W", "B"],
+            },
+            {"lifegain", "counters", "creature"},
+            ["lifegain", "counters"],
+        ),
+        (
+            {
+                "name": "Landfall Commander",
+                "oracle_text": "Landfall - Whenever a land enters the battlefield under your control, draw a card.",
+                "type_line": "Legendary Creature",
+                "color_identity": ["G", "U"],
+            },
+            {"landfall"},
+            ["landfall", "land drops"],
+        ),
+    ],
+)
+def test_strategy_tips_cover_representative_commander_archetypes(
+    commander_card,
+    expected_synergies,
+    expected_tip_terms,
+):
+    engine = make_engine()
+
+    synergies = set(engine._detect_commander_synergies(commander_card))
+    tips = engine._generate_commander_strategy_tips(
+        commander_card,
+        list(synergies),
+        engine._get_commander_constraints(commander_card),
+    )
+    joined = " ".join(tips).lower()
+
+    assert expected_synergies.issubset(synergies)
+    for term in expected_tip_terms:
+        assert term in joined
+    assert "rhystic study" not in joined or "U" in commander_card["color_identity"]
+    assert "phyrexian arena" not in joined or "B" in commander_card["color_identity"]

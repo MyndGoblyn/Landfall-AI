@@ -40,7 +40,7 @@ class EnhancedSuggestionEngine:
             'voltron': ['equipment', 'aura', 'attach']
         }
     
-    async def analyze_deck(self, deck: Dict, categories: Optional[List[str]] = None) -> Dict:
+    async def analyze_deck(self, deck: Dict, categories: Optional[List[str]] = None, deep: bool = False) -> Dict:
         """Main analysis entry point with commander synergy and category filtering"""
         cards = deck.get('cards', [])
         commander = deck.get('commander')
@@ -67,12 +67,27 @@ class EnhancedSuggestionEngine:
         
         # Generate suggestions with commander synergy and category filter
         suggestions_add = await self._generate_additions(
-            gaps, commander, color_identity, cards, commander_synergies, commander_data, categories, commander_constraints
+            gaps,
+            commander,
+            color_identity,
+            cards,
+            commander_synergies,
+            commander_data,
+            categories,
+            commander_constraints,
+            search_budget=10 if deep else 5,
         )
         suggestions_cut = await self._generate_cuts(cards, gaps, stats, commander_synergies, detected_themes)
         
         # Generate playstyle tips
-        playstyle_tips = self._generate_playstyle_tips(stats, commander_synergies, detected_themes, commander, color_identity)
+        playstyle_tips = self._generate_playstyle_tips(
+            stats,
+            commander_synergies,
+            detected_themes,
+            commander,
+            color_identity,
+            commander_data,
+        )
         
         # Generate combo suggestions
         combo_suggestions = self._generate_combo_suggestions(commander, commander_synergies, cards)
@@ -102,7 +117,20 @@ class EnhancedSuggestionEngine:
             add_once('enchantment')
         if 'artifact' in oracle_text or 'equipment' in oracle_text or 'artifact' in type_line:
             add_once('artifact')
-        if any(phrase in oracle_text for phrase in ['creatures you control', 'creature spell', 'nontoken creature', 'creature card']):
+        creature_theme_phrases = [
+            'creatures you control',
+            'creature spell',
+            'nontoken creature',
+            'creature card',
+            'whenever another creature',
+            'whenever a creature enters',
+            'whenever one or more creatures',
+            'creature enters the battlefield',
+            'each creature you control',
+            'creatures get',
+            'creatures have',
+        ]
+        if any(phrase in oracle_text for phrase in creature_theme_phrases):
             add_once('creature')
         spell_theme_phrases = [
             'instant or sorcery',
@@ -466,12 +494,113 @@ class EnhancedSuggestionEngine:
             theme for theme, count in theme_counts.items()
             if count >= theme_thresholds.get(theme, 5)
         ]
+
+    def _legal_example_names(
+        self,
+        candidates: List[tuple],
+        color_identity: Optional[List[str]],
+        limit: int = 3
+    ) -> str:
+        """Return example card names that fit the commander's color identity."""
+        commander_colors = set(color_identity or [])
+        legal_names = [
+            name for name, card_colors in candidates
+            if set(card_colors).issubset(commander_colors)
+        ]
+        return ", ".join(legal_names[:limit])
+
+    def _role_examples(
+        self,
+        role: str,
+        color_identity: Optional[List[str]],
+        commander_synergies: Optional[List[str]] = None
+    ) -> str:
+        """Choose color-legal examples so tips do not recommend off-identity cards."""
+        commander_synergies = commander_synergies or []
+
+        if role == 'draw' and 'enchantment' in commander_synergies:
+            examples = self._legal_example_names([
+                ("Mystic Remora", ["U"]),
+                ("Rhystic Study", ["U"]),
+                ("Necropotence", ["B"]),
+                ("Enchantress's Presence", ["G"]),
+                ("Mesa Enchantress", ["W"]),
+                ("Eidolon of Blossoms", ["G"]),
+                ("Sythis, Harvest's Hand", ["G", "W"]),
+            ], color_identity)
+            if examples:
+                return examples
+
+        if role == 'draw' and 'artifact' in commander_synergies:
+            examples = self._legal_example_names([
+                ("The One Ring", []),
+                ("Idol of Oblivion", []),
+                ("Esper Sentinel", ["W"]),
+                ("Thought Monitor", ["U"]),
+                ("Mystic Forge", []),
+            ], color_identity)
+            if examples:
+                return examples
+
+        examples_by_role = {
+            'draw': [
+                ("Esper Sentinel", ["W"]),
+                ("Mystic Remora", ["U"]),
+                ("Rhystic Study", ["U"]),
+                ("Phyrexian Arena", ["B"]),
+                ("Toski, Bearer of Secrets", ["G"]),
+                ("Skullclamp", []),
+                ("The One Ring", []),
+            ],
+            'ramp': [
+                ("Sol Ring", []),
+                ("Arcane Signet", []),
+                ("Fellwar Stone", []),
+                ("Nature's Lore", ["G"]),
+                ("Three Visits", ["G"]),
+                ("Talisman cycle", []),
+            ],
+            'interaction': [
+                ("Swords to Plowshares", ["W"]),
+                ("Counterspell", ["U"]),
+                ("Arcane Denial", ["U"]),
+                ("Swan Song", ["U"]),
+                ("Heroic Intervention", ["G"]),
+                ("Veil of Summer", ["G"]),
+                ("Deadly Rollick", ["B"]),
+                ("Chaos Warp", ["R"]),
+                ("Lightning Greaves", []),
+                ("Swiftfoot Boots", []),
+            ],
+            'enchantment': [
+                ("Mystic Remora", ["U"]),
+                ("Rhystic Study", ["U"]),
+                ("Necropotence", ["B"]),
+                ("Sterling Grove", ["G", "W"]),
+                ("Enchantress's Presence", ["G"]),
+                ("Grasp of Fate", ["W"]),
+                ("Diplomatic Immunity", ["U"]),
+            ],
+            'voltron': [
+                ("Lightning Greaves", []),
+                ("Swiftfoot Boots", []),
+                ("Whispersilk Cloak", []),
+                ("All That Glitters", ["W"]),
+                ("Rancor", ["G"]),
+                ("Blackblade Reforged", []),
+            ],
+        }
+        return self._legal_example_names(examples_by_role.get(role, []), color_identity)
     
     def _generate_playstyle_tips(self, stats: Dict, commander_synergies: List[str], 
                                   detected_themes: List[str], commander: Optional[str],
-                                  color_identity: Optional[List[str]] = None) -> List[str]:
+                                  color_identity: Optional[List[str]] = None,
+                                  commander_card: Optional[Dict] = None) -> List[str]:
         """Generate specific playstyle tips based on deck analysis"""
         tips = []
+        commander_name = commander or "your commander"
+        commander_text = commander_card.get('oracle_text', '').lower() if commander_card else ''
+        commander_type = commander_card.get('type_line', '').lower() if commander_card else ''
         
         # Mana base tips
         land_count = stats.get('total_lands', 0)
@@ -483,31 +612,37 @@ class EnhancedSuggestionEngine:
         # Draw engine tips
         draw_count = stats.get('role_counts', {}).get('draw', 0)
         if draw_count < 8:
-            if 'enchantment' in commander_synergies:
-                tips.append(f"Add more card draw! Try: Argothian Enchantress, Enchantress's Presence, or Eidolon of Blossoms for enchantment synergy.")
-            elif 'artifact' in commander_synergies:
-                tips.append(f"Boost card draw with artifact synergies: The One Ring, Esper Sentinel, or Mystic Remora.")
+            draw_examples = self._role_examples('draw', color_identity, commander_synergies)
+            if draw_examples:
+                tips.append(f"Your deck needs {8 - draw_count} more draw sources. Prioritize engines that match {commander_name}'s plan, such as {draw_examples}.")
             else:
-                tips.append(f"Your deck needs {8 - draw_count} more draw sources. Consider: Rhystic Study, Mystic Remora, or Phyrexian Arena.")
+                tips.append(f"Your deck needs {8 - draw_count} more draw sources. Prefer repeatable engines tied to your main theme over one-shot cantrips.")
         
         # Ramp tips
         ramp_count = stats.get('role_counts', {}).get('ramp', 0)
         if ramp_count < 10:
-            if 'artifact' in commander_synergies:
-                tips.append(f"Increase ramp with mana rocks: Sol Ring, Arcane Signet, Fellwar Stone, and Talisman of Progress.")
+            ramp_examples = self._role_examples('ramp', color_identity, commander_synergies)
+            if ramp_examples:
+                tips.append(f"Add {10 - ramp_count} more ramp pieces. Start with efficient fixing that fits the color identity, such as {ramp_examples}.")
             else:
-                tips.append(f"Add {10 - ramp_count} more ramp pieces. Prioritize 2-CMC rocks like Arcane Signet and Talisman cycle.")
+                tips.append(f"Add {10 - ramp_count} more ramp pieces. Prioritize two-mana acceleration so the commander and support engines come online earlier.")
         
         # Theme-specific tips
         if 'counters' in detected_themes or 'counters' in commander_synergies:
-            tips.append(
-                f"Counter Strategy: Make sure the deck places counters before it proliferates. For {commander}, -1/-1 counters from blight and repeatable proliferate payoffs are stronger than generic combat tricks."
-            )
+            if 'proliferate' in commander_text:
+                counter_kind = "-1/-1 counters" if "-1/-1 counter" in commander_text else "+1/+1 counters" if "+1/+1 counter" in commander_text else "counters"
+                tips.append(f"Counter Strategy: Make sure the deck reliably places {counter_kind} before leaning on proliferate. {commander_name} gets stronger when every proliferate trigger has several meaningful targets.")
+            else:
+                tips.append(f"Counter Strategy: Prioritize repeatable counter placement and payoffs over single combat tricks so {commander_name}'s board keeps scaling after the first setup turn.")
 
-        if 'tokens' in detected_themes:
-            tips.append(
-                f"Token Strategy: Keep token makers that produce real bodies. They trigger {commander} if they are Elves, help pay tap costs, and give proliferate engines time to take over the board."
-            )
+        if 'tokens' in detected_themes or 'tokens' in commander_synergies:
+            if 'elf' in commander_text or 'elf' in commander_type:
+                token_focus = "Elf token makers that also tap for mana or scale with creature count"
+            elif 'creature token' in commander_text or 'populate' in commander_text:
+                token_focus = "creature token makers and token payoffs"
+            else:
+                token_focus = "token makers that leave useful bodies or resources behind"
+            tips.append(f"Token Strategy: Favor {token_focus}. That gives {commander_name} more material to convert into pressure, sacrifice value, or board-wide payoffs.")
 
         if 'aristocrats' in detected_themes:
             tips.append(
@@ -515,10 +650,15 @@ class EnhancedSuggestionEngine:
             )
 
         if 'enchantress' in detected_themes:
-            tips.append(f"Enchantress Strategy: Maximize value with Sterling Grove (protection), Serra's Sanctum (ramp), and Aura Shards (removal).")
+            enchantment_examples = self._role_examples('enchantment', color_identity, commander_synergies)
+            if enchantment_examples:
+                tips.append(f"Enchantress Strategy: Keep the enchantment count high enough that each payoff chains into the next. Strong role players for this color identity include {enchantment_examples}.")
+            else:
+                tips.append("Enchantress Strategy: Keep the enchantment count high enough that each payoff chains into the next, and protect the key engine before committing too many pieces.")
         
         if 'voltron' in detected_themes:
-            tips.append(f"Voltron Strategy: Protect {commander} with Swiftfoot Boots, Lightning Greaves. Add Sword of Feast and Famine for value.")
+            voltron_examples = self._role_examples('voltron', color_identity, commander_synergies)
+            tips.append(f"Voltron Strategy: Protect {commander_name} before stacking damage. {voltron_examples or 'Cheap protection, evasion, and haste effects'} are better early additions than expensive power-only Equipment.")
         
         if 'graveyard' in detected_themes:
             tips.append(f"Graveyard Strategy: Your recursion package can help rebuild after wipes, but it also means graveyard hate is a real pressure point. Keep a few ways to recover key creatures or shuffle important cards back.")
@@ -526,12 +666,11 @@ class EnhancedSuggestionEngine:
         # Interaction tips
         interaction_count = stats.get('role_counts', {}).get('interaction', 0)
         if interaction_count < 5:
-            if color_identity and 'U' in color_identity:
-                tips.append("Add stack interaction like Counterspell, Arcane Denial, or Swan Song so you can protect your engine from wipes and combo turns.")
-            elif color_identity and 'G' in color_identity:
-                tips.append("Add cheap protection or disruption that fits your colors, such as Heroic Intervention, Veil of Summer, or Tamiyo's Safekeeping, so your board survives removal-heavy tables.")
+            interaction_examples = self._role_examples('interaction', color_identity, commander_synergies)
+            if interaction_examples:
+                tips.append(f"Add low-cost protection or disruption such as {interaction_examples} so {commander_name}'s engine survives wipes, removal, and combo turns.")
             else:
-                tips.append("Add a few low-cost protection or disruption pieces that fit your colors so your main engine can survive removal-heavy tables.")
+                tips.append(f"Add a few low-cost protection or disruption pieces that fit your colors so {commander_name}'s main engine can survive removal-heavy tables.")
         
         return tips
     
@@ -573,7 +712,8 @@ class EnhancedSuggestionEngine:
                                    color_identity: List[str], current_cards: List[Dict],
                                    commander_synergies: List[str], commander_data: Optional[Dict],
                                    categories: Optional[List[str]] = None,
-                                   commander_constraints: Optional[Dict] = None) -> List[Dict]:
+                                   commander_constraints: Optional[Dict] = None,
+                                   search_budget: int = 5) -> List[Dict]:
         """Generate enhanced card addition suggestions with commander synergy and categories"""
         suggestions = []
         current_card_names = {card['name'].lower() for card in current_cards}
@@ -645,7 +785,7 @@ class EnhancedSuggestionEngine:
                 ))
             
         # Execute searches
-        for role, query in queries:
+        for role, query in queries[:search_budget]:
             try:
                 results = await self.scryfall.search_cards_by_criteria(query, limit=20)
                 requested_synergy = role.split(':', 1)[1] if role.startswith('synergy:') else None
@@ -1648,58 +1788,137 @@ class EnhancedSuggestionEngine:
         except (ValueError, TypeError):
             pass
         return None
-    
-    async def analyze_commander(self, commander_card: Dict) -> Dict:
+
+    def _generate_commander_strategy_tips(
+        self,
+        commander_card: Dict,
+        synergies: List[str],
+        commander_constraints: Optional[Dict] = None
+    ) -> List[str]:
+        """Generate commander lookup tips from the actual oracle text and color identity."""
+        commander_constraints = commander_constraints or {}
+        commander_name = commander_card.get('name', 'This commander')
+        oracle_text = commander_card.get('oracle_text', '').lower()
+        type_line = commander_card.get('type_line', '').lower()
+        color_identity = commander_card.get('color_identity', [])
+        tips = []
+
+        if 'enchantment' in synergies:
+            if commander_constraints.get('max_enchantment_cmc'):
+                max_cmc = commander_constraints['max_enchantment_cmc']
+                examples = self._role_examples('enchantment', color_identity, synergies)
+                tips.append(f"{commander_name} wants a tight enchantment toolbox. Prioritize enchantments with mana value {max_cmc} or less so attack triggers can find protection, card draw, removal, or a win condition on demand.")
+                if examples:
+                    tips.append(f"Good enchantment targets in this color identity include {examples}; choose the mix based on whether the deck needs protection, cards, or table control.")
+            else:
+                examples = self._role_examples('enchantment', color_identity, synergies)
+                tips.append(f"Raise the enchantment density only when those enchantments advance the commander's trigger pattern. {examples or 'Repeatable draw, protection, and removal enchantments'} are higher quality than a pile of unrelated Auras.")
+
+        if 'artifact' in synergies:
+            if 'graveyard' in oracle_text:
+                tips.append(f"{commander_name} rewards artifacts that can be sacrificed, milled, or traded off and then reused. Favor artifacts with enters/dies value over mana-only rocks once the baseline ramp count is healthy.")
+            elif 'equipment' in oracle_text or 'attach' in oracle_text or 'equipped' in oracle_text:
+                tips.append(f"{commander_name} cares about Equipment as part of the main engine. Prioritize cheap equip costs, haste, protection, and combat triggers before expensive power-only Equipment.")
+            else:
+                tips.append(f"Keep the artifact package purposeful: ramp early, then convert artifact count into cards, sacrifice value, or a clear finisher instead of filling slots with generic rocks.")
+
+        if 'creature' in synergies:
+            if 'creature spell' in oracle_text:
+                tips.append(f"{commander_name} rewards casting creatures, so use a curve with enough low and mid-cost creatures to double-spell. ETB creatures are especially useful because they still matter if the commander is removed.")
+            elif 'enters the battlefield' in oracle_text or 'enters' in oracle_text:
+                tips.append(f"{commander_name} wants creatures that create value when they enter or when other creatures enter. Prioritize ETB creatures, token makers, and ways to reuse those triggers over vanilla bodies.")
+            elif 'creatures you control' in oracle_text or 'creatures get' in oracle_text:
+                tips.append(f"{commander_name} rewards having a real board. Mix cheap creatures, token production, and protection so the deck can rebuild after wipes instead of relying on one oversized threat.")
+            else:
+                tips.append(f"Keep the creature package synergistic: bodies should draw cards, ramp, recur, remove threats, or multiply the commander's main trigger rather than only filling the curve.")
+
+        if 'graveyard' in synergies:
+            if 'creature card' in oracle_text and 'graveyard' in oracle_text:
+                tips.append(f"{commander_name} wants creatures that are useful both on board and in the graveyard. Self-mill, discard outlets, and recursion are strongest when the creatures have ETB, death, or cast value.")
+            elif 'artifact card' in oracle_text and 'graveyard' in oracle_text:
+                tips.append(f"Stock the graveyard with artifacts deliberately. Self-mill and sacrifice outlets become card advantage when the artifact package includes reusable value pieces.")
+            else:
+                tips.append(f"Treat the graveyard as a second hand, but include a few ways to recover from graveyard hate so the deck is not forced to win through one zone.")
+
+        if 'tokens' in synergies:
+            if 'creature token' in oracle_text or 'populate' in oracle_text:
+                tips.append(f"{commander_name} benefits most from token makers that create bodies with relevant types, evasion, or scaling payoffs. Token doublers are best after the deck already has enough repeatable token production.")
+            else:
+                tips.append(f"Use token makers that leave behind resources the deck can spend, sacrifice, copy, or pump. Avoid token cards that make bodies without supporting the commander's payoff.")
+
+        if 'artifact_tokens' in synergies:
+            tips.append(f"Treasure, Clue, Food, and Blood tokens should do more than sit around. Add payoffs for sacrificing artifacts or counting artifacts so temporary tokens become lasting advantage.")
+
+        if 'counters' in synergies:
+            if 'proliferate' in oracle_text:
+                counter_kind = "-1/-1 counters" if "-1/-1 counter" in oracle_text else "+1/+1 counters" if "+1/+1 counter" in oracle_text else "counters"
+                tips.append(f"Put {counter_kind} on multiple permanents before proliferating. {commander_name} scales much better when each proliferate trigger advances several threats or weakens several opposing creatures.")
+            else:
+                tips.append(f"Use repeatable counter placement and cards that reward counters already being present. One-shot pump spells look flashy, but engines are what make {commander_name} reliable.")
+
+        if 'instant_sorcery' in synergies:
+            tips.append(f"Keep the spell curve low. Cheap cantrips, interaction, and flashback-style effects let {commander_name} trigger multiple times while still holding up answers.")
+
+        if 'lifegain' in synergies:
+            tips.append(f"Separate lifegain enablers from lifegain payoffs. {commander_name} needs repeatable life gain to turn cards like draw engines, counters, or drain effects into dependable pressure.")
+
+        if 'sacrifice' in synergies:
+            tips.append(f"Balance three pieces: fodder, free or cheap sacrifice outlets, and payoffs. The deck improves most when sacrificed permanents replace themselves or trigger recursion.")
+
+        if 'landfall' in synergies:
+            tips.append(f"Extra land drops and fetch lands are the fuel. Landfall payoffs should either draw cards, make mana, or create a closing board state so each land matters beyond the first trigger.")
+
+        if 'blink' in synergies:
+            if 'another target' in oracle_text or 'another creature' in oracle_text:
+                tips.append(f"{commander_name} needs profitable blink targets. Load the deck with ETB creatures and permanents, then use the commander to reuse removal, ramp, and card draw while protecting key pieces from targeted removal.")
+            else:
+                tips.append(f"Blink effects are strongest when they reuse ETB value or reset threatened permanents. Avoid blink cards without enough targets that immediately replace mana or cards.")
+
+        if 'exile' in synergies:
+            if 'play a card from exile' in oracle_text or 'from exile' in oracle_text:
+                tips.append(f"{commander_name} wants a steady flow of cards to play from exile. Impulse draw and cast-from-exile effects are better than one-shot exile removal because they keep the commander trigger chain active.")
+            else:
+                tips.append(f"Exile should be treated as card access or a payoff zone here, not just removal. Prioritize cards that let you play or cast the exiled cards.")
+
+        if 'voltron' in synergies and not any('Equipment' in tip or 'Auras' in tip for tip in tips):
+            tips.append(f"Protect {commander_name} before increasing damage. Haste, evasion, and hexproof effects make commander-damage plans more reliable than simply adding larger buffs.")
+
+        if not tips:
+            tips.append(f"Start by identifying the repeated action in {commander_name}'s text, then add cards that perform or reward that action at low mana values.")
+
+        ramp_examples = self._role_examples('ramp', color_identity, synergies)
+        interaction_examples = self._role_examples('interaction', color_identity, synergies)
+        tips.append(f"Use 36-38 lands and 10-12 ramp sources. {ramp_examples or 'Efficient two-mana ramp'} keeps the commander online without crowding out synergy slots.")
+        tips.append(f"Reserve 7-10 slots for answers and protection. {interaction_examples or 'Low-cost interaction in your colors'} lets the deck keep its engine after removal and board wipes.")
+
+        return tips
+
+    async def analyze_commander(self, commander_card: Dict, deep: bool = False) -> Dict:
         """Analyze a commander and provide strategy tips"""
         extracted = self.scryfall.extract_card_data(commander_card)
-        
+
         # Detect synergies
         synergies = self._detect_commander_synergies(commander_card)
-        
-        # Generate strategy tips
-        tips = []
-        oracle_text = commander_card.get('oracle_text', '').lower()
-        
-        if 'enchantment' in synergies:
-            tips.append(f"Build around enchantments with cards like Argothian Enchantress, Enchantress's Presence, and Sterling Grove for card advantage and protection.")
-        if 'artifact' in synergies:
-            tips.append(f"Focus on artifact synergies with Urza, Lord High Artificer, Etherium Sculptor, and Mystic Forge for consistent value.")
-        if 'graveyard' in synergies:
-            tips.append(f"Leverage graveyard strategies with Living Death, Reanimate, and Animate Dead to recur threats.")
-        if 'tokens' in synergies:
-            tips.append(f"Go wide with token strategies using Doubling Season, Parallel Lives, and Anointed Procession.")
-        if 'artifact_tokens' in synergies:
-            tips.append(f"Use Treasure, Clue, Food, or Blood token engines with sacrifice payoffs and artifact-count rewards so temporary resources become lasting value.")
-        if 'counters' in synergies:
-            tips.append(f"Build a +1/+1 counter theme with Ozolith, Hardened Scales, and Doubling Season for exponential growth.")
-        if 'instant_sorcery' in synergies:
-            tips.append(f"Lean into spellslinger payoffs with efficient cantrips, cheap interaction, and magecraft-style rewards.")
-        if 'lifegain' in synergies:
-            tips.append(f"Pair lifegain triggers with repeatable payoffs like Well of Lost Dreams, Heliod, Sun-Crowned, and life-drain effects.")
-        if 'sacrifice' in synergies:
-            tips.append(f"Use recursive creatures, sacrifice outlets, and death-trigger payoffs so every creature can become value.")
-        if 'voltron' in synergies:
-            tips.append(f"Protect and enhance your commander with haste, hexproof, evasion, and efficient Auras or Equipment.")
-        
-        # Generic tips
-        tips.append(f"Include 36-38 lands and 10-12 ramp sources for consistent mana.")
-        tips.append(f"Run 8-10 card draw engines to maintain hand advantage.")
-        tips.append(f"Pack 7-10 removal spells to answer threats efficiently.")
-        
-        # Get suggested cards with proper validation
         color_identity = extracted['color_identity']
         commander_constraints = self._get_commander_constraints(commander_card)
+        tips = self._generate_commander_strategy_tips(commander_card, synergies, commander_constraints)
+
+        # Get suggested cards with proper validation
         suggested_cards = []
         suggested_names = set()
         
-        for synergy in synergies:
+        synergy_search_budget = 8 if deep else 3
+        max_suggested_cards = 12 if deep else 8
+        per_synergy_limit = 4 if deep else 3
+
+        for synergy in synergies[:synergy_search_budget]:
             query = self._build_query_for_synergy(synergy, color_identity, commander_constraints)
             
             if query:
                 results = await self.scryfall.search_cards_by_criteria(query, limit=25)
                 cards_added = 0
                 for card in results:
-                    if cards_added >= 4 or len(suggested_cards) >= 12:
+                    if cards_added >= per_synergy_limit or len(suggested_cards) >= max_suggested_cards:
                         break
                     
                     card_name = card.get('name', '').lower()
@@ -1763,7 +1982,7 @@ class EnhancedSuggestionEngine:
                     suggested_names.add(extracted_name)
                     cards_added += 1
             
-            if len(suggested_cards) >= 12:
+            if len(suggested_cards) >= max_suggested_cards:
                 break
         
         # Generate combos
@@ -1781,28 +2000,150 @@ class EnhancedSuggestionEngine:
             'synergies': synergies,
             'strategy_tips': tips,
             'suggested_cards': suggested_cards,
-            'combos': combos
+            'combos': combos,
+            'analysis_depth': 'deep' if deep else 'fast'
         }
     
-    async def get_random_commander(self, colors: Optional[List[str]] = None,
-                                   keywords: Optional[List[str]] = None,
-                                   max_cmc: Optional[int] = None) -> Dict:
-        """Get a random commander with filters"""
-        # Build search query
+    def _quote_scryfall_phrase(self, value: str) -> str:
+        """Quote a user phrase for Scryfall syntax after stripping unsafe syntax."""
+        cleaned = re.sub(r'[^A-Za-z0-9 +/#\'-]', ' ', value).strip()
+        cleaned = re.sub(r'\s+', ' ', cleaned)
+        return f'"{cleaned}"' if ' ' in cleaned else cleaned
+
+    def _parse_search_terms(self, search_text: Optional[str], keywords: Optional[List[str]] = None) -> List[str]:
+        """Parse freeform search text and legacy keyword filters into normalized terms."""
+        raw_terms = []
+        if search_text:
+            quoted_terms = re.findall(r'"([^"]+)"', search_text)
+            unquoted_text = re.sub(r'"[^"]+"', ' ', search_text)
+            raw_terms.extend(quoted_terms)
+            raw_terms.extend(re.split(r'[,;/]+|\s+', unquoted_text))
+        raw_terms.extend(keywords or [])
+
+        terms = []
+        for term in raw_terms:
+            normalized = re.sub(r'[^A-Za-z0-9 +/#\'-]', ' ', term).strip().lower()
+            normalized = re.sub(r'\s+', ' ', normalized)
+            if normalized and normalized not in terms:
+                terms.append(normalized)
+
+        merged_terms = []
+        index = 0
+        mergeable_pairs = {
+            ('double', 'strike'): 'double strike',
+            ('first', 'strike'): 'first strike',
+            ('life', 'gain'): 'life gain',
+            ('card', 'draw'): 'card draw',
+        }
+        while index < len(terms):
+            pair = tuple(terms[index:index + 2])
+            if pair in mergeable_pairs:
+                merged_terms.append(mergeable_pairs[pair])
+                index += 2
+                continue
+            merged_terms.append(terms[index])
+            index += 1
+
+        return merged_terms[:6]
+
+    def _build_random_commander_query(
+        self,
+        colors: Optional[List[str]] = None,
+        keywords: Optional[List[str]] = None,
+        max_cmc: Optional[int] = None,
+        search_text: Optional[str] = None,
+    ) -> str:
+        """Build a budget-friendly Scryfall query for random commander discovery."""
         query_parts = ["is:commander", "f:commander"]
-        
+
         if colors:
             color_str = "".join(colors).lower()
             query_parts.append(f"id:{color_str}")
-        
-        if keywords:
-            keyword_query = " OR ".join([f"o:{kw.lower()}" for kw in keywords])
-            query_parts.append(f"({keyword_query})")
-        
+
         if max_cmc:
             query_parts.append(f"cmc<={max_cmc}")
-        
-        query = " ".join(query_parts)
+
+        keyword_abilities = {
+            'flying', 'trample', 'haste', 'vigilance', 'lifelink',
+            'deathtouch', 'hexproof', 'indestructible', 'first strike',
+            'double strike', 'menace', 'reach', 'ward', 'proliferate',
+            'cascade', 'connive', 'convoke', 'delve', 'escape', 'flashback',
+            'landfall', 'magecraft', 'mutate', 'partner', 'prowess',
+        }
+        term_queries = {
+            'artifact': '(t:artifact OR o:artifact OR otag:artifact)',
+            'artifacts': '(t:artifact OR o:artifact OR otag:artifact)',
+            'equipment': '(t:equipment OR o:equip OR o:equipped OR o:attach)',
+            'voltron': '(t:equipment OR t:aura OR o:equip OR o:attach)',
+            'aura': '(t:aura OR o:"enchanted creature")',
+            'auras': '(t:aura OR o:"enchanted creature")',
+            'enchantment': '(t:enchantment OR o:enchantment OR otag:enchantment)',
+            'enchantments': '(t:enchantment OR o:enchantment OR otag:enchantment)',
+            'graveyard': '(o:graveyard OR o:dies OR o:escape OR o:flashback OR otag:graveyard)',
+            'recursion': '(o:"from your graveyard" OR o:"return target" OR otag:recursion)',
+            'reanimator': '(o:reanimate OR o:"return target creature card" OR otag:reanimate)',
+            'sacrifice': '(o:sacrifice OR o:dies OR otag:sacrifice)',
+            'aristocrats': '(o:sacrifice OR o:dies OR o:"whenever another creature dies" OR otag:aristocrats)',
+            'tokens': '(o:"creature token" OR o:"tokens you control" OR o:populate OR otag:tokens)',
+            'token': '(o:"creature token" OR o:"tokens you control" OR o:populate OR otag:tokens)',
+            'treasure': '(o:"Treasure token" OR otag:treasure)',
+            'lifegain': '(o:"gain life" OR o:"whenever you gain life" OR otag:lifegain)',
+            'life gain': '(o:"gain life" OR o:"whenever you gain life" OR otag:lifegain)',
+            'counters': '(o:"+1/+1 counter" OR o:"-1/-1 counter" OR o:proliferate OR otag:counters)',
+            'counter': '(o:"+1/+1 counter" OR o:"-1/-1 counter" OR o:proliferate OR otag:counters)',
+            'spellslinger': '(o:"instant or sorcery" OR o:"whenever you cast" OR otag:spellslinger)',
+            'instant': '(o:instant OR t:instant)',
+            'sorcery': '(o:sorcery OR t:sorcery)',
+            'blink': '(o:"exile another" OR o:"return it to the battlefield" OR otag:blink)',
+            'flicker': '(o:"exile another" OR o:"return it to the battlefield" OR otag:blink)',
+            'exile': '(o:"from exile" OR o:"play a card from exile" OR o:"exile the top" OR otag:exile)',
+            'landfall': '(o:landfall OR o:"land enters" OR o:"land you control enters" OR kw:landfall)',
+            'lands': '(o:landfall OR o:"additional land" OR o:"land you control enters")',
+            'draw': '(o:"draw a card" OR o:"draw cards" OR otag:card-advantage)',
+            'card draw': '(o:"draw a card" OR o:"draw cards" OR otag:card-advantage)',
+            'mill': '(o:mill OR otag:mill)',
+            'zombies': '(t:zombie OR o:zombie)',
+            'zombie': '(t:zombie OR o:zombie)',
+            'elves': '(t:elf OR o:elf)',
+            'elf': '(t:elf OR o:elf)',
+            'goblins': '(t:goblin OR o:goblin)',
+            'goblin': '(t:goblin OR o:goblin)',
+            'dragons': '(t:dragon OR o:dragon)',
+            'dragon': '(t:dragon OR o:dragon)',
+            'slivers': '(t:sliver OR o:sliver)',
+            'sliver': '(t:sliver OR o:sliver)',
+            'vampires': '(t:vampire OR o:vampire)',
+            'vampire': '(t:vampire OR o:vampire)',
+            'humans': '(t:human OR o:human)',
+            'human': '(t:human OR o:human)',
+        }
+
+        translated_terms = []
+        for term in self._parse_search_terms(search_text, keywords):
+            if term in term_queries:
+                translated_terms.append(term_queries[term])
+            elif term in keyword_abilities:
+                translated_terms.append(f"kw:{self._quote_scryfall_phrase(term)}")
+            else:
+                safe_term = self._quote_scryfall_phrase(term)
+                translated_terms.append(f"(t:{safe_term} OR o:{safe_term})")
+
+        if translated_terms:
+            query_parts.append(" ".join(translated_terms))
+
+        return " ".join(query_parts)
+
+    async def get_random_commander(self, colors: Optional[List[str]] = None,
+                                   keywords: Optional[List[str]] = None,
+                                   max_cmc: Optional[int] = None,
+                                   search_text: Optional[str] = None) -> Dict:
+        """Get a random commander with filters"""
+        query = self._build_random_commander_query(
+            colors=colors,
+            keywords=keywords,
+            max_cmc=max_cmc,
+            search_text=search_text,
+        )
         
         try:
             results = await self.scryfall.search_cards_by_criteria(query, limit=100)
@@ -1815,7 +2156,9 @@ class EnhancedSuggestionEngine:
             commander_card = random.choice(results) if results else None
             
             if commander_card:
-                return await self.analyze_commander(commander_card)
+                result = await self.analyze_commander(commander_card)
+                result['search_query'] = query
+                return result
             else:
                 raise ValueError("No commanders found matching criteria")
         except Exception as e:

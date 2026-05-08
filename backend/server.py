@@ -882,14 +882,9 @@ async def delete_deck(deck_id: str, current_user: Dict = Depends(get_current_use
 
 class AnalysisRequest(BaseModel):
     categories: Optional[List[str]] = None  # ['ramp', 'draw', 'removal', 'counter', 'recursion', 'tutor']
-    
-@api_router.post("/decks/{deck_id}/analyze", response_model=AnalysisRun)
-async def analyze_deck(
-    deck_id: str, 
-    analysis_request: Optional[AnalysisRequest] = None,
-    current_user: Dict = Depends(get_current_user)
-):
-    deck = await db.decks.find_one({"id": deck_id, "user_id": current_user['id']}, {"_id": 0})
+
+async def run_deck_analysis(deck_id: str, user_id: str, categories: Optional[List[str]] = None, deep: bool = False) -> AnalysisRun:
+    deck = await db.decks.find_one({"id": deck_id, "user_id": user_id}, {"_id": 0})
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
     
@@ -897,33 +892,51 @@ async def analyze_deck(
         raise HTTPException(status_code=400, detail="Deck must have at least 50 cards to analyze")
     
     try:
-        # Run suggestion engine with optional category filter
-        categories = analysis_request.categories if analysis_request else None
-        result = await suggestion_engine.analyze_deck(deck, categories=categories)
+        result = await suggestion_engine.analyze_deck(deck, categories=categories, deep=deep)
         
-        # Create analysis run
         analysis = AnalysisRun(
             deck_id=deck_id,
-            user_id=current_user['id'],
+            user_id=user_id,
             suggestions_add=result['suggestions_add'],
             suggestions_cut=result['suggestions_cut'],
-            stats=result['stats']
+            stats=result['stats'],
+            commander_synergies=result.get('commander_synergies', []),
+            playstyle_tips=result.get('playstyle_tips', []),
+            detected_themes=result.get('detected_themes', []),
+            combo_suggestions=result.get('combo_suggestions', [])
         )
         
         analysis_dict = analysis.model_dump()
         analysis_dict['created_at'] = analysis_dict['created_at'].isoformat()
-        # Store commander synergies and playstyle tips
-        analysis_dict['commander_synergies'] = result.get('commander_synergies', [])
-        analysis_dict['playstyle_tips'] = result.get('playstyle_tips', [])
-        analysis_dict['detected_themes'] = result.get('detected_themes', [])
-        analysis_dict['combo_suggestions'] = result.get('combo_suggestions', [])
+        analysis_dict['analysis_depth'] = 'deep' if deep else 'fast'
         
         await db.analysis_runs.insert_one(analysis_dict)
         
         return analysis
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"Analysis error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@api_router.post("/decks/{deck_id}/analyze", response_model=AnalysisRun)
+async def analyze_deck(
+    deck_id: str,
+    analysis_request: Optional[AnalysisRequest] = None,
+    current_user: Dict = Depends(get_current_user)
+):
+    categories = analysis_request.categories if analysis_request else None
+    return await run_deck_analysis(deck_id, current_user['id'], categories=categories, deep=False)
+
+@api_router.post("/decks/{deck_id}/analyze/deep", response_model=AnalysisRun)
+async def deep_analyze_deck(
+    deck_id: str,
+    analysis_request: Optional[AnalysisRequest] = None,
+    current_user: Dict = Depends(get_current_user)
+):
+    """Run an opt-in deeper analysis with a larger Scryfall search budget."""
+    categories = analysis_request.categories if analysis_request else None
+    return await run_deck_analysis(deck_id, current_user['id'], categories=categories, deep=True)
 
 @api_router.get("/analysis/{analysis_id}", response_model=AnalysisRun)
 async def get_analysis(analysis_id: str, current_user: Dict = Depends(get_current_user)):
@@ -1009,6 +1022,7 @@ class CommanderLookupRequest(BaseModel):
 class RandomCommanderRequest(BaseModel):
     colors: Optional[List[str]] = None
     keywords: Optional[List[str]] = None
+    search_text: Optional[str] = None
     max_cmc: Optional[int] = None
 
 @api_router.post("/commander/lookup")
@@ -1034,6 +1048,25 @@ async def lookup_commander(request: CommanderLookupRequest, current_user: Dict =
         logging.error(f"Commander lookup error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Lookup failed: {str(e)}")
 
+@api_router.post("/commander/lookup/deep")
+async def deep_lookup_commander(request: CommanderLookupRequest, current_user: Dict = Depends(get_current_user)):
+    """Lookup a commander with a larger recommendation search budget."""
+    try:
+        commander_card = await scryfall_service.search_card(request.commander_name)
+        if not commander_card:
+            raise HTTPException(status_code=404, detail="Commander not found")
+
+        if not commander_card.get('legalities', {}).get('commander') == 'legal':
+            raise HTTPException(status_code=400, detail="Card is not a legal commander")
+
+        result = await suggestion_engine.analyze_commander(commander_card, deep=True)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Deep commander lookup error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Deep lookup failed: {str(e)}")
+
 @api_router.post("/commander/random")
 async def random_commander(request: RandomCommanderRequest, current_user: Dict = Depends(get_current_user)):
     """Generate a random commander with filters"""
@@ -1041,6 +1074,7 @@ async def random_commander(request: RandomCommanderRequest, current_user: Dict =
         result = await suggestion_engine.get_random_commander(
             colors=request.colors,
             keywords=request.keywords,
+            search_text=request.search_text,
             max_cmc=request.max_cmc
         )
         return result

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shuffle, Sparkles } from 'lucide-react';
+import { Search, Shuffle, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import ForestManaIcon from '../components/ForestManaIcon';
@@ -13,7 +13,7 @@ export default function RandomCommander() {
   const [commanderData, setCommanderData] = useState(null);
   const [filters, setFilters] = useState({
     colors: [],
-    keywords: [],
+    search_text: '',
     max_cmc: null
   });
   const { getAuthHeaders } = useAuth();
@@ -29,25 +29,11 @@ export default function RandomCommander() {
     { id: 'G', label: 'Green', color: '#00733e' }
   ];
 
-  const keywordOptions = [
-    'Flying', 'Trample', 'Haste', 'Vigilance', 'Lifelink',
-    'Deathtouch', 'Hexproof', 'Indestructible', 'First Strike',
-    'Double Strike', 'Menace', 'Reach', 'Ward'
-  ];
-
   const toggleColor = (colorId) => {
     if (filters.colors.includes(colorId)) {
       setFilters({...filters, colors: filters.colors.filter(c => c !== colorId)});
     } else {
       setFilters({...filters, colors: [...filters.colors, colorId]});
-    }
-  };
-
-  const toggleKeyword = (keyword) => {
-    if (filters.keywords.includes(keyword)) {
-      setFilters({...filters, keywords: filters.keywords.filter(k => k !== keyword)});
-    } else {
-      setFilters({...filters, keywords: [...filters.keywords, keyword]});
     }
   };
 
@@ -94,7 +80,7 @@ export default function RandomCommander() {
           <ManaPipRow colors={['W', 'U', 'B', 'R', 'G']} className="hero-mana-row" />
           <p className="page-eyebrow mb-2">Draft A Direction</p>
           <h2 className="text-4xl font-bold mb-4 page-title">Random Commander Generator</h2>
-          <p className="page-copy text-lg">Set color, keyword, and mana value constraints, then find a commander to build around.</p>
+          <p className="page-copy text-lg">Set color, strategy, and mana value constraints, then find a commander to build around.</p>
         </div>
 
         <div className="glass-panel p-8 mb-8">
@@ -121,22 +107,17 @@ export default function RandomCommander() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-3">Keywords/Abilities</label>
-            <div className="flex flex-wrap gap-2">
-              {keywordOptions.map((keyword) => (
-                <button
-                  key={keyword}
-                  onClick={() => toggleKeyword(keyword)}
-                  className={`px-4 py-2 transition-all ${
-                    filters.keywords.includes(keyword)
-                      ? 'tab-button-active'
-                      : 'tab-button bg-white/5 border border-white/10 hover:border-amber-300/40'
-                  }`}
-                  data-testid={`keyword-${keyword}`}
-                >
-                  {keyword}
-                </button>
-              ))}
+            <label className="block text-sm font-medium mb-3">Strategy Search</label>
+            <div className="relative">
+              <Search className="w-5 h-5 text-amber-300 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={filters.search_text}
+                onChange={(e) => setFilters({...filters, search_text: e.target.value})}
+                placeholder="lifegain counters, artifact graveyard, landfall draw"
+                className="input w-full pl-12"
+                data-testid="strategy-search-input"
+              />
             </div>
           </div>
 

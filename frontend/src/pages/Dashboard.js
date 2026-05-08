@@ -79,18 +79,18 @@ export default function Dashboard() {
     setShowAnalyzeModal(true);
   };
 
-  const analyzeDeck = async (categories) => {
+  const analyzeDeck = async (categories, deep = false) => {
     if (!selectedDeck) return;
 
     try {
-      toast.loading('Analyzing deck with enhanced engine...');
+      toast.loading(deep ? 'Running deep deck analysis...' : 'Analyzing deck with enhanced engine...');
       const response = await axios.post(
-        `${API}/decks/${selectedDeck.id}/analyze`,
+        `${API}/decks/${selectedDeck.id}/analyze${deep ? '/deep' : ''}`,
         categories ? { categories } : {},
         { headers: getAuthHeaders() }
       );
       toast.dismiss();
-      toast.success('Analysis complete!');
+      toast.success(deep ? 'Deep analysis complete!' : 'Analysis complete!');
       navigate(`/analysis/${response.data.id}`);
     } catch (error) {
       toast.dismiss();

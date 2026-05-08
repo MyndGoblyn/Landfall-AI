@@ -70,6 +70,10 @@ class ScryfallService:
     
     async def search_cards_by_criteria(self, query: str, limit: int = 20) -> List[Dict]:
         """Search cards using Scryfall search syntax"""
+        cache_key = f"search:{query.lower()}:{limit}"
+        if self._is_cache_valid(cache_key):
+            return self.cache[cache_key]
+
         try:
             session = await self.get_session()
             params = {"q": query, "unique": "cards", "order": "edhrec"}
@@ -77,7 +81,10 @@ class ScryfallService:
             async with session.get(f"{self.BASE_URL}/cards/search", params=params) as response:
                 if response.status == 200:
                     data = await response.json()
-                    return data.get('data', [])[:limit]
+                    results = data.get('data', [])[:limit]
+                    self.cache[cache_key] = results
+                    self.cache_expiry[cache_key] = datetime.now() + self.cache_ttl
+                    return results
                 else:
                     logger.error(f"Scryfall search error: {response.status}")
                     return []
