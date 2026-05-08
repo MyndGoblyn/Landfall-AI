@@ -463,3 +463,99 @@ def test_strategy_tips_cover_representative_commander_archetypes(
         assert term in joined
     assert "rhystic study" not in joined or "U" in commander_card["color_identity"]
     assert "phyrexian arena" not in joined or "B" in commander_card["color_identity"]
+
+
+def test_brago_is_blink_not_impulse_exile():
+    engine = make_engine()
+    brago = {
+        "name": "Brago, King Eternal",
+        "oracle_text": (
+            "Flying. Whenever Brago, King Eternal deals combat damage to a player, "
+            "exile any number of target nonland permanents you control, then return "
+            "those cards to the battlefield under their owner's control."
+        ),
+        "type_line": "Legendary Creature",
+        "color_identity": ["W", "U"],
+    }
+    mystic_forge = {
+        "name": "Mystic Forge",
+        "oracle_text": "You may look at the top card of your library any time. You may cast artifact spells and colorless spells from the top of your library.",
+        "type_line": "Artifact",
+    }
+    wall_of_omens = {
+        "name": "Wall of Omens",
+        "oracle_text": "Defender. When Wall of Omens enters the battlefield, draw a card.",
+        "type_line": "Creature",
+    }
+
+    synergies = engine._detect_commander_synergies(brago)
+
+    assert "blink" in synergies
+    assert "exile" not in synergies
+    assert not engine._card_matches_commander_context(mystic_forge, "blink", brago)
+    assert engine._card_matches_commander_context(wall_of_omens, "blink", brago)
+
+
+def test_sacrifice_recommendations_reject_land_fetches():
+    engine = make_engine()
+    teysa = {
+        "name": "Teysa Karlov",
+        "oracle_text": (
+            "If a creature dying causes a triggered ability of a permanent you control to trigger, "
+            "that ability triggers an additional time."
+        ),
+        "type_line": "Legendary Creature",
+        "color_identity": ["W", "B"],
+    }
+    evolving_wilds = {
+        "name": "Evolving Wilds",
+        "oracle_text": "{T}, Sacrifice Evolving Wilds: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+        "type_line": "Land",
+    }
+    viscera_seer = {
+        "name": "Viscera Seer",
+        "oracle_text": "Sacrifice a creature: Scry 1.",
+        "type_line": "Creature",
+    }
+
+    assert not engine._card_matches_commander_context(evolving_wilds, "sacrifice", teysa)
+    assert engine._card_matches_commander_context(viscera_seer, "sacrifice", teysa)
+
+
+def test_voltron_recommendations_reject_curses_as_generic_auras():
+    engine = make_engine()
+    curse = {
+        "name": "Curse of Opulence",
+        "oracle_text": "Enchant player. Whenever enchanted player is attacked, create a Gold token.",
+        "type_line": "Enchantment — Aura Curse",
+    }
+    boots = {
+        "name": "Swiftfoot Boots",
+        "oracle_text": "Equipped creature has hexproof and haste. Equip {1}.",
+        "type_line": "Artifact — Equipment",
+    }
+
+    assert not engine._card_matches_synergy(curse, "voltron")
+    assert engine._card_matches_synergy(boots, "voltron")
+
+
+def test_sections_are_built_for_paged_strategy_and_recommendations():
+    engine = make_engine()
+    tips = [
+        "Token engines need repeatable makers.",
+        "Balance makers and payoffs.",
+        "Use 36-38 lands and 10-12 ramp sources.",
+        "Reserve 7-10 slots for answers and protection.",
+        "Deep Strategy - Resource Loop: Check makers, outlets, and payoffs.",
+    ]
+    cards = [
+        {"name": "Core A", "confidence": "core"},
+        {"name": "Support A", "confidence": "support"},
+        {"name": "More A", "confidence": "alternate"},
+    ]
+
+    strategy_sections = engine._build_strategy_sections(tips)
+    recommendation_sections = engine._build_recommended_sections(cards)
+
+    assert [section["id"] for section in strategy_sections] == ["game_plan", "foundation", "deep"]
+    assert [section["id"] for section in recommendation_sections] == ["core", "support", "alternate"]

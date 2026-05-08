@@ -263,7 +263,15 @@ class EnhancedSuggestionEngine:
             add_once('landfall')
         if 'sacrifice' in oracle_text or re.search(r'\b(dies|dying|death)\b', oracle_text):
             add_once('sacrifice')
-        if any(phrase in oracle_text for phrase in ['exile it, then return', 'exile another target', 'return it to the battlefield', 'flicker']):
+        blink_phrases = [
+            'exile it, then return',
+            'exile another target',
+            'return it to the battlefield',
+            'return those cards to the battlefield',
+            'exile any number of target nonland permanents you control',
+            'flicker',
+        ]
+        if any(phrase in oracle_text for phrase in blink_phrases):
             add_once('blink')
         elif 'exile' in oracle_text:
             add_once('exile')
@@ -1536,6 +1544,80 @@ class EnhancedSuggestionEngine:
         ]
         return any(pattern in oracle_text for pattern in value_patterns)
 
+    def _is_blink_support(self, oracle_text: str, type_line: str) -> bool:
+        """Confirm blink candidates either reuse your permanents or are worth reusing."""
+        blink_text = (
+            'exile another' in oracle_text or
+            'exile target' in oracle_text and 'return' in oracle_text or
+            'exile any number' in oracle_text and 'return' in oracle_text or
+            'exile it, then return' in oracle_text or
+            'return it to the battlefield' in oracle_text
+        )
+        if blink_text:
+            return True
+
+        if 'enters the battlefield' not in oracle_text and 'enters under your control' not in oracle_text:
+            return False
+
+        if 'instant' in type_line or 'sorcery' in type_line:
+            return False
+
+        value_etb_terms = [
+            'draw',
+            'search your library',
+            'return target',
+            'exile target',
+            'destroy target',
+            'create',
+            'gain control',
+            'look at',
+            'put a land',
+            'add ',
+        ]
+        return any(term in oracle_text for term in value_etb_terms)
+
+    def _is_land_fetch_sacrifice(self, oracle_text: str, type_line: str) -> bool:
+        """Filter land-fetch sacrifices out of creature/death sacrifice recommendations."""
+        if 'land' not in type_line:
+            return False
+        return (
+            'sacrifice' in oracle_text and
+            'search your library' in oracle_text and
+            'basic land' in oracle_text and
+            not any(term in oracle_text for term in ['creature', 'dies', 'blood', 'treasure', 'clue', 'food'])
+        )
+
+    def _is_voltron_support(self, oracle_text: str, type_line: str) -> bool:
+        """Confirm Voltron cards improve the commander in combat instead of being generic Auras."""
+        if 'curse' in type_line or 'enchant player' in oracle_text or 'enchant opponent' in oracle_text:
+            return False
+
+        if 'equipment' in type_line or 'equip' in oracle_text or 'attach' in oracle_text:
+            return True
+
+        if 'aura' not in type_line and 'enchant creature' not in oracle_text and 'enchanted creature' not in oracle_text:
+            return False
+
+        voltron_terms = [
+            'gets +',
+            '+1/+1',
+            '+2/+',
+            'double strike',
+            'first strike',
+            'trample',
+            'flying',
+            'vigilance',
+            'lifelink',
+            'haste',
+            'hexproof',
+            'shroud',
+            'ward',
+            "can't be blocked",
+            'unblockable',
+            'draw a card',
+        ]
+        return any(term in oracle_text for term in voltron_terms)
+
     def _is_generic_mana_card(self, card_data: Dict) -> bool:
         """Identify mana-only staples that should not dominate commander theme recommendations."""
         name = card_data.get('name', '').lower()
@@ -1601,6 +1683,8 @@ class EnhancedSuggestionEngine:
             return self._is_artifact_token_support(oracle_text)
         if synergy == 'exile':
             return self._is_exile_value_card(oracle_text)
+        if synergy == 'blink':
+            return self._is_blink_support(oracle_text, type_line)
         if synergy == 'lifegain':
             return self._has_lifegain_reward_text(oracle_text) or re.search(r'\bgain(?:s|ed)? life\b', oracle_text) is not None
         if synergy == 'artifact':
@@ -1642,9 +1726,9 @@ class EnhancedSuggestionEngine:
                 self._has_creature_spell_text(oracle_text) or
                 self._has_creature_card_text(oracle_text)
             )
+        if synergy == 'voltron':
+            return self._is_voltron_support(oracle_text, type_line)
         if synergy in detected:
-            return True
-        if synergy == 'voltron' and ('equipment' in type_line or 'aura' in type_line):
             return True
         if synergy == 'landfall' and (
             'landfall' in oracle_text or
@@ -1727,6 +1811,11 @@ class EnhancedSuggestionEngine:
             if self._is_graveyard_hate(oracle_text):
                 return False
 
+        if synergy == 'blink':
+            if self._is_exile_value_card(oracle_text) and not self._is_blink_support(oracle_text, type_line):
+                return False
+            return self._is_blink_support(oracle_text, type_line)
+
         if synergy == 'landfall':
             if 'landfall' in commander_text or 'land you control enters' in commander_text:
                 return (
@@ -1784,6 +1873,26 @@ class EnhancedSuggestionEngine:
                 '+1/+1 counter on target creature' in oracle_text or
                 '+1/+1 counter on a creature' in oracle_text
             )
+
+        if synergy == 'sacrifice':
+            if self._is_land_fetch_sacrifice(oracle_text, type_line):
+                return False
+            return any(term in oracle_text for term in [
+                'sacrifice a creature',
+                'sacrifice another creature',
+                'sacrifice another permanent',
+                'whenever you sacrifice',
+                'whenever a creature dies',
+                'whenever another creature dies',
+                'creature dies',
+                'dies',
+                'death trigger',
+                'create a creature token',
+                'creature token',
+            ])
+
+        if synergy == 'voltron':
+            return self._is_voltron_support(oracle_text, type_line)
 
         return True
 
@@ -1882,8 +1991,38 @@ class EnhancedSuggestionEngine:
                 reasons.append(f"{card_name} adds +1/+1 counter scaling, which pairs with {commander_name}'s counter plan without depending on a separate combat-only payoff.")
             else:
                 reasons.append(f"{card_name} supports the counter plan by adding either more counter placement or a payoff for creatures that already have counters.")
+        elif synergy == 'creature':
+            if self._has_creature_spell_text(commander_text) and 'creature' in type_line:
+                if 'enters the battlefield' in oracle_lower:
+                    reasons.append(f"{card_name} is a creature spell for {commander_name}'s cast trigger and it still creates value when it enters, so it advances the engine from both sides.")
+                elif self._has_card_draw_text(oracle_lower):
+                    reasons.append(f"{card_name} keeps the creature count high while adding card flow, making {commander_name}'s creature-cast turns less likely to run out of gas.")
+                elif 'search your library' in oracle_lower or 'add ' in oracle_lower:
+                    reasons.append(f"{card_name} gives {commander_name} a creature-based ramp or fixing piece, which is stronger here than a noncreature support card because it also triggers the commander.")
+                else:
+                    reasons.append(f"{card_name} keeps {commander_name}'s creature-spell density high while giving the deck another body that can carry the main game plan.")
+            elif 'enters the battlefield' in commander_text and 'enters the battlefield' in oracle_lower:
+                reasons.append(f"{card_name} gives {commander_name} another ETB target worth reusing, turning blink, bounce, or creature-entry loops into concrete cards, mana, or interaction.")
+            elif 'creature token' in oracle_lower:
+                reasons.append(f"{card_name} supplies bodies for {commander_name}'s creature plan, giving the deck material for attacks, sacrifice lines, or board-scaling payoffs.")
+            else:
+                reasons.append(f"{card_name} supports {commander_name}'s creature plan with a job tied to the commander's trigger pattern rather than only filling the curve.")
+        elif synergy == 'blink':
+            if 'enters the battlefield' in oracle_lower and not ('exile' in oracle_lower and 'return' in oracle_lower):
+                reasons.append(f"{card_name} is a high-quality blink target for {commander_name}; reusing its ETB text turns each blink trigger into cards, mana, removal, or board presence.")
+            elif 'exile' in oracle_lower and 'return' in oracle_lower:
+                reasons.append(f"{card_name} gives {commander_name} another way to reuse or protect your own permanents, keeping the blink plan active even when the commander is removed.")
+            else:
+                reasons.append(f"{card_name} belongs in {commander_name}'s blink package because it creates repeatable value when permanents leave and return.")
         elif synergy == 'sacrifice':
-            reasons.append(f"{card_name} gives the deck more sacrifice texture, so {commander_name}'s death and resource-conversion lines happen more reliably.")
+            if 'sacrifice a creature' in oracle_lower or 'sacrifice another creature' in oracle_lower:
+                reasons.append(f"{card_name} is an actual sacrifice outlet for {commander_name}, letting the deck control when death triggers and resource-conversion lines happen.")
+            elif 'whenever you sacrifice' in oracle_lower or 'whenever a creature dies' in oracle_lower or 'whenever another creature dies' in oracle_lower:
+                reasons.append(f"{card_name} is a sacrifice payoff for {commander_name}, turning creature deaths into cards, damage, mana, or board growth instead of simple attrition.")
+            elif 'creature token' in oracle_lower:
+                reasons.append(f"{card_name} supplies fodder for {commander_name}'s sacrifice plan, giving the deck expendable material that can be cashed in for stronger effects.")
+            else:
+                reasons.append(f"{card_name} gives the deck more sacrifice texture, so {commander_name}'s death and resource-conversion lines happen more reliably.")
         elif synergy == 'enchantment':
             tutor_note = ""
             if commander_constraints.get('max_enchantment_cmc') and 'enchantment' in type_line:
@@ -1930,7 +2069,14 @@ class EnhancedSuggestionEngine:
             else:
                 reasons.append(f"{card_name} supports {commander_name}'s landfall plan by making land drops more frequent or more rewarding.")
         elif synergy == 'voltron':
-            reasons.append(f"{card_name} helps {commander_name} win through commander damage by adding protection, evasion, or repeatable combat pressure.")
+            if 'equipment' in type_line or 'equip' in oracle_lower:
+                reasons.append(f"{card_name} is Equipment that can stay on board through removal and help {commander_name} attack safely, hit harder, or generate combat value.")
+            elif 'hexproof' in oracle_lower or 'shroud' in oracle_lower or 'ward' in oracle_lower:
+                reasons.append(f"{card_name} protects {commander_name}, which is usually more important for Voltron than adding another pure damage boost.")
+            elif "can't be blocked" in oracle_lower or 'flying' in oracle_lower or 'trample' in oracle_lower:
+                reasons.append(f"{card_name} improves {commander_name}'s evasion, making combat triggers and commander-damage pressure more reliable.")
+            else:
+                reasons.append(f"{card_name} helps {commander_name} win through commander damage by adding protection, evasion, or repeatable combat pressure.")
         else:
             reasons.append(f"{card_name} connects to {commander_name}'s {synergy.replace('_', ' ')} theme in a way that advances the deck's core plan.")
 
@@ -1943,7 +2089,7 @@ class EnhancedSuggestionEngine:
             effect_notes.append("The sacrifice text matters because it gives you agency over when your permanents become resources.")
         if 'graveyard' in oracle_lower or 'dies' in oracle_lower:
             effect_notes.append("The graveyard text makes it useful after removal and improves your ability to grind.")
-        if '+1/+1 counter' in oracle_lower or 'proliferate' in oracle_lower:
+        if synergy == 'counters' and ('+1/+1 counter' in oracle_lower or 'proliferate' in oracle_lower):
             effect_notes.append("Its counter text gives the commander or board a clearer path from small advantages into a real clock.")
         if 'copy' in oracle_lower:
             effect_notes.append("Copy effects are especially strong here because they multiply the best permanent or trigger you already assembled.")
@@ -1952,6 +2098,173 @@ class EnhancedSuggestionEngine:
             reasons.append(effect_notes[0])
 
         return " ".join(reasons)
+
+    def _recommendation_quality_metadata(
+        self,
+        card_data: Dict,
+        synergy: str,
+        commander_card: Dict,
+        fallback_role: Optional[str] = None
+    ) -> Dict:
+        """Attach deterministic job and tier metadata for paging and QA."""
+        oracle_text = card_data.get('oracle_text', '').lower()
+        type_line = card_data.get('type_line', '').lower()
+        commander_text = self._combined_oracle_text(commander_card)
+        score = 50
+        job = fallback_role or synergy
+        evidence = synergy.replace('_', ' ')
+
+        if synergy == 'blink':
+            if 'enters the battlefield' in oracle_text and not ('exile' in oracle_text and 'return' in oracle_text):
+                job = 'ETB value target'
+                evidence = 'repeatable ETB value'
+                score = 88
+            elif 'exile' in oracle_text and 'return' in oracle_text:
+                job = 'blink enabler'
+                evidence = 'reuses or protects your permanents'
+                score = 84
+        elif synergy == 'creature':
+            if self._has_creature_spell_text(commander_text) and 'creature' in type_line:
+                job = 'creature spell trigger'
+                evidence = 'raises creature density for commander triggers'
+                score = 84
+                if 'enters the battlefield' in oracle_text or self._has_card_draw_text(oracle_text):
+                    score += 6
+            elif 'creature token' in oracle_text:
+                job = 'creature material'
+                evidence = 'adds bodies for the creature plan'
+                score = 76
+            elif 'enters the battlefield' in oracle_text:
+                job = 'ETB creature value'
+                evidence = 'supports creature-entry loops'
+                score = 80
+        elif synergy == 'sacrifice':
+            if 'sacrifice a creature' in oracle_text or 'sacrifice another creature' in oracle_text:
+                job = 'sacrifice outlet'
+                evidence = 'lets you control death triggers'
+                score = 88
+            elif 'whenever you sacrifice' in oracle_text or 'whenever a creature dies' in oracle_text or 'whenever another creature dies' in oracle_text:
+                job = 'death payoff'
+                evidence = 'pays off sacrifices and deaths'
+                score = 84
+            elif 'creature token' in oracle_text:
+                job = 'sacrifice fodder'
+                evidence = 'creates expendable material'
+                score = 74
+        elif synergy == 'counters':
+            counter_plan = self._counter_plan_for_text(commander_text)
+            if counter_plan == 'named_counters' and 'proliferate' in oracle_text:
+                job = 'named-counter scaling'
+                evidence = 'adds counters after the commander marks a permanent'
+                score = 86
+            elif self._is_counter_multiplier(oracle_text):
+                job = 'counter multiplier'
+                evidence = 'increases counters produced by the engine'
+                score = 82
+            elif self._is_counter_payoff(oracle_text):
+                job = 'counter payoff'
+                evidence = 'rewards counters already being present'
+                score = 76
+        elif synergy == 'voltron':
+            if 'equipment' in type_line or 'equip' in oracle_text:
+                job = 'equipment pressure'
+                evidence = 'reusable combat upgrade'
+                score = 82
+            elif any(term in oracle_text for term in ['hexproof', 'shroud', 'ward']):
+                job = 'commander protection'
+                evidence = 'keeps the threat on board'
+                score = 86
+            elif any(term in oracle_text for term in ["can't be blocked", 'flying', 'trample']):
+                job = 'combat evasion'
+                evidence = 'helps damage and triggers connect'
+                score = 80
+        elif synergy == 'tokens':
+            if 'twice that many' in oracle_text or 'double the number' in oracle_text:
+                job = 'token multiplier'
+                evidence = 'scales repeatable token output'
+                score = 88
+            elif 'tokens you control' in oracle_text:
+                job = 'token payoff'
+                evidence = 'rewards the board the commander makes'
+                score = 80
+            elif 'creature token' in oracle_text:
+                job = 'token maker'
+                evidence = 'adds bodies to the core plan'
+                score = 74
+        elif synergy == 'artifact_tokens':
+            if 'whenever you sacrifice' in oracle_text or 'sacrifice an artifact' in oracle_text:
+                job = 'artifact-token payoff'
+                evidence = 'converts temporary tokens into value'
+                score = 84
+            elif self._has_artifact_token_text(oracle_text):
+                job = 'artifact-token maker'
+                evidence = 'adds spendable artifacts'
+                score = 76
+        elif synergy == 'exile':
+            if 'from exile' in oracle_text:
+                job = 'exile payoff'
+                evidence = 'rewards cards cast from exile'
+                score = 84
+            else:
+                job = 'impulse draw'
+                evidence = 'keeps exile-play triggers flowing'
+                score = 78
+
+        if self._has_card_draw_text(oracle_text):
+            score += 4
+        if 'mana value' in oracle_text or 'costs' in oracle_text:
+            score += 2
+
+        score = min(score, 95)
+        confidence = 'core' if score >= 84 else 'support' if score >= 72 else 'alternate'
+        return {
+            'job': job,
+            'confidence': confidence,
+            'score': score,
+            'evidence': evidence,
+        }
+
+    def _build_strategy_sections(self, tips: List[str]) -> List[Dict]:
+        """Group tips into small deterministic pages without changing legacy output."""
+        sections = [
+            {'id': 'game_plan', 'label': 'Game Plan', 'tips': []},
+            {'id': 'build_priorities', 'label': 'Build Priorities', 'tips': []},
+            {'id': 'foundation', 'label': 'Foundation', 'tips': []},
+            {'id': 'deep', 'label': 'Deep Search', 'tips': []},
+        ]
+
+        for tip in tips:
+            if tip.startswith('Deep Strategy'):
+                sections[3]['tips'].append(tip)
+            elif tip.startswith('Use 36-38') or tip.startswith('Reserve 7-10'):
+                sections[2]['tips'].append(tip)
+            elif len(sections[0]['tips']) < 3:
+                sections[0]['tips'].append(tip)
+            else:
+                sections[1]['tips'].append(tip)
+
+        return [section for section in sections if section['tips']]
+
+    def _build_recommended_sections(self, suggested_cards: List[Dict]) -> List[Dict]:
+        """Group recommendations into pages by deterministic quality tier."""
+        section_map = {
+            'core': {'id': 'core', 'label': 'Core Synergy', 'cards': []},
+            'support': {'id': 'support', 'label': 'Support Picks', 'cards': []},
+            'alternate': {'id': 'alternate', 'label': 'More Options', 'cards': []},
+        }
+
+        for index, card in enumerate(suggested_cards):
+            confidence = card.get('confidence')
+            if confidence not in section_map:
+                confidence = 'core' if index < 4 else 'support' if index < 8 else 'alternate'
+            section_map[confidence]['cards'].append(card)
+
+        sections = [section for section in section_map.values() if section['cards']]
+        if len(sections) == 1 and len(sections[0]['cards']) > 6:
+            first_cards = sections[0]['cards']
+            sections[0]['cards'] = first_cards[:6]
+            sections.append({'id': 'alternate', 'label': 'More Options', 'cards': first_cards[6:]})
+        return sections
     
     def _get_card_images(self, scryfall_card: Dict) -> Dict[str, Optional[str]]:
         """Extract card image URLs from Scryfall data, handling double-faced cards"""
@@ -2019,14 +2332,14 @@ class EnhancedSuggestionEngine:
 
         synergy_queries = {
             'artifact': '(o:"artifact card" OR o:"artifact spell" OR o:"artifacts you control" OR o:"whenever an artifact" OR o:"sacrifice an artifact" OR t:equipment OR o:equip)',
-            'blink': "(o:exile o:return)",
+            'blink': '(o:exile o:return OR o:"enters the battlefield")',
             'creature': '(o:"creature spell" OR o:"creature enters" OR o:"creatures you control" OR o:"whenever another creature" OR o:"whenever a creature" OR o:"creature token")',
             'exile': '(o:"exile the top" OR o:"play that card" OR o:"cast that card" OR o:"from exile" OR o:"until end of your next turn")',
             'graveyard': '(o:"from your graveyard" OR o:"put into your graveyard" OR o:dies OR o:reanimate OR o:flashback OR o:escape OR o:unearth)',
             'instant_sorcery': '(t:instant OR t:sorcery OR o:"instant or sorcery")',
             'landfall': '(o:landfall OR o:"additional land" OR o:"land you control enters")',
             'lifegain': '(o:"whenever you gain life" OR o:"if you gained life" OR o:"life total" OR o:"life you gained")',
-            'sacrifice': "(o:sacrifice OR o:dies)",
+            'sacrifice': '(o:"sacrifice a creature" OR o:"sacrifice another creature" OR o:"whenever you sacrifice" OR o:"whenever a creature dies" OR o:"whenever another creature dies" OR o:"creature token")',
             'tokens': '(o:"creature token" OR o:"creature tokens" OR o:populate OR o:"tokens you control" OR o:"one or more tokens" OR o:"twice that many")',
             'artifact_tokens': '(o:"Treasure token" OR o:"Clue token" OR o:"Food token" OR o:"Blood token" OR o:"artifact token")',
             'voltron': "(t:equipment OR t:aura OR o:equip OR o:attach)",
@@ -2226,8 +2539,8 @@ class EnhancedSuggestionEngine:
         suggested_names = set()
         
         synergy_search_budget = 8 if deep else 3
-        max_suggested_cards = 12 if deep else 8
-        per_synergy_limit = 4 if deep else 3
+        max_suggested_cards = 18 if deep else 10
+        per_synergy_limit = 5 if deep else 3
         max_total_searches = 8 if deep else 3
         search_count = 0
 
@@ -2293,11 +2606,20 @@ class EnhancedSuggestionEngine:
                         synergy,
                         commander_card
                     )
+                    quality = self._recommendation_quality_metadata(
+                        card_extracted,
+                        synergy,
+                        commander_card
+                    )
                     
                     suggested_cards.append({
                         'name': card_extracted['name'],
                         'cmc': effective_cmc,
                         'role': synergy,
+                        'job': quality['job'],
+                        'confidence': quality['confidence'],
+                        'score': quality['score'],
+                        'evidence': quality['evidence'],
                         'reason': reason,
                         'image_url': image_data['front'],
                         'image_url_back': image_data['back']
@@ -2339,10 +2661,21 @@ class EnhancedSuggestionEngine:
                         continue
 
                     image_data = self._get_card_images(card)
+                    quality = self._recommendation_quality_metadata(
+                        card_extracted,
+                        role,
+                        commander_card,
+                        fallback_role=role
+                    )
+                    quality['confidence'] = 'support'
                     suggested_cards.append({
                         'name': card_extracted['name'],
                         'cmc': self._calculate_effective_cmc(card),
                         'role': role,
+                        'job': quality['job'],
+                        'confidence': quality['confidence'],
+                        'score': quality['score'],
+                        'evidence': quality['evidence'],
                         'reason': self._generate_card_reasoning(
                             card_extracted,
                             role,
@@ -2371,7 +2704,9 @@ class EnhancedSuggestionEngine:
             'image_url': self._get_card_image(commander_card),
             'synergies': synergies,
             'strategy_tips': tips,
+            'strategy_sections': self._build_strategy_sections(tips),
             'suggested_cards': suggested_cards,
+            'recommended_sections': self._build_recommended_sections(suggested_cards),
             'combos': combos,
             'analysis_depth': 'deep' if deep else 'fast'
         }

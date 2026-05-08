@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Shuffle, Sparkles } from 'lucide-react';
+import { Search, Shuffle } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import ForestManaIcon from '../components/ForestManaIcon';
+import { RecommendedCardsPager, StrategyPager } from '../components/CommanderAnalysisSections';
 import { ManaPipRow } from '../components/ManaSymbols';
 import { useAuth } from '../context/AuthContext';
 import { API } from '../lib/api';
@@ -197,14 +198,7 @@ export default function RandomCommander() {
 
             <div className="glass-panel p-6">
               <h3 className="text-2xl font-semibold mb-4 text-amber-300">Strategy Analysis</h3>
-              <div className="space-y-3">
-                {commanderData.strategy_tips.map((tip, idx) => (
-                  <div key={idx} className="flex gap-3">
-                    <Sparkles className="w-5 h-5 text-amber-300 flex-shrink-0 mt-1" />
-                    <p className="text-gray-100">{tip}</p>
-                  </div>
-                ))}
-              </div>
+              <StrategyPager commanderData={commanderData} />
             </div>
 
             {commanderData.synergies && commanderData.synergies.length > 0 && (
@@ -223,36 +217,10 @@ export default function RandomCommander() {
             <div className="glass-panel p-6">
               <h3 className="text-2xl font-semibold mb-6">Recommended Cards</h3>
               {suggestedCards.length > 0 ? (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {suggestedCards.map((card, idx) => (
-                    <div key={idx} className="card deck-card-theme flex gap-4">
-                      <div className="flex gap-2 flex-shrink-0">
-                        {card.image_url && (
-                          <img
-                            src={card.image_url}
-                            alt={card.name}
-                            className="w-24 h-32 object-cover rounded-lg"
-                          />
-                        )}
-                        {card.image_url_back && (
-                          <img
-                            src={card.image_url_back}
-                            alt={`${card.name} (back)`}
-                            className="w-24 h-32 object-cover rounded-lg"
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-lg mb-2">{card.name}</h4>
-                        <p className="text-sm page-copy mb-3">{card.reason}</p>
-                        <div className="flex gap-2 text-xs flex-wrap">
-                          <span className="theme-pill">{card.role}</span>
-                          <span className="theme-pill">Mana Value {card.cmc}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <RecommendedCardsPager
+                  commanderData={commanderData}
+                  emptyMessage="No theme-specific recommendations were found for this commander. Try randomizing again or loosening the filters."
+                />
               ) : (
                 <p className="page-copy">
                   No theme-specific recommendations were found for this commander. Try randomizing again or loosening the filters.
