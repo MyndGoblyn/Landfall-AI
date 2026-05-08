@@ -1,4 +1,5 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
+import asyncio
 import logging
 import re
 from collections import Counter, defaultdict
@@ -817,15 +818,6 @@ class EnhancedSuggestionEngine:
                     'power_level': 'Medium'
                 })
         
-        # Generic powerful combos by color
-        if any(c in commander_synergies for c in ['artifact', 'creature']):
-            combos.append({
-                'name': 'Dramatic Scepter',
-                'cards': ['Isochron Scepter', 'Dramatic Reversal', 'Any Mana Rock'],
-                'description': 'Infinite mana combo. Imprint Dramatic Reversal on Scepter with 2+ mana in rocks.',
-                'power_level': 'High'
-            })
-        
         return combos
     
     async def _generate_additions(self, gaps: Dict, commander: Optional[str], 
@@ -1618,6 +1610,10 @@ class EnhancedSuggestionEngine:
         ]
         return any(term in oracle_text for term in voltron_terms)
 
+    def _is_land_card(self, card_data: Dict) -> bool:
+        """Keep lands out of commander mechanic recommendations."""
+        return re.search(r'\bland\b', card_data.get('type_line', '').lower()) is not None
+
     def _is_generic_mana_card(self, card_data: Dict) -> bool:
         """Identify mana-only staples that should not dominate commander theme recommendations."""
         name = card_data.get('name', '').lower()
@@ -2153,9 +2149,9 @@ class EnhancedSuggestionEngine:
                 score = 74
         elif synergy == 'counters':
             counter_plan = self._counter_plan_for_text(commander_text)
-            if counter_plan == 'named_counters' and 'proliferate' in oracle_text:
+            if 'proliferate' in oracle_text and counter_plan in ['proliferate', 'named_counters']:
                 job = 'named-counter scaling'
-                evidence = 'adds counters after the commander marks a permanent'
+                evidence = 'adds counters after the commander establishes them'
                 score = 86
             elif self._is_counter_multiplier(oracle_text):
                 job = 'counter multiplier'
@@ -2248,9 +2244,9 @@ class EnhancedSuggestionEngine:
     def _build_recommended_sections(self, suggested_cards: List[Dict]) -> List[Dict]:
         """Group recommendations into pages by deterministic quality tier."""
         section_map = {
-            'core': {'id': 'core', 'label': 'Core Synergy', 'cards': []},
+            'core': {'id': 'core', 'label': 'Sharp Picks', 'cards': []},
             'support': {'id': 'support', 'label': 'Support Picks', 'cards': []},
-            'alternate': {'id': 'alternate', 'label': 'More Options', 'cards': []},
+            'alternate': {'id': 'alternate', 'label': 'More Finds', 'cards': []},
         }
 
         for index, card in enumerate(suggested_cards):
@@ -2522,6 +2518,176 @@ class EnhancedSuggestionEngine:
 
         return notes
 
+    def _candidate_card_for_synergy(self, card: Dict, synergy: str) -> Dict:
+        """Select the most relevant face for validating a double-faced candidate."""
+        if card.get('card_faces') and len(card.get('card_faces', [])) > 1:
+            if synergy == 'enchantment':
+                return self._get_correct_face_for_validation(card, 'enchantment')
+            if synergy == 'artifact':
+                return self._get_correct_face_for_validation(card, 'artifact')
+            if synergy == 'creature':
+                return self._get_correct_face_for_validation(card, 'creature')
+        return card
+
+    def _passes_commander_recommendation_constraints(
+        self,
+        card_extracted: Dict,
+        effective_cmc: float,
+        commander_constraints: Dict
+    ) -> bool:
+        """Apply commander-specific hard constraints after relevance validation."""
+        if self._is_land_card(card_extracted):
+            return False
+
+        if self._is_generic_mana_card(card_extracted):
+            return False
+
+        if 'max_enchantment_cmc' in commander_constraints:
+            if 'enchantment' in card_extracted['type_line'].lower():
+                if effective_cmc > commander_constraints['max_enchantment_cmc']:
+                    return False
+
+        if 'max_tutor_cmc' in commander_constraints:
+            if effective_cmc > commander_constraints['max_tutor_cmc']:
+                return False
+
+        return True
+
+    def _build_commander_recommendation(
+        self,
+        card: Dict,
+        card_extracted: Dict,
+        effective_cmc: float,
+        synergy: str,
+        commander_card: Dict,
+        commander_name: str,
+        minimum_score: int
+    ) -> Optional[Dict]:
+        """Return compact recommendation data when a candidate clears the quality floor."""
+        quality = self._recommendation_quality_metadata(
+            card_extracted,
+            synergy,
+            commander_card
+        )
+        if quality['score'] < minimum_score:
+            return None
+
+        image_data = self._get_card_images(card)
+        reason = self._generate_commander_recommendation_reason(
+            card_extracted,
+            commander_name,
+            synergy,
+            commander_card
+        )
+
+        return {
+            'name': card_extracted['name'],
+            'cmc': effective_cmc,
+            'role': synergy,
+            'job': quality['job'],
+            'confidence': quality['confidence'],
+            'score': quality['score'],
+            'evidence': quality['evidence'],
+            'reason': reason,
+            'image_url': image_data['front'],
+            'image_url_back': image_data['back']
+        }
+
+    async def _search_commander_recommendations(
+        self,
+        commander_card: Dict,
+        synergies: List[str],
+        color_identity: List[str],
+        commander_constraints: Dict,
+        max_cards: int,
+        search_budget: int,
+        per_synergy_limit: int,
+        query_limit: int,
+        minimum_score: int,
+        exclude_names: Optional[Set[str]] = None,
+        concurrency: int = 3,
+    ) -> List[Dict]:
+        """Search Scryfall in bounded parallel and keep only commander-specific cards."""
+        extracted = self.scryfall.extract_card_data(commander_card)
+        commander_name = extracted['name']
+        seen_names = {commander_name.lower()}
+        seen_names.update(name.lower() for name in (exclude_names or set()))
+
+        search_specs = []
+        for synergy in synergies[:search_budget]:
+            query = self._build_query_for_synergy(synergy, color_identity, commander_constraints)
+            if query:
+                search_specs.append((synergy, query))
+
+        if not search_specs:
+            return []
+
+        semaphore = asyncio.Semaphore(max(1, concurrency))
+
+        async def run_search(synergy: str, query: str):
+            async with semaphore:
+                results = await self.scryfall.search_cards_by_criteria(query, limit=query_limit)
+                return synergy, results
+
+        search_results = await asyncio.gather(
+            *(run_search(synergy, query) for synergy, query in search_specs)
+        )
+
+        candidates = []
+        order = 0
+        for synergy, results in search_results:
+            cards_added_for_synergy = 0
+            for card in results:
+                if cards_added_for_synergy >= per_synergy_limit:
+                    break
+
+                card_name = card.get('name', '').lower()
+                if not card_name or card_name in seen_names:
+                    continue
+                if not self._is_legal_for_deck(card, color_identity):
+                    continue
+
+                card_to_validate = self._candidate_card_for_synergy(card, synergy)
+                card_extracted = self.scryfall.extract_card_data(card_to_validate)
+                extracted_name = card_extracted['name'].lower()
+                if extracted_name in seen_names:
+                    continue
+
+                effective_cmc = self._calculate_effective_cmc(card_to_validate)
+                if not self._card_matches_synergy(card_extracted, synergy):
+                    continue
+                if not self._card_matches_commander_context(card_extracted, synergy, commander_card):
+                    continue
+                if not self._passes_commander_recommendation_constraints(
+                    card_extracted,
+                    effective_cmc,
+                    commander_constraints
+                ):
+                    continue
+
+                recommendation = self._build_commander_recommendation(
+                    card,
+                    card_extracted,
+                    effective_cmc,
+                    synergy,
+                    commander_card,
+                    commander_name,
+                    minimum_score
+                )
+                if not recommendation:
+                    continue
+
+                recommendation['_order'] = order
+                candidates.append(recommendation)
+                seen_names.add(extracted_name)
+                cards_added_for_synergy += 1
+                order += 1
+
+        candidates.sort(key=lambda card: (-card.get('score', 0), card.get('_order', 0)))
+        for card in candidates:
+            card.pop('_order', None)
+        return candidates[:max_cards]
+
     async def analyze_commander(self, commander_card: Dict, deep: bool = False) -> Dict:
         """Analyze a commander and provide strategy tips"""
         extracted = self.scryfall.extract_card_data(commander_card)
@@ -2534,161 +2700,18 @@ class EnhancedSuggestionEngine:
         if deep:
             tips.extend(self._generate_deep_commander_strategy_tips(commander_card, synergies, commander_constraints))
 
-        # Get suggested cards with proper validation
-        suggested_cards = []
-        suggested_names = set()
-        
-        synergy_search_budget = 8 if deep else 3
-        max_suggested_cards = 18 if deep else 10
-        per_synergy_limit = 5 if deep else 3
-        max_total_searches = 8 if deep else 3
-        search_count = 0
-
-        for synergy in synergies[:synergy_search_budget]:
-            if search_count >= max_total_searches:
-                break
-            query = self._build_query_for_synergy(synergy, color_identity, commander_constraints)
-            
-            if query:
-                search_count += 1
-                results = await self.scryfall.search_cards_by_criteria(query, limit=25)
-                cards_added = 0
-                for card in results:
-                    if cards_added >= per_synergy_limit or len(suggested_cards) >= max_suggested_cards:
-                        break
-                    
-                    card_name = card.get('name', '').lower()
-                    if card_name in suggested_names or card_name == extracted['name'].lower():
-                        continue
-
-                    # CRITICAL: Validate color identity
-                    if not self._is_legal_for_deck(card, color_identity):
-                        continue
-                    
-                    # Handle double-faced cards
-                    card_to_validate = card
-                    if card.get('card_faces') and len(card.get('card_faces', [])) > 1:
-                        if synergy == 'enchantment':
-                            card_to_validate = self._get_correct_face_for_validation(card, 'enchantment')
-                        elif synergy == 'artifact':
-                            card_to_validate = self._get_correct_face_for_validation(card, 'artifact')
-                        elif synergy == 'creature':
-                            card_to_validate = self._get_correct_face_for_validation(card, 'creature')
-                    
-                    card_extracted = self.scryfall.extract_card_data(card_to_validate)
-                    effective_cmc = self._calculate_effective_cmc(card_to_validate)
-                    extracted_name = card_extracted['name'].lower()
-                    if extracted_name in suggested_names:
-                        continue
-                    if not self._card_matches_synergy(card_extracted, synergy):
-                        continue
-                    if not self._card_matches_commander_context(card_extracted, synergy, commander_card):
-                        continue
-                    if self._is_generic_mana_card(card_extracted):
-                        continue
-                    
-                    # Apply commander constraints
-                    if commander_constraints:
-                        if 'max_enchantment_cmc' in commander_constraints:
-                            if 'enchantment' in card_extracted['type_line'].lower():
-                                if effective_cmc > commander_constraints['max_enchantment_cmc']:
-                                    continue
-                        
-                        if 'max_tutor_cmc' in commander_constraints:
-                            if effective_cmc > commander_constraints['max_tutor_cmc']:
-                                continue
-                    
-                    # Get images (handles double-faced cards)
-                    image_data = self._get_card_images(card)
-                    reason = self._generate_commander_recommendation_reason(
-                        card_extracted,
-                        extracted['name'],
-                        synergy,
-                        commander_card
-                    )
-                    quality = self._recommendation_quality_metadata(
-                        card_extracted,
-                        synergy,
-                        commander_card
-                    )
-                    
-                    suggested_cards.append({
-                        'name': card_extracted['name'],
-                        'cmc': effective_cmc,
-                        'role': synergy,
-                        'job': quality['job'],
-                        'confidence': quality['confidence'],
-                        'score': quality['score'],
-                        'evidence': quality['evidence'],
-                        'reason': reason,
-                        'image_url': image_data['front'],
-                        'image_url_back': image_data['back']
-                    })
-                    suggested_names.add(extracted_name)
-                    cards_added += 1
-            
-            if len(suggested_cards) >= max_suggested_cards:
-                break
-
-        if deep and len(suggested_cards) < max_suggested_cards:
-            support_roles = ['draw', 'ramp', 'protection', 'interaction']
-            for role in support_roles:
-                if len(suggested_cards) >= max_suggested_cards or search_count >= max_total_searches:
-                    break
-
-                query = self._build_query_for_role(role, color_identity, synergies, commander_constraints)
-                if not query:
-                    continue
-
-                search_count += 1
-                results = await self.scryfall.search_cards_by_criteria(query, limit=20)
-                cards_added = 0
-                for card in results:
-                    if cards_added >= 1 or len(suggested_cards) >= max_suggested_cards:
-                        break
-
-                    card_name = card.get('name', '').lower()
-                    if card_name in suggested_names or card_name == extracted['name'].lower():
-                        continue
-                    if not self._is_legal_for_deck(card, color_identity):
-                        continue
-
-                    card_extracted = self.scryfall.extract_card_data(card)
-                    extracted_name = card_extracted['name'].lower()
-                    if extracted_name in suggested_names:
-                        continue
-                    if not self._card_matches_role(card_extracted, role):
-                        continue
-
-                    image_data = self._get_card_images(card)
-                    quality = self._recommendation_quality_metadata(
-                        card_extracted,
-                        role,
-                        commander_card,
-                        fallback_role=role
-                    )
-                    quality['confidence'] = 'support'
-                    suggested_cards.append({
-                        'name': card_extracted['name'],
-                        'cmc': self._calculate_effective_cmc(card),
-                        'role': role,
-                        'job': quality['job'],
-                        'confidence': quality['confidence'],
-                        'score': quality['score'],
-                        'evidence': quality['evidence'],
-                        'reason': self._generate_card_reasoning(
-                            card_extracted,
-                            role,
-                            extracted['name'],
-                            synergies,
-                            {'roles': {role: 1}},
-                            commander_constraints
-                        ),
-                        'image_url': image_data['front'],
-                        'image_url_back': image_data['back']
-                    })
-                    suggested_names.add(extracted_name)
-                    cards_added += 1
+        suggested_cards = await self._search_commander_recommendations(
+            commander_card=commander_card,
+            synergies=synergies,
+            color_identity=color_identity,
+            commander_constraints=commander_constraints,
+            max_cards=5,
+            search_budget=5 if deep else 3,
+            per_synergy_limit=4 if deep else 3,
+            query_limit=24 if deep else 16,
+            minimum_score=84,
+            concurrency=3,
+        )
         
         # Generate combos
         combos = self._generate_combo_suggestions(extracted['name'], synergies, [])
@@ -2709,6 +2732,45 @@ class EnhancedSuggestionEngine:
             'recommended_sections': self._build_recommended_sections(suggested_cards),
             'combos': combos,
             'analysis_depth': 'deep' if deep else 'fast'
+        }
+
+    async def find_more_commander_recommendations(
+        self,
+        commander_card: Dict,
+        exclude_names: Optional[List[str]] = None,
+        page: int = 1,
+    ) -> Dict:
+        """Run an explicit broader recommendation pass after the user asks for more."""
+        extracted = self.scryfall.extract_card_data(commander_card)
+        synergies = self._detect_commander_synergies(commander_card)
+        color_identity = extracted['color_identity']
+        commander_constraints = self._get_commander_constraints(commander_card)
+        excluded = {name.lower() for name in (exclude_names or [])}
+
+        more_cards = await self._search_commander_recommendations(
+            commander_card=commander_card,
+            synergies=synergies,
+            color_identity=color_identity,
+            commander_constraints=commander_constraints,
+            max_cards=8,
+            search_budget=8,
+            per_synergy_limit=5,
+            query_limit=36,
+            minimum_score=72,
+            exclude_names=excluded,
+            concurrency=3,
+        )
+
+        for card in more_cards:
+            if card.get('confidence') == 'core':
+                card['confidence'] = 'support'
+
+        return {
+            'commander_name': extracted['name'],
+            'suggested_cards': more_cards,
+            'recommended_sections': self._build_recommended_sections(more_cards),
+            'page': page,
+            'has_more': len(more_cards) >= 8,
         }
     
     def _quote_scryfall_phrase(self, value: str) -> str:

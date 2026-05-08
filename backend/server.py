@@ -1020,6 +1020,11 @@ async def replace_suggestion(
 class CommanderLookupRequest(BaseModel):
     commander_name: str
 
+class CommanderMoreRecommendationsRequest(BaseModel):
+    commander_name: str
+    exclude_names: List[str] = Field(default_factory=list)
+    page: int = 1
+
 class RandomCommanderRequest(BaseModel):
     colors: Optional[List[str]] = None
     keywords: Optional[List[str]] = None
@@ -1119,6 +1124,31 @@ async def deep_lookup_commander(request: CommanderLookupRequest, current_user: D
     except Exception as e:
         logging.error(f"Deep commander lookup error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Deep lookup failed: {str(e)}")
+
+@api_router.post("/commander/recommendations/more")
+async def more_commander_recommendations(
+    request: CommanderMoreRecommendationsRequest,
+    current_user: Dict = Depends(get_current_user)
+):
+    """Search for additional commander recommendations only after the user asks."""
+    try:
+        commander_card = await scryfall_service.search_card(request.commander_name)
+        if not commander_card:
+            raise HTTPException(status_code=404, detail="Commander not found")
+
+        if not suggestion_engine._is_commander_eligible(commander_card):
+            raise HTTPException(status_code=400, detail="Card is not a legal commander")
+
+        return await suggestion_engine.find_more_commander_recommendations(
+            commander_card,
+            exclude_names=request.exclude_names,
+            page=request.page,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"More commander recommendation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"More recommendations failed: {str(e)}")
 
 @api_router.post("/commander/random")
 async def random_commander(request: RandomCommanderRequest, current_user: Dict = Depends(get_current_user)):

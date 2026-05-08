@@ -19,6 +19,7 @@ def make_engine():
 class FakeScryfall:
     def __init__(self):
         self.queries = []
+        self.results = []
 
     def extract_card_data(self, scryfall_card):
         return {
@@ -37,7 +38,7 @@ class FakeScryfall:
 
     async def search_cards_by_criteria(self, query, limit=20):
         self.queries.append((query, limit))
-        return []
+        return self.results
 
 
 def test_playstyle_tips_do_not_assume_specific_unrelated_counter_or_token_plans():
@@ -537,6 +538,101 @@ def test_voltron_recommendations_reject_curses_as_generic_auras():
 
     assert not engine._card_matches_synergy(curse, "voltron")
     assert engine._card_matches_synergy(boots, "voltron")
+
+
+def test_commander_recommendations_exclude_lands_even_when_mechanically_relevant():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.results = [
+        {
+            "name": "Karn's Bastion",
+            "oracle_text": "{4}, {T}: Proliferate.",
+            "type_line": "Land",
+            "cmc": 0,
+            "color_identity": [],
+        },
+        {
+            "name": "Contagion Clasp",
+            "oracle_text": "When Contagion Clasp enters the battlefield, put a -1/-1 counter on target creature. {4}, {T}: Proliferate.",
+            "type_line": "Artifact",
+            "cmc": 2,
+            "color_identity": [],
+        },
+    ]
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    commander = {
+        "name": "Named Counter Commander",
+        "oracle_text": "Whenever this creature attacks, put a blight counter on target creature. Then proliferate.",
+        "type_line": "Legendary Creature",
+        "color_identity": [],
+    }
+
+    cards = asyncio.run(engine._search_commander_recommendations(
+        commander_card=commander,
+        synergies=["counters"],
+        color_identity=[],
+        commander_constraints=engine._get_commander_constraints(commander),
+        max_cards=5,
+        search_budget=1,
+        per_synergy_limit=5,
+        query_limit=10,
+        minimum_score=72,
+    ))
+
+    assert [card["name"] for card in cards] == ["Contagion Clasp"]
+
+
+def test_parallel_recommendation_search_is_bounded():
+    class SlowScryfall(FakeScryfall):
+        def __init__(self):
+            super().__init__()
+            self.active = 0
+            self.max_active = 0
+
+        async def search_cards_by_criteria(self, query, limit=20):
+            self.queries.append((query, limit))
+            self.active += 1
+            self.max_active = max(self.max_active, self.active)
+            await asyncio.sleep(0.01)
+            self.active -= 1
+            return []
+
+    fake_scryfall = SlowScryfall()
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    commander = {
+        "name": "Many Themes Commander",
+        "oracle_text": "Whenever you cast a creature spell, create a token, gain life, proliferate, then play a card from exile. Landfall.",
+        "type_line": "Legendary Artifact Enchantment Creature",
+        "color_identity": ["W", "U", "B", "R", "G"],
+    }
+
+    asyncio.run(engine._search_commander_recommendations(
+        commander_card=commander,
+        synergies=["artifact", "creature", "tokens", "lifegain", "counters", "exile", "landfall"],
+        color_identity=["W", "U", "B", "R", "G"],
+        commander_constraints=engine._get_commander_constraints(commander),
+        max_cards=5,
+        search_budget=7,
+        per_synergy_limit=2,
+        query_limit=10,
+        minimum_score=84,
+        concurrency=3,
+    ))
+
+    assert len(fake_scryfall.queries) > 3
+    assert fake_scryfall.max_active <= 3
+    assert fake_scryfall.max_active > 1
+
+
+def test_generic_combo_lines_are_not_added_for_creature_themes():
+    engine = make_engine()
+
+    combos = engine._generate_combo_suggestions(
+        "Chulane, Teller of Tales",
+        ["creature"],
+        [],
+    )
+
+    assert combos == []
 
 
 def test_sections_are_built_for_paged_strategy_and_recommendations():

@@ -11,6 +11,7 @@ import { API } from '../lib/api';
 
 export default function RandomCommander() {
   const [loading, setLoading] = useState(false);
+  const [moreLoading, setMoreLoading] = useState(false);
   const [commanderData, setCommanderData] = useState(null);
   const [filters, setFilters] = useState({
     colors: [],
@@ -67,6 +68,56 @@ export default function RandomCommander() {
   const colorText = commanderData?.color_identity?.length
     ? commanderData.color_identity.join('')
     : 'Colorless';
+
+  const handleFindMoreCards = async () => {
+    if (!commanderData?.name || moreLoading) return;
+
+    setMoreLoading(true);
+    try {
+      const existingCards = commanderData.suggested_cards || [];
+      const response = await axios.post(
+        `${API}/commander/recommendations/more`,
+        {
+          commander_name: commanderData.name,
+          exclude_names: existingCards.map((card) => card.name),
+          page: Math.floor(existingCards.length / 8) + 1,
+        },
+        { headers: getAuthHeaders() }
+      );
+
+      const newCards = response.data.suggested_cards || [];
+      if (newCards.length === 0) {
+        toast.info('No additional high-confidence cards found.');
+        return;
+      }
+
+      setCommanderData((current) => {
+        const currentCards = current?.suggested_cards || [];
+        const existingMore = current?.recommended_sections?.find((section) => section.id === 'more_finds')?.cards || [];
+        const baseSections = (current?.recommended_sections || [])
+          .filter((section) => section.id !== 'more_finds')
+          .map((section) => ({ ...section, cards: section.cards || [] }));
+
+        return {
+          ...current,
+          suggested_cards: [...currentCards, ...newCards],
+          recommended_sections: [
+            ...baseSections,
+            {
+              id: 'more_finds',
+              label: 'More Finds',
+              cards: [...existingMore, ...newCards],
+            },
+          ],
+        };
+      });
+      toast.success(`Found ${newCards.length} more cards.`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Could not find more cards');
+    } finally {
+      setMoreLoading(false);
+    }
+  };
 
   return (
     <div className="app-shell">
@@ -220,6 +271,8 @@ export default function RandomCommander() {
                 <RecommendedCardsPager
                   commanderData={commanderData}
                   emptyMessage="No theme-specific recommendations were found for this commander. Try randomizing again or loosening the filters."
+                  onFindMore={handleFindMoreCards}
+                  findMoreLoading={moreLoading}
                 />
               ) : (
                 <p className="page-copy">

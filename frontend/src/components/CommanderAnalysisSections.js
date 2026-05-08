@@ -65,7 +65,13 @@ export function StrategyPager({ commanderData }) {
   );
 }
 
-export function RecommendedCardsPager({ commanderData, emptyMessage }) {
+export function RecommendedCardsPager({
+  commanderData,
+  emptyMessage,
+  onFindMore,
+  findMoreLoading = false,
+  findMoreDisabled = false,
+}) {
   const sections = useMemo(() => {
     const backendSections = commanderData?.recommended_sections || [];
     if (backendSections.length > 0) return backendSections;
@@ -118,6 +124,21 @@ export function RecommendedCardsPager({ commanderData, emptyMessage }) {
           </div>
         ))}
       </div>
+      {onFindMore && (
+        <div className="find-more-row">
+          <button
+            type="button"
+            className="btn-secondary px-5 py-3"
+            onClick={onFindMore}
+            disabled={findMoreLoading || findMoreDisabled}
+          >
+            {findMoreLoading ? 'Searching deeper...' : 'Find More Cards'}
+          </button>
+          <p className="page-copy text-sm">
+            More cards runs a broader deterministic search and may take longer.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

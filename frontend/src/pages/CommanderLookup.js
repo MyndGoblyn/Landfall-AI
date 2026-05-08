@@ -13,6 +13,7 @@ export default function CommanderLookup() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [deepLoading, setDeepLoading] = useState(false);
+  const [moreLoading, setMoreLoading] = useState(false);
   const [optionLoading, setOptionLoading] = useState(false);
   const [commanderOptions, setCommanderOptions] = useState([]);
   const [commanderData, setCommanderData] = useState(null);
@@ -87,6 +88,56 @@ export default function CommanderLookup() {
   const handleOptionSelect = async (commanderName) => {
     setSearchQuery(commanderName);
     await lookupCommander(commanderName, false);
+  };
+
+  const handleFindMoreCards = async () => {
+    if (!commanderData?.name || moreLoading) return;
+
+    setMoreLoading(true);
+    try {
+      const existingCards = commanderData.suggested_cards || [];
+      const response = await axios.post(
+        `${API}/commander/recommendations/more`,
+        {
+          commander_name: commanderData.name,
+          exclude_names: existingCards.map((card) => card.name),
+          page: Math.floor(existingCards.length / 8) + 1,
+        },
+        { headers: getAuthHeaders() }
+      );
+
+      const newCards = response.data.suggested_cards || [];
+      if (newCards.length === 0) {
+        toast.info('No additional high-confidence cards found.');
+        return;
+      }
+
+      setCommanderData((current) => {
+        const currentCards = current?.suggested_cards || [];
+        const existingMore = current?.recommended_sections?.find((section) => section.id === 'more_finds')?.cards || [];
+        const baseSections = (current?.recommended_sections || [])
+          .filter((section) => section.id !== 'more_finds')
+          .map((section) => ({ ...section, cards: section.cards || [] }));
+
+        return {
+          ...current,
+          suggested_cards: [...currentCards, ...newCards],
+          recommended_sections: [
+            ...baseSections,
+            {
+              id: 'more_finds',
+              label: 'More Finds',
+              cards: [...existingMore, ...newCards],
+            },
+          ],
+        };
+      });
+      toast.success(`Found ${newCards.length} more cards.`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Could not find more cards');
+    } finally {
+      setMoreLoading(false);
+    }
   };
 
   const colorText = commanderData?.color_identity?.length
@@ -251,6 +302,8 @@ export default function CommanderLookup() {
                 <RecommendedCardsPager
                   commanderData={commanderData}
                   emptyMessage="No theme-specific recommendations were found for this commander."
+                  onFindMore={handleFindMoreCards}
+                  findMoreLoading={moreLoading}
                 />
               </div>
             )}

@@ -1191,6 +1191,17 @@ textarea.input {
   margin-top: 2px;
 }
 
+.find-more-row {
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-top: 18px;
+}
+
 @media (max-width: 900px) {
   .command-zone-panel {
     grid-template-columns: 1fr;
