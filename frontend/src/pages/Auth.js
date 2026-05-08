@@ -63,7 +63,7 @@ export default function Auth() {
       } else if (result.user || isLogin) {
         navigate('/dashboard');
       } else {
-        setIsLogin(true);
+        navigate(`/verify-email-sent?email=${encodeURIComponent(email)}`);
       }
     } else {
       toast.error(result.error);

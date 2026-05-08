@@ -10,6 +10,7 @@ import AnalysisResults from './pages/AnalysisResults';
 import CommanderLookup from './pages/CommanderLookup';
 import RandomCommander from './pages/RandomCommander';
 import VerifyEmail from './pages/VerifyEmail';
+import VerifyEmailSent from './pages/VerifyEmailSent';
 import ResetPassword from './pages/ResetPassword';
 import './App.css';
 
@@ -31,6 +32,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/verify-email-sent" element={<VerifyEmailSent />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={
