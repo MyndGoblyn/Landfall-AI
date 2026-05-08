@@ -298,6 +298,8 @@ async def get_current_user(
     user = await db.users.find_one({"id": payload['user_id']}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    if REQUIRE_EMAIL_VERIFICATION and not user.get("email_verified", False):
+        raise HTTPException(status_code=403, detail="Please verify your email before continuing")
     return user
 
 def parse_stored_datetime(value: Any) -> datetime:
@@ -442,6 +444,10 @@ async def consume_auth_token(raw_token: str, purpose: str) -> Dict[str, Any]:
     return token_doc
 
 def build_auth_link(path: str, token: str) -> str:
+    if path == "/verify-email":
+        return f"{APP_PUBLIC_URL}/?verify_email_token={token}"
+    if path == "/reset-password":
+        return f"{APP_PUBLIC_URL}/?reset_password_token={token}"
     return f"{APP_PUBLIC_URL}{path}?token={token}"
 
 def send_email(to_email: str, subject: str, body: str) -> bool:

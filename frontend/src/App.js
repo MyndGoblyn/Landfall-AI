@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ManaBackground from './components/ManaBackground';
 import Landing from './pages/Landing';
@@ -13,6 +13,22 @@ import VerifyEmail from './pages/VerifyEmail';
 import VerifyEmailSent from './pages/VerifyEmailSent';
 import ResetPassword from './pages/ResetPassword';
 import './App.css';
+
+const LandingRoute = () => {
+  const [searchParams] = useSearchParams();
+  const verifyToken = searchParams.get('verify_email_token');
+  const resetToken = searchParams.get('reset_password_token');
+
+  if (verifyToken) {
+    return <Navigate to={`/verify-email?token=${encodeURIComponent(verifyToken)}`} replace />;
+  }
+
+  if (resetToken) {
+    return <Navigate to={`/reset-password?token=${encodeURIComponent(resetToken)}`} replace />;
+  }
+
+  return <Landing />;
+};
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -30,7 +46,7 @@ function App() {
       <ManaBackground />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<LandingRoute />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/verify-email-sent" element={<VerifyEmailSent />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
