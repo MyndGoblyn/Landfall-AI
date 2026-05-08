@@ -57,6 +57,22 @@ function ManaPips({ colors = [] }) {
   return <ManaPipRow colors={colors} compact className="mana-row" />;
 }
 
+const getCandidateCommanderName = (deck) => {
+  if (deck?.commander) {
+    return deck.commander;
+  }
+
+  return deck?.cards?.find((card) => card.type_line?.includes('Legendary Creature'))?.name || '';
+};
+
+const cleanCommanderName = (name) => (
+  name
+    .replace(/\*CMDR\*/gi, '')
+    .replace(/\bCommander\b/gi, '')
+    .replace(/\s*\([^)]*\)\s*$/g, '')
+    .trim()
+);
+
 function RoleBadge({ role, tone = 'add' }) {
   const meta = getRoleMeta(role);
   const Icon = meta.Icon;
@@ -212,23 +228,33 @@ export default function AnalysisResults() {
 
   useEffect(() => {
     const fetchCommanderCard = async () => {
-      if (!deck?.commander) {
+      const commanderName = cleanCommanderName(getCandidateCommanderName(deck));
+      if (!commanderName) {
         setCommanderCard(null);
         return;
       }
 
       try {
         const response = await axios.get('https://api.scryfall.com/cards/named', {
-          params: { exact: deck.commander }
+          params: { exact: commanderName },
+          withCredentials: false
         });
         setCommanderCard(response.data);
       } catch (error) {
-        setCommanderCard(null);
+        try {
+          const response = await axios.get('https://api.scryfall.com/cards/named', {
+            params: { fuzzy: commanderName },
+            withCredentials: false
+          });
+          setCommanderCard(response.data);
+        } catch {
+          setCommanderCard(null);
+        }
       }
     };
 
     fetchCommanderCard();
-  }, [deck?.commander]);
+  }, [deck]);
 
   const fetchAnalysis = async () => {
     try {
@@ -287,6 +313,7 @@ export default function AnalysisResults() {
   const roleCounts = stats.role_counts || {};
   const swapCount = Math.max(adds.length, cuts.length);
   const maxCmcCount = Math.max(...Object.values(stats.cmc_distribution || {}), 1);
+  const displayCommanderName = deck?.commander || commanderCard?.name || getCandidateCommanderName(deck);
   const commanderImageUrl = commanderCard?.image_uris?.normal
     || commanderCard?.card_faces?.[0]?.image_uris?.normal
     || null;
@@ -472,16 +499,16 @@ export default function AnalysisResults() {
                 <div className="commander-spotlight">
                   <div className="commander-spotlight-image">
                     {commanderImageUrl ? (
-                      <img src={commanderImageUrl} alt={deck?.commander || 'Deck commander'} />
+                      <img src={commanderImageUrl} alt={displayCommanderName || 'Deck commander'} />
                     ) : (
                       <div className="commander-portrait-fallback">
-                        {(deck?.commander || 'Commander').slice(0, 2).toUpperCase()}
+                        {(displayCommanderName || 'Commander').slice(0, 2).toUpperCase()}
                       </div>
                     )}
                   </div>
                   <div className="commander-spotlight-copy">
                     <p className="eyebrow">Commander</p>
-                    <h4>{deck?.commander || 'Commander unavailable'}</h4>
+                    <h4>{displayCommanderName || 'Commander unavailable'}</h4>
                     <p>{commanderTypeLine}</p>
                   </div>
                 </div>
