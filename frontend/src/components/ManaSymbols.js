@@ -1,8 +1,8 @@
-import { Diamond, Flame, Leaf, Skull, Sun, Waves } from 'lucide-react';
+import { Diamond, Droplet, Flame, Leaf, Skull, Sun } from 'lucide-react';
 
 const manaMeta = {
   W: { label: 'White', Icon: Sun },
-  U: { label: 'Blue', Icon: Waves },
+  U: { label: 'Blue', Icon: Droplet },
   B: { label: 'Black', Icon: Skull },
   R: { label: 'Red', Icon: Flame },
   G: { label: 'Green', Icon: Leaf },
