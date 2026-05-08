@@ -72,6 +72,68 @@ class EnhancedSuggestionEngine:
     def _has_creature_card_text(self, text: str) -> bool:
         """Match creature-card text without treating noncreature cards as creatures."""
         return re.search(r'(?<!non)creature card', text) is not None
+
+    def _counter_plan_for_text(self, text: str) -> Optional[str]:
+        """Classify counter text so recommendations do not treat all counters alike."""
+        if 'proliferate' in text:
+            return 'proliferate'
+        if self._named_counter_terms(text):
+            return 'named_counters'
+        if '-1/-1 counter' in text:
+            return 'negative_counters'
+        if '+1/+1 counter' not in text and 'counter on' not in text:
+            return None
+        if any(phrase in text for phrase in [
+            'each creature you control',
+            'creatures you control',
+            'each other creature',
+            'one or more creatures you control',
+        ]):
+            return 'board_counters'
+        if re.search(r'put (?:a |one |one or more |that many )?\+1/\+1 counters? on (?:this creature|it|him|her|[a-z\', -]+)', text):
+            return 'self_counters'
+        return 'targeted_counters'
+
+    def _named_counter_terms(self, text: str) -> List[str]:
+        ignored = {'1/+1', '1/-1', 'loyalty'}
+        terms = []
+        for match in re.finditer(r'\b([a-z][a-z -]+?) counters?\b', text):
+            term = match.group(1).strip()
+            previous = None
+            while previous != term:
+                previous = term
+                term = re.sub(
+                    r'^(?:put|puts|putting|has|have|with|on|target|a|an|one or more|one|two|three|that|those)\s+',
+                    '',
+                    term
+                ).strip()
+            if len(term.split()) > 2:
+                term = term.split()[-1]
+            if term not in ignored and not term.endswith('+1/+1') and '+1/+1' not in term and '-1/-1' not in term:
+                if term not in terms:
+                    terms.append(term)
+        return terms
+
+    def _is_counter_multiplier(self, oracle_text: str) -> bool:
+        return any(phrase in oracle_text for phrase in [
+            'additional +1/+1 counter',
+            'that many plus one',
+            'twice that many',
+            'double the number of counters',
+            'double the number of +1/+1 counters',
+        ])
+
+    def _is_counter_payoff(self, oracle_text: str) -> bool:
+        return any(phrase in oracle_text for phrase in [
+            'creatures you control with counters',
+            'creature you control with a counter',
+            'if a creature you control has a counter',
+            'modified creatures',
+            'modified creature',
+            'for each counter',
+            'remove a +1/+1 counter',
+            'whenever one or more counters',
+        ])
     
     async def analyze_deck(self, deck: Dict, categories: Optional[List[str]] = None, deep: bool = False) -> Dict:
         """Main analysis entry point with commander synergy and category filtering"""
@@ -221,6 +283,9 @@ class EnhancedSuggestionEngine:
         
         # Store commander's color identity for validation
         constraints['commander_color_identity'] = commander_card.get('color_identity', [])
+        counter_plan = self._counter_plan_for_text(oracle_text)
+        if counter_plan:
+            constraints['counter_plan'] = counter_plan
         
         # Zur the Enchanter: "mana value 3 or less"
         if 'zur' in name and 'enchant' in name.lower():
@@ -1671,6 +1736,55 @@ class EnhancedSuggestionEngine:
                     'you may play lands' in oracle_text
                 )
 
+        if synergy == 'counters':
+            counter_plan = self._counter_plan_for_text(commander_text)
+            if not counter_plan:
+                return False
+            if 'proliferate' in oracle_text and counter_plan not in ['proliferate', 'named_counters']:
+                return False
+            if counter_plan == 'proliferate':
+                return (
+                    'proliferate' in oracle_text or
+                    self._is_counter_multiplier(oracle_text) or
+                    self._is_counter_payoff(oracle_text) or
+                    '+1/+1 counter' in oracle_text or
+                    '-1/-1 counter' in oracle_text
+                )
+            if counter_plan == 'named_counters':
+                named_terms = self._named_counter_terms(commander_text)
+                return (
+                    'proliferate' in oracle_text or
+                    any(f'{term} counter' in oracle_text for term in named_terms)
+                )
+            if counter_plan == 'self_counters':
+                external_counter_payoff = (
+                    self._is_counter_payoff(oracle_text) and
+                    'remove a +1/+1 counter' not in oracle_text and
+                    'enters the battlefield with' not in oracle_text
+                )
+                return (
+                    self._is_counter_multiplier(oracle_text) or
+                    external_counter_payoff or
+                    ('commander' in oracle_text and '+1/+1 counter' in oracle_text) or
+                    'move counters' in oracle_text or
+                    'move all counters' in oracle_text
+                )
+            if counter_plan == 'board_counters':
+                return (
+                    self._is_counter_multiplier(oracle_text) or
+                    self._is_counter_payoff(oracle_text) or
+                    'creatures you control' in oracle_text and '+1/+1 counter' in oracle_text or
+                    'each creature you control' in oracle_text and '+1/+1 counter' in oracle_text
+                )
+            if counter_plan == 'negative_counters':
+                return '-1/-1 counter' in oracle_text or self._is_counter_payoff(oracle_text)
+            return (
+                self._is_counter_multiplier(oracle_text) or
+                self._is_counter_payoff(oracle_text) or
+                '+1/+1 counter on target creature' in oracle_text or
+                '+1/+1 counter on a creature' in oracle_text
+            )
+
         return True
 
     def _generate_commander_recommendation_reason(
@@ -1741,11 +1855,27 @@ class EnhancedSuggestionEngine:
             else:
                 reasons.append(f"{card_name} rewards the artifact tokens {commander_name} creates, turning temporary resources into a more durable engine.")
         elif synergy == 'counters':
+            counter_plan = self._counter_plan_for_text(commander_text)
             if 'proliferate' in oracle_lower:
                 if 'proliferate' in commander_text:
                     reasons.append(f"{card_name} gives {commander_name} another proliferate effect, making every counter already on the table scale harder.")
+                elif counter_plan == 'named_counters':
+                    named_terms = self._named_counter_terms(commander_text)
+                    counter_label = f"{named_terms[0]} counters" if named_terms else "the commander's named counters"
+                    reasons.append(f"{card_name} can add more {counter_label} after {commander_name} marks a permanent, supporting that specific counter plan without mixing in unrelated +1/+1 counter cards.")
                 else:
-                    reasons.append(f"{card_name} can multiply counters after {commander_name} starts placing them, turning one counter trigger into a larger board advantage.")
+                    reasons.append(f"{card_name} can multiply counters after {commander_name} starts placing them, but it belongs here only as a counter-scaling support piece, not because the commander is a proliferate deck.")
+            elif self._is_counter_multiplier(oracle_lower):
+                if counter_plan == 'self_counters':
+                    reasons.append(f"{card_name} increases the +1/+1 counters {commander_name} puts on itself, making each commander trigger scale into a faster clock.")
+                elif counter_plan == 'board_counters':
+                    reasons.append(f"{card_name} increases the counters your board receives, so {commander_name}'s counter plan turns small creatures into real pressure faster.")
+                else:
+                    reasons.append(f"{card_name} improves the counter plan by increasing the number of counters your engine creates instead of adding an unrelated counter subtheme.")
+            elif 'commander' in oracle_lower and '+1/+1 counter' in oracle_lower:
+                reasons.append(f"{card_name} puts counters directly on {commander_name}, which supports the commander's own scaling plan without asking the deck to pivot into a generic counter shell.")
+            elif self._is_counter_payoff(oracle_lower):
+                reasons.append(f"{card_name} pays you for already having counters, giving {commander_name}'s scaling plan a concrete reward beyond simply making creatures larger.")
             elif '-1/-1 counter' in oracle_lower:
                 reasons.append(f"{card_name} adds -1/-1 counter pressure, giving {commander_name} a way to shrink or pick off creatures while staying inside a counter-focused plan.")
             elif '+1/+1 counter' in oracle_lower:
@@ -1873,10 +2003,23 @@ class EnhancedSuggestionEngine:
                 cmc_filter = f" cmc<={commander_constraints['max_enchantment_cmc']}"
             return f"t:enchantment{cmc_filter} {color_filter} f:commander"
 
+        if synergy == 'counters':
+            counter_plan = commander_constraints.get('counter_plan')
+            if counter_plan == 'proliferate':
+                return f'(o:proliferate OR o:"+1/+1 counter" OR o:"-1/-1 counter" OR o:"additional +1/+1 counter" OR o:"twice that many") {color_filter} f:commander'
+            if counter_plan == 'named_counters':
+                return f'o:proliferate {color_filter} f:commander'
+            if counter_plan == 'self_counters':
+                return f'(o:"additional +1/+1 counter" OR o:"that many plus one" OR o:"twice that many" OR o:"double the number of counters" OR o:"move counters" OR o:"commander" OR o:modified) {color_filter} f:commander'
+            if counter_plan == 'board_counters':
+                return f'(o:"additional +1/+1 counter" OR o:"creatures you control" o:"+1/+1 counter" OR o:"creatures you control with counters" OR o:modified OR o:"for each counter") {color_filter} f:commander'
+            if counter_plan == 'negative_counters':
+                return f'(o:"-1/-1 counter" OR o:"for each counter" OR o:"remove a counter") {color_filter} f:commander'
+            return f'(o:"additional +1/+1 counter" OR o:"that many plus one" OR o:"creatures you control with counters" OR o:modified OR o:"for each counter") {color_filter} f:commander'
+
         synergy_queries = {
             'artifact': '(o:"artifact card" OR o:"artifact spell" OR o:"artifacts you control" OR o:"whenever an artifact" OR o:"sacrifice an artifact" OR t:equipment OR o:equip)',
             'blink': "(o:exile o:return)",
-            'counters': '(o:"+1/+1 counter" OR o:"-1/-1 counter" OR o:proliferate OR o:"put one or more counters")',
             'creature': '(o:"creature spell" OR o:"creature enters" OR o:"creatures you control" OR o:"whenever another creature" OR o:"whenever a creature" OR o:"creature token")',
             'exile': '(o:"exile the top" OR o:"play that card" OR o:"cast that card" OR o:"from exile" OR o:"until end of your next turn")',
             'graveyard': '(o:"from your graveyard" OR o:"put into your graveyard" OR o:dies OR o:reanimate OR o:flashback OR o:escape OR o:unearth)',
@@ -1967,7 +2110,12 @@ class EnhancedSuggestionEngine:
             tips.append(f"Treasure, Clue, Food, and Blood tokens should do more than sit around. Add payoffs for sacrificing artifacts or counting artifacts so temporary tokens become lasting advantage.")
 
         if 'counters' in synergies:
-            if 'proliferate' in oracle_text:
+            counter_plan = commander_constraints.get('counter_plan') or self._counter_plan_for_text(oracle_text)
+            if counter_plan == 'named_counters':
+                named_terms = self._named_counter_terms(oracle_text)
+                counter_label = f"{named_terms[0]} counters" if named_terms else "named counters"
+                tips.append(f"Treat {counter_label} as its own mechanic. Proliferate can support it after the commander places the first counter, but generic +1/+1 counter cards do not advance this plan.")
+            elif 'proliferate' in oracle_text:
                 counter_kind = "-1/-1 counters" if "-1/-1 counter" in oracle_text else "+1/+1 counters" if "+1/+1 counter" in oracle_text else "counters"
                 tips.append(f"Put {counter_kind} on multiple permanents before proliferating. {commander_name} scales much better when each proliferate trigger advances several threats or weakens several opposing creatures.")
             else:
@@ -2281,8 +2429,12 @@ class EnhancedSuggestionEngine:
         query_parts = ["is:commander", "t:creature", "f:commander"]
 
         if colors:
-            color_str = "".join(colors).lower()
-            query_parts.append(f"id:{color_str}")
+            normalized_colors = [color.upper() for color in colors]
+            if 'C' in normalized_colors:
+                query_parts.append("id:c")
+            else:
+                color_str = "".join(normalized_colors).lower()
+                query_parts.append(f"id:{color_str}")
 
         if max_cmc:
             query_parts.append(f"cmc<={max_cmc}")

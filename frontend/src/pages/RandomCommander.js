@@ -22,6 +22,7 @@ export default function RandomCommander() {
   const combos = commanderData?.combos || [];
 
   const colorOptions = [
+    { id: 'C', label: 'Colorless', color: '#898577' },
     { id: 'W', label: 'White', color: '#f8f6d8' },
     { id: 'U', label: 'Blue', color: '#0e68ab' },
     { id: 'B', label: 'Black', color: '#150b00' },
@@ -30,10 +31,18 @@ export default function RandomCommander() {
   ];
 
   const toggleColor = (colorId) => {
+    if (colorId === 'C') {
+      setFilters({
+        ...filters,
+        colors: filters.colors.includes('C') ? [] : ['C']
+      });
+      return;
+    }
+
     if (filters.colors.includes(colorId)) {
       setFilters({...filters, colors: filters.colors.filter(c => c !== colorId)});
     } else {
-      setFilters({...filters, colors: [...filters.colors, colorId]});
+      setFilters({...filters, colors: [...filters.colors.filter(c => c !== 'C'), colorId]});
     }
   };
 
@@ -100,6 +109,7 @@ export default function RandomCommander() {
                   }`}
                   style={{ backgroundColor: color.color }}
                   title={color.label}
+                  aria-label={color.label}
                   data-testid={`color-${color.id}`}
                 />
               ))}

@@ -169,6 +169,15 @@ def test_random_commander_filters_to_legendary_creatures():
     assert "t:creature" in query
 
 
+def test_random_commander_colorless_filter_is_exact_color_identity():
+    engine = make_engine()
+
+    query = engine._build_random_commander_query(colors=["C"])
+
+    assert "id:c" in query
+    assert "id:w" not in query
+
+
 def test_commander_synergy_detection_does_not_use_type_line_only_artifact_theme():
     engine = make_engine()
     artifact_body = {
@@ -243,6 +252,80 @@ def test_counter_reasons_do_not_invent_proliferate_or_blight_language():
 
     assert "proliferate ability" not in reason
     assert "blight" not in reason.lower()
+
+
+def test_self_counter_commanders_do_not_accept_proliferate_or_self_contained_counter_cards():
+    engine = make_engine()
+    commander = {
+        "name": "Gimli of the Glittering Caves",
+        "type_line": "Legendary Creature - Dwarf Warrior",
+        "oracle_text": "Whenever one or more Treasures enter the battlefield under your control, put a +1/+1 counter on Gimli of the Glittering Caves.",
+    }
+    karns_bastion = {
+        "name": "Karn's Bastion",
+        "type_line": "Land",
+        "oracle_text": "{4}, {T}: Proliferate.",
+    }
+    walking_ballista = {
+        "name": "Walking Ballista",
+        "type_line": "Artifact Creature - Construct",
+        "oracle_text": "Walking Ballista enters the battlefield with X +1/+1 counters on it. Remove a +1/+1 counter from Walking Ballista: It deals 1 damage to any target.",
+    }
+    hardened_scales = {
+        "name": "Hardened Scales",
+        "type_line": "Enchantment",
+        "oracle_text": "If one or more +1/+1 counters would be put on a creature you control, that many plus one are put on it instead.",
+    }
+    opal_palace = {
+        "name": "Opal Palace",
+        "type_line": "Land",
+        "oracle_text": "{T}: Add one mana of any color in your commander's color identity. If you spend this mana to cast your commander, it enters with a number of additional +1/+1 counters on it.",
+    }
+
+    assert not engine._card_matches_commander_context(karns_bastion, "counters", commander)
+    assert not engine._card_matches_commander_context(walking_ballista, "counters", commander)
+    assert engine._card_matches_commander_context(hardened_scales, "counters", commander)
+    assert engine._card_matches_commander_context(opal_palace, "counters", commander)
+
+
+def test_named_counter_commanders_do_not_accept_plus_one_counter_package():
+    engine = make_engine()
+    commander = {
+        "name": "Ultima, Origin of Oblivion",
+        "type_line": "Legendary Creature - God",
+        "oracle_text": "Whenever Ultima attacks, put a blight counter on target land. Whenever you tap a land for {C}, add an additional {C}.",
+    }
+    hardened_scales = {
+        "name": "Hardened Scales",
+        "type_line": "Enchantment",
+        "oracle_text": "If one or more +1/+1 counters would be put on a creature you control, that many plus one are put on it instead.",
+    }
+    contagion_clasp = {
+        "name": "Contagion Clasp",
+        "type_line": "Artifact",
+        "oracle_text": "{4}, {T}: Proliferate.",
+    }
+
+    constraints = engine._get_commander_constraints(commander)
+    tips = engine._generate_commander_strategy_tips(
+        commander,
+        ["counters"],
+        constraints,
+    )
+    reason = engine._generate_commander_recommendation_reason(
+        contagion_clasp,
+        commander["name"],
+        "counters",
+        commander,
+    )
+
+    assert constraints["counter_plan"] == "named_counters"
+    assert engine._named_counter_terms(commander["oracle_text"]) == ["blight"]
+    assert not engine._card_matches_commander_context(hardened_scales, "counters", commander)
+    assert engine._card_matches_commander_context(contagion_clasp, "counters", commander)
+    assert "generic +1/+1 counter cards do not advance this plan" in " ".join(tips)
+    assert "blight counters" in reason
+    assert "put a blight counters" not in reason
 
 
 def test_commander_analysis_uses_larger_search_budget_only_for_deep_mode():
