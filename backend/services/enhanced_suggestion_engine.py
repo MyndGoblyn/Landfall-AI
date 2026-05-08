@@ -39,6 +39,31 @@ class EnhancedSuggestionEngine:
             'sacrifice': ['sacrifice', 'dies'],
             'voltron': ['equipment', 'aura', 'attach']
         }
+
+    def _combined_type_line(self, card: Dict) -> str:
+        """Return all face type lines as a single lowercase string."""
+        parts = [card.get('type_line', '')]
+        parts.extend(face.get('type_line', '') for face in card.get('card_faces', []) or [])
+        return ' '.join(part for part in parts if part).lower()
+
+    def _combined_oracle_text(self, card: Dict) -> str:
+        """Return all face oracle text as a single lowercase string."""
+        parts = [card.get('oracle_text', '')]
+        parts.extend(face.get('oracle_text', '') for face in card.get('card_faces', []) or [])
+        return ' '.join(part for part in parts if part).lower()
+
+    def _is_commander_eligible(self, card: Dict, creature_only: bool = False) -> bool:
+        """True when the card can actually be chosen as a commander."""
+        if not card or card.get('legalities', {}).get('commander') != 'legal':
+            return False
+
+        type_line = self._combined_type_line(card)
+        oracle_text = self._combined_oracle_text(card)
+        is_legendary_creature = 'legendary' in type_line and 'creature' in type_line
+        if creature_only:
+            return is_legendary_creature
+
+        return is_legendary_creature or 'can be your commander' in oracle_text
     
     async def analyze_deck(self, deck: Dict, categories: Optional[List[str]] = None, deep: bool = False) -> Dict:
         """Main analysis entry point with commander synergy and category filtering"""
@@ -104,8 +129,8 @@ class EnhancedSuggestionEngine:
     
     def _detect_commander_synergies(self, commander_card: Dict) -> List[str]:
         """Detect what synergies the commander cares about"""
-        oracle_text = commander_card.get('oracle_text', '').lower()
-        type_line = commander_card.get('type_line', '').lower()
+        oracle_text = self._combined_oracle_text(commander_card)
+        type_line = self._combined_type_line(commander_card)
         
         synergies = []
 
@@ -113,9 +138,9 @@ class EnhancedSuggestionEngine:
             if synergy_type not in synergies:
                 synergies.append(synergy_type)
 
-        if 'enchantment' in oracle_text or 'aura' in oracle_text or 'enchant' in oracle_text or 'enchantment' in type_line:
+        if 'enchantment' in oracle_text or 'aura' in oracle_text or 'enchant' in oracle_text:
             add_once('enchantment')
-        if 'artifact' in oracle_text or 'equipment' in oracle_text or 'artifact' in type_line:
+        if 'artifact' in oracle_text or 'equipment' in oracle_text:
             add_once('artifact')
         creature_theme_phrases = [
             'creatures you control',
@@ -1491,13 +1516,44 @@ class EnhancedSuggestionEngine:
             return self._is_exile_value_card(oracle_text)
         if synergy == 'lifegain':
             return self._has_lifegain_reward_text(oracle_text) or re.search(r'\bgain(?:s|ed)? life\b', oracle_text) is not None
+        if synergy == 'artifact':
+            artifact_support = [
+                'artifact card',
+                'artifact spell',
+                'artifacts you control',
+                'whenever an artifact',
+                'sacrifice an artifact',
+                'artifact token',
+                'equipment',
+                'equip',
+                'equipped',
+            ]
+            return any(phrase in oracle_text for phrase in artifact_support) or 'equipment' in type_line
+        if synergy == 'enchantment':
+            enchantment_support = [
+                'enchantment card',
+                'enchantment spell',
+                'enchantments you control',
+                'whenever an enchantment',
+                'aura',
+                'enchant ',
+                'enchanted',
+            ]
+            return any(phrase in oracle_text for phrase in enchantment_support) or 'aura' in type_line
+        if synergy == 'creature':
+            creature_support = [
+                'creature spell',
+                'creature card',
+                'creatures you control',
+                'whenever another creature',
+                'whenever a creature',
+                'creature enters',
+                'enters the battlefield',
+                'nontoken creature',
+                'creature token',
+            ]
+            return any(phrase in oracle_text for phrase in creature_support)
         if synergy in detected:
-            return True
-        if synergy == 'artifact' and 'artifact' in type_line:
-            return True
-        if synergy == 'enchantment' and 'enchantment' in type_line:
-            return True
-        if synergy == 'creature' and 'creature' in type_line:
             return True
         if synergy == 'voltron' and ('equipment' in type_line or 'aura' in type_line):
             return True
@@ -1512,7 +1568,7 @@ class EnhancedSuggestionEngine:
 
     def _card_matches_commander_context(self, card_data: Dict, synergy: str, commander_card: Dict) -> bool:
         """Confirm the candidate matches the commander's specific version of a broad theme."""
-        commander_text = commander_card.get('oracle_text', '').lower()
+        commander_text = self._combined_oracle_text(commander_card)
         oracle_text = card_data.get('oracle_text', '').lower()
         type_line = card_data.get('type_line', '').lower()
 
@@ -1526,8 +1582,42 @@ class EnhancedSuggestionEngine:
             if 'enchantment card' in commander_text and 'graveyard' in commander_text:
                 return 'enchantment' in type_line or 'enchantment card' in oracle_text
 
-        if synergy == 'artifact' and 'artifact card in your graveyard' in commander_text:
-            return 'artifact' in type_line
+        if synergy == 'artifact':
+            if not any(term in commander_text for term in ['artifact', 'equipment', 'equip', 'treasure', 'clue', 'food', 'blood']):
+                return False
+            if 'artifact card in your graveyard' in commander_text:
+                return 'artifact' in type_line
+            if 'equipment' in commander_text or 'equipped' in commander_text or 'equip' in commander_text:
+                return 'equipment' in type_line or any(term in oracle_text for term in ['equipment', 'equip', 'equipped', 'attach'])
+
+        if synergy == 'enchantment':
+            if not any(term in commander_text for term in ['enchantment', 'aura', 'enchant', 'enchanted']):
+                return False
+            if 'aura' in commander_text or 'enchanted' in commander_text:
+                return 'aura' in type_line or any(term in oracle_text for term in ['aura', 'enchant ', 'enchanted'])
+
+        if synergy == 'creature':
+            if 'creature spell' in commander_text:
+                return 'creature' in type_line or 'creature spell' in oracle_text
+            if any(term in commander_text for term in ['enters the battlefield', 'creature enters']):
+                return any(term in oracle_text for term in [
+                    'enters the battlefield',
+                    'creature token',
+                    'return it to the battlefield',
+                    'exile another',
+                    'whenever another creature',
+                    'whenever a creature',
+                ])
+            if any(term in commander_text for term in ['creatures you control', 'each creature you control', 'creatures get', 'creatures have']):
+                return any(term in oracle_text for term in [
+                    'creatures you control',
+                    'each creature you control',
+                    'creature token',
+                    'whenever a creature',
+                    'whenever another creature',
+                    '+1/+1 counter',
+                    'draw a card',
+                ])
 
         if synergy == 'tokens':
             if any(phrase in oracle_text for phrase in ['its controller creates', 'that player creates', 'target opponent creates']):
@@ -1757,10 +1847,10 @@ class EnhancedSuggestionEngine:
             return f"t:enchantment{cmc_filter} {color_filter} f:commander"
 
         synergy_queries = {
-            'artifact': "t:artifact",
+            'artifact': '(o:"artifact card" OR o:"artifact spell" OR o:"artifacts you control" OR o:"whenever an artifact" OR o:"sacrifice an artifact" OR t:equipment OR o:equip)',
             'blink': "(o:exile o:return)",
             'counters': '(o:"+1/+1 counter" OR o:"-1/-1 counter" OR o:proliferate OR o:"put one or more counters")',
-            'creature': "t:creature",
+            'creature': '(o:"creature spell" OR o:"creature enters" OR o:"creatures you control" OR o:"whenever another creature" OR o:"whenever a creature" OR o:"creature token")',
             'exile': '(o:"exile the top" OR o:"play that card" OR o:"cast that card" OR o:"from exile" OR o:"until end of your next turn")',
             'graveyard': '(o:"from your graveyard" OR o:"put into your graveyard" OR o:dies OR o:reanimate OR o:flashback OR o:escape OR o:unearth)',
             'instant_sorcery': '(t:instant OR t:sorcery OR o:"instant or sorcery")',
@@ -1915,7 +2005,23 @@ class EnhancedSuggestionEngine:
         else:
             notes.append(f"Deep Strategy - Priority Lane: Build around the repeated action in {commander_name}'s text first, then add staples only after that engine has enough density.")
 
-        if any(theme in synergies for theme in ['creature', 'tokens', 'artifact_tokens', 'sacrifice']):
+        if 'artifact' in synergies:
+            if 'graveyard' in oracle_text:
+                notes.append("Deep Strategy - Artifact Loop: Split artifacts into self-sacrificing value pieces, recursion targets, and payoffs. Mana rocks are useful early, but the best cards still matter after they are milled or destroyed.")
+            elif 'equipment' in oracle_text or 'equipped' in oracle_text:
+                notes.append("Deep Strategy - Equipment Curve: Keep equip costs low enough to move protection and evasion after removal. One expensive Equipment is weaker than several pieces that let the commander attack safely.")
+            else:
+                notes.append("Deep Strategy - Artifact Density: Count only artifacts that feed the commander's trigger or convert into cards, damage, or recursion. Raw artifact count should serve a payoff.")
+        if 'creature' in synergies:
+            if 'creature spell' in oracle_text:
+                notes.append("Deep Strategy - Creature Casting: Bias toward creatures that replace themselves, ramp, or interact when cast. That keeps the commander trigger productive even when the table removes the first board.")
+            elif 'enters the battlefield' in oracle_text or 'creature enters' in oracle_text:
+                notes.append("Deep Strategy - ETB Texture: Mix token makers with individually strong ETB creatures, then add blink or bounce only when there are enough targets that immediately create cards, mana, or removal.")
+            else:
+                notes.append("Deep Strategy - Board Quality: Creature count matters less than creature jobs. Prioritize bodies that protect, draw, ramp, recur, or multiply the commander's payoff.")
+        if 'enchantment' in synergies:
+            notes.append("Deep Strategy - Enchantment Slots: Separate enchantments into engines, protection, removal, and finishers. Auras need a specific payoff or protection role before they earn space.")
+        if any(theme in synergies for theme in ['tokens', 'artifact_tokens', 'sacrifice']):
             notes.append("Deep Strategy - Resource Loop: Check that the deck has makers, outlets, and payoffs in balance. Too many payoffs without repeatable material will make strong cards look stranded.")
         if any(theme in synergies for theme in ['graveyard', 'exile', 'blink', 'landfall']):
             notes.append("Deep Strategy - Sequencing: Favor cards that generate value over multiple turns or zones. This kind of commander improves when setup pieces replace themselves instead of asking you to spend a full card for setup only.")
@@ -2145,7 +2251,7 @@ class EnhancedSuggestionEngine:
         search_text: Optional[str] = None,
     ) -> str:
         """Build a budget-friendly Scryfall query for random commander discovery."""
-        query_parts = ["is:commander", "f:commander"]
+        query_parts = ["is:commander", "t:creature", "f:commander"]
 
         if colors:
             color_str = "".join(colors).lower()
@@ -2238,9 +2344,11 @@ class EnhancedSuggestionEngine:
         
         try:
             results = await self.scryfall.search_cards_by_criteria(query, limit=100)
+            results = [card for card in results if self._is_commander_eligible(card, creature_only=True)]
             if not results:
                 # Fallback to any commander
-                results = await self.scryfall.search_cards_by_criteria("is:commander f:commander", limit=100)
+                results = await self.scryfall.search_cards_by_criteria("is:commander t:creature f:commander", limit=100)
+                results = [card for card in results if self._is_commander_eligible(card, creature_only=True)]
             
             # Pick random
             import random

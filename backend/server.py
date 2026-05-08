@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Header, HTTPException, Depends, Request, Response, status
+from fastapi import FastAPI, APIRouter, Header, HTTPException, Depends, Request, Response, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.responses import JSONResponse
@@ -10,6 +10,7 @@ import asyncio
 import hashlib
 import secrets
 import smtplib
+import re
 from pathlib import Path
 from email.message import EmailMessage
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
@@ -1025,6 +1026,58 @@ class RandomCommanderRequest(BaseModel):
     search_text: Optional[str] = None
     max_cmc: Optional[int] = None
 
+def _commander_candidate_payload(card: Dict) -> Dict:
+    images = suggestion_engine._get_card_images(card)
+    return {
+        "name": card.get("name"),
+        "type_line": card.get("type_line"),
+        "oracle_text": card.get("oracle_text", ""),
+        "cmc": card.get("cmc", 0),
+        "color_identity": card.get("color_identity", []),
+        "image_url": images["front"],
+        "image_url_back": images["back"],
+    }
+
+def _commander_candidate_name_matches(card_name: str, query: str) -> bool:
+    tokens = re.findall(r"[A-Za-z0-9]+", query.lower())
+    if not tokens:
+        return False
+    words = re.findall(r"[A-Za-z0-9]+", card_name.lower())
+    return all(any(word.startswith(token) for word in words) for token in tokens)
+
+@api_router.get("/commander/search")
+async def search_commanders(
+    query: str = Query(..., min_length=2, max_length=80),
+    current_user: Dict = Depends(get_current_user)
+):
+    """Return commander candidates for ambiguous or partial card names."""
+    safe_query = suggestion_engine._quote_scryfall_phrase(query)
+    search_queries = [
+        f"name:{safe_query} is:commander f:commander",
+        f"{safe_query} is:commander f:commander",
+    ]
+    candidates = []
+    seen_names = set()
+
+    for search_query in search_queries:
+        results = await scryfall_service.search_cards_by_criteria(search_query, limit=20)
+        for card in results:
+            if not suggestion_engine._is_commander_eligible(card):
+                continue
+            if not _commander_candidate_name_matches(card.get("name", ""), query):
+                continue
+            name_key = card.get("name", "").lower()
+            if not name_key or name_key in seen_names:
+                continue
+            candidates.append(_commander_candidate_payload(card))
+            seen_names.add(name_key)
+            if len(candidates) >= 8:
+                break
+        if len(candidates) >= 8:
+            break
+
+    return {"query": query, "candidates": candidates}
+
 @api_router.post("/commander/lookup")
 async def lookup_commander(request: CommanderLookupRequest, current_user: Dict = Depends(get_current_user)):
     """Lookup a specific commander and provide strategy analysis"""
@@ -1034,8 +1087,8 @@ async def lookup_commander(request: CommanderLookupRequest, current_user: Dict =
         if not commander_card:
             raise HTTPException(status_code=404, detail="Commander not found")
         
-        # Check if it's a legal commander
-        if not commander_card.get('legalities', {}).get('commander') == 'legal':
+        # Check if it can actually be chosen as a commander.
+        if not suggestion_engine._is_commander_eligible(commander_card):
             raise HTTPException(status_code=400, detail="Card is not a legal commander")
         
         # Analyze commander
@@ -1056,7 +1109,7 @@ async def deep_lookup_commander(request: CommanderLookupRequest, current_user: D
         if not commander_card:
             raise HTTPException(status_code=404, detail="Commander not found")
 
-        if not commander_card.get('legalities', {}).get('commander') == 'legal':
+        if not suggestion_engine._is_commander_eligible(commander_card):
             raise HTTPException(status_code=400, detail="Card is not a legal commander")
 
         result = await suggestion_engine.analyze_commander(commander_card, deep=True)

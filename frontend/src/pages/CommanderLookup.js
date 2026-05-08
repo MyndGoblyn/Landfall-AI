@@ -12,14 +12,13 @@ export default function CommanderLookup() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [deepLoading, setDeepLoading] = useState(false);
+  const [optionLoading, setOptionLoading] = useState(false);
+  const [commanderOptions, setCommanderOptions] = useState([]);
   const [commanderData, setCommanderData] = useState(null);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
 
-  const handleSearch = async (e, deep = false) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
+  const lookupCommander = async (commanderName, deep = false) => {
     if (deep) {
       setDeepLoading(true);
     } else {
@@ -28,10 +27,11 @@ export default function CommanderLookup() {
     try {
       const response = await axios.post(
         `${API}/commander/lookup${deep ? '/deep' : ''}`,
-        { commander_name: searchQuery },
+        { commander_name: commanderName },
         { headers: getAuthHeaders() }
       );
       setCommanderData(response.data);
+      setCommanderOptions([]);
       toast.success(deep ? 'Deep strategy complete!' : 'Commander found!');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Commander not found');
@@ -39,6 +39,53 @@ export default function CommanderLookup() {
       setLoading(false);
       setDeepLoading(false);
     }
+  };
+
+  const fetchCommanderOptions = async (query) => {
+    setOptionLoading(true);
+    try {
+      const response = await axios.get(`${API}/commander/search`, {
+        params: { query },
+        headers: getAuthHeaders(),
+      });
+      return response.data.candidates || [];
+    } catch (error) {
+      return [];
+    } finally {
+      setOptionLoading(false);
+    }
+  };
+
+  const shouldOfferOptionsFirst = (query) => {
+    const trimmed = query.trim();
+    return trimmed.length >= 2 && trimmed.length <= 12 && !trimmed.includes(' ');
+  };
+
+  const handleSearch = async (e, deep = false) => {
+    e.preventDefault();
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) return;
+
+    if (!deep && shouldOfferOptionsFirst(trimmedQuery)) {
+      const options = await fetchCommanderOptions(trimmedQuery);
+      if (options.length > 1) {
+        setCommanderOptions(options);
+        setCommanderData(null);
+        toast.success('Choose the commander you meant.');
+        return;
+      }
+      if (options.length === 1) {
+        await lookupCommander(options[0].name, false);
+        return;
+      }
+    }
+
+    await lookupCommander(trimmedQuery, deep);
+  };
+
+  const handleOptionSelect = async (commanderName) => {
+    setSearchQuery(commanderName);
+    await lookupCommander(commanderName, false);
   };
 
   const colorText = commanderData?.color_identity?.length
@@ -82,11 +129,11 @@ export default function CommanderLookup() {
             />
             <button
               type="submit"
-              disabled={loading || deepLoading}
+              disabled={loading || deepLoading || optionLoading}
               className="btn-primary px-8"
               data-testid="search-commander-btn"
             >
-              {loading ? (
+              {loading || optionLoading ? (
                 <span className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   Searching...
@@ -100,7 +147,7 @@ export default function CommanderLookup() {
             </button>
             <button
               type="button"
-              disabled={loading || deepLoading}
+              disabled={loading || deepLoading || optionLoading}
               onClick={(e) => handleSearch(e, true)}
               className="btn-secondary px-8"
               data-testid="deep-search-commander-btn"
@@ -119,6 +166,33 @@ export default function CommanderLookup() {
             </button>
           </div>
         </form>
+
+        {commanderOptions.length > 0 && (
+          <div className="glass-panel p-6 mb-10" data-testid="commander-options">
+            <h3 className="text-2xl font-semibold mb-4 text-amber-300">Select a Commander</h3>
+            <div className="commander-option-grid">
+              {commanderOptions.map((option) => (
+                <button
+                  type="button"
+                  key={option.name}
+                  className="commander-option-card"
+                  onClick={() => handleOptionSelect(option.name)}
+                >
+                  {option.image_url && (
+                    <img src={option.image_url} alt={option.name} className="commander-option-image" />
+                  )}
+                  <span className="commander-option-body">
+                    <span className="commander-option-name">{option.name}</span>
+                    <span className="commander-option-type">{option.type_line}</span>
+                    <span className="commander-option-meta">
+                      Mana Value {option.cmc}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {commanderData && (
           <div className="space-y-8" data-testid="commander-results">

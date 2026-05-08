@@ -114,7 +114,7 @@ def test_random_commander_query_translates_freeform_terms_to_scryfall_syntax():
         search_text="artifact graveyard lifegain counters zombies",
     )
 
-    assert query.startswith("is:commander f:commander")
+    assert query.startswith("is:commander t:creature f:commander")
     assert "id:bg" in query
     assert "cmc<=4" in query
     assert "otag:lifegain" in query
@@ -133,6 +133,71 @@ def test_random_commander_query_supports_keyword_abilities_and_sanitizes_text():
     assert 'kw:"double strike"' in query
     assert "<" not in query
     assert ">" not in query
+
+
+def test_commander_eligibility_requires_actual_commander_permission():
+    engine = make_engine()
+
+    legendary_creature = {
+        "name": "Legal Commander",
+        "type_line": "Legendary Creature - Human Wizard",
+        "legalities": {"commander": "legal"},
+    }
+    legendary_vehicle = {
+        "name": "Legendary Vehicle",
+        "type_line": "Legendary Artifact - Vehicle",
+        "legalities": {"commander": "legal"},
+    }
+    commander_planeswalker = {
+        "name": "Commander Planeswalker",
+        "type_line": "Legendary Planeswalker",
+        "oracle_text": "This card can be your commander.",
+        "legalities": {"commander": "legal"},
+    }
+
+    assert engine._is_commander_eligible(legendary_creature)
+    assert not engine._is_commander_eligible(legendary_vehicle)
+    assert engine._is_commander_eligible(commander_planeswalker)
+    assert not engine._is_commander_eligible(commander_planeswalker, creature_only=True)
+
+
+def test_random_commander_filters_to_legendary_creatures():
+    engine = make_engine()
+
+    query = engine._build_random_commander_query(search_text="graveyard")
+
+    assert "t:creature" in query
+
+
+def test_commander_synergy_detection_does_not_use_type_line_only_artifact_theme():
+    engine = make_engine()
+    artifact_body = {
+        "name": "Artifact Body Commander",
+        "type_line": "Legendary Artifact Creature - Construct",
+        "oracle_text": "Whenever you draw your second card each turn, put a +1/+1 counter on this creature.",
+    }
+
+    synergies = engine._detect_commander_synergies(artifact_body)
+
+    assert "artifact" not in synergies
+    assert "counters" in synergies
+
+
+def test_artifact_synergy_rejects_generic_artifact_without_rules_support():
+    engine = make_engine()
+    mana_rock = {
+        "name": "Generic Mana Rock",
+        "type_line": "Artifact",
+        "oracle_text": "Tap: Add one mana of any color.",
+    }
+    artifact_engine = {
+        "name": "Artifact Payoff",
+        "type_line": "Artifact",
+        "oracle_text": "Whenever an artifact enters the battlefield under your control, draw a card.",
+    }
+
+    assert not engine._card_matches_synergy(mana_rock, "artifact")
+    assert engine._card_matches_synergy(artifact_engine, "artifact")
 
 
 def test_commander_analysis_uses_larger_search_budget_only_for_deep_mode():
