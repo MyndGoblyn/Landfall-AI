@@ -154,12 +154,35 @@ def test_commander_analysis_uses_larger_search_budget_only_for_deep_mode():
     fast_query_count = len(fake_scryfall.queries)
     fake_scryfall.queries.clear()
 
-    asyncio.run(engine.analyze_commander(commander_card, deep=True))
+    deep_result = asyncio.run(engine.analyze_commander(commander_card, deep=True))
     deep_query_count = len(fake_scryfall.queries)
 
     assert fast_query_count == 3
     assert deep_query_count > fast_query_count
     assert deep_query_count <= 8
+    assert deep_result["analysis_depth"] == "deep"
+    assert any("Deep Strategy" in tip for tip in deep_result["strategy_tips"])
+
+
+def test_deep_strategy_tips_are_visibly_distinct_from_fast_tips():
+    engine = make_engine()
+    zur_card = {
+        "name": "Zur the Enchanter",
+        "oracle_text": (
+            "Flying. Whenever Zur the Enchanter attacks, you may search your library "
+            "for an enchantment card with mana value 3 or less, put it onto the battlefield, then shuffle."
+        ),
+        "type_line": "Legendary Creature - Human Wizard",
+        "color_identity": ["W", "U", "B"],
+    }
+    synergies = engine._detect_commander_synergies(zur_card)
+    constraints = engine._get_commander_constraints(zur_card)
+
+    fast_tips = engine._generate_commander_strategy_tips(zur_card, synergies, constraints)
+    deep_tips = fast_tips + engine._generate_deep_commander_strategy_tips(zur_card, synergies, constraints)
+
+    assert len(deep_tips) > len(fast_tips)
+    assert any("Deep Strategy - Tutor Map" in tip for tip in deep_tips)
 
 
 @pytest.mark.parametrize(

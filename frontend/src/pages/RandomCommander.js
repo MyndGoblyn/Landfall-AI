@@ -115,7 +115,7 @@ export default function RandomCommander() {
                 value={filters.search_text}
                 onChange={(e) => setFilters({...filters, search_text: e.target.value})}
                 placeholder="lifegain counters, artifact graveyard, landfall draw"
-                className="input w-full pl-12"
+                className="input strategy-search-input w-full"
                 data-testid="strategy-search-input"
               />
             </div>

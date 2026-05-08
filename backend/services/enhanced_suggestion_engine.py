@@ -1893,6 +1893,41 @@ class EnhancedSuggestionEngine:
 
         return tips
 
+    def _generate_deep_commander_strategy_tips(
+        self,
+        commander_card: Dict,
+        synergies: List[str],
+        commander_constraints: Optional[Dict] = None
+    ) -> List[str]:
+        """Generate extra notes that make opt-in deep strategy visibly deeper."""
+        commander_constraints = commander_constraints or {}
+        commander_name = commander_card.get('name', 'This commander')
+        oracle_text = commander_card.get('oracle_text', '').lower()
+        color_identity = commander_card.get('color_identity', [])
+        notes = []
+
+        if commander_constraints.get('max_enchantment_cmc'):
+            max_cmc = commander_constraints['max_enchantment_cmc']
+            notes.append(f"Deep Strategy - Tutor Map: Separate the {max_cmc}-mana-or-less targets into protection, card advantage, removal, and finishers. That keeps each attack trigger from becoming a generic value search.")
+        elif synergies:
+            theme_names = ", ".join(theme.replace('_', ' ') for theme in synergies[:3])
+            notes.append(f"Deep Strategy - Priority Lane: Treat {theme_names} as the main lane, then cut cards that only share colors with {commander_name} but do not advance those triggers.")
+        else:
+            notes.append(f"Deep Strategy - Priority Lane: Build around the repeated action in {commander_name}'s text first, then add staples only after that engine has enough density.")
+
+        if any(theme in synergies for theme in ['creature', 'tokens', 'artifact_tokens', 'sacrifice']):
+            notes.append("Deep Strategy - Resource Loop: Check that the deck has makers, outlets, and payoffs in balance. Too many payoffs without repeatable material will make strong cards look stranded.")
+        if any(theme in synergies for theme in ['graveyard', 'exile', 'blink', 'landfall']):
+            notes.append("Deep Strategy - Sequencing: Favor cards that generate value over multiple turns or zones. This kind of commander improves when setup pieces replace themselves instead of asking you to spend a full card for setup only.")
+        if any(theme in synergies for theme in ['voltron', 'counters', 'lifegain']):
+            notes.append(f"Deep Strategy - Protection Check: {commander_name} likely needs protection before payoff density. Haste, ward/hexproof, and instant-speed saves make the engine much less fragile.")
+
+        interaction_examples = self._role_examples('interaction', color_identity, synergies)
+        if interaction_examples:
+            notes.append(f"Deep Strategy - Table Safety: Reserve slots for answers like {interaction_examples}; deep recommendations should improve the engine without leaving it unable to stop faster decks.")
+
+        return notes
+
     async def analyze_commander(self, commander_card: Dict, deep: bool = False) -> Dict:
         """Analyze a commander and provide strategy tips"""
         extracted = self.scryfall.extract_card_data(commander_card)
@@ -1902,6 +1937,8 @@ class EnhancedSuggestionEngine:
         color_identity = extracted['color_identity']
         commander_constraints = self._get_commander_constraints(commander_card)
         tips = self._generate_commander_strategy_tips(commander_card, synergies, commander_constraints)
+        if deep:
+            tips.extend(self._generate_deep_commander_strategy_tips(commander_card, synergies, commander_constraints))
 
         # Get suggested cards with proper validation
         suggested_cards = []
@@ -1910,11 +1947,16 @@ class EnhancedSuggestionEngine:
         synergy_search_budget = 8 if deep else 3
         max_suggested_cards = 12 if deep else 8
         per_synergy_limit = 4 if deep else 3
+        max_total_searches = 8 if deep else 3
+        search_count = 0
 
         for synergy in synergies[:synergy_search_budget]:
+            if search_count >= max_total_searches:
+                break
             query = self._build_query_for_synergy(synergy, color_identity, commander_constraints)
             
             if query:
+                search_count += 1
                 results = await self.scryfall.search_cards_by_criteria(query, limit=25)
                 cards_added = 0
                 for card in results:
@@ -1984,6 +2026,55 @@ class EnhancedSuggestionEngine:
             
             if len(suggested_cards) >= max_suggested_cards:
                 break
+
+        if deep and len(suggested_cards) < max_suggested_cards:
+            support_roles = ['draw', 'ramp', 'protection', 'interaction']
+            for role in support_roles:
+                if len(suggested_cards) >= max_suggested_cards or search_count >= max_total_searches:
+                    break
+
+                query = self._build_query_for_role(role, color_identity, synergies, commander_constraints)
+                if not query:
+                    continue
+
+                search_count += 1
+                results = await self.scryfall.search_cards_by_criteria(query, limit=20)
+                cards_added = 0
+                for card in results:
+                    if cards_added >= 1 or len(suggested_cards) >= max_suggested_cards:
+                        break
+
+                    card_name = card.get('name', '').lower()
+                    if card_name in suggested_names or card_name == extracted['name'].lower():
+                        continue
+                    if not self._is_legal_for_deck(card, color_identity):
+                        continue
+
+                    card_extracted = self.scryfall.extract_card_data(card)
+                    extracted_name = card_extracted['name'].lower()
+                    if extracted_name in suggested_names:
+                        continue
+                    if not self._card_matches_role(card_extracted, role):
+                        continue
+
+                    image_data = self._get_card_images(card)
+                    suggested_cards.append({
+                        'name': card_extracted['name'],
+                        'cmc': self._calculate_effective_cmc(card),
+                        'role': role,
+                        'reason': self._generate_card_reasoning(
+                            card_extracted,
+                            role,
+                            extracted['name'],
+                            synergies,
+                            {'roles': {role: 1}},
+                            commander_constraints
+                        ),
+                        'image_url': image_data['front'],
+                        'image_url_back': image_data['back']
+                    })
+                    suggested_names.add(extracted_name)
+                    cards_added += 1
         
         # Generate combos
         combos = self._generate_combo_suggestions(extracted['name'], synergies, [])

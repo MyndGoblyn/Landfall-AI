@@ -195,6 +195,10 @@ h1, h2, h3, h4, h5, h6 {
   color: rgba(244, 239, 227, 0.42);
 }
 
+.input.strategy-search-input {
+  padding-left: 44px;
+}
+
 /* Textarea */
 textarea.input {
   min-height: 200px;
