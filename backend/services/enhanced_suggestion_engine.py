@@ -1053,16 +1053,24 @@ class EnhancedSuggestionEngine:
                     
                     # Generate specific, contextual reasoning with constraints
                     if requested_synergy and commander_data:
-                        reason = self._generate_commander_recommendation_reason(
+                        quality = self._recommendation_quality_metadata(
+                            extracted,
+                            requested_synergy,
+                            commander_data,
+                        )
+                        if quality['score'] < 76 or not quality.get('evidence_tags') or quality.get('confidence') == 'speculative':
+                            continue
+                        reason = self._generate_validated_recommendation_reason(
                             extracted,
                             commander or "your commander",
                             requested_synergy,
-                            commander_data
+                            quality
                         )
                     else:
-                        reason = self._generate_card_reasoning(
-                            extracted, display_role, commander, commander_synergies, gaps, commander_constraints
-                        )
+                        quality = self._role_recommendation_quality_metadata(extracted, display_role, gaps)
+                        if quality['score'] < 76 or quality.get('fit_tier') == 'Speculative':
+                            continue
+                        reason = self._generate_validated_role_reason(extracted, display_role, quality)
                     
                     suggestion = {
                         'card_name': extracted['name'],
@@ -1074,7 +1082,12 @@ class EnhancedSuggestionEngine:
                             extracted['oracle_text'].lower(), 
                             extracted['type_line'].lower()
                         ),
-                        'confidence': 0.9 if requested_synergy else 0.8,
+                        'confidence': 0.9 if requested_synergy else quality['confidence'],
+                        'fit_tier': quality['fit_tier'],
+                        'score': quality['score'],
+                        'evidence': quality['evidence'],
+                        'evidence_tags': quality['evidence_tags'],
+                        'penalty_tags': quality['penalty_tags'],
                         'image_url': image_data['front'],
                         'image_url_back': image_data['back']
                     }
@@ -1289,6 +1302,124 @@ class EnhancedSuggestionEngine:
                 'prevent all damage',
             ])
         return True
+
+    def _role_recommendation_quality_metadata(self, card_data: Dict, role: str, gaps: Dict) -> Dict:
+        """Score deck-analysis role fixes separately from commander synergy."""
+        oracle_text = card_data.get('oracle_text', '').lower()
+        type_line = card_data.get('type_line', '').lower()
+        cmc = card_data.get('cmc', 0)
+        evidence_tags = ['role_gap'] if role in gaps.get('roles', {}) else []
+        penalty_tags = []
+        score = 70 if evidence_tags else 62
+        evidence = f"fills {role} need"
+        job = f"{role} role fix"
+
+        if role == 'draw' and self._has_card_draw_text(oracle_text):
+            score += 10
+            evidence = 'adds card flow'
+            if 'whenever' in oracle_text or 'at the beginning' in oracle_text:
+                score += 5
+                evidence_tags.append('repeatable_engine')
+            evidence_tags.append('card_flow')
+        elif role == 'ramp' and self._card_matches_role(card_data, 'ramp'):
+            score += 9
+            evidence = 'improves mana development'
+            evidence_tags.append('mana_development')
+            if cmc <= 2:
+                score += 4
+                evidence_tags.append('low_setup_cost')
+        elif role == 'removal' and self._card_matches_role(card_data, 'removal'):
+            score += 10
+            evidence = 'answers specific threats'
+            evidence_tags.append('interaction')
+        elif role == 'sweeper' and self._card_matches_role(card_data, 'sweeper'):
+            score += 9
+            evidence = 'resets wide boards'
+            evidence_tags.append('interaction')
+        elif role == 'protection' and self._card_matches_role(card_data, 'protection'):
+            score += 10
+            evidence = 'protects key permanents'
+            evidence_tags.append('protection')
+        elif role == 'interaction' and self._card_matches_role(card_data, 'interaction'):
+            score += 10
+            evidence = 'interacts on the stack or prevents damage'
+            evidence_tags.append('interaction')
+        elif role == 'counter' and 'counter target' in oracle_text:
+            score += 18
+            evidence = 'counters opposing spells or abilities'
+            evidence_tags.append('interaction')
+            evidence_tags.append('requested_category')
+        elif role == 'recursion' and any(term in oracle_text for term in ['return', 'graveyard', 'reanimate']):
+            score += 16
+            evidence = 'returns cards from the graveyard'
+            evidence_tags.append('role_value')
+            evidence_tags.append('requested_category')
+        elif role == 'tutor' and ('search your library' in oracle_text or 'tutor' in oracle_text):
+            score += 16
+            evidence = 'adds library search redundancy'
+            evidence_tags.append('role_value')
+            evidence_tags.append('requested_category')
+
+        if self._is_generic_mana_card(card_data):
+            penalty_tags.append('generic_staple')
+            if role != 'ramp':
+                score -= 14
+        if cmc >= 6 and role not in {'sweeper'}:
+            penalty_tags.append('high_mana_value')
+            score -= 8
+        if 'until end of turn' in oracle_text and role not in {'protection', 'removal'}:
+            penalty_tags.append('one_shot_effect')
+            score -= 5
+        if 'land' in type_line and role not in {'ramp'}:
+            penalty_tags.append('wrong_card_type')
+            score -= 18
+
+        if len(evidence_tags) <= 1 and score < 78:
+            penalty_tags.append('low_evidence')
+
+        score = max(0, min(score, 92))
+        if score >= 84:
+            fit_tier = 'Strong Role Fix'
+            confidence = 0.86
+        elif score >= 76:
+            fit_tier = 'Role Fix'
+            confidence = 0.78
+        else:
+            fit_tier = 'Speculative'
+            confidence = 0.6
+
+        return {
+            'job': job,
+            'fit_tier': fit_tier,
+            'score': score,
+            'evidence': evidence,
+            'evidence_tags': evidence_tags,
+            'penalty_tags': penalty_tags,
+            'confidence': confidence,
+        }
+
+    def _generate_validated_role_reason(self, card_data: Dict, role: str, quality: Dict) -> str:
+        """Explain role fixes without overstating commander synergy."""
+        card_name = card_data.get('name', 'This card')
+        action = f"{card_name} is a {role} role fix."
+        if role == 'draw':
+            action = f"{card_name} adds card flow."
+        elif role == 'ramp':
+            action = f"{card_name} improves mana development."
+        elif role in {'removal', 'interaction', 'sweeper'}:
+            action = f"{card_name} gives the deck more interaction."
+        elif role == 'protection':
+            action = f"{card_name} protects key permanents."
+
+        reason = f"{action} It is recommended as a role fix because the analysis found a deck-health need: {quality.get('evidence', role)}."
+        penalties = set(quality.get('penalty_tags', []))
+        if 'generic_staple' in penalties:
+            reason += " This is a role recommendation, not a commander-specific synergy claim."
+        if 'high_mana_value' in penalties:
+            reason += " Its higher mana value means it should compete with other payoff slots."
+        if 'one_shot_effect' in penalties:
+            reason += " Because the effect is temporary, it is best used to patch a specific gap."
+        return reason
 
     def _generate_cut_reason(self, card: Dict, cut_type: str, protected_themes: set) -> str:
         """Generate a more concrete explanation for a cut suggestion."""
@@ -2259,140 +2390,340 @@ class EnhancedSuggestionEngine:
         commander_card: Dict,
         fallback_role: Optional[str] = None
     ) -> Dict:
-        """Attach deterministic job and tier metadata for paging and QA."""
+        """Attach deterministic proof, penalty, and tier metadata for recommendations."""
         oracle_text = card_data.get('oracle_text', '').lower()
         type_line = card_data.get('type_line', '').lower()
         commander_text = self._combined_oracle_text(commander_card)
         score = 50
         job = fallback_role or synergy
         evidence = synergy.replace('_', ' ')
+        evidence_tags = []
+        penalty_tags = []
+
+        def add_evidence(tag: str):
+            if tag not in evidence_tags:
+                evidence_tags.append(tag)
+
+        def add_penalty(tag: str):
+            if tag not in penalty_tags:
+                penalty_tags.append(tag)
 
         if synergy == 'blink':
             if 'enters the battlefield' in oracle_text and not ('exile' in oracle_text and 'return' in oracle_text):
                 job = 'ETB value target'
                 evidence = 'repeatable ETB value'
                 score = 88
+                add_evidence('direct_synergy')
+                add_evidence('repeatable_engine')
             elif 'exile' in oracle_text and 'return' in oracle_text:
                 job = 'blink enabler'
                 evidence = 'reuses or protects your permanents'
                 score = 84
+                add_evidence('enabler')
+                add_evidence('protection')
         elif synergy == 'creature':
             if self._has_creature_spell_text(commander_text) and 'creature' in type_line:
                 job = 'creature spell trigger'
                 evidence = 'raises creature density for commander triggers'
                 score = 84
+                add_evidence('direct_synergy')
+                add_evidence('creature_density')
                 if 'enters the battlefield' in oracle_text or self._has_card_draw_text(oracle_text):
                     score += 6
+                    add_evidence('role_value')
             elif 'creature token' in oracle_text:
                 job = 'creature material'
                 evidence = 'adds bodies for the creature plan'
                 score = 76
+                add_evidence('enabler')
+                add_evidence('creature_token_support')
             elif 'enters the battlefield' in oracle_text:
                 job = 'ETB creature value'
                 evidence = 'supports creature-entry loops'
                 score = 80
+                add_evidence('role_value')
         elif synergy == 'board_conversion':
             if self._is_creature_token_support(oracle_text, type_line):
                 job = 'wide-board material'
                 evidence = 'adds creature material for the commander to convert'
                 score = 88
+                add_evidence('direct_synergy')
+                add_evidence('creature_token_support')
             elif 'creature' in type_line and card_data.get('cmc', 0) <= 2:
                 job = 'cheap body'
                 evidence = 'sets up the board before the payoff arrives'
                 score = 84
+                add_evidence('enabler')
+                add_evidence('low_setup_cost')
             elif 'creature' in type_line and card_data.get('cmc', 0) <= 3:
                 job = 'early attacker'
                 evidence = 'becomes a better threat after conversion'
                 score = 82
+                add_evidence('enabler')
             elif any(term in oracle_text for term in ['creatures you control gain', 'creatures you control have', 'attacking creatures', "can't be blocked"]):
                 job = 'combat converter'
                 evidence = 'helps the converted board connect'
                 score = 84
+                add_evidence('direct_synergy')
+                add_evidence('payoff')
         elif synergy == 'sacrifice':
             if 'sacrifice a creature' in oracle_text or 'sacrifice another creature' in oracle_text:
                 job = 'sacrifice outlet'
                 evidence = 'lets you control death triggers'
                 score = 88
+                add_evidence('direct_synergy')
+                add_evidence('sacrifice_outlet')
             elif 'whenever you sacrifice' in oracle_text or 'whenever a creature dies' in oracle_text or 'whenever another creature dies' in oracle_text:
                 job = 'death payoff'
                 evidence = 'pays off sacrifices and deaths'
                 score = 84
+                add_evidence('direct_synergy')
+                add_evidence('payoff')
             elif 'creature token' in oracle_text:
                 job = 'sacrifice fodder'
                 evidence = 'creates expendable material'
                 score = 74
+                add_evidence('enabler')
+                add_evidence('creature_token_support')
         elif synergy == 'counters':
             counter_plan = self._counter_plan_for_text(commander_text)
             if 'proliferate' in oracle_text and counter_plan in ['proliferate', 'named_counters']:
                 job = 'named-counter scaling'
                 evidence = 'adds counters after the commander establishes them'
                 score = 86
+                add_evidence('direct_synergy')
+                add_evidence('counter_scaling')
             elif self._is_counter_multiplier(oracle_text):
                 job = 'counter multiplier'
                 evidence = 'increases counters produced by the engine'
                 score = 82
+                add_evidence('direct_synergy')
+                add_evidence('counter_placement')
             elif self._is_counter_payoff(oracle_text):
                 job = 'counter payoff'
                 evidence = 'rewards counters already being present'
                 score = 76
+                add_evidence('payoff')
+            elif '+1/+1 counter' in oracle_text or 'counter on' in oracle_text:
+                add_penalty('wrong_counter_context')
+                score = 60
         elif synergy == 'voltron':
             if 'equipment' in type_line or 'equip' in oracle_text:
                 job = 'equipment pressure'
                 evidence = 'reusable combat upgrade'
                 score = 82
+                add_evidence('direct_synergy')
+                add_evidence('repeatable_engine')
             elif any(term in oracle_text for term in ['hexproof', 'shroud', 'ward']):
                 job = 'commander protection'
                 evidence = 'keeps the threat on board'
                 score = 86
+                add_evidence('protection')
             elif any(term in oracle_text for term in ["can't be blocked", 'flying', 'trample']):
                 job = 'combat evasion'
                 evidence = 'helps damage and triggers connect'
                 score = 80
+                add_evidence('enabler')
         elif synergy == 'tokens':
             if 'twice that many' in oracle_text or 'double the number' in oracle_text:
                 job = 'token multiplier'
                 evidence = 'scales repeatable token output'
                 score = 88
+                add_evidence('direct_synergy')
+                add_evidence('payoff')
             elif 'tokens you control' in oracle_text:
                 job = 'token payoff'
                 evidence = 'rewards the board the commander makes'
                 score = 80
+                add_evidence('payoff')
             elif 'creature token' in oracle_text:
                 job = 'token maker'
                 evidence = 'adds bodies to the core plan'
                 score = 74
+                add_evidence('enabler')
+                add_evidence('creature_token_support')
+            elif 'treasure token' in oracle_text or 'clue token' in oracle_text or 'food token' in oracle_text:
+                add_penalty('wrong_token_type')
+                score = 58
         elif synergy == 'artifact_tokens':
             if 'whenever you sacrifice' in oracle_text or 'sacrifice an artifact' in oracle_text:
                 job = 'artifact-token payoff'
                 evidence = 'converts temporary tokens into value'
                 score = 84
+                add_evidence('direct_synergy')
+                add_evidence('payoff')
             elif self._has_artifact_token_text(oracle_text):
                 job = 'artifact-token maker'
                 evidence = 'adds spendable artifacts'
                 score = 76
+                add_evidence('enabler')
         elif synergy == 'exile':
             if 'from exile' in oracle_text:
                 job = 'exile payoff'
                 evidence = 'rewards cards cast from exile'
                 score = 84
+                add_evidence('direct_synergy')
+                add_evidence('payoff')
             else:
                 job = 'impulse draw'
                 evidence = 'keeps exile-play triggers flowing'
                 score = 78
+                add_evidence('enabler')
+                add_evidence('card_access')
+        elif synergy == 'artifact':
+            if any(term in oracle_text for term in ['whenever an artifact', 'artifacts you control', 'sacrifice an artifact', 'artifact card']):
+                job = 'artifact engine'
+                evidence = 'cares about artifacts directly'
+                score = 84
+                add_evidence('direct_synergy')
+            elif 'equipment' in type_line or 'equip' in oracle_text:
+                job = 'equipment support'
+                evidence = 'artifact card with combat utility'
+                score = 78
+                add_evidence('enabler')
+        elif synergy == 'enchantment':
+            if any(term in oracle_text for term in ['whenever an enchantment', 'enchantments you control', 'enchantment card']):
+                job = 'enchantment engine'
+                evidence = 'cares about enchantments directly'
+                score = 84
+                add_evidence('direct_synergy')
+            elif 'aura' in type_line or 'enchant ' in oracle_text or 'enchanted creature' in oracle_text:
+                job = 'aura support'
+                evidence = 'supports the enchantment package'
+                score = 78
+                add_evidence('enabler')
+        elif synergy == 'landfall':
+            if 'additional land' in oracle_text or 'you may play lands' in oracle_text:
+                job = 'extra land drop'
+                evidence = 'increases landfall trigger frequency'
+                score = 88
+                add_evidence('direct_synergy')
+                add_evidence('enabler')
+            elif 'landfall' in oracle_text or 'land you control enters' in oracle_text:
+                job = 'landfall payoff'
+                evidence = 'rewards the same land-drop plan'
+                score = 82
+                add_evidence('payoff')
+        elif synergy == 'lifegain':
+            if self._has_lifegain_reward_text(oracle_text):
+                job = 'lifegain payoff'
+                evidence = 'rewards life gain directly'
+                score = 84
+                add_evidence('direct_synergy')
+            elif re.search(r'\bgain(?:s|ed)? life\b', oracle_text):
+                job = 'lifegain enabler'
+                evidence = 'supplies life gain triggers'
+                score = 76
+                add_evidence('enabler')
+        elif synergy == 'instant_sorcery':
+            if any(term in oracle_text for term in ['whenever you cast an instant', 'whenever you cast a sorcery', 'instant or sorcery']):
+                job = 'spell payoff'
+                evidence = 'rewards instant and sorcery casting'
+                score = 84
+                add_evidence('direct_synergy')
+            elif 'copy target instant' in oracle_text or 'copy target sorcery' in oracle_text:
+                job = 'spell copier'
+                evidence = 'multiplies key spells'
+                score = 80
+                add_evidence('payoff')
 
         if self._has_card_draw_text(oracle_text):
             score += 4
+            add_evidence('card_flow')
         if 'mana value' in oracle_text or 'costs' in oracle_text:
             score += 2
+        if card_data.get('cmc', 0) >= 6 and not any(tag in evidence_tags for tag in ['payoff', 'direct_synergy']):
+            add_penalty('high_mana_value')
+            score -= 8
+        if 'until end of turn' in oracle_text and not any(tag in evidence_tags for tag in ['protection', 'payoff']):
+            add_penalty('one_shot_effect')
+            score -= 5
+        if self._is_generic_mana_card(card_data):
+            add_penalty('generic_staple')
+            score -= 12
+        if not evidence_tags:
+            add_penalty('low_theme_overlap')
+            score = min(score, 64)
 
-        score = min(score, 95)
-        confidence = 'core' if score >= 84 else 'support' if score >= 72 else 'alternate'
+        score = max(0, min(score, 95))
+        if score >= 86 and 'direct_synergy' in evidence_tags:
+            confidence = 'core'
+            fit_tier = 'Core Fit'
+        elif score >= 78 and evidence_tags:
+            confidence = 'support'
+            fit_tier = 'Strong Support'
+        elif score >= 72 and evidence_tags:
+            confidence = 'alternate'
+            fit_tier = 'Role Fit'
+        else:
+            confidence = 'speculative'
+            fit_tier = 'Speculative'
         return {
             'job': job,
             'confidence': confidence,
+            'fit_tier': fit_tier,
             'score': score,
             'evidence': evidence,
+            'evidence_tags': evidence_tags,
+            'penalty_tags': penalty_tags,
         }
+
+    def _generate_validated_recommendation_reason(
+        self,
+        card_data: Dict,
+        commander_name: str,
+        synergy: str,
+        quality: Dict
+    ) -> str:
+        """Build why-it-fits copy only from validated evidence and penalties."""
+        card_name = card_data.get('name', 'This card')
+        oracle_text = card_data.get('oracle_text', '').lower()
+        type_line = card_data.get('type_line', '').lower()
+        evidence_tags = set(quality.get('evidence_tags', []))
+        penalty_tags = set(quality.get('penalty_tags', []))
+        job = quality.get('job', synergy.replace('_', ' '))
+
+        action = f"{card_name} fills the {job} role."
+        if 'creature_token_support' in evidence_tags:
+            action = f"{card_name} creates or supports creature material."
+        elif 'sacrifice_outlet' in evidence_tags:
+            action = f"{card_name} gives the deck a real sacrifice outlet."
+        elif 'counter_scaling' in evidence_tags:
+            action = f"{card_name} adds proliferate or counter-scaling text."
+        elif 'counter_placement' in evidence_tags:
+            action = f"{card_name} increases the counters your engine creates."
+        elif 'protection' in evidence_tags:
+            action = f"{card_name} protects the commander or key permanents."
+        elif 'card_flow' in evidence_tags:
+            action = f"{card_name} adds card flow while filling the {job} role."
+        elif 'payoff' in evidence_tags:
+            action = f"{card_name} rewards the board state this deck is trying to build."
+        elif 'enabler' in evidence_tags:
+            action = f"{card_name} is an enabler for the deck's {synergy.replace('_', ' ')} plan."
+
+        fit = f"That matters for {commander_name} because the validated match is {quality.get('evidence', synergy.replace('_', ' '))}."
+        if synergy == 'board_conversion':
+            fit = f"That matters for {commander_name} because board-conversion commanders need material or team-wide combat support before the payoff turn."
+        elif synergy == 'tokens' and 'creature_token_support' in evidence_tags:
+            fit = f"That matters for {commander_name} because the commander wants bodies or token payoffs, not unrelated token vocabulary."
+        elif synergy == 'artifact_tokens':
+            fit = f"That matters for {commander_name} because the card creates or converts artifact tokens the deck can actually use."
+        elif synergy == 'counters':
+            fit = f"That matters for {commander_name} because the card interacts with the same counter plan instead of merely mentioning counters."
+        elif synergy == 'sacrifice':
+            fit = f"That matters for {commander_name} because sacrifice decks need outlets, fodder, or payoffs that turn deaths into resources."
+        elif synergy == 'blink':
+            fit = f"That matters for {commander_name} because blink decks need reusable ETB targets or ways to reset and protect permanents."
+
+        caution = ""
+        if 'high_mana_value' in penalty_tags:
+            caution = " Its mana value means it should be treated as a payoff slot, not early setup."
+        elif 'one_shot_effect' in penalty_tags:
+            caution = " Because the effect is temporary, it is best as support rather than a core engine."
+        elif 'generic_staple' in penalty_tags:
+            caution = " This is recommended only as a role piece, not as commander-specific synergy."
+
+        return f"{action} {fit}{caution}"
 
     def _build_strategy_sections(self, tips: List[str]) -> List[Dict]:
         """Group tips into small deterministic pages without changing legacy output."""
@@ -2418,9 +2749,9 @@ class EnhancedSuggestionEngine:
     def _build_recommended_sections(self, suggested_cards: List[Dict]) -> List[Dict]:
         """Group recommendations into pages by deterministic quality tier."""
         section_map = {
-            'core': {'id': 'core', 'label': 'Sharp Picks', 'cards': []},
-            'support': {'id': 'support', 'label': 'Support Picks', 'cards': []},
-            'alternate': {'id': 'alternate', 'label': 'More Finds', 'cards': []},
+            'core': {'id': 'core', 'label': 'Core Fit', 'cards': []},
+            'support': {'id': 'support', 'label': 'Strong Support', 'cards': []},
+            'alternate': {'id': 'alternate', 'label': 'Role Fit', 'cards': []},
         }
 
         for index, card in enumerate(suggested_cards):
@@ -2754,13 +3085,15 @@ class EnhancedSuggestionEngine:
         )
         if quality['score'] < minimum_score:
             return None
+        if not quality.get('evidence_tags') or quality.get('confidence') == 'speculative':
+            return None
 
         image_data = self._get_card_images(card)
-        reason = self._generate_commander_recommendation_reason(
+        reason = self._generate_validated_recommendation_reason(
             card_extracted,
             commander_name,
             synergy,
-            commander_card
+            quality
         )
 
         return {
@@ -2769,8 +3102,11 @@ class EnhancedSuggestionEngine:
             'role': synergy,
             'job': quality['job'],
             'confidence': quality['confidence'],
+            'fit_tier': quality['fit_tier'],
             'score': quality['score'],
             'evidence': quality['evidence'],
+            'evidence_tags': quality['evidence_tags'],
+            'penalty_tags': quality['penalty_tags'],
             'reason': reason,
             'image_url': image_data['front'],
             'image_url_back': image_data['back']

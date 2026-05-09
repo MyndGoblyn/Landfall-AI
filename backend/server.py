@@ -220,6 +220,11 @@ class Suggestion(BaseModel):
     price: Optional[float] = None
     synergy_tags: List[str] = []
     confidence: float = 0.8
+    fit_tier: Optional[str] = None
+    score: Optional[int] = None
+    evidence: Optional[str] = None
+    evidence_tags: List[str] = []
+    penalty_tags: List[str] = []
     image_url: Optional[str] = None
     image_url_back: Optional[str] = None  # For double-faced cards
 

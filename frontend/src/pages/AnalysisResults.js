@@ -140,8 +140,10 @@ function RecommendationCard({ suggestion, type = 'add', index }) {
       <CardImages suggestion={suggestion} />
       <div className="recommendation-body">
         <div className="recommendation-kicker">
+          {suggestion.fit_tier && <span>{suggestion.fit_tier}</span>}
           <RoleBadge role={suggestion.role_tag} tone={isAdd ? 'add' : 'cut'} />
           <span>MV {suggestion.cmc}</span>
+          {suggestion.score && <span>Score {suggestion.score}</span>}
           {suggestion.price && <span>${suggestion.price.toFixed(2)}</span>}
           {suggestion.confidence && (
             <span>{Math.round(suggestion.confidence * 100)}% {isAdd ? 'match' : 'confidence'}</span>
@@ -163,6 +165,9 @@ function RecommendationCard({ suggestion, type = 'add', index }) {
         <div className="recommendation-copy">
           <h4>{isAdd ? 'Why it fits' : 'Why it is flexible'}</h4>
           <p>{suggestion.reason}</p>
+          {suggestion.evidence && (
+            <p className="recommendation-evidence">Evidence: {suggestion.evidence}</p>
+          )}
         </div>
       </div>
     </article>

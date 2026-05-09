@@ -116,6 +116,7 @@ export function RecommendedCardsPager({
               </div>
               <p className="text-sm page-copy mb-3">{card.reason}</p>
               <div className="flex gap-2 text-xs flex-wrap">
+                {card.fit_tier && <span className="theme-pill">{card.fit_tier}</span>}
                 <span className="theme-pill">{card.job || card.role}</span>
                 {card.evidence && <span className="theme-pill">{card.evidence}</span>}
                 <span className="theme-pill">Mana Value {card.cmc}</span>

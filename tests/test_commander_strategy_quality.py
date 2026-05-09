@@ -755,6 +755,91 @@ def test_board_conversion_recommendation_search_returns_nonland_material():
     assert [card["name"] for card in cards] == ["Servo Engine"]
     assert cards[0]["job"] == "wide-board material"
     assert cards[0]["evidence"] == "adds creature material for the commander to convert"
+    assert cards[0]["fit_tier"] == "Core Fit"
+    assert "creature_token_support" in cards[0]["evidence_tags"]
+
+
+def test_recommendation_quality_gate_rejects_wrong_token_type_for_creature_tokens():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.results = [
+        {
+            "name": "Big Score",
+            "oracle_text": "As an additional cost to cast this spell, discard a card. Draw two cards and create two Treasure tokens.",
+            "type_line": "Instant",
+            "cmc": 4,
+            "color_identity": ["R"],
+        },
+        {
+            "name": "Dragon Fodder",
+            "oracle_text": "Create two 1/1 red Goblin creature tokens.",
+            "type_line": "Sorcery",
+            "cmc": 2,
+            "color_identity": ["R"],
+        },
+    ]
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    commander = {
+        "name": "Creature Token Commander",
+        "oracle_text": "Whenever you create one or more creature tokens, draw a card.",
+        "type_line": "Legendary Creature",
+        "color_identity": ["R"],
+    }
+
+    cards = asyncio.run(engine._search_commander_recommendations(
+        commander_card=commander,
+        synergies=["tokens"],
+        color_identity=["R"],
+        commander_constraints=engine._get_commander_constraints(commander),
+        max_cards=5,
+        search_budget=1,
+        per_synergy_limit=5,
+        query_limit=10,
+        minimum_score=72,
+    ))
+
+    assert [card["name"] for card in cards] == ["Dragon Fodder"]
+    assert "creature_token_support" in cards[0]["evidence_tags"]
+    assert "Treasure" not in cards[0]["reason"]
+
+
+def test_recommendation_quality_gate_marks_loose_counter_matches_speculative():
+    engine = make_engine()
+    commander = {
+        "name": "Named Counter Commander",
+        "oracle_text": "Whenever this creature attacks, put a blight counter on target creature. Then proliferate.",
+        "type_line": "Legendary Creature",
+        "color_identity": [],
+    }
+    loose_counter_card = {
+        "name": "Random Counter Trick",
+        "oracle_text": "Put a +1/+1 counter on target creature.",
+        "type_line": "Instant",
+        "cmc": 1,
+    }
+
+    quality = engine._recommendation_quality_metadata(loose_counter_card, "counters", commander)
+
+    assert quality["fit_tier"] == "Speculative"
+    assert "wrong_counter_context" in quality["penalty_tags"]
+    assert quality["score"] < 72
+
+
+def test_role_fix_reason_does_not_claim_commander_synergy():
+    engine = make_engine()
+    gaps = {"roles": {"draw": 3}}
+    draw_card = {
+        "name": "Read the Bones",
+        "oracle_text": "Scry 2, then draw two cards. You lose 2 life.",
+        "type_line": "Sorcery",
+        "cmc": 3,
+    }
+
+    quality = engine._role_recommendation_quality_metadata(draw_card, "draw", gaps)
+    reason = engine._generate_validated_role_reason(draw_card, "draw", quality)
+
+    assert quality["fit_tier"] in {"Role Fix", "Strong Role Fix"}
+    assert "role" in reason.lower()
+    assert "commander-specific synergy" not in reason.lower()
 
 
 def test_deep_deck_analysis_is_visibly_distinct_from_fast_analysis():

@@ -923,6 +923,12 @@ textarea.input {
   color: #e7ddcb;
 }
 
+.recommendation-copy .recommendation-evidence {
+  margin-top: 8px;
+  color: #d8b66a;
+  font-size: 0.84rem;
+}
+
 .role-chip {
   display: inline-flex;
   align-items: center;
