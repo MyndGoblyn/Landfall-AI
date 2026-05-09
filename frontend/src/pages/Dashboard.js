@@ -8,6 +8,7 @@ import AppTopbar from '../components/AppTopbar';
 import AnalyzeModal from '../components/AnalyzeModal';
 import { ManaPip } from '../components/ManaSymbols';
 import { API } from '../lib/api';
+import useRotatingStatus from '../hooks/useRotatingStatus';
 
 export default function Dashboard() {
   const [decks, setDecks] = useState([]);
@@ -16,8 +17,15 @@ export default function Dashboard() {
   const [showAnalyzeModal, setShowAnalyzeModal] = useState(false);
   const [selectedDeck, setSelectedDeck] = useState(null);
   const [newDeckName, setNewDeckName] = useState('');
+  const [analysisLoadingMode, setAnalysisLoadingMode] = useState(null);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
+  const analysisStatus = useRotatingStatus(Boolean(analysisLoadingMode), [
+    'Reading deck roles and commander themes',
+    'Checking synergy tags and role coverage',
+    'Building pilot notes and risk checks',
+    'Scoring upgrade and cut candidates',
+  ]);
 
   useEffect(() => {
     fetchDecks();
@@ -83,7 +91,8 @@ export default function Dashboard() {
     if (!selectedDeck) return;
 
     try {
-      toast.loading(deep ? 'Running deep deck analysis...' : 'Analyzing deck with enhanced engine...');
+      setAnalysisLoadingMode(deep ? 'deep' : 'fast');
+      toast.loading(deep ? 'Running deep deterministic analysis...' : 'Analyzing deck with deterministic engine...');
       const response = await axios.post(
         `${API}/decks/${selectedDeck.id}/analyze${deep ? '/deep' : ''}`,
         categories ? { categories } : {},
@@ -95,12 +104,20 @@ export default function Dashboard() {
     } catch (error) {
       toast.dismiss();
       toast.error(error.response?.data?.detail || 'Analysis failed');
+    } finally {
+      setAnalysisLoadingMode(null);
     }
   };
 
   return (
     <div className="app-shell">
       <AppTopbar showLogout />
+      {analysisLoadingMode && (
+        <div className="analysis-progress-banner" role="status" aria-live="polite">
+          <strong>{analysisLoadingMode === 'deep' ? 'Deep Analysis' : 'Deck Analysis'}</strong>
+          <span>{analysisStatus}</span>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12 max-w-7xl">

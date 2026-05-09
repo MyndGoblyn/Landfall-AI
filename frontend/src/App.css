@@ -1049,6 +1049,11 @@ textarea.input {
   gap: 12px;
 }
 
+.pilot-note-pager {
+  display: grid;
+  gap: 16px;
+}
+
 .pilot-note {
   display: grid;
   grid-template-columns: 32px 1fr;
@@ -1069,6 +1074,56 @@ textarea.input {
 
 .pilot-note p {
   color: #e7ddcb;
+}
+
+.loading-status-copy {
+  color: #d9c8a6;
+  font-size: 0.82rem;
+  max-width: 260px;
+}
+
+.loading-status-panel,
+.analysis-progress-banner {
+  border: 1px solid rgba(244, 210, 125, 0.28);
+  border-radius: 8px;
+  background: rgba(15, 16, 18, 0.88);
+  color: #e7ddcb;
+}
+
+.loading-status-panel {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.loading-status-panel strong {
+  color: #f4d27d;
+}
+
+.loading-status-panel p {
+  color: #bfb3a4;
+  font-size: 0.84rem;
+}
+
+.analysis-progress-banner {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 14px auto 0;
+  max-width: 760px;
+  padding: 10px 16px;
+  position: sticky;
+  top: 74px;
+  z-index: 18;
+}
+
+.analysis-progress-banner strong {
+  color: #f4d27d;
+}
+
+.analysis-progress-banner span {
+  color: #d9c8a6;
 }
 
 .theme-cloud {

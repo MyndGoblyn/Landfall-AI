@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import AppTopbar from '../components/AppTopbar';
 import { ManaPipRow } from '../components/ManaSymbols';
 import { API } from '../lib/api';
+import useRotatingStatus from '../hooks/useRotatingStatus';
 
 const roleMeta = {
   counters: { label: 'Counters', className: 'role-counters', Icon: Sparkles },
@@ -239,6 +240,91 @@ function HealthMeter({ role, count }) {
   );
 }
 
+const pilotNoteSections = [
+  { id: 'game-plan', label: 'Game Plan', prefixes: ['Game Plan -'], fallbackLimit: 3 },
+  { id: 'setup', label: 'Setup', prefixes: ['Setup Priority -', 'Your land count', 'Add ', 'Your deck needs'] },
+  { id: 'sequencing', label: 'Sequencing', prefixes: ['Sequencing -', 'Mulligan Guidance -'] },
+  { id: 'risk', label: 'Risk Check', prefixes: ['Failure Point -', 'Table Safety -'] },
+  { id: 'upgrade', label: 'Upgrade Direction', prefixes: ['Upgrade Direction -', 'Counter Strategy:', 'Token Strategy:', 'Aristocrats Strategy:', 'Enchantress Strategy:', 'Voltron Strategy:', 'Graveyard Strategy:'] },
+  { id: 'deep', label: 'Deep Analysis', prefixes: ['Deep Analysis -'] },
+];
+
+function buildPilotNoteSections(tips = []) {
+  const remaining = tips.map((tip, index) => ({ tip, index }));
+  const sections = pilotNoteSections.map((section) => {
+    const matches = [];
+
+    for (let i = remaining.length - 1; i >= 0; i -= 1) {
+      const entry = remaining[i];
+      if (section.prefixes.some((prefix) => entry.tip.startsWith(prefix))) {
+        matches.unshift(entry);
+        remaining.splice(i, 1);
+      }
+    }
+
+    if (matches.length === 0 && section.fallbackLimit && remaining.length > 0) {
+      matches.push(...remaining.splice(0, section.fallbackLimit));
+    }
+
+    return {
+      id: section.id,
+      label: section.label,
+      tips: matches.sort((a, b) => a.index - b.index).map((entry) => entry.tip),
+    };
+  }).filter((section) => section.tips.length > 0);
+
+  if (remaining.length > 0) {
+    sections.push({
+      id: 'more',
+      label: 'More Notes',
+      tips: remaining.sort((a, b) => a.index - b.index).map((entry) => entry.tip),
+    });
+  }
+
+  return sections;
+}
+
+function PilotNotesPager({ tips = [] }) {
+  const sections = useMemo(() => buildPilotNoteSections(tips), [tips]);
+  const [activeId, setActiveId] = useState(sections[0]?.id || '');
+
+  useEffect(() => {
+    setActiveId(sections[0]?.id || '');
+  }, [tips, sections]);
+
+  const activeSection = sections.find((section) => section.id === activeId) || sections[0];
+
+  if (!activeSection) return null;
+
+  return (
+    <div className="pilot-note-pager">
+      {sections.length > 1 && (
+        <div className="section-pager-tabs" role="tablist" aria-label="Pilot note sections">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              type="button"
+              className={`section-pager-tab ${activeSection.id === section.id ? 'active' : ''}`}
+              onClick={() => setActiveId(section.id)}
+            >
+              <span>{section.label}</span>
+              <span className="section-pager-count">{section.tips.length}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="pilot-note-list">
+        {activeSection.tips.map((tip, idx) => (
+          <div key={`${activeSection.id}-${idx}`} className="pilot-note">
+            <span>{idx + 1}</span>
+            <p>{tip}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AnalysisResults() {
   const { analysisId } = useParams();
   const [analysis, setAnalysis] = useState(null);
@@ -248,6 +334,12 @@ export default function AnalysisResults() {
   const [deepLoading, setDeepLoading] = useState(false);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
+  const deepStatus = useRotatingStatus(deepLoading, [
+    'Running deeper deterministic passes',
+    'Checking role coverage against commander themes',
+    'Building pilot notes and risk checks',
+    'Scoring upgrade and cut candidates',
+  ]);
 
   useEffect(() => {
     fetchAnalysis();
@@ -389,6 +481,7 @@ export default function AnalysisResults() {
                 </>
               )}
             </button>
+            {deepLoading && <span className="loading-status-copy">{deepStatus}</span>}
             <button
               data-testid="export-btn"
               onClick={handleExport}
@@ -532,14 +625,7 @@ export default function AnalysisResults() {
                       <h3>Game plan signals</h3>
                     </div>
                   </div>
-                  <div className="pilot-note-list">
-                    {analysis.playstyle_tips.map((tip, idx) => (
-                      <div key={idx} className="pilot-note">
-                        <span>{idx + 1}</span>
-                        <p>{tip}</p>
-                      </div>
-                    ))}
-                  </div>
+                  <PilotNotesPager tips={analysis.playstyle_tips} />
                 </section>
               )}
 

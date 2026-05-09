@@ -136,7 +136,7 @@ export function RecommendedCardsPager({
             {findMoreLoading ? 'Searching deeper...' : 'Find More Cards'}
           </button>
           <p className="page-copy text-sm">
-            More cards runs a broader deterministic search and may take longer.
+            More cards runs a broader deterministic search, validates extra evidence, and may take longer.
           </p>
         </div>
       )}

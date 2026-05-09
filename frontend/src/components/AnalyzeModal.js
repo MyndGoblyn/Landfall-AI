@@ -109,6 +109,9 @@ export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
             Deep Analysis
           </button>
         </div>
+        <p className="page-copy text-xs mt-4 text-center">
+          Deep Analysis runs broader deterministic checks and can take longer than a fast pass.
+        </p>
       </div>
     </div>
   );

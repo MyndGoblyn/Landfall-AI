@@ -6,6 +6,7 @@ import { Link as LinkIcon, FileText, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import AppTopbar from '../components/AppTopbar';
 import { API } from '../lib/api';
+import useRotatingStatus from '../hooks/useRotatingStatus';
 
 export default function DeckImport() {
   const { deckId } = useParams();
@@ -16,6 +17,12 @@ export default function DeckImport() {
   const [loading, setLoading] = useState(false);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
+  const importStatus = useRotatingStatus(loading, [
+    'Fetching card data from Scryfall',
+    'Validating names, faces, and color identity',
+    'Reading oracle text and card types',
+    'Saving the deck for analysis',
+  ]);
 
   useEffect(() => {
     fetchDeck();
@@ -159,6 +166,12 @@ export default function DeckImport() {
                 </span>
               )}
             </button>
+            {loading && (
+              <div className="loading-status-panel mt-4" aria-live="polite">
+                <strong>{importStatus}</strong>
+                <p>First imports can take up to 1-2 minutes while the backend fetches uncached card data.</p>
+              </div>
+            )}
           </form>
 
           <div className="tip-panel mt-8 p-4">
