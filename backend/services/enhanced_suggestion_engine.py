@@ -40,7 +40,53 @@ class EnhancedSuggestionEngine:
             'blink': ['exile it, then return', 'exile another target', 'return it to the battlefield', 'flicker'],
             'landfall': ['landfall', 'land enters', 'additional land'],
             'sacrifice': ['sacrifice', 'dies'],
-            'voltron': ['equipment', 'aura', 'attach']
+            'voltron': ['equipment', 'aura', 'attach'],
+            'typal': ['choose a creature type', 'kindred'],
+            'combat_damage': ['combat damage to a player', 'combat damage to one or more players'],
+            'attack_triggers': ['whenever you attack', 'whenever this creature attacks', 'whenever one or more creatures attack'],
+            'extra_combat': ['additional combat phase', 'extra combat phase'],
+            'colorless_big_mana': ['colorless'],
+            'target_spells': ['target'],
+            'donation': ['you own that your opponents control', 'gains control of target permanent', 'exchange control'],
+            'temporary_drawback': ['end the turn', 'beginning of the next end step'],
+            'forced_reanimation': ['under target opponent', 'under their control'],
+            'goad': ['goad']
+        }
+
+        self.creature_type_terms = {
+            'advisor', 'ally', 'angel', 'artificer', 'assassin', 'barbarian', 'bird',
+            'cleric', 'construct', 'demon', 'dragon', 'druid', 'dwarf', 'eldrazi',
+            'elemental', 'elf', 'faerie', 'goblin', 'god', 'golem', 'human',
+            'insect', 'knight', 'merfolk', 'myr', 'pirate', 'rogue', 'samurai',
+            'shaman', 'sliver', 'soldier', 'sphinx', 'spirit', 'squirrel',
+            'thopter', 'vampire', 'warlock', 'warrior', 'wizard', 'zombie',
+        }
+        self.synergy_priority = {
+            'forced_reanimation': 5,
+            'target_spells': 6,
+            'donation': 7,
+            'temporary_drawback': 8,
+            'colorless_big_mana': 9,
+            'typal': 10,
+            'extra_combat': 11,
+            'attack_triggers': 12,
+            'combat_damage': 13,
+            'goad': 14,
+            'blink': 15,
+            'landfall': 16,
+            'artifact_tokens': 17,
+            'sacrifice': 18,
+            'counters': 19,
+            'voltron': 20,
+            'enchantment': 21,
+            'artifact': 22,
+            'graveyard': 23,
+            'tokens': 24,
+            'lifegain': 25,
+            'instant_sorcery': 26,
+            'creature': 27,
+            'exile': 28,
+            'board_conversion': 29,
         }
 
     def _combined_type_line(self, card: Dict) -> str:
@@ -54,6 +100,163 @@ class EnhancedSuggestionEngine:
         parts = [card.get('oracle_text', '')]
         parts.extend(face.get('oracle_text', '') for face in card.get('card_faces', []) or [])
         return ' '.join(part for part in parts if part).lower()
+
+    def _prioritize_synergies(self, synergies: List[str]) -> List[str]:
+        """Keep specific commander plans ahead of broad support themes."""
+        unique = list(dict.fromkeys(synergies))
+        return sorted(unique, key=lambda synergy: self.synergy_priority.get(synergy, 100))
+
+    def _detect_typal_creature_types(self, oracle_text: str, type_line: str = "") -> List[str]:
+        """Detect creature-type plans from rules text without using commander names."""
+        text = oracle_text.lower()
+        detected = []
+
+        if 'choose a creature type' in text or 'creatures of the chosen type' in text or 'kindred' in type_line.lower():
+            detected.append('chosen type')
+
+        for creature_type in sorted(self.creature_type_terms):
+            plural = f"{creature_type}s"
+            type_ref = rf"(?:{creature_type}|{plural})"
+            token_only_types = {'construct', 'servo', 'thopter', 'myr'}
+            patterns = [
+                rf"\b{type_ref} spells?\b",
+                rf"\bother {type_ref}\b",
+                rf"\bwhenever .* {type_ref}\b",
+                rf"\b{type_ref} card\b",
+            ]
+            if creature_type not in token_only_types:
+                patterns.append(rf"\bcreates?\b.* {creature_type}\b")
+            if any(re.search(pattern, text) for pattern in patterns):
+                detected.append(creature_type)
+
+        return list(dict.fromkeys(detected))
+
+    def _has_attack_trigger_text(self, oracle_text: str) -> bool:
+        return (
+            re.search(r"whenever .* attacks?", oracle_text) is not None or
+            "creature attacking causes a triggered ability" in oracle_text or
+            "attacking causes a triggered ability" in oracle_text or
+            "whenever you attack" in oracle_text or
+            "attack trigger" in oracle_text or
+            "attacks, " in oracle_text
+        )
+
+    def _has_combat_damage_trigger_text(self, oracle_text: str) -> bool:
+        return re.search(
+            r"(deals|deal) combat damage to (?:a|one or more|one of your)? ?(?:players?|opponents?)",
+            oracle_text
+        ) is not None
+
+    def _has_target_cost_modifier_text(self, oracle_text: str) -> bool:
+        if 'for each target' in oracle_text or 'any number of targets' in oracle_text:
+            return True
+
+        for sentence in re.split(r'[.\n]', oracle_text):
+            if 'target' in sentence and ('cost' in sentence or 'costs' in sentence):
+                return True
+        return False
+
+    def _has_scalable_target_spell_text(self, oracle_text: str) -> bool:
+        return any(phrase in oracle_text for phrase in [
+            'any number of target',
+            'any number of targets',
+            'for each target',
+            'up to two target',
+            'up to three target',
+            'up to four target',
+            'up to five target',
+            'divided as you choose',
+            'x target',
+        ])
+
+    def _is_spell_stack_plan(self, oracle_text: str, type_line: str = "") -> bool:
+        """Separate real spellslinger plans from cards that only mention being cast."""
+        type_line = type_line.lower()
+        if 'instant' in type_line or 'sorcery' in type_line:
+            return True
+
+        spell_plan_terms = [
+            'instant or sorcery',
+            'instant and sorcery',
+            'instant card',
+            'sorcery card',
+            'instant spell',
+            'sorcery spell',
+            'noncreature spell',
+            'magecraft',
+            'copy target instant',
+            'copy target sorcery',
+            'whenever you cast a spell',
+            'whenever you cast an instant',
+            'whenever you cast a sorcery',
+            'whenever you cast a noncreature spell',
+            'whenever you cast or copy',
+            'whenever you copy',
+        ]
+        return any(term in oracle_text for term in spell_plan_terms) or self._has_target_cost_modifier_text(oracle_text)
+
+    def _sacrifice_relevant_text(self, oracle_text: str) -> str:
+        """Drop negated sacrifice wording before checking for sacrifice plans."""
+        return re.sub(r"\b(?:can't|cannot|cant) be sacrificed(?: this turn)?\b", "", oracle_text)
+
+    def _has_sacrifice_plan_text(self, oracle_text: str) -> bool:
+        relevant_text = self._sacrifice_relevant_text(oracle_text)
+        return 'sacrifice' in relevant_text or re.search(r'\b(dies|dying|death)\b', relevant_text) is not None
+
+    def _has_donation_text(self, oracle_text: str) -> bool:
+        return any(phrase in oracle_text for phrase in [
+            'you own that your opponents control',
+            'you own that opponents control',
+            'target opponent gains control',
+            'that player gains control',
+            'gains control of a nonland permanent',
+            'exchange control',
+            'gain control of target permanent you control',
+        ])
+
+    def _has_temporary_drawback_text(self, oracle_text: str) -> bool:
+        return (
+            'end the turn' in oracle_text or
+            (
+                'beginning of the next end step' in oracle_text and
+                (
+                    re.search(r'(?:exile|sacrifice) it at the beginning of the next end step', oracle_text) is not None or
+                    re.search(r'at the beginning of the next end step,? (?:exile|sacrifice) it', oracle_text) is not None
+                )
+            )
+        )
+
+    def _has_forced_reanimation_text(self, oracle_text: str) -> bool:
+        return (
+            'graveyard' in oracle_text and
+            'opponent' in oracle_text and
+            any(phrase in oracle_text for phrase in [
+                'under their control',
+                'under that player',
+                'under target opponent',
+                'target opponent puts',
+            ])
+        )
+
+    def _has_bad_gift_creature_text(self, oracle_text: str) -> bool:
+        hard_drawbacks = [
+            'skip your next turn',
+            'you lose the game',
+            "you can't win",
+            'you cannot win',
+            "you can't draw cards",
+            'you cannot draw cards',
+            'exile your library',
+            'your life total becomes',
+            'that player sacrifices it',
+        ]
+        if any(phrase in oracle_text for phrase in hard_drawbacks):
+            return True
+        if 'at the beginning of your upkeep' in oracle_text and any(
+            term in oracle_text for term in ['sacrifice', 'discard', 'pay', 'lose life', 'deals damage']
+        ):
+            return True
+        return False
 
     def _registry_signals_for_card(
         self,
@@ -298,19 +501,7 @@ class EnhancedSuggestionEngine:
             self._has_creature_card_text(oracle_text)
         ):
             add_once('creature')
-        spell_theme_phrases = [
-            'instant or sorcery',
-            'instant and sorcery',
-            'instant card',
-            'sorcery card',
-            'instant spell',
-            'sorcery spell',
-            'whenever you cast a spell',
-            'whenever you cast an instant',
-            'whenever you cast a sorcery',
-            'noncreature spell',
-        ]
-        if any(phrase in oracle_text for phrase in spell_theme_phrases):
+        if self._is_spell_stack_plan(oracle_text, type_line):
             add_once('instant_sorcery')
         if (
             'graveyard' in oracle_text or
@@ -321,16 +512,34 @@ class EnhancedSuggestionEngine:
             add_once('graveyard')
         if self._has_lifegain_reward_text(oracle_text):
             add_once('lifegain')
-        if '+1/+1 counter' in oracle_text or 'proliferate' in oracle_text or 'counter on' in oracle_text:
+        if (
+            '+1/+1 counter' in oracle_text or
+            'proliferate' in oracle_text or
+            'counter on' in oracle_text or
+            'one or more counters' in oracle_text or
+            'that many plus one' in oracle_text
+        ):
             add_once('counters')
         if 'token' in oracle_text and any(phrase in oracle_text for phrase in ['create', 'populate', 'copy']):
             if self._has_artifact_token_text(oracle_text) and 'creature token' not in oracle_text:
                 add_once('artifact_tokens')
             else:
                 add_once('tokens')
+        if any(phrase in oracle_text for phrase in [
+            'artifact creature token',
+            'token copy of target artifact',
+            'token that is a copy of target artifact',
+            "token that's a copy of target artifact",
+            'tokens that are copies of target artifact',
+            'tokens that are copies of the exiled card',
+        ]):
+            add_once('artifact_tokens')
+        sacrifice_text = self._sacrifice_relevant_text(oracle_text)
+        if 'whenever you sacrifice a permanent' in sacrifice_text or 'sacrifice a permanent' in sacrifice_text:
+            add_once('artifact_tokens')
         if 'landfall' in oracle_text or 'additional land' in oracle_text or 'land you control enters' in oracle_text:
             add_once('landfall')
-        if 'sacrifice' in oracle_text or re.search(r'\b(dies|dying|death)\b', oracle_text):
+        if self._has_sacrifice_plan_text(oracle_text):
             add_once('sacrifice')
         blink_phrases = [
             'exile it, then return',
@@ -344,10 +553,53 @@ class EnhancedSuggestionEngine:
             add_once('blink')
         elif 'exile' in oracle_text:
             add_once('exile')
+        if 'target creature' in oracle_text and 'exile' in oracle_text and 'return' in oracle_text:
+            add_once('creature')
         if any(phrase in oracle_text for phrase in ['equipment', 'aura', 'attach', 'equipped', 'enchanted']):
             add_once('voltron')
+        if 'enchantment' in oracle_text and re.search(r'gets? \+1/\+1 for each enchantment', oracle_text):
+            add_once('voltron')
+        if 'investigate' in oracle_text or 'clue' in oracle_text:
+            add_once('artifact_tokens')
+        if 'deals combat damage to a player, put' in oracle_text and 'counter on it' in oracle_text:
+            add_once('voltron')
+        if self._has_combat_damage_trigger_text(oracle_text) and (
+            ('double strike' in oracle_text and 'haste' in oracle_text) or
+            'gains control' in oracle_text or
+            'gain control' in oracle_text
+        ):
+            add_once('voltron')
+        if self._has_target_cost_modifier_text(oracle_text):
+            add_once('instant_sorcery')
         if self._is_board_conversion_commander(oracle_text):
             add_once('board_conversion')
+        if 'exile' in oracle_text and 'permanents you control until' in oracle_text and 'leaves the battlefield' in oracle_text:
+            add_once('blink')
+        if self._detect_typal_creature_types(oracle_text, type_line):
+            add_once('typal')
+        if self._has_combat_damage_trigger_text(oracle_text):
+            add_once('combat_damage')
+        if self._has_attack_trigger_text(oracle_text):
+            add_once('attack_triggers')
+        if 'additional combat phase' in oracle_text or 'extra combat phase' in oracle_text:
+            add_once('extra_combat')
+        if not commander_card.get('color_identity') and (
+            commander_card.get('cmc', 0) >= 4 or
+            'colorless' in oracle_text or
+            'artifact' in oracle_text or
+            'eldrazi' in type_line
+        ):
+            add_once('colorless_big_mana')
+        if self._has_target_cost_modifier_text(oracle_text):
+            add_once('target_spells')
+        if self._has_donation_text(oracle_text):
+            add_once('donation')
+        if self._has_temporary_drawback_text(oracle_text):
+            add_once('temporary_drawback')
+        if self._has_forced_reanimation_text(oracle_text):
+            add_once('forced_reanimation')
+        if 'goad' in oracle_text:
+            add_once('goad')
 
         if self.mechanics_registry and self.mechanics_registry.count() > 0:
             registry_signals = self.mechanics_registry.detect_signals(
@@ -364,11 +616,13 @@ class EnhancedSuggestionEngine:
                 if not signal.can_define_deck and signal.evidence_strength != 'core':
                     continue
                 for synergy_type in self.mechanics_registry.synergies_for_signal(signal):
+                    if synergy_type == 'instant_sorcery' and not self._is_spell_stack_plan(oracle_text, type_line):
+                        continue
                     if synergy_type == 'exile' and 'blink' in synergies:
                         continue
                     add_once(synergy_type)
         
-        return synergies
+        return self._prioritize_synergies(synergies)
     
     def _get_commander_constraints(self, commander_card: Dict) -> Dict:
         """Extract specific constraints from commander abilities"""
@@ -377,10 +631,30 @@ class EnhancedSuggestionEngine:
         
         oracle_text = commander_card.get('oracle_text', '').lower()
         name = commander_card.get('name', '').lower()
+        type_line = commander_card.get('type_line', '').lower()
         constraints = {}
         
         # Store commander's color identity for validation
         constraints['commander_color_identity'] = commander_card.get('color_identity', [])
+        constraints['typal_types'] = self._detect_typal_creature_types(oracle_text, type_line=type_line)
+        if not commander_card.get('color_identity'):
+            constraints['colorless_identity'] = True
+        if self._has_combat_damage_trigger_text(oracle_text):
+            constraints['combat_damage_trigger'] = True
+        if self._has_attack_trigger_text(oracle_text):
+            constraints['attack_trigger'] = True
+        if self._has_target_cost_modifier_text(oracle_text):
+            constraints['target_cost_modifier'] = True
+        if 'aura card with mana value' in oracle_text:
+            constraints['aura_tutor_chain'] = True
+        if self._has_donation_text(oracle_text):
+            constraints['donation_plan'] = True
+        if self._has_temporary_drawback_text(oracle_text):
+            constraints['temporary_drawback_plan'] = True
+        if self._has_forced_reanimation_text(oracle_text):
+            constraints['forced_reanimation_plan'] = True
+        if 'goad' in oracle_text:
+            constraints['goad_plan'] = True
         counter_plan = self._counter_plan_for_text(oracle_text)
         if counter_plan:
             constraints['counter_plan'] = counter_plan
@@ -572,6 +846,14 @@ class EnhancedSuggestionEngine:
         """Detect what synergies a card provides"""
         synergies = []
         for synergy_type, keywords in self.synergy_keywords.items():
+            if synergy_type == 'instant_sorcery':
+                if self._is_spell_stack_plan(oracle_text, type_line):
+                    synergies.append(synergy_type)
+                continue
+            if synergy_type == 'sacrifice':
+                if self._has_sacrifice_plan_text(oracle_text):
+                    synergies.append(synergy_type)
+                continue
             if synergy_type == 'creature':
                 creature_keywords = [
                     keyword for keyword in keywords
@@ -587,6 +869,47 @@ class EnhancedSuggestionEngine:
             if any(keyword in oracle_text or keyword in type_line for keyword in keywords):
                 synergies.append(synergy_type)
 
+        if self._detect_typal_creature_types(oracle_text, type_line) and 'typal' not in synergies:
+            synergies.append('typal')
+        if ('investigate' in oracle_text or 'clue' in oracle_text) and 'artifact_tokens' not in synergies:
+            synergies.append('artifact_tokens')
+        if any(phrase in oracle_text for phrase in [
+            'artifact creature token',
+            'token copy of target artifact',
+            'token that is a copy of target artifact',
+            "token that's a copy of target artifact",
+            'tokens that are copies of target artifact',
+            'tokens that are copies of the exiled card',
+        ]) and 'artifact_tokens' not in synergies:
+            synergies.append('artifact_tokens')
+        sacrifice_text = self._sacrifice_relevant_text(oracle_text)
+        if ('whenever you sacrifice a permanent' in sacrifice_text or 'sacrifice a permanent' in sacrifice_text) and 'artifact_tokens' not in synergies:
+            synergies.append('artifact_tokens')
+        if 'enchantment' in oracle_text and re.search(r'gets? \+1/\+1 for each enchantment', oracle_text) and 'voltron' not in synergies:
+            synergies.append('voltron')
+        if 'deals combat damage to a player, put' in oracle_text and 'counter on it' in oracle_text and 'voltron' not in synergies:
+            synergies.append('voltron')
+        if self._has_target_cost_modifier_text(oracle_text) and 'instant_sorcery' not in synergies:
+            synergies.append('instant_sorcery')
+        if 'exile' in oracle_text and 'permanents you control until' in oracle_text and 'leaves the battlefield' in oracle_text and 'blink' not in synergies:
+            synergies.append('blink')
+        if self._has_combat_damage_trigger_text(oracle_text) and 'combat_damage' not in synergies:
+            synergies.append('combat_damage')
+        if self._has_attack_trigger_text(oracle_text) and 'attack_triggers' not in synergies:
+            synergies.append('attack_triggers')
+        if ('additional combat phase' in oracle_text or 'extra combat phase' in oracle_text) and 'extra_combat' not in synergies:
+            synergies.append('extra_combat')
+        if self._has_target_cost_modifier_text(oracle_text) and 'target_spells' not in synergies:
+            synergies.append('target_spells')
+        if self._has_donation_text(oracle_text) and 'donation' not in synergies:
+            synergies.append('donation')
+        if self._has_temporary_drawback_text(oracle_text) and 'temporary_drawback' not in synergies:
+            synergies.append('temporary_drawback')
+        if self._has_forced_reanimation_text(oracle_text) and 'forced_reanimation' not in synergies:
+            synergies.append('forced_reanimation')
+        if 'goad' in oracle_text and 'goad' not in synergies:
+            synergies.append('goad')
+
         if self.mechanics_registry and self.mechanics_registry.count() > 0:
             registry_signals = self.mechanics_registry.detect_signals(
                 oracle_text,
@@ -600,9 +923,11 @@ class EnhancedSuggestionEngine:
                 if signal.support_only and not signal.requirements_met:
                     continue
                 for synergy_type in self.mechanics_registry.synergies_for_signal(signal):
+                    if synergy_type == 'instant_sorcery' and not self._is_spell_stack_plan(oracle_text, type_line):
+                        continue
                     if synergy_type not in synergies:
                         synergies.append(synergy_type)
-        return synergies
+        return self._prioritize_synergies(synergies)
     
     def _detect_roles(self, oracle_text: str, type_line: str, card_name: str) -> List[str]:
         """Detect card roles from oracle text"""
@@ -705,9 +1030,9 @@ class EnhancedSuggestionEngine:
                 theme_counts['tokens'] += 1
             if 'landfall' in oracle_text:
                 theme_counts['landfall'] += 1
-            if 'sacrifice' in oracle_text:
+            if self._has_sacrifice_plan_text(oracle_text):
                 theme_counts['aristocrats'] += 1
-            if any(w in oracle_text for w in ['instant', 'sorcery']) and 'cast' in oracle_text:
+            if self._is_spell_stack_plan(oracle_text, type_line):
                 theme_counts['spellslinger'] += 1
 
             if self.mechanics_registry and self.mechanics_registry.count() > 0:
@@ -723,6 +1048,8 @@ class EnhancedSuggestionEngine:
                     if signal.support_only and not signal.requirements_met:
                         continue
                     for synergy in self.mechanics_registry.synergies_for_signal(signal):
+                        if synergy == 'instant_sorcery' and not self._is_spell_stack_plan(oracle_text, type_line):
+                            continue
                         if synergy == 'instant_sorcery':
                             registry_theme_scores['spellslinger'] += signal.score
                         elif synergy == 'enchantment':
@@ -926,6 +1253,24 @@ class EnhancedSuggestionEngine:
                 resource_needs.append('the commander-specific named counter')
             else:
                 resource_needs.append('validated counter placement or payoffs')
+        if 'typal' in themes:
+            resource_needs.append('high creature-type density')
+        if 'combat_damage' in themes:
+            resource_needs.append('evasive attackers that connect')
+        if 'attack_triggers' in themes or 'extra_combat' in themes:
+            resource_needs.append('attack triggers and combat protection')
+        if 'colorless_big_mana' in themes:
+            resource_needs.append('colorless ramp and utility artifacts')
+        if 'target_spells' in themes:
+            resource_needs.append('spells with meaningful target counts')
+        if 'donation' in themes:
+            resource_needs.append('permanents worth giving away or exchanging')
+        if 'temporary_drawback' in themes:
+            resource_needs.append('delayed-trigger and end-step timing payoffs')
+        if 'forced_reanimation' in themes:
+            resource_needs.append('graveyard creatures that hurt opponents')
+        if 'goad' in themes:
+            resource_needs.append('reliable combat-damage pressure')
 
         profile = {
             'primary_synergies': synergies or [],
@@ -951,6 +1296,26 @@ class EnhancedSuggestionEngine:
             return f"Game Plan - {commander_name} is a board-conversion plan: build material first, then turn a wide board into pressure once the payoff is online."
         if 'artifact_tokens' in primary:
             return f"Game Plan - {commander_name} should turn temporary artifact tokens into durable value: mana bursts, sacrifice payoffs, cards, or a closing turn."
+        if 'forced_reanimation' in primary:
+            return f"Game Plan - {commander_name} weaponizes the graveyard politically, so the deck wants creatures that are bad for opponents to receive and ways to stock them safely."
+        if 'donation' in primary:
+            return f"Game Plan - {commander_name} is a control-exchange plan: pick permanents that are harmless or punishing to give away, then get paid for ownership asymmetry."
+        if 'temporary_drawback' in primary:
+            return f"Game Plan - {commander_name} cares about timing windows and delayed triggers, so the deck should use temporary effects only when it can keep the upside."
+        if 'target_spells' in primary:
+            return f"Game Plan - {commander_name} rewards spells with real target counts, making scalable targeted interaction stronger than generic spell density."
+        if 'colorless_big_mana' in primary:
+            return f"Game Plan - {commander_name} is constrained to colorless tools, so ramp, utility lands, and expensive colorless payoffs need to carry the deck's full engine."
+        if 'typal' in primary:
+            return f"Game Plan - {commander_name} is a creature-type deck first; payoff cards are best when they increase type density, multiply type-specific triggers, or reward the chosen tribe."
+        if 'extra_combat' in primary:
+            return f"Game Plan - {commander_name} scales through additional combats, so attack triggers, vigilance, untap effects, and protection matter more than one-shot combat tricks."
+        if 'attack_triggers' in primary:
+            return f"Game Plan - {commander_name} wants attack triggers, so cards should reward declaring attackers rather than only caring about combat damage after blockers."
+        if 'combat_damage' in primary:
+            return f"Game Plan - {commander_name} needs creatures to connect with players, so evasion, tempo, and protection are engine pieces rather than cosmetic upgrades."
+        if 'goad' in primary:
+            return f"Game Plan - {commander_name} uses combat to control the table, so reliable damage and goad payoffs matter more than generic creature size."
         if 'graveyard' in primary:
             return f"Game Plan - {commander_name} wants the graveyard to function like a resource zone, so the deck should stock it deliberately and convert it into cards, bodies, or mana."
         if 'blink' in primary:
@@ -2005,6 +2370,9 @@ class EnhancedSuggestionEngine:
             'food token',
             'blood token',
             'artifact token',
+            'investigate',
+            'clues',
+            'clue',
         ])
 
     def _creates_tokens_for_other_player(self, oracle_text: str) -> bool:
@@ -2434,6 +2802,29 @@ class EnhancedSuggestionEngine:
             'land you control enters' in oracle_text
         ):
             return True
+        if synergy == 'typal':
+            return bool(self._detect_typal_creature_types(oracle_text, type_line)) or 'creature' in type_line
+        if synergy == 'combat_damage':
+            return (
+                self._has_combat_damage_trigger_text(oracle_text) or
+                any(term in oracle_text for term in ['flying', 'menace', 'trample', "can't be blocked", 'skulk'])
+            )
+        if synergy == 'attack_triggers':
+            return self._has_attack_trigger_text(oracle_text) or any(term in oracle_text for term in ['attacking creatures', 'whenever you attack'])
+        if synergy == 'extra_combat':
+            return any(term in oracle_text for term in ['additional combat phase', 'extra combat phase', 'untap all creatures'])
+        if synergy == 'colorless_big_mana':
+            return 'artifact' in type_line or 'colorless' in oracle_text or card_data.get('cmc', 0) >= 7
+        if synergy == 'target_spells':
+            return self._has_target_cost_modifier_text(oracle_text) or ('target' in oracle_text and ('instant' in type_line or 'sorcery' in type_line))
+        if synergy == 'donation':
+            return self._has_donation_text(oracle_text)
+        if synergy == 'temporary_drawback':
+            return self._has_temporary_drawback_text(oracle_text)
+        if synergy == 'forced_reanimation':
+            return self._has_forced_reanimation_text(oracle_text) or self._has_bad_gift_creature_text(oracle_text)
+        if synergy == 'goad':
+            return 'goad' in oracle_text or 'must attack' in oracle_text
 
         registry_scores = self._registry_synergy_scores_for_card(
             {
@@ -2614,6 +3005,50 @@ class EnhancedSuggestionEngine:
                     return False
                 return True
             return False
+
+        if synergy == 'typal':
+            typal_types = self._detect_typal_creature_types(commander_text)
+            if typal_types and typal_types[0] != 'chosen type':
+                return typal_types[0] in oracle_text or typal_types[0] in type_line
+            return bool(self._detect_typal_creature_types(oracle_text, type_line)) or 'creature' in type_line
+
+        if synergy == 'combat_damage':
+            return self._has_combat_damage_trigger_text(oracle_text) or any(term in oracle_text for term in [
+                'flying', 'menace', 'trample', "can't be blocked", 'double strike', 'unblockable'
+            ])
+
+        if synergy == 'attack_triggers':
+            return self._has_attack_trigger_text(oracle_text) or any(term in oracle_text for term in [
+                'attacking creatures', 'whenever you attack', 'create a', 'haste', 'vigilance'
+            ])
+
+        if synergy == 'extra_combat':
+            return any(term in oracle_text for term in [
+                'additional combat phase', 'extra combat phase', 'untap all creatures',
+                'whenever this creature attacks', 'attacking creatures', 'vigilance'
+            ])
+
+        if synergy == 'colorless_big_mana':
+            return 'artifact' in type_line or 'colorless' in oracle_text or card_data.get('cmc', 0) >= 7
+
+        if synergy == 'target_spells':
+            return self._has_target_cost_modifier_text(oracle_text) or (
+                'target' in oracle_text and ('instant' in type_line or 'sorcery' in type_line)
+            )
+
+        if synergy == 'donation':
+            return self._has_donation_text(oracle_text) or any(term in oracle_text for term in [
+                'opponent gains control', 'exchange control', 'you own'
+            ])
+
+        if synergy == 'temporary_drawback':
+            return self._has_temporary_drawback_text(oracle_text)
+
+        if synergy == 'forced_reanimation':
+            return self._has_forced_reanimation_text(oracle_text) or self._has_bad_gift_creature_text(oracle_text)
+
+        if synergy == 'goad':
+            return 'goad' in oracle_text or 'must attack' in oracle_text or self._has_combat_damage_trigger_text(oracle_text)
 
         return True
 
@@ -2982,7 +3417,14 @@ class EnhancedSuggestionEngine:
                 add_penalty('wrong_counter_context')
                 score = 60
         elif synergy == 'voltron':
-            if 'equipment' in type_line or 'equip' in oracle_text:
+            if commander_constraints.get('aura_tutor_chain') and ('aura' in type_line or 'aura' in oracle_text):
+                job = 'Aura support'
+                evidence = 'supports the Aura tutor chain'
+                score = 88
+                add_evidence('direct_synergy')
+                if self._has_card_draw_text(oracle_text):
+                    add_evidence('card_flow')
+            elif 'equipment' in type_line or 'equip' in oracle_text:
                 job = 'equipment pressure'
                 evidence = 'reusable combat upgrade'
                 score = 82
@@ -3156,6 +3598,133 @@ class EnhancedSuggestionEngine:
                 evidence = 'multiplies key spells'
                 score = 80
                 add_evidence('payoff')
+        elif synergy == 'typal':
+            typal_types = self._detect_typal_creature_types(commander_text)
+            matching_type = next((term for term in typal_types if term != 'chosen type' and (term in oracle_text or term in type_line)), None)
+            if matching_type:
+                job = f'{matching_type} typal support'
+                evidence = f'adds {matching_type} density or payoff text'
+                score = 84
+                add_evidence('direct_synergy')
+                add_evidence('typal_density')
+            elif 'creature' in type_line:
+                job = 'typal body'
+                evidence = 'adds creature-type density'
+                score = 74
+                add_evidence('enabler')
+        elif synergy == 'combat_damage':
+            if self._has_combat_damage_trigger_text(oracle_text):
+                job = 'combat-damage payoff'
+                evidence = 'rewards creatures connecting with players'
+                score = 84
+                add_evidence('direct_synergy')
+            elif any(term in oracle_text for term in ['flying', 'menace', 'trample', "can't be blocked", 'double strike']):
+                job = 'evasion support'
+                evidence = 'helps combat damage connect'
+                score = 78
+                add_evidence('enabler')
+        elif synergy == 'attack_triggers':
+            if self._has_attack_trigger_text(oracle_text):
+                job = 'attack-trigger payoff'
+                evidence = 'rewards declaring attackers'
+                score = 84
+                add_evidence('direct_synergy')
+            elif 'attacking creatures' in oracle_text or 'haste' in oracle_text or 'vigilance' in oracle_text:
+                job = 'attack support'
+                evidence = 'improves repeated attacks'
+                score = 78
+                add_evidence('enabler')
+        elif synergy == 'extra_combat':
+            if 'additional combat phase' in oracle_text or 'extra combat phase' in oracle_text:
+                job = 'extra combat payoff'
+                evidence = 'adds another combat step'
+                score = 88
+                add_evidence('direct_synergy')
+                add_evidence('payoff')
+            elif 'untap all creatures' in oracle_text or 'vigilance' in oracle_text:
+                job = 'extra-combat support'
+                evidence = 'keeps attackers useful across combats'
+                score = 80
+                add_evidence('enabler')
+        elif synergy == 'colorless_big_mana':
+            if card_data.get('cmc', 0) >= 7:
+                job = 'big colorless payoff'
+                evidence = 'uses the colorless ramp plan'
+                score = 84
+                add_evidence('payoff')
+            elif 'artifact' in type_line or 'colorless' in oracle_text:
+                job = 'colorless setup'
+                evidence = 'fits colorless deck-building constraints'
+                score = 80
+                add_evidence('enabler')
+        elif synergy == 'target_spells':
+            if self._has_target_cost_modifier_text(oracle_text):
+                job = 'target-scaling payoff'
+                evidence = 'scales with target counts'
+                score = 86
+                add_evidence('direct_synergy')
+            elif 'target' in oracle_text and ('instant' in type_line or 'sorcery' in type_line):
+                if self._has_scalable_target_spell_text(oracle_text):
+                    job = 'scalable targeted spell'
+                    evidence = 'turns multiple targets into better output'
+                    score = 86
+                    add_evidence('direct_synergy')
+                    add_evidence('enabler')
+                else:
+                    job = 'targeted spell'
+                    evidence = 'gives the commander relevant targets'
+                    score = 78
+                    add_evidence('enabler')
+        elif synergy == 'donation':
+            if self._has_donation_text(oracle_text):
+                job = 'donation engine'
+                evidence = 'changes control or rewards ownership asymmetry'
+                score = 86
+                add_evidence('direct_synergy')
+            elif any(term in oracle_text for term in ['at the beginning of your upkeep', "can't attack", "can't block"]):
+                job = 'donation target'
+                evidence = 'can punish the player who controls it'
+                score = 78
+                add_evidence('enabler')
+        elif synergy == 'temporary_drawback':
+            if self._has_temporary_drawback_text(oracle_text):
+                job = 'delayed-trigger piece'
+                evidence = 'has a timing drawback the commander can exploit'
+                score = 84
+                add_evidence('direct_synergy')
+            elif 'until end of turn' in oracle_text:
+                job = 'temporary-value support'
+                evidence = 'creates a temporary window to exploit'
+                score = 74
+                add_evidence('enabler')
+        elif synergy == 'forced_reanimation':
+            if self._has_forced_reanimation_text(oracle_text):
+                job = 'forced reanimation engine'
+                evidence = 'gives graveyard creatures to opponents'
+                score = 88
+                add_evidence('direct_synergy')
+            elif self._has_bad_gift_creature_text(oracle_text):
+                job = 'bad gift creature'
+                evidence = 'is worse for opponents to receive'
+                score = 90
+                add_evidence('payoff')
+                add_evidence('direct_synergy')
+            elif 'when this creature enters' in oracle_text:
+                job = 'risky ETB creature'
+                evidence = 'has an enters trigger to evaluate before gifting'
+                score = 72
+                add_evidence('enabler')
+        elif synergy == 'goad':
+            if 'goad' in oracle_text:
+                job = 'goad engine'
+                evidence = 'forces opposing creatures into combat'
+                score = 84
+                add_evidence('direct_synergy')
+            elif self._has_combat_damage_trigger_text(oracle_text):
+                job = 'goad enabler'
+                evidence = 'helps trigger combat-control effects'
+                score = 78
+                add_evidence('enabler')
 
         if registry_signal:
             add_evidence('mechanic_match')
@@ -3257,6 +3826,8 @@ class EnhancedSuggestionEngine:
             action = f"{card_name} protects the commander or key permanents."
         elif 'card_flow' in evidence_tags:
             action = f"{card_name} adds card flow through its {job} text."
+        elif job == 'bad gift creature':
+            action = f"{card_name} is a bad gift creature with a real drawback."
         elif 'payoff' in evidence_tags:
             action = f"{card_name} rewards the board state this deck is trying to build."
         elif 'enabler' in evidence_tags:
@@ -3365,12 +3936,37 @@ class EnhancedSuggestionEngine:
             else:
                 fit = f"That matters for {commander_name} because the card rewards using exile as a resource zone rather than only as removal."
         elif synergy == 'voltron':
-            if 'protection' in evidence_tags:
+            if commander_constraints.get('aura_tutor_chain') and ('aura' in type_line or 'aura' in oracle_text):
+                if 'aura' in type_line:
+                    fit = f"That matters for {commander_name} because the card is part of the Aura ladder the commander can actually tutor and sequence by mana value."
+                else:
+                    fit = f"That matters for {commander_name} because it rewards Aura casts with cards or support while staying tied to the commander's tutor chain."
+            elif 'protection' in evidence_tags:
                 fit = f"That matters for {commander_name} because Voltron plans fail when the commander cannot survive removal or combat."
             elif 'direct_synergy' in evidence_tags or 'repeatable_engine' in evidence_tags:
                 fit = f"That matters for {commander_name} because repeatable combat upgrades make attacks safer or more profitable across several turns."
             else:
                 fit = f"That matters for {commander_name} because combat-focused commanders need evasion, protection, or reusable pressure more than one-shot damage."
+        elif synergy == 'typal':
+            fit = f"That matters for {commander_name} because typal decks need cards that raise the right creature density or reward that exact creature type."
+        elif synergy == 'combat_damage':
+            fit = f"That matters for {commander_name} because the engine depends on creatures connecting with players, so evasion and combat-damage payoffs are real setup."
+        elif synergy == 'attack_triggers':
+            fit = f"That matters for {commander_name} because attack-trigger decks care about declaring attackers before blockers, not just dealing damage afterward."
+        elif synergy == 'extra_combat':
+            fit = f"That matters for {commander_name} because each extra combat multiplies attack triggers, untap value, and combat-damage payoffs already on board."
+        elif synergy == 'colorless_big_mana':
+            fit = f"That matters for {commander_name} because colorless decks need artifact and land-based tools to replace the colored ramp, draw, and interaction they cannot run."
+        elif synergy == 'target_spells':
+            fit = f"That matters for {commander_name} because target-based commanders need spells whose targets change cost, scale output, or unlock interaction lines."
+        elif synergy == 'donation':
+            fit = f"That matters for {commander_name} because ownership and control are the point; the card should be useful to give away or reward that exchange."
+        elif synergy == 'temporary_drawback':
+            fit = f"That matters for {commander_name} because delayed sacrifice, exile, or end-step triggers become resources only when the timing is controlled."
+        elif synergy == 'forced_reanimation':
+            fit = f"That matters for {commander_name} because normal reanimation targets can help opponents, while bad gifts or temporary creatures turn the graveyard into pressure."
+        elif synergy == 'goad':
+            fit = f"That matters for {commander_name} because goad plans need opponents' creatures attacking elsewhere while your deck keeps connecting safely."
 
         mechanic_clause = ""
         if (
@@ -3514,17 +4110,37 @@ class EnhancedSuggestionEngine:
                 return f'(o:"-1/-1 counter" OR o:"for each counter" OR o:"remove a counter") {color_filter} f:commander'
             return f'(o:"additional +1/+1 counter" OR o:"that many plus one" OR o:"creatures you control with counters" OR o:modified OR o:"for each counter") {color_filter} f:commander'
 
+        if synergy == 'typal':
+            typal_types = [t for t in commander_constraints.get('typal_types', []) if t != 'chosen type']
+            if typal_types:
+                type_term = self._quote_scryfall_phrase(typal_types[0])
+                return f'(t:{type_term} OR o:{type_term}) {color_filter} f:commander'
+            return f'(o:"choose a creature type" OR o:"creatures of the chosen type" OR t:kindred) {color_filter} f:commander'
+
+        if synergy == 'colorless_big_mana':
+            return f'(t:artifact OR t:eldrazi OR o:"colorless mana" OR o:"mana value 7" OR o:"mana value 8") {color_filter} f:commander'
+
+        if synergy == 'target_spells':
+            return f'((t:instant OR t:sorcery) (o:"any number of target" OR o:"for each target" OR o:"up to two target" OR o:"up to three target" OR o:"up to four target" OR o:"up to five target" OR o:"divided as you choose" OR o:"X target")) {color_filter} f:commander'
+
         synergy_queries = {
             'artifact': '(o:"artifact card" OR o:"artifact spell" OR o:"artifacts you control" OR o:"whenever an artifact" OR o:"sacrifice an artifact" OR t:equipment OR o:equip)',
             'board_conversion': '(t:creature OR o:"creature token" OR o:"creature tokens" OR o:"create a 1/1" OR o:"create two" OR o:"create three" OR o:"create X" OR o:thopter OR o:servo OR o:myr OR o:construct OR o:"creatures you control have" OR o:"creatures you control gain" OR o:"attacking creatures")',
             'blink': '(o:exile o:return OR o:"enters the battlefield")',
+            'combat_damage': '(o:"combat damage to a player" OR o:"combat damage to one or more players" OR o:"deals combat damage")',
+            'attack_triggers': '(o:"whenever" o:attacks OR o:"whenever you attack" OR o:"attacking creatures")',
+            'extra_combat': '(o:"additional combat phase" OR o:"extra combat phase" OR o:"untap all creatures")',
             'creature': '(o:"creature spell" OR o:"creature enters" OR o:"creatures you control" OR o:"whenever another creature" OR o:"whenever a creature" OR o:"creature token")',
+            'donation': '(o:"gains control of target permanent" OR o:"exchange control" OR o:"you own" OR o:"opponents control")',
             'exile': '(o:"exile the top" OR o:"play that card" OR o:"cast that card" OR o:"from exile" OR o:"until end of your next turn")',
+            'forced_reanimation': "(t:creature (o:\"skip your next turn\" OR o:\"you lose the game\" OR o:\"you can't win\" OR o:\"you can't draw cards\" OR o:\"exile your library\" OR o:\"your life total becomes\" OR o:\"that player sacrifices it\" OR o:\"under their control\"))",
+            'goad': '(o:goad OR o:"must attack")',
             'graveyard': '(o:"from your graveyard" OR o:"put into your graveyard" OR o:dies OR o:reanimate OR o:flashback OR o:escape OR o:unearth)',
             'instant_sorcery': '(t:instant OR t:sorcery OR o:"instant or sorcery")',
             'landfall': '(o:landfall OR o:"additional land" OR o:"land you control enters")',
             'lifegain': '(o:"whenever you gain life" OR o:"if you gained life" OR o:"life total" OR o:"life you gained")',
             'sacrifice': '(o:"sacrifice a creature" OR o:"sacrifice another creature" OR o:"whenever you sacrifice" OR o:"whenever a creature dies" OR o:"whenever another creature dies" OR o:"creature token")',
+            'temporary_drawback': '(o:"end the turn" OR o:"beginning of the next end step" OR o:"sacrifice it" OR o:"exile it")',
             'tokens': '(o:"creature token" OR o:"creature tokens" OR o:populate OR o:"tokens you control" OR o:"one or more tokens" OR o:"twice that many")',
             'artifact_tokens': '(o:"Treasure token" OR o:"Clue token" OR o:"Food token" OR o:"Blood token" OR o:"artifact token")',
             'voltron': "(t:equipment OR t:aura OR o:equip OR o:attach)",
@@ -3582,6 +4198,9 @@ class EnhancedSuggestionEngine:
             else:
                 examples = self._role_examples('enchantment', color_identity, synergies)
                 tips.append(f"Raise the enchantment density only when those enchantments advance the commander's trigger pattern. {examples or 'Repeatable draw, protection, and removal enchantments'} are higher quality than a pile of unrelated Auras.")
+
+        if commander_constraints.get('aura_tutor_chain'):
+            tips.append(f"{commander_name} should sequence Auras by mana value. Each Aura should protect, add evasion, remove a blocker, or increase damage because the tutor chain only works when the next Aura has mana value less than or equal to the one cast and a different name.")
 
         if 'artifact' in synergies:
             if 'graveyard' in oracle_text:
@@ -3663,6 +4282,38 @@ class EnhancedSuggestionEngine:
         if 'voltron' in synergies and not any('Equipment' in tip or 'Auras' in tip for tip in tips):
             tips.append(f"Protect {commander_name} before increasing damage. Haste, evasion, and hexproof effects make commander-damage plans more reliable than simply adding larger buffs.")
 
+        if 'typal' in synergies:
+            typal_types = commander_constraints.get('typal_types') or self._detect_typal_creature_types(oracle_text, type_line)
+            label = typal_types[0] if typal_types else "chosen creature type"
+            tips.append(f"Keep the typal package focused on {label} density. Lords, token makers, and payoffs are strongest when they reward the same creature type instead of only being generically powerful creatures.")
+
+        if 'combat_damage' in synergies:
+            tips.append(f"{commander_name} needs damage to connect with players. Prioritize cheap evasive bodies, combat protection, or tempo pieces before expensive finishers.")
+
+        if 'attack_triggers' in synergies:
+            tips.append(f"Attack triggers care about declaring attackers, not necessarily dealing combat damage. Favor cards that create attacking bodies, add attack payoffs, or make repeated combats safer.")
+
+        if 'extra_combat' in synergies:
+            tips.append(f"Extra combat effects scale with vigilance, untap support, and attack triggers. A card is better here when it improves multiple combat steps instead of only one swing.")
+
+        if 'colorless_big_mana' in synergies:
+            tips.append("Colorless decks cannot lean on colored ramp, removal, or card draw. Use artifacts, utility lands, and high-impact colorless payoffs that justify the slower setup.")
+
+        if 'target_spells' in synergies:
+            tips.append(f"{commander_name} rewards targeted spells with meaningful target counts. Prioritize scalable interaction and X-spells that actually target over generic cantrips or burn.")
+
+        if 'donation' in synergies:
+            tips.append(f"{commander_name} cares about ownership and control. Donation targets should either be safe to give away, punish the receiver, or become asymmetric once opponents control them.")
+
+        if 'temporary_drawback' in synergies:
+            tips.append(f"{commander_name} is timing-sensitive. Favor cards with delayed sacrifice, exile, or end-step drawbacks only when the deck can end the turn or otherwise keep the upside.")
+
+        if 'forced_reanimation' in synergies:
+            tips.append(f"{commander_name} wants graveyard creatures that are bad gifts. Normal reanimation targets can help opponents, so prioritize creatures with drawbacks, forced attacks, or temporary value.")
+
+        if 'goad' in synergies:
+            tips.append(f"Goad plans need reliable combat damage and political pressure. Evasion and repeatable attack incentives are higher quality than generic large creatures.")
+
         if not tips:
             tips.append(f"Start by identifying the repeated action in {commander_name}'s text, then add cards that perform or reward that action at low mana values.")
 
@@ -3697,6 +4348,8 @@ class EnhancedSuggestionEngine:
             if strategy_language:
                 notes.append(f"Deep Strategy - {mechanic['name']}: {strategy_language}")
 
+        if commander_constraints.get('aura_tutor_chain'):
+            notes.append("Deep Strategy - Aura Ladder: Build an Aura ladder by mana value so every cast can find a different name with a real job: protection first, then evasion, removal, and damage scaling.")
         if commander_constraints.get('max_enchantment_cmc'):
             max_cmc = commander_constraints['max_enchantment_cmc']
             notes.append(f"Deep Strategy - Tutor Map: Separate the {max_cmc}-mana-or-less targets into protection, card advantage, removal, and finishers. That keeps each attack trigger from becoming a generic value search.")
@@ -3760,6 +4413,12 @@ class EnhancedSuggestionEngine:
 
         if self._is_generic_mana_card(card_extracted):
             return False
+
+        if commander_constraints.get('aura_tutor_chain'):
+            card_type = card_extracted['type_line'].lower()
+            card_text = card_extracted.get('oracle_text', '').lower()
+            if 'aura' not in card_type and 'aura' not in card_text:
+                return False
 
         if 'max_enchantment_cmc' in commander_constraints:
             if 'enchantment' in card_extracted['type_line'].lower():
