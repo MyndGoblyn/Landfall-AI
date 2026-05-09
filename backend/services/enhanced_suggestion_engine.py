@@ -117,7 +117,8 @@ class EnhancedSuggestionEngine:
 
     def _is_counter_multiplier(self, oracle_text: str) -> bool:
         return any(phrase in oracle_text for phrase in [
-            'additional +1/+1 counter',
+            'if one or more +1/+1 counters would be put',
+            'if one or more counters would be put',
             'that many plus one',
             'twice that many',
             'double the number of counters',
@@ -192,6 +193,7 @@ class EnhancedSuggestionEngine:
                 commander,
                 cards,
                 color_identity,
+                commander_data,
             ))
         
         # Generate combo suggestions
@@ -724,6 +726,204 @@ class EnhancedSuggestionEngine:
             ],
         }
         return self._legal_example_names(examples_by_role.get(role, []), color_identity)
+
+    def _build_strategy_profile(
+        self,
+        commander_card: Optional[Dict],
+        synergies: List[str],
+        stats: Optional[Dict] = None,
+        detected_themes: Optional[List[str]] = None,
+    ) -> Dict:
+        """Normalize commander and deck signals into general pilot-note rules."""
+        stats = stats or {}
+        detected_themes = detected_themes or []
+        oracle_text = self._combined_oracle_text(commander_card or {})
+        type_line = self._combined_type_line(commander_card or {})
+        themes = list(dict.fromkeys([*(synergies or []), *detected_themes]))
+        role_counts = stats.get('role_counts', {})
+        mana_value = (commander_card or {}).get('cmc', 0) or 0
+        counter_plan = self._counter_plan_for_text(oracle_text) if oracle_text else None
+
+        flags = set()
+        if re.search(r'combat damage to (?:a|one or more) players?', oracle_text):
+            flags.add('combat_damage_trigger')
+        if re.search(r'whenever .* attacks?', oracle_text) or 'attack trigger' in oracle_text:
+            flags.add('attack_trigger')
+        if any(term in oracle_text for term in ['tap:', '{t}:', 'activate only as a sorcery']):
+            flags.add('activation_engine')
+        if 'commander' in oracle_text or mana_value >= 5 or flags & {'combat_damage_trigger', 'attack_trigger'}:
+            flags.add('commander_exposure')
+        if 'graveyard' in themes:
+            flags.add('graveyard_exposure')
+        if any(theme in themes for theme in ['tokens', 'artifact_tokens', 'board_conversion', 'creature']):
+            flags.add('board_exposure')
+        if 'voltron' in themes or 'combat_damage_trigger' in flags:
+            flags.add('combat_exposure')
+
+        resource_needs = []
+        if any(theme in themes for theme in ['creature', 'tokens', 'board_conversion']):
+            resource_needs.append('creature material')
+        if 'artifact_tokens' in themes:
+            resource_needs.append('spendable artifact tokens')
+        if 'artifact' in themes:
+            resource_needs.append('purposeful artifacts')
+        if 'graveyard' in themes:
+            resource_needs.append('graveyard access and recursion')
+        if 'landfall' in themes:
+            resource_needs.append('extra land drops or fetch effects')
+        if 'blink' in themes:
+            resource_needs.append('profitable ETB targets')
+        if 'instant_sorcery' in themes:
+            resource_needs.append('cheap spells and card flow')
+        if 'lifegain' in themes:
+            resource_needs.append('repeatable life gain')
+        if 'counters' in themes:
+            if counter_plan == 'self_counters':
+                resource_needs.append('repeatable counter scaling for the commander')
+            elif counter_plan == 'board_counters':
+                resource_needs.append('board-wide counter placement')
+            elif counter_plan == 'named_counters':
+                resource_needs.append('the commander-specific named counter')
+            else:
+                resource_needs.append('validated counter placement or payoffs')
+
+        profile = {
+            'primary_synergies': synergies or [],
+            'themes': themes,
+            'oracle_text': oracle_text,
+            'type_line': type_line,
+            'mana_value': mana_value,
+            'counter_plan': counter_plan,
+            'flags': flags,
+            'resource_needs': resource_needs,
+            'role_counts': role_counts,
+            'land_count': stats.get('total_lands', 0),
+            'total_cards': stats.get('total_cards', 0),
+        }
+        return profile
+
+    def _strategy_profile_sentence(self, profile: Dict, commander_name: str) -> str:
+        """Describe the commander's plan without relying on commander-specific branches."""
+        themes = profile.get('themes', [])
+        primary = profile.get('primary_synergies') or themes
+        needs = profile.get('resource_needs', [])
+        if 'board_conversion' in primary:
+            return f"Game Plan - {commander_name} is a board-conversion plan: build material first, then turn a wide board into pressure once the payoff is online."
+        if 'artifact_tokens' in primary:
+            return f"Game Plan - {commander_name} should turn temporary artifact tokens into durable value: mana bursts, sacrifice payoffs, cards, or a closing turn."
+        if 'graveyard' in primary:
+            return f"Game Plan - {commander_name} wants the graveyard to function like a resource zone, so the deck should stock it deliberately and convert it into cards, bodies, or mana."
+        if 'blink' in primary:
+            return f"Game Plan - {commander_name} is strongest when blink effects reuse permanents that immediately create cards, mana, removal, or protection."
+        if 'landfall' in primary:
+            return f"Game Plan - {commander_name} needs land drops to be fuel, not just mana; extra lands and fetch effects should feed payoffs that draw, ramp, or close."
+        if 'lifegain' in primary:
+            return f"Game Plan - {commander_name} needs repeatable life gain before payoff cards matter, then the deck can convert life changes into cards, counters, or pressure."
+        if 'counters' in primary:
+            counter_plan = profile.get('counter_plan')
+            if counter_plan == 'self_counters':
+                return f"Game Plan - {commander_name} scales through its own counter engine, so the deck should protect the commander and reward counters already being present."
+            if counter_plan == 'board_counters':
+                return f"Game Plan - {commander_name} wants counters spread across the board, so repeatable placement and board-wide payoffs matter more than single-target pump."
+            return f"Game Plan - {commander_name} needs counter cards that match its actual counter pattern, not generic counter text."
+        if 'creature' in primary or 'tokens' in primary:
+            return f"Game Plan - {commander_name} wants a board that does jobs: ramp, draw, pressure, sacrifice, or trigger the commander rather than only filling creature slots."
+        if themes:
+            theme_names = ", ".join(theme.replace('_', ' ') for theme in themes[:3])
+            return f"Game Plan - This build currently leans toward {theme_names}; keep those themes tied to the commander's actual engine instead of letting them become separate packages."
+        if needs:
+            return f"Game Plan - {commander_name} should prioritize {', '.join(needs[:3])} before adding broad Commander staples."
+        return f"Game Plan - Build around the repeated action in {commander_name}'s text, then add staples only after the engine has enough density."
+
+    def _generate_profile_pilot_notes(
+        self,
+        profile: Dict,
+        commander_name: str,
+        color_identity: Optional[List[str]] = None,
+        deep: bool = False,
+        deck_context: bool = False,
+    ) -> List[str]:
+        """Generate generalized tactical notes from a strategy profile."""
+        notes = [self._strategy_profile_sentence(profile, commander_name)]
+        themes = profile.get('themes', [])
+        flags = profile.get('flags', set())
+        needs = profile.get('resource_needs', [])
+        role_counts = profile.get('role_counts', {})
+        land_count = profile.get('land_count', 0)
+        mana_value = profile.get('mana_value', 0)
+
+        if needs:
+            notes.append(f"Setup Priority - Establish {', '.join(needs[:3])} before loading up on payoff-only cards; payoffs are weakest when the deck has not created material for them yet.")
+        elif mana_value >= 5:
+            notes.append(f"Setup Priority - Because the commander costs {mana_value} mana, early turns should favor ramp, fixing, and protection over slow value pieces.")
+        else:
+            notes.append("Setup Priority - Keep early plays purposeful: ramp, card flow, protection, or the first piece of the commander's engine.")
+
+        if 'combat_damage_trigger' in flags or 'attack_trigger' in flags or 'voltron' in themes:
+            notes.append("Sequencing - Do not expose the commander before it can connect or be protected. Haste, evasion, and instant-speed protection often matter more than another payoff.")
+        elif 'board_conversion' in themes or 'tokens' in themes:
+            notes.append("Sequencing - Build the board first, then deploy payoffs once a wipe or removal spell will not strand the entire plan.")
+        elif 'graveyard' in themes:
+            notes.append("Sequencing - Put cards into the graveyard with a purpose; self-mill is best when the next turn can recur, cast, or profit from what was milled.")
+        elif 'blink' in themes:
+            notes.append("Sequencing - Play ETB permanents before blink pieces so the blink cards immediately replace mana, cards, or removal.")
+        elif 'landfall' in themes:
+            notes.append("Sequencing - Hold extra land drops or fetches when possible until a landfall payoff is on board.")
+
+        if deck_context:
+            if land_count and land_count < 36:
+                notes.append(f"Failure Point - The deck currently has {land_count} lands, so missed land drops can make the whole engine look worse than it is.")
+            if role_counts.get('draw', 0) < 8:
+                notes.append(f"Failure Point - Card flow is light at {role_counts.get('draw', 0)} draw sources; this kind of plan needs ways to reload after the first engine piece is answered.")
+            if role_counts.get('protection', 0) < 3 and ('commander_exposure' in flags or 'combat_exposure' in flags):
+                notes.append(f"Failure Point - Protection is light at {role_counts.get('protection', 0)} pieces, which is risky for a commander-facing or combat-facing plan.")
+            if role_counts.get('interaction', 0) < 5:
+                notes.append(f"Failure Point - Interaction is light at {role_counts.get('interaction', 0)} pieces, so faster decks or hate pieces may disrupt the plan before it stabilizes.")
+        else:
+            if 'graveyard_exposure' in flags:
+                notes.append("Failure Point - Graveyard hate can shut off the best lines, so include cards that still function from hand or board.")
+            elif 'board_exposure' in flags:
+                notes.append("Failure Point - Board wipes punish this plan. Prioritize rebuild tools, card draw, or protection before adding more win-more payoffs.")
+            elif 'commander_exposure' in flags:
+                notes.append("Failure Point - If the commander is removed before generating value, the deck needs backup engines that still advance the same plan.")
+
+        if deep:
+            mulligan_role = "ramp or early engine material"
+            if 'combat_damage_trigger' in flags or 'voltron' in themes:
+                mulligan_role = "mana plus protection, haste, or evasion"
+            elif 'graveyard' in themes:
+                mulligan_role = "mana plus a graveyard enabler or value creature"
+            elif 'landfall' in themes:
+                mulligan_role = "three lands or ramp plus a landfall payoff"
+            elif 'artifact_tokens' in themes:
+                mulligan_role = "mana plus an artifact-token maker or card-flow piece"
+            notes.append(f"Mulligan Guidance - Keep hands with 2-3 lands and {mulligan_role}; ship hands that are only payoff cards with no setup.")
+            notes.append("Upgrade Direction - Add enablers until the deck reliably starts its engine, then add payoffs that convert that engine into cards, mana, removal, or a win.")
+
+            examples = self._role_examples('interaction', color_identity, themes)
+            if examples:
+                notes.append(f"Table Safety - Interaction such as {examples} keeps the main plan from losing to a single hate piece, combo turn, or board wipe.")
+
+        return self._filter_quality_tips(notes)
+
+    def _filter_quality_tips(self, tips: List[str]) -> List[str]:
+        """Remove duplicate or overly vague pilot notes."""
+        filtered = []
+        seen = set()
+        banned_fragments = [
+            'support your strategy',
+            'consider it for filling gaps',
+            'good stuff',
+        ]
+        for tip in tips:
+            cleaned = re.sub(r'\s+', ' ', tip).strip()
+            if not cleaned or cleaned.lower() in seen:
+                continue
+            if any(fragment in cleaned.lower() for fragment in banned_fragments):
+                continue
+            seen.add(cleaned.lower())
+            filtered.append(cleaned)
+        return filtered
     
     def _generate_playstyle_tips(self, stats: Dict, commander_synergies: List[str], 
                                   detected_themes: List[str], commander: Optional[str],
@@ -734,6 +934,19 @@ class EnhancedSuggestionEngine:
         commander_name = commander or "your commander"
         commander_text = commander_card.get('oracle_text', '').lower() if commander_card else ''
         commander_type = commander_card.get('type_line', '').lower() if commander_card else ''
+        profile = self._build_strategy_profile(
+            commander_card,
+            commander_synergies,
+            stats=stats,
+            detected_themes=detected_themes,
+        )
+        tips.extend(self._generate_profile_pilot_notes(
+            profile,
+            commander_name,
+            color_identity=color_identity,
+            deep=False,
+            deck_context=True,
+        ))
         
         # Mana base tips
         land_count = stats.get('total_lands', 0)
@@ -769,9 +982,7 @@ class EnhancedSuggestionEngine:
                 tips.append(f"Counter Strategy: Prioritize repeatable counter placement and payoffs over single combat tricks so {commander_name}'s board keeps scaling after the first setup turn.")
 
         if 'tokens' in detected_themes or 'tokens' in commander_synergies:
-            if 'elf' in commander_text or 'elf' in commander_type:
-                token_focus = "Elf token makers that also tap for mana or scale with creature count"
-            elif 'creature token' in commander_text or 'populate' in commander_text:
+            if 'creature token' in commander_text or 'populate' in commander_text:
                 token_focus = "creature token makers and token payoffs"
             else:
                 token_focus = "token makers that leave useful bodies or resources behind"
@@ -805,7 +1016,7 @@ class EnhancedSuggestionEngine:
             else:
                 tips.append(f"Add a few low-cost protection or disruption pieces that fit your colors so {commander_name}'s main engine can survive removal-heavy tables.")
         
-        return tips
+        return self._filter_quality_tips(tips)
 
     def _generate_deep_deck_playstyle_tips(
         self,
@@ -815,6 +1026,7 @@ class EnhancedSuggestionEngine:
         commander: Optional[str],
         cards: List[Dict],
         color_identity: Optional[List[str]] = None,
+        commander_card: Optional[Dict] = None,
     ) -> List[str]:
         """Add visibly deeper deterministic notes for opt-in deck analysis."""
         tips = []
@@ -834,6 +1046,23 @@ class EnhancedSuggestionEngine:
             card for card in nonland_cards
             if card.get('cmc', 0) <= 2
         ]
+        profile = self._build_strategy_profile(
+            commander_card,
+            commander_synergies,
+            stats=stats,
+            detected_themes=detected_themes,
+        )
+        deep_profile_notes = self._generate_profile_pilot_notes(
+            profile,
+            commander_name,
+            color_identity=color_identity,
+            deep=True,
+            deck_context=True,
+        )
+        tips.extend([
+            tip for tip in deep_profile_notes
+            if tip.startswith(('Mulligan Guidance', 'Upgrade Direction', 'Table Safety'))
+        ])
 
         if themes:
             tips.append(
@@ -866,7 +1095,7 @@ class EnhancedSuggestionEngine:
                 "Deep Analysis - Color Discipline: Recommendations stay inside commander color identity, but color fixing still matters. Favor flexible fixing when the deck has several double-pip spells or wants to cast the commander on curve."
             )
 
-        return tips
+        return self._filter_quality_tips(tips)
     
     def _generate_combo_suggestions(self, commander: Optional[str], 
                                      commander_synergies: List[str], cards: List[Dict]) -> List[Dict]:
@@ -1638,8 +1867,28 @@ class EnhancedSuggestionEngine:
             'artifact token',
         ])
 
+    def _creates_tokens_for_other_player(self, oracle_text: str) -> bool:
+        """Reject removal/counterspells that give the token to an opponent or target's controller."""
+        gift_patterns = [
+            r"\bits controller creates?\b",
+            r"\bthat (?:creature|player|spell|permanent)'?s controller creates?\b",
+            r"\bthat player creates?\b",
+            r"\btarget opponent creates?\b",
+            r"\ban opponent creates?\b",
+            r"\beach opponent creates?\b",
+            r"\beach player creates?\b",
+        ]
+        return any(re.search(pattern, oracle_text) for pattern in gift_patterns)
+
     def _is_creature_token_support(self, oracle_text: str, type_line: str) -> bool:
         """Identify cards that support creature-token plans instead of incidental Treasure ramp."""
+        if self._creates_tokens_for_other_player(oracle_text):
+            return any(phrase in oracle_text for phrase in [
+                'tokens you control get',
+                'tokens you control have',
+                'token creatures you control',
+            ])
+
         if any(phrase in oracle_text for phrase in [
             'creature token',
             'creature tokens',
@@ -1661,8 +1910,41 @@ class EnhancedSuggestionEngine:
             return True
         return False
 
+    def _creates_own_creature_tokens(self, oracle_text: str) -> bool:
+        """Identify cards that actually create or copy creature tokens for this deck."""
+        if self._creates_tokens_for_other_player(oracle_text):
+            return False
+        return any(phrase in oracle_text for phrase in [
+            'create a 1/1',
+            'create two',
+            'create three',
+            'create x',
+            'create that many',
+            'creature token',
+            'creature tokens',
+            'populate',
+        ])
+
+    def _supports_existing_creature_board(self, oracle_text: str) -> bool:
+        """Identify anthem, evasion, and payoff text for creatures already controlled."""
+        return any(phrase in oracle_text for phrase in [
+            'creatures you control get',
+            'creatures you control have',
+            'tokens you control get',
+            'tokens you control have',
+            'attacking creatures',
+        ])
+
     def _is_artifact_token_support(self, oracle_text: str) -> bool:
         """Identify cards that make or spend artifact tokens as an engine."""
+        if self._creates_tokens_for_other_player(oracle_text):
+            return any(phrase in oracle_text for phrase in [
+                'artifacts you control',
+                'for each artifact you control',
+                'sacrifice an artifact',
+                'whenever you sacrifice',
+            ])
+
         return self._has_artifact_token_text(oracle_text) or any(phrase in oracle_text for phrase in [
             'sacrifice an artifact',
             'whenever you sacrifice',
@@ -1835,6 +2117,8 @@ class EnhancedSuggestionEngine:
         """Identify cards that add bodies or make a wide converted board attack better."""
         if 'land' in type_line:
             return False
+        if self._creates_tokens_for_other_player(oracle_text):
+            return False
 
         creature_token_body = self._is_creature_token_support(oracle_text, type_line) or any(phrase in oracle_text for phrase in [
             'create a 1/1',
@@ -1975,10 +2259,10 @@ class EnhancedSuggestionEngine:
                 'creature enters',
                 'enters the battlefield',
                 'nontoken creature',
-                'creature token',
             ]
             return (
                 any(phrase in oracle_text for phrase in creature_support) or
+                self._is_creature_token_support(oracle_text, type_line) or
                 self._has_creature_spell_text(oracle_text) or
                 self._has_creature_card_text(oracle_text)
             )
@@ -2033,25 +2317,23 @@ class EnhancedSuggestionEngine:
             if any(term in commander_text for term in ['enters the battlefield', 'creature enters']):
                 return any(term in oracle_text for term in [
                     'enters the battlefield',
-                    'creature token',
                     'return it to the battlefield',
                     'exile another',
                     'whenever another creature',
                     'whenever a creature',
-                ])
+                ]) or self._is_creature_token_support(oracle_text, type_line)
             if any(term in commander_text for term in ['creatures you control', 'each creature you control', 'creatures get', 'creatures have']):
                 return any(term in oracle_text for term in [
                     'creatures you control',
                     'each creature you control',
-                    'creature token',
                     'whenever a creature',
                     'whenever another creature',
                     '+1/+1 counter',
                     'draw a card',
-                ])
+                ]) or self._is_creature_token_support(oracle_text, type_line)
 
         if synergy == 'tokens':
-            if any(phrase in oracle_text for phrase in ['its controller creates', 'that player creates', 'target opponent creates']):
+            if self._creates_tokens_for_other_player(oracle_text):
                 return False
             if 'creature token' in commander_text or 'populate' in commander_text:
                 return self._is_creature_token_support(oracle_text, type_line)
@@ -2059,7 +2341,7 @@ class EnhancedSuggestionEngine:
                 return False
 
         if synergy == 'artifact_tokens':
-            if any(phrase in oracle_text for phrase in ['its controller creates', 'that player creates', 'target opponent creates']):
+            if self._creates_tokens_for_other_player(oracle_text):
                 return False
             return self._is_artifact_token_support(oracle_text)
 
@@ -2431,24 +2713,36 @@ class EnhancedSuggestionEngine:
                 if 'enters the battlefield' in oracle_text or self._has_card_draw_text(oracle_text):
                     score += 6
                     add_evidence('role_value')
-            elif 'creature token' in oracle_text:
+            elif self._creates_own_creature_tokens(oracle_text):
                 job = 'creature material'
                 evidence = 'adds bodies for the creature plan'
                 score = 76
                 add_evidence('enabler')
                 add_evidence('creature_token_support')
+            elif self._supports_existing_creature_board(oracle_text):
+                job = 'creature-board support'
+                evidence = 'improves the creatures already in play'
+                score = 76
+                add_evidence('enabler')
+                add_evidence('board_support')
             elif 'enters the battlefield' in oracle_text:
                 job = 'ETB creature value'
                 evidence = 'supports creature-entry loops'
                 score = 80
                 add_evidence('role_value')
         elif synergy == 'board_conversion':
-            if self._is_creature_token_support(oracle_text, type_line):
+            if self._creates_own_creature_tokens(oracle_text):
                 job = 'wide-board material'
                 evidence = 'adds creature material for the commander to convert'
                 score = 88
                 add_evidence('direct_synergy')
                 add_evidence('creature_token_support')
+            elif self._supports_existing_creature_board(oracle_text):
+                job = 'wide-board support'
+                evidence = 'helps the converted board connect'
+                score = 84
+                add_evidence('direct_synergy')
+                add_evidence('board_support')
             elif 'creature' in type_line and card_data.get('cmc', 0) <= 2:
                 job = 'cheap body'
                 evidence = 'sets up the board before the payoff arrives'
@@ -2479,7 +2773,7 @@ class EnhancedSuggestionEngine:
                 score = 84
                 add_evidence('direct_synergy')
                 add_evidence('payoff')
-            elif 'creature token' in oracle_text:
+            elif self._creates_own_creature_tokens(oracle_text):
                 job = 'sacrifice fodder'
                 evidence = 'creates expendable material'
                 score = 74
@@ -2536,12 +2830,18 @@ class EnhancedSuggestionEngine:
                 evidence = 'rewards the board the commander makes'
                 score = 80
                 add_evidence('payoff')
-            elif 'creature token' in oracle_text:
+            elif self._creates_own_creature_tokens(oracle_text):
                 job = 'token maker'
                 evidence = 'adds bodies to the core plan'
                 score = 74
                 add_evidence('enabler')
                 add_evidence('creature_token_support')
+            elif self._supports_existing_creature_board(oracle_text):
+                job = 'token-board support'
+                evidence = 'improves the token board after it exists'
+                score = 76
+                add_evidence('payoff')
+                add_evidence('board_support')
             elif 'treasure token' in oracle_text or 'clue token' in oracle_text or 'food token' in oracle_text:
                 add_penalty('wrong_token_type')
                 score = 58
@@ -2685,7 +2985,9 @@ class EnhancedSuggestionEngine:
 
         action = f"{card_name} fills the {job} role."
         if 'creature_token_support' in evidence_tags:
-            action = f"{card_name} creates or supports creature material."
+            action = f"{card_name} creates creature material."
+        elif 'board_support' in evidence_tags:
+            action = f"{card_name} improves the creatures already on board."
         elif 'sacrifice_outlet' in evidence_tags:
             action = f"{card_name} gives the deck a real sacrifice outlet."
         elif 'counter_scaling' in evidence_tags:
@@ -2706,6 +3008,8 @@ class EnhancedSuggestionEngine:
             fit = f"That matters for {commander_name} because board-conversion commanders need material or team-wide combat support before the payoff turn."
         elif synergy == 'tokens' and 'creature_token_support' in evidence_tags:
             fit = f"That matters for {commander_name} because the commander wants bodies or token payoffs, not unrelated token vocabulary."
+        elif 'board_support' in evidence_tags:
+            fit = f"That matters for {commander_name} because the card rewards or improves the board after the deck has assembled creatures."
         elif synergy == 'artifact_tokens':
             fit = f"That matters for {commander_name} because the card creates or converts artifact tokens the deck can actually use."
         elif synergy == 'counters':
@@ -2729,16 +3033,26 @@ class EnhancedSuggestionEngine:
         """Group tips into small deterministic pages without changing legacy output."""
         sections = [
             {'id': 'game_plan', 'label': 'Game Plan', 'tips': []},
-            {'id': 'build_priorities', 'label': 'Build Priorities', 'tips': []},
+            {'id': 'setup', 'label': 'Setup', 'tips': []},
+            {'id': 'sequencing', 'label': 'Sequencing', 'tips': []},
+            {'id': 'risk', 'label': 'Risk Check', 'tips': []},
             {'id': 'foundation', 'label': 'Foundation', 'tips': []},
             {'id': 'deep', 'label': 'Deep Search', 'tips': []},
         ]
 
         for tip in tips:
             if tip.startswith('Deep Strategy'):
+                sections[5]['tips'].append(tip)
+            elif tip.startswith('Game Plan'):
+                sections[0]['tips'].append(tip)
+            elif tip.startswith('Setup Priority') or tip.startswith('Upgrade Direction'):
+                sections[1]['tips'].append(tip)
+            elif tip.startswith('Sequencing') or tip.startswith('Mulligan Guidance'):
+                sections[2]['tips'].append(tip)
+            elif tip.startswith('Failure Point') or tip.startswith('Table Safety'):
                 sections[3]['tips'].append(tip)
             elif tip.startswith('Use 36-38') or tip.startswith('Reserve 7-10'):
-                sections[2]['tips'].append(tip)
+                sections[4]['tips'].append(tip)
             elif len(sections[0]['tips']) < 3:
                 sections[0]['tips'].append(tip)
             else:
@@ -2876,7 +3190,14 @@ class EnhancedSuggestionEngine:
         oracle_text = commander_card.get('oracle_text', '').lower()
         type_line = commander_card.get('type_line', '').lower()
         color_identity = commander_card.get('color_identity', [])
-        tips = []
+        profile = self._build_strategy_profile(commander_card, synergies)
+        tips = self._generate_profile_pilot_notes(
+            profile,
+            commander_name,
+            color_identity=color_identity,
+            deep=False,
+            deck_context=False,
+        )
 
         if 'enchantment' in synergies:
             if commander_constraints.get('max_enchantment_cmc'):
@@ -2977,7 +3298,7 @@ class EnhancedSuggestionEngine:
         tips.append(f"Use 36-38 lands and 10-12 ramp sources. {ramp_examples or 'Efficient two-mana ramp'} keeps the commander online without crowding out synergy slots.")
         tips.append(f"Reserve 7-10 slots for answers and protection. {interaction_examples or 'Low-cost interaction in your colors'} lets the deck keep its engine after removal and board wipes.")
 
-        return tips
+        return self._filter_quality_tips(tips)
 
     def _generate_deep_commander_strategy_tips(
         self,
@@ -2990,7 +3311,14 @@ class EnhancedSuggestionEngine:
         commander_name = commander_card.get('name', 'This commander')
         oracle_text = commander_card.get('oracle_text', '').lower()
         color_identity = commander_card.get('color_identity', [])
-        notes = []
+        profile = self._build_strategy_profile(commander_card, synergies)
+        notes = self._generate_profile_pilot_notes(
+            profile,
+            commander_name,
+            color_identity=color_identity,
+            deep=True,
+            deck_context=False,
+        )[4:]
 
         if commander_constraints.get('max_enchantment_cmc'):
             max_cmc = commander_constraints['max_enchantment_cmc']
@@ -3030,7 +3358,7 @@ class EnhancedSuggestionEngine:
         if interaction_examples:
             notes.append(f"Deep Strategy - Table Safety: Reserve slots for answers like {interaction_examples}; deep recommendations should improve the engine without leaving it unable to stop faster decks.")
 
-        return notes
+        return self._filter_quality_tips(notes)
 
     def _candidate_card_for_synergy(self, card: Dict, synergy: str) -> Dict:
         """Select the most relevant face for validating a double-faced candidate."""
@@ -3231,6 +3559,19 @@ class EnhancedSuggestionEngine:
             minimum_score=84,
             concurrency=3,
         )
+        if not suggested_cards and synergies:
+            suggested_cards = await self._search_commander_recommendations(
+                commander_card=commander_card,
+                synergies=synergies,
+                color_identity=color_identity,
+                commander_constraints=commander_constraints,
+                max_cards=3,
+                search_budget=6 if not deep else 8,
+                per_synergy_limit=3,
+                query_limit=28 if not deep else 36,
+                minimum_score=78,
+                concurrency=3,
+            )
         
         # Generate combos
         combos = self._generate_combo_suggestions(extracted['name'], synergies, [])

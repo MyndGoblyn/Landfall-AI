@@ -23,6 +23,13 @@ class ScryfallService:
     async def close(self):
         if self.session and not self.session.closed:
             await self.session.close()
+
+    def _retry_after_seconds(self, response, fallback: float) -> float:
+        """Read Retry-After when Scryfall asks us to slow down."""
+        try:
+            return max(float(response.headers.get("Retry-After", fallback)), fallback)
+        except (TypeError, ValueError):
+            return fallback
     
     def _is_cache_valid(self, key: str) -> bool:
         if key not in self.cache:
@@ -43,18 +50,23 @@ class ScryfallService:
             endpoint = "/cards/named"
             params = {"fuzzy" if fuzzy else "exact": name}
             
-            async with session.get(f"{self.BASE_URL}{endpoint}", params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    self.cache[cache_key] = data
-                    self.cache_expiry[cache_key] = datetime.now() + self.cache_ttl
-                    return data
-                elif response.status == 404:
-                    logger.warning(f"Card not found: {name}")
-                    return None
-                else:
-                    logger.error(f"Scryfall API error: {response.status}")
-                    return None
+            for attempt in range(3):
+                async with session.get(f"{self.BASE_URL}{endpoint}", params=params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        self.cache[cache_key] = data
+                        self.cache_expiry[cache_key] = datetime.now() + self.cache_ttl
+                        return data
+                    elif response.status == 404:
+                        logger.warning(f"Card not found: {name}")
+                        return None
+                    elif response.status in {429, 500, 502, 503, 504} and attempt < 2:
+                        wait_time = self._retry_after_seconds(response, 0.35 * (attempt + 1))
+                        logger.warning(f"Scryfall card lookup retry {attempt + 1} for {name}: {response.status}")
+                        await asyncio.sleep(wait_time)
+                    else:
+                        logger.error(f"Scryfall API error: {response.status}")
+                        return None
         except Exception as e:
             logger.error(f"Error fetching card {name}: {str(e)}")
             return None
@@ -65,7 +77,7 @@ class ScryfallService:
         for name in names:
             card = await self.search_card(name)
             results.append(card)
-            await asyncio.sleep(0.1)  # Scryfall rate limit: 10 req/sec
+            await asyncio.sleep(0.12)  # Keep text imports below Scryfall's burst limits
         return results
     
     async def search_cards_by_criteria(self, query: str, limit: int = 20) -> List[Dict]:
@@ -78,16 +90,21 @@ class ScryfallService:
             session = await self.get_session()
             params = {"q": query, "unique": "cards", "order": "edhrec"}
             
-            async with session.get(f"{self.BASE_URL}/cards/search", params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    results = data.get('data', [])[:limit]
-                    self.cache[cache_key] = results
-                    self.cache_expiry[cache_key] = datetime.now() + self.cache_ttl
-                    return results
-                else:
-                    logger.error(f"Scryfall search error: {response.status}")
-                    return []
+            for attempt in range(3):
+                async with session.get(f"{self.BASE_URL}/cards/search", params=params) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        results = data.get('data', [])[:limit]
+                        self.cache[cache_key] = results
+                        self.cache_expiry[cache_key] = datetime.now() + self.cache_ttl
+                        return results
+                    elif response.status in {429, 500, 502, 503, 504} and attempt < 2:
+                        wait_time = self._retry_after_seconds(response, 0.35 * (attempt + 1))
+                        logger.warning(f"Scryfall search retry {attempt + 1}: {response.status}")
+                        await asyncio.sleep(wait_time)
+                    else:
+                        logger.error(f"Scryfall search error: {response.status}")
+                        return []
         except Exception as e:
             logger.error(f"Error searching cards: {str(e)}")
             return []

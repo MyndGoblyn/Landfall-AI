@@ -157,7 +157,7 @@ class DeckParser:
     async def _parse_text(self, text: str) -> Dict:
         """Parse deck from plain text format"""
         lines = text.strip().split('\n')
-        cards = []
+        parsed_entries = []
         commander = None
         
         for line in lines:
@@ -179,8 +179,11 @@ class DeckParser:
                 card_name = re.sub(r'\*CMDR\*|COMMANDER', '', card_name, flags=re.IGNORECASE).strip()
                 commander = card_name
             
-            # Fetch from Scryfall
-            scryfall_card = await self.scryfall.search_card(card_name)
+            parsed_entries.append((card_name, qty))
+
+        cards = []
+        scryfall_cards = await self.scryfall.get_card_bulk([name for name, _qty in parsed_entries])
+        for (card_name, qty), scryfall_card in zip(parsed_entries, scryfall_cards):
             if scryfall_card:
                 card_info = self._build_card_info(scryfall_card, qty)
                 cards.append(card_info)
