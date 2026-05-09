@@ -4478,6 +4478,94 @@ class EnhancedSuggestionEngine:
             'image_url_back': image_data['back']
         }
 
+    def _recommendation_base_rank(self, recommendation: Dict) -> float:
+        """Local rank for deterministic recommendation ordering after Scryfall retrieval."""
+        evidence_tags = set(recommendation.get('evidence_tags', []))
+        penalty_tags = set(recommendation.get('penalty_tags', []))
+        fit_tier_rank = {
+            'Core Fit': 4,
+            'Strong Support': 3,
+            'Role Fit': 2,
+            'Speculative': 0,
+        }.get(recommendation.get('fit_tier'), 1)
+        confidence_rank = {
+            'core': 4,
+            'high': 3,
+            'medium': 2,
+            'low': 1,
+            'speculative': 0,
+        }.get(recommendation.get('confidence'), 1)
+
+        direct_bonus = 0
+        for tag, value in {
+            'direct_synergy': 35,
+            'mechanic_core': 18,
+            'tutorable_enchantment': 16,
+            'card_flow': 12,
+            'protection': 10,
+            'payoff': 8,
+            'enabler': 6,
+        }.items():
+            if tag in evidence_tags:
+                direct_bonus += value
+
+        job = recommendation.get('job', '').lower()
+        cmc = recommendation.get('cmc') or 0
+        setup_like = (
+            any(tag in evidence_tags for tag in ['enabler', 'protection', 'card_flow', 'sacrifice_outlet']) or
+            any(term in job for term in ['support', 'setup', 'protection', 'outlet', 'card flow'])
+        )
+        curve_bonus = max(0, 5 - cmc) * (4 if setup_like else 1)
+
+        return (
+            recommendation.get('score', 0) * 100 +
+            fit_tier_rank * 16 +
+            confidence_rank * 10 +
+            len(evidence_tags) * 6 +
+            direct_bonus +
+            curve_bonus -
+            len(penalty_tags) * 25
+        )
+
+    def _recommendation_sort_key(self, recommendation: Dict) -> tuple:
+        """Sort strongest local matches first; Scryfall order is only the final tie-breaker."""
+        return (
+            -self._recommendation_base_rank(recommendation),
+            recommendation.get('_synergy_index', 99),
+            recommendation.get('_source_rank', 999),
+            recommendation.get('name', ''),
+        )
+
+    def _recommendation_selection_score(self, recommendation: Dict, selected: List[Dict]) -> float:
+        """Apply a soft diversity tax so one job does not crowd every slot."""
+        score = self._recommendation_base_rank(recommendation)
+        job = recommendation.get('job', recommendation.get('role', '')).lower()
+        role = recommendation.get('role', '').lower()
+        same_job = sum(1 for card in selected if card.get('job', '').lower() == job)
+        same_role = sum(1 for card in selected if card.get('role', '').lower() == role)
+        return (
+            score -
+            same_job * 120 -
+            same_role * 60 -
+            recommendation.get('_source_rank', 999) * 0.01
+        )
+
+    def _select_ranked_recommendations(self, candidates: List[Dict], max_cards: int) -> List[Dict]:
+        """Pick final recommendations using local score, then job diversity."""
+        remaining = sorted(candidates, key=self._recommendation_sort_key)
+        selected = []
+
+        while remaining and len(selected) < max_cards:
+            remaining.sort(key=lambda card: (
+                -self._recommendation_selection_score(card, selected),
+                card.get('_synergy_index', 99),
+                card.get('_source_rank', 999),
+                card.get('name', ''),
+            ))
+            selected.append(remaining.pop(0))
+
+        return selected
+
     async def _search_commander_recommendations(
         self,
         commander_card: Dict,
@@ -4495,39 +4583,36 @@ class EnhancedSuggestionEngine:
         """Search Scryfall in bounded parallel and keep only commander-specific cards."""
         extracted = self.scryfall.extract_card_data(commander_card)
         commander_name = extracted['name']
-        seen_names = {commander_name.lower()}
-        seen_names.update(name.lower() for name in (exclude_names or set()))
+        excluded_names = {commander_name.lower()}
+        excluded_names.update(name.lower() for name in (exclude_names or set()))
 
         search_specs = []
-        for synergy in synergies[:search_budget]:
+        for synergy_index, synergy in enumerate(synergies[:search_budget]):
             query = self._build_query_for_synergy(synergy, color_identity, commander_constraints)
             if query:
-                search_specs.append((synergy, query))
+                search_specs.append((synergy_index, synergy, query))
 
         if not search_specs:
             return []
 
         semaphore = asyncio.Semaphore(max(1, concurrency))
 
-        async def run_search(synergy: str, query: str):
+        async def run_search(synergy_index: int, synergy: str, query: str):
             async with semaphore:
                 results = await self.scryfall.search_cards_by_criteria(query, limit=query_limit)
-                return synergy, results
+                return synergy_index, synergy, results
 
         search_results = await asyncio.gather(
-            *(run_search(synergy, query) for synergy, query in search_specs)
+            *(run_search(synergy_index, synergy, query) for synergy_index, synergy, query in search_specs)
         )
 
-        candidates = []
+        candidates_by_name = {}
         order = 0
-        for synergy, results in search_results:
-            cards_added_for_synergy = 0
-            for card in results:
-                if cards_added_for_synergy >= per_synergy_limit:
-                    break
-
+        for synergy_index, synergy, results in search_results:
+            synergy_candidates = []
+            for source_rank, card in enumerate(results):
                 card_name = card.get('name', '').lower()
-                if not card_name or card_name in seen_names:
+                if not card_name or card_name in excluded_names:
                     continue
                 if not self._is_legal_for_deck(card, color_identity):
                     continue
@@ -4535,7 +4620,7 @@ class EnhancedSuggestionEngine:
                 card_to_validate = self._candidate_card_for_synergy(card, synergy)
                 card_extracted = self.scryfall.extract_card_data(card_to_validate)
                 extracted_name = card_extracted['name'].lower()
-                if extracted_name in seen_names:
+                if extracted_name in excluded_names:
                     continue
 
                 effective_cmc = self._calculate_effective_cmc(card_to_validate)
@@ -4563,15 +4648,25 @@ class EnhancedSuggestionEngine:
                     continue
 
                 recommendation['_order'] = order
-                candidates.append(recommendation)
-                seen_names.add(extracted_name)
-                cards_added_for_synergy += 1
+                recommendation['_source_rank'] = source_rank
+                recommendation['_synergy_index'] = synergy_index
+                recommendation['_rank_score'] = self._recommendation_base_rank(recommendation)
+                synergy_candidates.append(recommendation)
                 order += 1
 
-        candidates.sort(key=lambda card: (-card.get('score', 0), card.get('_order', 0)))
+            for recommendation in sorted(synergy_candidates, key=self._recommendation_sort_key)[:per_synergy_limit]:
+                name_key = recommendation['name'].lower()
+                existing = candidates_by_name.get(name_key)
+                if existing is None or self._recommendation_sort_key(recommendation) < self._recommendation_sort_key(existing):
+                    candidates_by_name[name_key] = recommendation
+
+        candidates = self._select_ranked_recommendations(list(candidates_by_name.values()), max_cards)
         for card in candidates:
             card.pop('_order', None)
-        return candidates[:max_cards]
+            card.pop('_source_rank', None)
+            card.pop('_synergy_index', None)
+            card.pop('_rank_score', None)
+        return candidates
 
     async def analyze_commander(self, commander_card: Dict, deep: bool = False) -> Dict:
         """Analyze a commander and provide strategy tips"""

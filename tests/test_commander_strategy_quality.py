@@ -802,6 +802,62 @@ def test_recommendation_quality_gate_rejects_wrong_token_type_for_creature_token
     assert "Treasure" not in cards[0]["reason"]
 
 
+def test_commander_recommendations_score_full_batch_before_synergy_cap():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.results = [
+        {
+            "name": "Wide Burn",
+            "oracle_text": "Wide Burn deals X damage divided as you choose among any number of target creatures.",
+            "type_line": "Sorcery",
+            "cmc": 4,
+            "color_identity": ["R"],
+        },
+        {
+            "name": "Insightful Wide Burn",
+            "oracle_text": "Insightful Wide Burn deals X damage divided as you choose among any number of target creatures. Draw a card.",
+            "type_line": "Sorcery",
+            "cmc": 4,
+            "color_identity": ["R"],
+        },
+    ]
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    commander = {
+        "name": "Target Cost Commander",
+        "oracle_text": "Spells you cast cost {1} less to cast for each target.",
+        "type_line": "Legendary Creature",
+        "color_identity": ["R"],
+    }
+
+    cards = asyncio.run(engine._search_commander_recommendations(
+        commander_card=commander,
+        synergies=["target_spells"],
+        color_identity=["R"],
+        commander_constraints=engine._get_commander_constraints(commander),
+        max_cards=1,
+        search_budget=1,
+        per_synergy_limit=1,
+        query_limit=10,
+        minimum_score=84,
+    ))
+
+    assert [card["name"] for card in cards] == ["Insightful Wide Burn"]
+    assert "card_flow" in cards[0]["evidence_tags"]
+
+
+def test_recommendation_selection_applies_soft_job_diversity():
+    engine = make_engine()
+    candidates = [
+        {"name": "First Outlet", "score": 90, "job": "sacrifice outlet", "role": "sacrifice", "fit_tier": "Core Fit", "confidence": "core", "evidence_tags": ["direct_synergy"], "penalty_tags": [], "cmc": 2, "_source_rank": 0, "_synergy_index": 0},
+        {"name": "Second Outlet", "score": 90, "job": "sacrifice outlet", "role": "sacrifice", "fit_tier": "Core Fit", "confidence": "core", "evidence_tags": ["direct_synergy"], "penalty_tags": [], "cmc": 2, "_source_rank": 1, "_synergy_index": 0},
+        {"name": "Third Outlet", "score": 90, "job": "sacrifice outlet", "role": "sacrifice", "fit_tier": "Core Fit", "confidence": "core", "evidence_tags": ["direct_synergy"], "penalty_tags": [], "cmc": 2, "_source_rank": 2, "_synergy_index": 0},
+        {"name": "Token Payoff", "score": 89, "job": "token payoff", "role": "tokens", "fit_tier": "Core Fit", "confidence": "core", "evidence_tags": ["direct_synergy"], "penalty_tags": [], "cmc": 3, "_source_rank": 3, "_synergy_index": 1},
+    ]
+
+    selected = engine._select_ranked_recommendations(candidates, 3)
+
+    assert [card["name"] for card in selected] == ["First Outlet", "Token Payoff", "Second Outlet"]
+
+
 def test_recommendation_quality_gate_marks_loose_counter_matches_speculative():
     engine = make_engine()
     commander = {
