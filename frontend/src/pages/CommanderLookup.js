@@ -143,6 +143,7 @@ export default function CommanderLookup() {
   const colorText = commanderData?.color_identity?.length
     ? commanderData.color_identity.join('')
     : 'Colorless';
+  const formatSynergy = (synergy) => synergy.replace(/_/g, ' ');
 
   return (
     <div className="app-shell">
@@ -289,24 +290,22 @@ export default function CommanderLookup() {
                 <div className="flex flex-wrap gap-2">
                   {commanderData.synergies.map((synergy, idx) => (
                     <span key={idx} className="theme-pill capitalize">
-                      {synergy}
+                      {formatSynergy(synergy)}
                     </span>
                   ))}
                 </div>
               </div>
             )}
 
-            {commanderData.suggested_cards && commanderData.suggested_cards.length > 0 && (
-              <div className="glass-panel p-6">
-                <h3 className="text-2xl font-semibold mb-6">Recommended Cards</h3>
-                <RecommendedCardsPager
-                  commanderData={commanderData}
-                  emptyMessage="No theme-specific recommendations were found for this commander."
-                  onFindMore={handleFindMoreCards}
-                  findMoreLoading={moreLoading}
-                />
-              </div>
-            )}
+            <div className="glass-panel p-6">
+              <h3 className="text-2xl font-semibold mb-6">Recommended Cards</h3>
+              <RecommendedCardsPager
+                commanderData={commanderData}
+                emptyMessage="No theme-specific recommendations were found for this commander."
+                onFindMore={handleFindMoreCards}
+                findMoreLoading={moreLoading}
+              />
+            </div>
 
             {commanderData.combos && commanderData.combos.length > 0 && (
               <div className="glass-panel p-6">

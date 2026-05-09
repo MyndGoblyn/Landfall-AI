@@ -68,6 +68,7 @@ export default function RandomCommander() {
   const colorText = commanderData?.color_identity?.length
     ? commanderData.color_identity.join('')
     : 'Colorless';
+  const formatSynergy = (synergy) => synergy.replace(/_/g, ' ');
 
   const handleFindMoreCards = async () => {
     if (!commanderData?.name || moreLoading) return;
@@ -258,7 +259,7 @@ export default function RandomCommander() {
                 <div className="flex flex-wrap gap-2">
                   {commanderData.synergies.map((synergy, idx) => (
                     <span key={idx} className="theme-pill capitalize">
-                      {synergy}
+                      {formatSynergy(synergy)}
                     </span>
                   ))}
                 </div>

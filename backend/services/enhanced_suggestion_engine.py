@@ -278,6 +278,8 @@ class EnhancedSuggestionEngine:
             add_once('exile')
         if any(phrase in oracle_text for phrase in ['equipment', 'aura', 'attach', 'equipped', 'enchanted']):
             add_once('voltron')
+        if self._is_board_conversion_commander(oracle_text):
+            add_once('board_conversion')
         
         return synergies
     
@@ -1610,6 +1612,62 @@ class EnhancedSuggestionEngine:
         ]
         return any(term in oracle_text for term in voltron_terms)
 
+    def _is_board_conversion_commander(self, oracle_text: str) -> bool:
+        """Detect commanders that turn many small bodies into a combat engine."""
+        board_text = any(phrase in oracle_text for phrase in [
+            'creatures you control have base power and toughness',
+            'other creatures you control have base power and toughness',
+            'base power and toughness',
+            'creatures you control are',
+            'in addition to their other creature types',
+        ])
+        combat_pressure = any(phrase in oracle_text for phrase in [
+            'attack each combat if able',
+            "can't be blocked",
+            'must attack',
+            'attack if able',
+        ])
+        return board_text and ('creatures you control' in oracle_text or 'other creatures you control' in oracle_text or combat_pressure)
+
+    def _is_board_conversion_support(self, oracle_text: str, type_line: str, cmc: float = 0) -> bool:
+        """Identify cards that add bodies or make a wide converted board attack better."""
+        if 'land' in type_line:
+            return False
+
+        creature_token_body = self._is_creature_token_support(oracle_text, type_line) or any(phrase in oracle_text for phrase in [
+            'create a 1/1',
+            'create two',
+            'create three',
+            'create x',
+            'create that many',
+            'thopter artifact creature token',
+            'servo artifact creature token',
+            'myr artifact creature token',
+            'construct artifact creature token',
+            'eldrazi scion',
+            'eldrazi spawn',
+        ])
+        cheap_body = 'creature' in type_line and cmc <= 3
+        multi_body = any(phrase in oracle_text for phrase in [
+            'for each creature',
+            'for each artifact',
+            'whenever a nontoken creature enters',
+            'whenever another nontoken creature enters',
+            'at the beginning of combat',
+        ])
+        attack_support = any(phrase in oracle_text for phrase in [
+            'creatures you control gain',
+            'creatures you control have',
+            'attacking creatures',
+            "can't be blocked",
+            'menace',
+            'trample',
+            'haste',
+            'indestructible',
+        ])
+
+        return creature_token_body or cheap_body or multi_body or attack_support
+
     def _is_land_card(self, card_data: Dict) -> bool:
         """Keep lands out of commander mechanic recommendations."""
         return re.search(r'\bland\b', card_data.get('type_line', '').lower()) is not None
@@ -1724,6 +1782,8 @@ class EnhancedSuggestionEngine:
             )
         if synergy == 'voltron':
             return self._is_voltron_support(oracle_text, type_line)
+        if synergy == 'board_conversion':
+            return self._is_board_conversion_support(oracle_text, type_line, card_data.get('cmc', 0))
         if synergy in detected:
             return True
         if synergy == 'landfall' and (
@@ -1890,6 +1950,21 @@ class EnhancedSuggestionEngine:
         if synergy == 'voltron':
             return self._is_voltron_support(oracle_text, type_line)
 
+        if synergy == 'board_conversion':
+            if self._is_board_conversion_support(oracle_text, type_line, card_data.get('cmc', 0)):
+                if 'enters the battlefield' in oracle_text and not any(term in oracle_text for term in [
+                    'create',
+                    'creatures you control',
+                    'tokens you control',
+                    'attacking creatures',
+                    'haste',
+                    'trample',
+                    "can't be blocked",
+                ]):
+                    return False
+                return True
+            return False
+
         return True
 
     def _generate_commander_recommendation_reason(
@@ -2003,6 +2078,15 @@ class EnhancedSuggestionEngine:
                 reasons.append(f"{card_name} supplies bodies for {commander_name}'s creature plan, giving the deck material for attacks, sacrifice lines, or board-scaling payoffs.")
             else:
                 reasons.append(f"{card_name} supports {commander_name}'s creature plan with a job tied to the commander's trigger pattern rather than only filling the curve.")
+        elif synergy == 'board_conversion':
+            if self._is_creature_token_support(oracle_lower, type_line):
+                reasons.append(f"{card_name} gives {commander_name} creature material to convert into real combat damage, which is stronger here than relying only on oversized standalone threats.")
+            elif 'creature' in type_line and cmc <= 3:
+                reasons.append(f"{card_name} is a cheap body that can come down before {commander_name} and later become part of the converted attack force.")
+            elif any(term in oracle_lower for term in ['creatures you control gain', 'creatures you control have', 'attacking creatures', "can't be blocked"]):
+                reasons.append(f"{card_name} helps the wide board actually connect in combat after {commander_name} turns small creatures into meaningful attackers.")
+            else:
+                reasons.append(f"{card_name} supports {commander_name}'s board-conversion plan by adding material or combat texture for the commander to amplify.")
         elif synergy == 'blink':
             if 'enters the battlefield' in oracle_lower and not ('exile' in oracle_lower and 'return' in oracle_lower):
                 reasons.append(f"{card_name} is a high-quality blink target for {commander_name}; reusing its ETB text turns each blink trigger into cards, mana, removal, or board presence.")
@@ -2079,7 +2163,9 @@ class EnhancedSuggestionEngine:
         effect_notes = []
         if self._has_card_draw_text(oracle_lower):
             effect_notes.append("It also adds card flow, which helps the deck keep finding action instead of running out of pressure.")
-        if 'create' in oracle_lower and 'token' in oracle_lower:
+        if synergy == 'board_conversion' and self._is_creature_token_support(oracle_lower, type_line):
+            effect_notes.append("Its creature-token production gives the commander more material to amplify in combat.")
+        elif synergy != 'board_conversion' and 'create' in oracle_lower and 'token' in oracle_lower:
             effect_notes.append("Its token production gives you extra permanents to build around, sacrifice, or convert into value.")
         if 'sacrifice' in oracle_lower:
             effect_notes.append("The sacrifice text matters because it gives you agency over when your permanents become resources.")
@@ -2134,6 +2220,23 @@ class EnhancedSuggestionEngine:
                 job = 'ETB creature value'
                 evidence = 'supports creature-entry loops'
                 score = 80
+        elif synergy == 'board_conversion':
+            if self._is_creature_token_support(oracle_text, type_line):
+                job = 'wide-board material'
+                evidence = 'adds creature material for the commander to convert'
+                score = 88
+            elif 'creature' in type_line and card_data.get('cmc', 0) <= 2:
+                job = 'cheap body'
+                evidence = 'sets up the board before the payoff arrives'
+                score = 84
+            elif 'creature' in type_line and card_data.get('cmc', 0) <= 3:
+                job = 'early attacker'
+                evidence = 'becomes a better threat after conversion'
+                score = 82
+            elif any(term in oracle_text for term in ['creatures you control gain', 'creatures you control have', 'attacking creatures', "can't be blocked"]):
+                job = 'combat converter'
+                evidence = 'helps the converted board connect'
+                score = 84
         elif synergy == 'sacrifice':
             if 'sacrifice a creature' in oracle_text or 'sacrifice another creature' in oracle_text:
                 job = 'sacrifice outlet'
@@ -2328,6 +2431,7 @@ class EnhancedSuggestionEngine:
 
         synergy_queries = {
             'artifact': '(o:"artifact card" OR o:"artifact spell" OR o:"artifacts you control" OR o:"whenever an artifact" OR o:"sacrifice an artifact" OR t:equipment OR o:equip)',
+            'board_conversion': '(t:creature OR o:"creature token" OR o:"creature tokens" OR o:"create a 1/1" OR o:"create two" OR o:"create three" OR o:"create X" OR o:thopter OR o:servo OR o:myr OR o:construct OR o:"creatures you control have" OR o:"creatures you control gain" OR o:"attacking creatures")',
             'blink': '(o:exile o:return OR o:"enters the battlefield")',
             'creature': '(o:"creature spell" OR o:"creature enters" OR o:"creatures you control" OR o:"whenever another creature" OR o:"whenever a creature" OR o:"creature token")',
             'exile': '(o:"exile the top" OR o:"play that card" OR o:"cast that card" OR o:"from exile" OR o:"until end of your next turn")',
@@ -2391,8 +2495,14 @@ class EnhancedSuggestionEngine:
             else:
                 tips.append(f"Keep the artifact package purposeful: ramp early, then convert artifact count into cards, sacrifice value, or a clear finisher instead of filling slots with generic rocks.")
 
+        if 'board_conversion' in synergies:
+            tips.append(f"{commander_name} turns quantity into combat pressure. Build the board first with cheap bodies, token makers, and creatures that leave multiple attackers behind, then let the commander convert that material into damage.")
+            tips.append("Avoid leaning on expensive single threats that do not multiply the board. This profile improves most when one card creates several attackers or makes the whole team safer in combat.")
+
         if 'creature' in synergies:
-            if self._has_creature_spell_text(oracle_text):
+            if 'board_conversion' in synergies:
+                pass
+            elif self._has_creature_spell_text(oracle_text):
                 tips.append(f"{commander_name} rewards casting creatures, so use a curve with enough low and mid-cost creatures to double-spell. ETB creatures are especially useful because they still matter if the commander is removed.")
             elif 'enters the battlefield' in oracle_text or 'enters' in oracle_text:
                 tips.append(f"{commander_name} wants creatures that create value when they enter or when other creatures enter. Prioritize ETB creatures, token makers, and ways to reuse those triggers over vanilla bodies.")
@@ -2497,7 +2607,9 @@ class EnhancedSuggestionEngine:
             else:
                 notes.append("Deep Strategy - Artifact Density: Count only artifacts that feed the commander's trigger or convert into cards, damage, or recursion. Raw artifact count should serve a payoff.")
         if 'creature' in synergies:
-            if self._has_creature_spell_text(oracle_text):
+            if 'board_conversion' in synergies:
+                notes.append("Deep Strategy - Board Conversion: Count setup cards by how much material they create before the commander arrives. Cheap bodies, repeatable token makers, and team evasion matter more than standalone value creatures.")
+            elif self._has_creature_spell_text(oracle_text):
                 notes.append("Deep Strategy - Creature Casting: Bias toward creatures that replace themselves, ramp, or interact when cast. That keeps the commander trigger productive even when the table removes the first board.")
             elif 'enters the battlefield' in oracle_text or 'creature enters' in oracle_text:
                 notes.append("Deep Strategy - ETB Texture: Mix token makers with individually strong ETB creatures, then add blink or bounce only when there are enough targets that immediately create cards, mana, or removal.")

@@ -635,6 +635,124 @@ def test_generic_combo_lines_are_not_added_for_creature_themes():
     assert combos == []
 
 
+def test_board_conversion_profile_is_general_not_commander_specific():
+    engine = make_engine()
+    commander = {
+        "name": "Wide Board Converter",
+        "oracle_text": (
+            "Other creatures you control have base power and toughness 4/2 "
+            "and are Warriors in addition to their other creature types. "
+            "Creatures you control attack each combat if able."
+        ),
+        "type_line": "Legendary Creature",
+        "color_identity": ["R"],
+    }
+
+    synergies = engine._detect_commander_synergies(commander)
+    tips = engine._generate_commander_strategy_tips(
+        commander,
+        synergies,
+        engine._get_commander_constraints(commander),
+    )
+    joined = " ".join(tips).lower()
+
+    assert "board_conversion" in synergies
+    assert "cheap bodies" in joined
+    assert "token makers" in joined
+    assert "quantity into combat pressure" in joined
+
+
+def test_board_conversion_scores_bodies_and_rejects_etb_only_value():
+    engine = make_engine()
+    commander = {
+        "name": "Wide Board Converter",
+        "oracle_text": "Other creatures you control have base power and toughness 4/2. Creatures you control attack each combat if able.",
+        "type_line": "Legendary Creature",
+        "color_identity": [],
+    }
+    token_maker = {
+        "name": "Servo Engine",
+        "oracle_text": "When Servo Engine enters the battlefield, create two 1/1 colorless Servo artifact creature tokens.",
+        "type_line": "Artifact Creature",
+        "cmc": 3,
+    }
+    cheap_body = {
+        "name": "Signal Pest",
+        "oracle_text": "Battle cry.",
+        "type_line": "Artifact Creature",
+        "cmc": 1,
+    }
+    etb_value = {
+        "name": "Solemn Simulacrum",
+        "oracle_text": "When Solemn Simulacrum enters the battlefield, search your library for a basic land card. When it dies, you may draw a card.",
+        "type_line": "Artifact Creature",
+        "cmc": 4,
+    }
+    noncreature_token_card = {
+        "name": "Academy Manufactor",
+        "oracle_text": "If you would create a Clue, Food, or Treasure token, instead create one of each.",
+        "type_line": "Artifact Creature",
+        "cmc": 3,
+    }
+
+    assert engine._card_matches_synergy(token_maker, "board_conversion")
+    assert engine._card_matches_commander_context(token_maker, "board_conversion", commander)
+    assert engine._recommendation_quality_metadata(token_maker, "board_conversion", commander)["score"] >= 84
+    assert "creature material" in engine._generate_commander_recommendation_reason(
+        token_maker,
+        commander["name"],
+        "board_conversion",
+        commander,
+    )
+    assert engine._card_matches_synergy(cheap_body, "board_conversion")
+    assert engine._recommendation_quality_metadata(cheap_body, "board_conversion", commander)["score"] >= 84
+    assert not engine._card_matches_commander_context(etb_value, "board_conversion", commander)
+    assert engine._recommendation_quality_metadata(noncreature_token_card, "board_conversion", commander)["job"] == "early attacker"
+
+
+def test_board_conversion_recommendation_search_returns_nonland_material():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.results = [
+        {
+            "name": "Path of Ancestry",
+            "oracle_text": "Add one mana of any color in your commander's color identity.",
+            "type_line": "Land",
+            "cmc": 0,
+            "color_identity": [],
+        },
+        {
+            "name": "Servo Engine",
+            "oracle_text": "When Servo Engine enters the battlefield, create two 1/1 colorless Servo artifact creature tokens.",
+            "type_line": "Artifact Creature",
+            "cmc": 3,
+            "color_identity": [],
+        },
+    ]
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    commander = {
+        "name": "Wide Board Converter",
+        "oracle_text": "Other creatures you control have base power and toughness 4/2. Creatures you control attack each combat if able.",
+        "type_line": "Legendary Creature",
+        "color_identity": [],
+    }
+
+    cards = asyncio.run(engine._search_commander_recommendations(
+        commander_card=commander,
+        synergies=["board_conversion"],
+        color_identity=[],
+        commander_constraints=engine._get_commander_constraints(commander),
+        max_cards=5,
+        search_budget=1,
+        per_synergy_limit=5,
+        query_limit=10,
+        minimum_score=84,
+    ))
+
+    assert [card["name"] for card in cards] == ["Servo Engine"]
+    assert cards[0]["job"] == "wide-board material"
+    assert cards[0]["evidence"] == "adds creature material for the commander to convert"
+
+
 def test_sections_are_built_for_paged_strategy_and_recommendations():
     engine = make_engine()
     tips = [
