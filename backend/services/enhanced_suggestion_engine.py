@@ -3,6 +3,7 @@ import asyncio
 import logging
 import re
 from collections import Counter, defaultdict
+from services.mechanics_registry import MechanicsRegistry
 from services.scryfall_service import ScryfallService
 
 logger = logging.getLogger(__name__)
@@ -12,6 +13,7 @@ class EnhancedSuggestionEngine:
     
     def __init__(self, scryfall_service: ScryfallService):
         self.scryfall = scryfall_service
+        self.mechanics_registry = MechanicsRegistry.load_default()
         
         # Role targets
         self.role_targets = {
@@ -52,6 +54,60 @@ class EnhancedSuggestionEngine:
         parts = [card.get('oracle_text', '')]
         parts.extend(face.get('oracle_text', '') for face in card.get('card_faces', []) or [])
         return ' '.join(part for part in parts if part).lower()
+
+    def _registry_signals_for_card(
+        self,
+        card: Dict,
+        context_card: Optional[Dict] = None,
+        include_texture: bool = True,
+    ) -> List[Dict]:
+        """Detect exact mechanics with the registry while keeping output serializable."""
+        if not self.mechanics_registry or self.mechanics_registry.count() == 0:
+            return []
+
+        context_text = self._combined_oracle_text(context_card) if context_card else None
+        signals = self.mechanics_registry.detect_signals(
+            self._combined_oracle_text(card),
+            self._combined_type_line(card),
+            context_text=context_text,
+            include_texture=include_texture,
+        )
+        return [signal.as_dict() for signal in signals]
+
+    def _registry_synergy_scores_for_card(
+        self,
+        card: Dict,
+        context_card: Optional[Dict] = None,
+        include_texture: bool = True,
+    ) -> Dict[str, int]:
+        """Map exact registry mechanics back onto the app's stable broad synergies."""
+        if not self.mechanics_registry or self.mechanics_registry.count() == 0:
+            return {}
+
+        context_text = self._combined_oracle_text(context_card) if context_card else None
+        signals = self.mechanics_registry.detect_signals(
+            self._combined_oracle_text(card),
+            self._combined_type_line(card),
+            context_text=context_text,
+            include_texture=include_texture,
+        )
+        return self.mechanics_registry.synergy_scores(signals)
+
+    def _top_registry_mechanics(
+        self,
+        card: Dict,
+        limit: int = 4,
+        include_texture: bool = False,
+    ) -> List[Dict]:
+        """Return high-signal exact mechanics for tips and QA metadata."""
+        signals = self._registry_signals_for_card(card, include_texture=include_texture)
+        filtered = [
+            signal for signal in signals
+            if signal['evidence_strength'] != 'reject'
+            and signal['score'] >= 2
+            and (signal['can_define_deck'] or not signal['support_only'])
+        ]
+        return filtered[:limit]
 
     def _is_commander_eligible(self, card: Dict, creature_only: bool = False) -> bool:
         """True when the card can actually be chosen as a commander."""
@@ -292,6 +348,25 @@ class EnhancedSuggestionEngine:
             add_once('voltron')
         if self._is_board_conversion_commander(oracle_text):
             add_once('board_conversion')
+
+        if self.mechanics_registry and self.mechanics_registry.count() > 0:
+            registry_signals = self.mechanics_registry.detect_signals(
+                oracle_text,
+                type_line,
+                context_text=oracle_text,
+                include_texture=False,
+            )
+            for signal in registry_signals:
+                if signal.score < 4:
+                    continue
+                if signal.support_only and not signal.requirements_met:
+                    continue
+                if not signal.can_define_deck and signal.evidence_strength != 'core':
+                    continue
+                for synergy_type in self.mechanics_registry.synergies_for_signal(signal):
+                    if synergy_type == 'exile' and 'blink' in synergies:
+                        continue
+                    add_once(synergy_type)
         
         return synergies
     
@@ -511,6 +586,22 @@ class EnhancedSuggestionEngine:
                 continue
             if any(keyword in oracle_text or keyword in type_line for keyword in keywords):
                 synergies.append(synergy_type)
+
+        if self.mechanics_registry and self.mechanics_registry.count() > 0:
+            registry_signals = self.mechanics_registry.detect_signals(
+                oracle_text,
+                type_line,
+                context_text=oracle_text,
+                include_texture=False,
+            )
+            for signal in registry_signals:
+                if signal.score < 4:
+                    continue
+                if signal.support_only and not signal.requirements_met:
+                    continue
+                for synergy_type in self.mechanics_registry.synergies_for_signal(signal):
+                    if synergy_type not in synergies:
+                        synergies.append(synergy_type)
         return synergies
     
     def _detect_roles(self, oracle_text: str, type_line: str, card_name: str) -> List[str]:
@@ -587,6 +678,7 @@ class EnhancedSuggestionEngine:
     def _detect_deck_themes(self, cards: List[Dict], commander_synergies: List[str]) -> List[str]:
         """Detect prominent mechanical themes in the deck"""
         theme_counts = defaultdict(int)
+        registry_theme_scores = defaultdict(int)
         
         for card in cards:
             oracle_text = card.get('oracle_text', '').lower()
@@ -617,6 +709,32 @@ class EnhancedSuggestionEngine:
                 theme_counts['aristocrats'] += 1
             if any(w in oracle_text for w in ['instant', 'sorcery']) and 'cast' in oracle_text:
                 theme_counts['spellslinger'] += 1
+
+            if self.mechanics_registry and self.mechanics_registry.count() > 0:
+                registry_signals = self.mechanics_registry.detect_signals(
+                    oracle_text,
+                    type_line,
+                    context_text=oracle_text,
+                    include_texture=False,
+                )
+                for signal in registry_signals:
+                    if signal.score < 3:
+                        continue
+                    if signal.support_only and not signal.requirements_met:
+                        continue
+                    for synergy in self.mechanics_registry.synergies_for_signal(signal):
+                        if synergy == 'instant_sorcery':
+                            registry_theme_scores['spellslinger'] += signal.score
+                        elif synergy == 'enchantment':
+                            registry_theme_scores['enchantress'] += signal.score
+                        elif synergy == 'artifact':
+                            registry_theme_scores['artifacts'] += signal.score
+                        elif synergy in {
+                            'graveyard', 'counters', 'tokens', 'landfall',
+                            'sacrifice', 'artifact_tokens', 'blink', 'lifegain', 'voltron'
+                        }:
+                            theme = 'aristocrats' if synergy == 'sacrifice' else synergy
+                            registry_theme_scores[theme] += signal.score
         
         theme_thresholds = {
             'enchantress': 3,
@@ -629,10 +747,28 @@ class EnhancedSuggestionEngine:
             'aristocrats': 4,
             'spellslinger': 5,
         }
-        return [
+        registry_thresholds = {
+            'enchantress': 12,
+            'artifacts': 24,
+            'voltron': 12,
+            'graveyard': 16,
+            'counters': 12,
+            'tokens': 12,
+            'landfall': 12,
+            'aristocrats': 12,
+            'spellslinger': 16,
+            'artifact_tokens': 12,
+            'blink': 12,
+            'lifegain': 12,
+        }
+        detected = [
             theme for theme, count in theme_counts.items()
             if count >= theme_thresholds.get(theme, 5)
         ]
+        for theme, score in registry_theme_scores.items():
+            if score >= registry_thresholds.get(theme, 16) and theme not in detected:
+                detected.append(theme)
+        return detected
 
     def _legal_example_names(
         self,
@@ -2254,7 +2390,23 @@ class EnhancedSuggestionEngine:
                 'enchant ',
                 'enchanted',
             ]
-            return any(phrase in oracle_text for phrase in enchantment_support) or 'aura' in type_line
+            useful_enchantment_role = (
+                'enchantment' in type_line and
+                (
+                    self._has_card_draw_text(oracle_text) or
+                    any(term in oracle_text for term in [
+                        'pay',
+                        'tax',
+                        "can't attack",
+                        'cannot attack',
+                        'attacks you',
+                        'attack you',
+                        'loses all abilities',
+                        "can't block",
+                    ])
+                )
+            )
+            return any(phrase in oracle_text for phrase in enchantment_support) or 'aura' in type_line or useful_enchantment_role
         if synergy == 'creature':
             creature_support = [
                 'creatures you control',
@@ -2281,6 +2433,16 @@ class EnhancedSuggestionEngine:
             'additional land' in oracle_text or
             'land you control enters' in oracle_text
         ):
+            return True
+
+        registry_scores = self._registry_synergy_scores_for_card(
+            {
+                'oracle_text': oracle_text,
+                'type_line': type_line,
+            },
+            include_texture=False,
+        )
+        if registry_scores.get(synergy, 0) >= 4:
             return True
 
         return False
@@ -2695,6 +2857,19 @@ class EnhancedSuggestionEngine:
             if tag not in penalty_tags:
                 penalty_tags.append(tag)
 
+        registry_signal = None
+        if self.mechanics_registry and self.mechanics_registry.count() > 0:
+            registry_signals = self.mechanics_registry.detect_signals(
+                oracle_text,
+                type_line,
+                context_text=commander_text,
+                include_texture=True,
+            )
+            registry_signal = self.mechanics_registry.best_signal_for_synergy(
+                registry_signals,
+                synergy,
+            )
+
         if synergy == 'blink':
             if 'enters the battlefield' in oracle_text and not ('exile' in oracle_text and 'return' in oracle_text):
                 job = 'ETB value target'
@@ -2892,6 +3067,36 @@ class EnhancedSuggestionEngine:
                 evidence = 'cares about enchantments directly'
                 score = 84
                 add_evidence('direct_synergy')
+            elif (
+                commander_constraints.get('max_enchantment_cmc') is not None and
+                'enchantment' in type_line and
+                'aura' not in type_line and
+                'enchant ' not in oracle_text and
+                'enchanted creature' not in oracle_text and
+                card_data.get('cmc', 0) <= commander_constraints['max_enchantment_cmc'] and
+                self._has_card_draw_text(oracle_text)
+            ):
+                job = 'tutorable card flow'
+                evidence = 'draw enchantment inside the commander tutor range'
+                score = 86
+                add_evidence('direct_synergy')
+                add_evidence('tutorable_enchantment')
+                add_evidence('card_flow')
+            elif (
+                commander_constraints.get('max_enchantment_cmc') is not None and
+                'enchantment' in type_line and
+                'aura' not in type_line and
+                'enchant ' not in oracle_text and
+                'enchanted creature' not in oracle_text and
+                card_data.get('cmc', 0) <= commander_constraints['max_enchantment_cmc'] and
+                any(term in oracle_text for term in ['pay', 'tax', "can't attack", 'cannot attack', 'attacks you', 'attack you'])
+            ):
+                job = 'tutorable table control'
+                evidence = 'control enchantment inside the commander tutor range'
+                score = 84
+                add_evidence('direct_synergy')
+                add_evidence('tutorable_enchantment')
+                add_evidence('table_control')
             elif 'aura' in type_line or 'enchant ' in oracle_text or 'enchanted creature' in oracle_text:
                 job = 'aura utility'
                 evidence = 'adds a tutorable enchantment utility effect'
@@ -2952,6 +3157,21 @@ class EnhancedSuggestionEngine:
                 score = 80
                 add_evidence('payoff')
 
+        if registry_signal:
+            add_evidence('mechanic_match')
+            if registry_signal.evidence_strength == 'core' and registry_signal.can_define_deck:
+                add_evidence('mechanic_core')
+                score += 2
+            elif registry_signal.evidence_strength == 'support':
+                add_evidence('mechanic_support')
+                score += 1
+            if registry_signal.support_only and not registry_signal.requirements_met:
+                add_penalty('support_only_mechanic')
+                score -= 6
+            if registry_signal.risk_level == 'high' and not registry_signal.requirements_met:
+                add_penalty('uncorroborated_mechanic')
+                score -= 8
+
         if self._has_card_draw_text(oracle_text):
             score += 4
             add_evidence('card_flow')
@@ -2991,6 +3211,12 @@ class EnhancedSuggestionEngine:
             'evidence': evidence,
             'evidence_tags': evidence_tags,
             'penalty_tags': penalty_tags,
+            'mechanic': registry_signal.name if registry_signal else None,
+            'mechanic_reason': registry_signal.reason_language if registry_signal else None,
+            'mechanic_strategy': registry_signal.strategy_language if registry_signal else None,
+            'mechanic_strength': registry_signal.evidence_strength if registry_signal else None,
+            'mechanic_risk': registry_signal.risk_level if registry_signal else None,
+            'mechanic_support_only': registry_signal.support_only if registry_signal else False,
         }
 
     def _generate_validated_recommendation_reason(
@@ -3011,6 +3237,10 @@ class EnhancedSuggestionEngine:
         evidence_tags = set(quality.get('evidence_tags', []))
         penalty_tags = set(quality.get('penalty_tags', []))
         job = quality.get('job', synergy.replace('_', ' '))
+        mechanic_name = quality.get('mechanic')
+        mechanic_reason = quality.get('mechanic_reason')
+        mechanic_strength = quality.get('mechanic_strength')
+        mechanic_support_only = quality.get('mechanic_support_only')
 
         action = f"{card_name} contributes a validated {job} effect."
         if 'creature_token_support' in evidence_tags:
@@ -3031,6 +3261,8 @@ class EnhancedSuggestionEngine:
             action = f"{card_name} rewards the board state this deck is trying to build."
         elif 'enabler' in evidence_tags:
             action = f"{card_name} supplies a concrete {job} effect for the {synergy.replace('_', ' ')} plan."
+        elif mechanic_name and mechanic_reason:
+            action = f"{card_name} contributes {job} through {mechanic_name}."
 
         if synergy == 'enchantment':
             tutor_limit = commander_constraints.get('max_enchantment_cmc')
@@ -3044,6 +3276,16 @@ class EnhancedSuggestionEngine:
                     fit = f"That matters for {commander_name} because an evasive or protected attacker can turn combat damage into extra cards while still serving as a toolbox target.{tutor_clause}"
                 else:
                     fit = f"That matters for {commander_name} because it converts an enchanted creature into repeatable card flow while staying inside the enchantment plan.{tutor_clause}"
+                return f"{action} {fit}"
+
+            if 'card_flow' in evidence_tags and 'tutorable_enchantment' in evidence_tags:
+                action = f"{card_name} is tutorable enchantment card flow."
+                fit = f"That matters for {commander_name} because the attack trigger can find a card-advantage piece instead of relying on a random draw step.{tutor_clause}"
+                return f"{action} {fit}"
+
+            if 'table_control' in evidence_tags and 'tutorable_enchantment' in evidence_tags:
+                action = f"{card_name} is tutorable enchantment table control."
+                fit = f"That matters for {commander_name} because the toolbox can slow attacks or tax opponents while the commander keeps attacking.{tutor_clause}"
                 return f"{action} {fit}"
 
             if 'recursion' in evidence_tags:
@@ -3062,6 +3304,8 @@ class EnhancedSuggestionEngine:
                 return f"{action} {fit}"
 
         fit = f"That matters for {commander_name} because it provides {quality.get('evidence', synergy.replace('_', ' '))} that the commander can convert into advantage."
+        if mechanic_name and mechanic_reason:
+            fit = f"That matters for {commander_name} because {mechanic_reason}, giving the {synergy.replace('_', ' ')} plan a specific job instead of a loose theme match."
         if synergy == 'board_conversion':
             fit = f"That matters for {commander_name} because board-conversion commanders need material or team-wide combat support before the payoff turn."
         elif synergy == 'tokens' and 'creature_token_support' in evidence_tags:
@@ -3128,6 +3372,18 @@ class EnhancedSuggestionEngine:
             else:
                 fit = f"That matters for {commander_name} because combat-focused commanders need evasion, protection, or reusable pressure more than one-shot damage."
 
+        mechanic_clause = ""
+        if (
+            mechanic_name and mechanic_reason and
+            mechanic_name.lower().replace(' ', '_') not in {synergy, job.lower().replace(' ', '_')}
+        ):
+            if mechanic_support_only or mechanic_strength == 'texture':
+                mechanic_clause = f" Treat the {mechanic_name} text as support: it {mechanic_reason}."
+            elif 'mechanic_core' in evidence_tags:
+                mechanic_clause = f" The {mechanic_name} text is the concrete evidence: it {mechanic_reason}."
+            elif 'mechanic_support' in evidence_tags:
+                mechanic_clause = f" The {mechanic_name} text is concrete evidence for this support role: it {mechanic_reason}."
+
         caution = ""
         if 'high_mana_value' in penalty_tags:
             caution = " Its mana value means it should be treated as a payoff slot, not early setup."
@@ -3135,8 +3391,12 @@ class EnhancedSuggestionEngine:
             caution = " Because the effect is temporary, it is best as support rather than a core engine."
         elif 'generic_staple' in penalty_tags:
             caution = " This is recommended only as a role piece, not as commander-specific synergy."
+        elif 'support_only_mechanic' in penalty_tags:
+            caution = " The mechanic is only supporting evidence here, so it should not be treated as the whole deck plan."
+        elif 'uncorroborated_mechanic' in penalty_tags:
+            caution = " This match needs more deck evidence before it should drive recommendations by itself."
 
-        return f"{action} {fit}{caution}"
+        return f"{action} {fit}{mechanic_clause}{caution}"
 
     def _build_strategy_sections(self, tips: List[str]) -> List[Dict]:
         """Group tips into small deterministic pages without changing legacy output."""
@@ -3307,6 +3567,10 @@ class EnhancedSuggestionEngine:
             deep=False,
             deck_context=False,
         )
+        for mechanic in self._top_registry_mechanics(commander_card, limit=2, include_texture=False):
+            strategy_language = mechanic.get('strategy_language')
+            if strategy_language and all(strategy_language not in tip for tip in tips):
+                tips.append(f"Mechanic Focus - {mechanic['name']}: {strategy_language}")
 
         if 'enchantment' in synergies:
             if commander_constraints.get('max_enchantment_cmc'):
@@ -3428,6 +3692,10 @@ class EnhancedSuggestionEngine:
             deep=True,
             deck_context=False,
         )[4:]
+        for mechanic in self._top_registry_mechanics(commander_card, limit=4, include_texture=False):
+            strategy_language = mechanic.get('strategy_language')
+            if strategy_language:
+                notes.append(f"Deep Strategy - {mechanic['name']}: {strategy_language}")
 
         if commander_constraints.get('max_enchantment_cmc'):
             max_cmc = commander_constraints['max_enchantment_cmc']
@@ -3543,6 +3811,7 @@ class EnhancedSuggestionEngine:
             'fit_tier': quality['fit_tier'],
             'score': quality['score'],
             'evidence': quality['evidence'],
+            'mechanic': quality.get('mechanic'),
             'evidence_tags': quality['evidence_tags'],
             'penalty_tags': quality['penalty_tags'],
             'reason': reason,
@@ -3696,6 +3965,7 @@ class EnhancedSuggestionEngine:
             'toughness': commander_card.get('toughness'),
             'image_url': self._get_card_image(commander_card),
             'synergies': synergies,
+            'mechanics': self._top_registry_mechanics(commander_card, limit=6, include_texture=False),
             'strategy_tips': tips,
             'strategy_sections': self._build_strategy_sections(tips),
             'suggested_cards': suggested_cards,
@@ -3867,6 +4137,8 @@ class EnhancedSuggestionEngine:
                 translated_terms.append(term_queries[term])
             elif term in keyword_abilities:
                 translated_terms.append(f"kw:{self._quote_scryfall_phrase(term)}")
+            elif self.mechanics_registry and self.mechanics_registry.query_for_term(term):
+                translated_terms.append(self.mechanics_registry.query_for_term(term))
             else:
                 safe_term = self._quote_scryfall_phrase(term)
                 translated_terms.append(f"(t:{safe_term} OR o:{safe_term})")

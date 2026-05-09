@@ -967,6 +967,40 @@ def test_enchantment_recommendation_reasons_name_actual_evidence():
     assert "combat damage into extra cards" in reason
 
 
+def test_zur_non_aura_enchantments_can_clear_quality_gate_with_specific_roles():
+    engine = make_engine()
+    commander = {
+        "name": "Zur the Enchanter",
+        "oracle_text": (
+            "Flying. Whenever Zur the Enchanter attacks, you may search your library "
+            "for an enchantment card with mana value 3 or less, put it onto the battlefield, then shuffle."
+        ),
+        "type_line": "Legendary Creature - Human Wizard",
+        "color_identity": ["W", "U", "B"],
+    }
+    mystic_remora = {
+        "name": "Mystic Remora",
+        "oracle_text": "Cumulative upkeep {1}. Whenever an opponent casts a noncreature spell, you may draw a card unless that player pays {4}.",
+        "type_line": "Enchantment",
+        "cmc": 1,
+    }
+
+    quality = engine._recommendation_quality_metadata(mystic_remora, "enchantment", commander)
+    reason = engine._generate_validated_recommendation_reason(
+        mystic_remora,
+        commander["name"],
+        "enchantment",
+        quality,
+        commander,
+    )
+
+    assert engine._card_matches_synergy(mystic_remora, "enchantment")
+    assert quality["score"] >= 84
+    assert quality["job"] == "tutorable card flow"
+    assert "tutorable enchantment card flow" in reason
+    assert "random draw step" in reason
+
+
 def test_validated_recommendation_reasons_are_not_circular_across_synergies():
     engine = make_engine()
     cases = [
@@ -1191,3 +1225,81 @@ def test_validated_recommendation_reasons_are_not_circular_across_synergies():
         assert commander["name"] in reason, synergy
         for fragment in banned_fragments:
             assert fragment not in lowered, (synergy, reason)
+
+
+def test_mechanics_registry_loads_and_expands_search_terms():
+    engine = make_engine()
+
+    assert engine.mechanics_registry.count() >= 290
+    bargain_query = engine.mechanics_registry.query_for_term("bargain")
+    random_query = engine._build_random_commander_query(search_text="bargain")
+
+    assert bargain_query
+    assert bargain_query in random_query
+    assert "(t:bargain OR o:bargain)" not in random_query
+
+
+def test_registry_does_not_turn_flying_alone_into_a_theme():
+    engine = make_engine()
+    commander = {
+        "name": "Flying Only Commander",
+        "oracle_text": "Flying.",
+        "type_line": "Legendary Creature - Bird",
+        "color_identity": ["U"],
+    }
+
+    synergies = engine._detect_commander_synergies(commander)
+
+    assert "voltron" not in synergies
+    assert "counters" not in synergies
+
+
+def test_registry_mechanic_focus_adds_specific_strategy_language():
+    engine = make_engine()
+    commander = {
+        "name": "Bargain Commander",
+        "oracle_text": "Bargain. Whenever you sacrifice an artifact, enchantment, or token, draw a card.",
+        "type_line": "Legendary Creature - Warlock",
+        "color_identity": ["B"],
+    }
+
+    synergies = engine._detect_commander_synergies(commander)
+    tips = engine._generate_commander_strategy_tips(
+        commander,
+        synergies,
+        engine._get_commander_constraints(commander),
+    )
+
+    assert "sacrifice" in synergies
+    assert any("Mechanic Focus - Bargain" in tip for tip in tips)
+    assert any("fodder" in tip.lower() or "sacrifice" in tip.lower() for tip in tips)
+
+
+def test_reason_builder_names_exact_mechanic_when_it_adds_evidence():
+    engine = make_engine()
+    commander = {
+        "name": "Artifact Token Commander",
+        "oracle_text": "Whenever you sacrifice an artifact, draw a card.",
+        "type_line": "Legendary Creature - Pirate",
+        "color_identity": ["R", "B"],
+    }
+    card = {
+        "name": "Professional Face-Breaker",
+        "oracle_text": "Whenever one or more creatures you control deal combat damage to a player, create a Treasure token.",
+        "type_line": "Creature - Human Warrior",
+        "cmc": 3,
+    }
+
+    quality = engine._recommendation_quality_metadata(card, "artifact_tokens", commander)
+    reason = engine._generate_validated_recommendation_reason(
+        card,
+        commander["name"],
+        "artifact_tokens",
+        quality,
+        commander,
+    )
+
+    assert quality["mechanic"] == "Treasure"
+    assert "Treasure" in reason
+    assert "concrete evidence" in reason
+    assert "validated match" not in reason

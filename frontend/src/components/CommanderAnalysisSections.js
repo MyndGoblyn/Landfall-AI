@@ -120,6 +120,7 @@ export function RecommendedCardsPager({
               <div className="flex gap-2 text-xs flex-wrap">
                 {card.fit_tier && <span className="theme-pill">{card.fit_tier}</span>}
                 <span className="theme-pill">{card.job || card.role}</span>
+                {card.mechanic && <span className="theme-pill">{card.mechanic}</span>}
                 {card.evidence && <span className="theme-pill">{card.evidence}</span>}
                 <span className="theme-pill">Mana Value {card.cmc}</span>
               </div>
