@@ -3012,7 +3012,7 @@ class EnhancedSuggestionEngine:
         penalty_tags = set(quality.get('penalty_tags', []))
         job = quality.get('job', synergy.replace('_', ' '))
 
-        action = f"{card_name} fills the {job} role."
+        action = f"{card_name} contributes a validated {job} effect."
         if 'creature_token_support' in evidence_tags:
             action = f"{card_name} creates creature material."
         elif 'board_support' in evidence_tags:
@@ -3026,11 +3026,11 @@ class EnhancedSuggestionEngine:
         elif 'protection' in evidence_tags:
             action = f"{card_name} protects the commander or key permanents."
         elif 'card_flow' in evidence_tags:
-            action = f"{card_name} adds card flow while filling the {job} role."
+            action = f"{card_name} adds card flow through its {job} text."
         elif 'payoff' in evidence_tags:
             action = f"{card_name} rewards the board state this deck is trying to build."
         elif 'enabler' in evidence_tags:
-            action = f"{card_name} is an enabler for the deck's {synergy.replace('_', ' ')} plan."
+            action = f"{card_name} supplies a concrete {job} effect for the {synergy.replace('_', ' ')} plan."
 
         if synergy == 'enchantment':
             tutor_limit = commander_constraints.get('max_enchantment_cmc')
@@ -3061,15 +3061,34 @@ class EnhancedSuggestionEngine:
                 fit = f"That matters for {commander_name} because the card gives the attack trigger a specific job to find instead of being generic enchantment density.{tutor_clause}"
                 return f"{action} {fit}"
 
-        fit = f"That matters for {commander_name} because the validated match is {quality.get('evidence', synergy.replace('_', ' '))}."
+        fit = f"That matters for {commander_name} because it provides {quality.get('evidence', synergy.replace('_', ' '))} that the commander can convert into advantage."
         if synergy == 'board_conversion':
             fit = f"That matters for {commander_name} because board-conversion commanders need material or team-wide combat support before the payoff turn."
         elif synergy == 'tokens' and 'creature_token_support' in evidence_tags:
             fit = f"That matters for {commander_name} because the commander wants bodies or token payoffs, not unrelated token vocabulary."
+        elif synergy == 'artifact':
+            if 'card_flow' in evidence_tags:
+                fit = f"That matters for {commander_name} because artifact decks need artifacts that also replace themselves or keep cards moving, not only permanents that sit on board."
+            elif 'direct_synergy' in evidence_tags:
+                fit = f"That matters for {commander_name} because the card directly references artifacts and gives the artifact count a payoff beyond raw mana."
+            else:
+                fit = f"That matters for {commander_name} because the card adds an artifact-specific job instead of being a generic support piece."
+        elif synergy == 'creature':
+            if 'creature_density' in evidence_tags:
+                fit = f"That matters for {commander_name} because it keeps creature-spell density high while adding a useful effect to the board."
+            elif 'creature_token_support' in evidence_tags:
+                fit = f"That matters for {commander_name} because it supplies bodies for attacks, sacrifice lines, or creature-count payoffs."
+            else:
+                fit = f"That matters for {commander_name} because the creature slot advances the commander's board plan with a concrete job."
         elif 'board_support' in evidence_tags:
             fit = f"That matters for {commander_name} because the card rewards or improves the board after the deck has assembled creatures."
         elif synergy == 'artifact_tokens':
             fit = f"That matters for {commander_name} because the card creates or converts artifact tokens the deck can actually use."
+        elif synergy == 'graveyard':
+            if 'recursion' in evidence_tags or 'role_value' in evidence_tags:
+                fit = f"That matters for {commander_name} because graveyard decks need cards that turn discarded, milled, or destroyed resources back into board presence."
+            else:
+                fit = f"That matters for {commander_name} because the card makes the graveyard function as a resource zone rather than a discard pile."
         elif synergy == 'counters':
             fit = f"That matters for {commander_name} because the card interacts with the same counter plan instead of merely mentioning counters."
         elif synergy == 'sacrifice':
@@ -3081,6 +3100,33 @@ class EnhancedSuggestionEngine:
                 fit = f"That matters for {commander_name} because the card has a specific enchantment job, not just matching the type line."
             else:
                 fit = f"That matters for {commander_name} because it advances the enchantment plan with a validated effect instead of only sharing a card type."
+        elif synergy == 'landfall':
+            if 'enabler' in evidence_tags:
+                fit = f"That matters for {commander_name} because extra land drops or land access create more trigger turns and make landfall payoffs less dependent on natural draws."
+            else:
+                fit = f"That matters for {commander_name} because each land entering becomes a more meaningful payoff instead of just a mana source."
+        elif synergy == 'lifegain':
+            if 'direct_synergy' in evidence_tags or 'payoff' in evidence_tags:
+                fit = f"That matters for {commander_name} because repeatable life gain needs payoffs that turn life changes into cards, counters, damage, or pressure."
+            else:
+                fit = f"That matters for {commander_name} because the card supplies life-gain triggers for the commander or payoff suite to use."
+        elif synergy == 'instant_sorcery':
+            if 'payoff' in evidence_tags:
+                fit = f"That matters for {commander_name} because every cheap spell can become more than a one-for-one exchange once a payoff is online."
+            else:
+                fit = f"That matters for {commander_name} because spell decks need efficient effects that keep the instant/sorcery chain moving."
+        elif synergy == 'exile':
+            if 'card_access' in evidence_tags:
+                fit = f"That matters for {commander_name} because impulse draw and exile access keep cards available for cast-from-exile triggers."
+            else:
+                fit = f"That matters for {commander_name} because the card rewards using exile as a resource zone rather than only as removal."
+        elif synergy == 'voltron':
+            if 'protection' in evidence_tags:
+                fit = f"That matters for {commander_name} because Voltron plans fail when the commander cannot survive removal or combat."
+            elif 'direct_synergy' in evidence_tags or 'repeatable_engine' in evidence_tags:
+                fit = f"That matters for {commander_name} because repeatable combat upgrades make attacks safer or more profitable across several turns."
+            else:
+                fit = f"That matters for {commander_name} because combat-focused commanders need evasion, protection, or reusable pressure more than one-shot damage."
 
         caution = ""
         if 'high_mana_value' in penalty_tags:

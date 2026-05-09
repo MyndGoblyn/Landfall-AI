@@ -965,3 +965,229 @@ def test_enchantment_recommendation_reasons_name_actual_evidence():
     assert "card-draw Aura" in reason
     assert "mana value 1" in reason
     assert "combat damage into extra cards" in reason
+
+
+def test_validated_recommendation_reasons_are_not_circular_across_synergies():
+    engine = make_engine()
+    cases = [
+        (
+            "artifact",
+            {
+                "name": "Artifact Commander",
+                "oracle_text": "Whenever an artifact enters the battlefield under your control, draw a card.",
+                "type_line": "Legendary Creature - Artificer",
+                "color_identity": ["U"],
+            },
+            {
+                "name": "Thought Monitor",
+                "oracle_text": "Affinity for artifacts. Flying. When Thought Monitor enters the battlefield, draw two cards.",
+                "type_line": "Artifact Creature - Construct",
+                "cmc": 7,
+            },
+        ),
+        (
+            "creature",
+            {
+                "name": "Creature Commander",
+                "oracle_text": "Whenever you cast a creature spell, draw a card.",
+                "type_line": "Legendary Creature - Druid",
+                "color_identity": ["G"],
+            },
+            {
+                "name": "Elvish Visionary",
+                "oracle_text": "When Elvish Visionary enters the battlefield, draw a card.",
+                "type_line": "Creature - Elf Shaman",
+                "cmc": 2,
+            },
+        ),
+        (
+            "board_conversion",
+            {
+                "name": "Board Commander",
+                "oracle_text": "Creatures you control have base power and toughness 5/3 and are Juggernauts in addition to their other types.",
+                "type_line": "Legendary Artifact Creature - Juggernaut",
+                "color_identity": [],
+            },
+            {
+                "name": "Myr Battlesphere",
+                "oracle_text": "When Myr Battlesphere enters the battlefield, create four 1/1 colorless Myr artifact creature tokens.",
+                "type_line": "Artifact Creature - Myr Construct",
+                "cmc": 7,
+            },
+        ),
+        (
+            "sacrifice",
+            {
+                "name": "Sacrifice Commander",
+                "oracle_text": "Whenever you sacrifice a creature, each opponent loses 1 life.",
+                "type_line": "Legendary Creature - Vampire",
+                "color_identity": ["B"],
+            },
+            {
+                "name": "Viscera Seer",
+                "oracle_text": "Sacrifice a creature: Scry 1.",
+                "type_line": "Creature - Vampire Wizard",
+                "cmc": 1,
+            },
+        ),
+        (
+            "counters",
+            {
+                "name": "Counter Commander",
+                "oracle_text": "Whenever you proliferate, put a +1/+1 counter on target creature.",
+                "type_line": "Legendary Creature - Advisor",
+                "color_identity": ["G", "U"],
+            },
+            {
+                "name": "Evolution Sage",
+                "oracle_text": "Landfall - Whenever a land enters the battlefield under your control, proliferate.",
+                "type_line": "Creature - Elf Druid",
+                "cmc": 3,
+            },
+        ),
+        (
+            "blink",
+            {
+                "name": "Blink Commander",
+                "oracle_text": "Whenever one or more permanents you control leave the battlefield, draw a card.",
+                "type_line": "Legendary Creature - Spirit",
+                "color_identity": ["W", "U"],
+            },
+            {
+                "name": "Mulldrifter",
+                "oracle_text": "Flying. When Mulldrifter enters the battlefield, draw two cards.",
+                "type_line": "Creature - Elemental",
+                "cmc": 5,
+            },
+        ),
+        (
+            "tokens",
+            {
+                "name": "Token Commander",
+                "oracle_text": "Whenever one or more creature tokens enter under your control, put a +1/+1 counter on each creature you control.",
+                "type_line": "Legendary Creature - Soldier",
+                "color_identity": ["G", "W"],
+            },
+            {
+                "name": "Adeline, Resplendent Cathar",
+                "oracle_text": "Whenever you attack, for each opponent, create a 1/1 white Human creature token tapped and attacking.",
+                "type_line": "Legendary Creature - Human Knight",
+                "cmc": 3,
+            },
+        ),
+        (
+            "artifact_tokens",
+            {
+                "name": "Treasure Commander",
+                "oracle_text": "Whenever you sacrifice an artifact, draw a card.",
+                "type_line": "Legendary Creature - Pirate",
+                "color_identity": ["R", "B"],
+            },
+            {
+                "name": "Professional Face-Breaker",
+                "oracle_text": "Whenever one or more creatures you control deal combat damage to a player, create a Treasure token.",
+                "type_line": "Creature - Human Warrior",
+                "cmc": 3,
+            },
+        ),
+        (
+            "exile",
+            {
+                "name": "Exile Commander",
+                "oracle_text": "Whenever you cast a spell from exile, create a Treasure token.",
+                "type_line": "Legendary Creature - Wizard",
+                "color_identity": ["R"],
+            },
+            {
+                "name": "Light Up the Stage",
+                "oracle_text": "Exile the top two cards of your library. Until the end of your next turn, you may play those cards.",
+                "type_line": "Sorcery",
+                "cmc": 3,
+            },
+        ),
+        (
+            "landfall",
+            {
+                "name": "Landfall Commander",
+                "oracle_text": "Landfall - Whenever a land enters the battlefield under your control, draw a card.",
+                "type_line": "Legendary Creature - Elemental",
+                "color_identity": ["G", "U"],
+            },
+            {
+                "name": "Azusa, Lost but Seeking",
+                "oracle_text": "You may play two additional lands on each of your turns.",
+                "type_line": "Legendary Creature - Human Monk",
+                "cmc": 3,
+            },
+        ),
+        (
+            "lifegain",
+            {
+                "name": "Life Commander",
+                "oracle_text": "Whenever you gain life, put a +1/+1 counter on target creature.",
+                "type_line": "Legendary Creature - Cleric",
+                "color_identity": ["W", "B"],
+            },
+            {
+                "name": "Ajani's Pridemate",
+                "oracle_text": "Whenever you gain life, put a +1/+1 counter on Ajani's Pridemate.",
+                "type_line": "Creature - Cat Soldier",
+                "cmc": 2,
+            },
+        ),
+        (
+            "instant_sorcery",
+            {
+                "name": "Spell Commander",
+                "oracle_text": "Whenever you cast an instant or sorcery spell, create a 1/1 creature token.",
+                "type_line": "Legendary Creature - Wizard",
+                "color_identity": ["U", "R"],
+            },
+            {
+                "name": "Young Pyromancer",
+                "oracle_text": "Whenever you cast an instant or sorcery spell, create a 1/1 red Elemental creature token.",
+                "type_line": "Creature - Human Shaman",
+                "cmc": 2,
+            },
+        ),
+        (
+            "voltron",
+            {
+                "name": "Voltron Commander",
+                "oracle_text": "Whenever this creature deals combat damage to a player, draw a card.",
+                "type_line": "Legendary Creature - Warrior",
+                "color_identity": ["W"],
+            },
+            {
+                "name": "Lightning Greaves",
+                "oracle_text": "Equipped creature has haste and shroud. Equip 0.",
+                "type_line": "Artifact - Equipment",
+                "cmc": 2,
+            },
+        ),
+    ]
+    banned_fragments = [
+        "validated match",
+        "fits because it fits",
+        "supports the package",
+        "supports the enchantment package",
+        "fills the",
+        "is an enabler for the deck's",
+    ]
+
+    for synergy, commander, card in cases:
+        quality = engine._recommendation_quality_metadata(card, synergy, commander)
+        reason = engine._generate_validated_recommendation_reason(
+            card,
+            commander["name"],
+            synergy,
+            quality,
+            commander,
+        )
+        lowered = reason.lower()
+
+        assert len(reason.split()) >= 18, synergy
+        assert card["name"] in reason, synergy
+        assert commander["name"] in reason, synergy
+        for fragment in banned_fragments:
+            assert fragment not in lowered, (synergy, reason)
