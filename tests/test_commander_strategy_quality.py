@@ -929,3 +929,39 @@ def test_sections_are_built_for_paged_strategy_and_recommendations():
 
     assert [section["id"] for section in strategy_sections] == ["game_plan", "foundation", "deep"]
     assert [section["id"] for section in recommendation_sections] == ["core", "support", "alternate"]
+
+
+def test_enchantment_recommendation_reasons_name_actual_evidence():
+    engine = make_engine()
+    commander = {
+        "name": "Zur the Enchanter",
+        "oracle_text": (
+            "Flying. Whenever Zur the Enchanter attacks, you may search your library "
+            "for an enchantment card with mana value 3 or less, put it onto the battlefield, then shuffle."
+        ),
+        "type_line": "Legendary Creature - Human Wizard",
+        "color_identity": ["W", "U", "B"],
+    }
+    curiosity = {
+        "name": "Curiosity",
+        "oracle_text": "Enchant creature. Whenever enchanted creature deals damage to an opponent, you may draw a card.",
+        "type_line": "Enchantment - Aura",
+        "cmc": 1,
+    }
+
+    quality = engine._recommendation_quality_metadata(curiosity, "enchantment", commander)
+    reason = engine._generate_validated_recommendation_reason(
+        curiosity,
+        commander["name"],
+        "enchantment",
+        quality,
+        commander,
+    )
+
+    assert quality["job"] == "card-draw aura"
+    assert "tutorable_enchantment" in quality["evidence_tags"]
+    assert "validated match" not in reason
+    assert "supports the enchantment package" not in reason
+    assert "card-draw Aura" in reason
+    assert "mana value 1" in reason
+    assert "combat damage into extra cards" in reason

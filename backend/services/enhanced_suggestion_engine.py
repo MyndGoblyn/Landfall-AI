@@ -310,7 +310,11 @@ class EnhancedSuggestionEngine:
         if counter_plan:
             constraints['counter_plan'] = counter_plan
         
-        # Zur the Enchanter: "mana value 3 or less"
+        enchantment_tutor_match = re.search(r'enchantment card with mana (?:value|cost) (\d+) or less', oracle_text)
+        if enchantment_tutor_match:
+            constraints['max_enchantment_cmc'] = int(enchantment_tutor_match.group(1))
+
+        # Legacy fallback for older wording.
         if 'zur' in name and 'enchant' in name.lower():
             if 'mana value 3 or less' in oracle_text or 'mana cost 3 or less' in oracle_text:
                 constraints['max_enchantment_cmc'] = 3
@@ -2676,6 +2680,7 @@ class EnhancedSuggestionEngine:
         oracle_text = card_data.get('oracle_text', '').lower()
         type_line = card_data.get('type_line', '').lower()
         commander_text = self._combined_oracle_text(commander_card)
+        commander_constraints = self._get_commander_constraints(commander_card)
         score = 50
         job = fallback_role or synergy
         evidence = synergy.replace('_', ' ')
@@ -2888,10 +2893,30 @@ class EnhancedSuggestionEngine:
                 score = 84
                 add_evidence('direct_synergy')
             elif 'aura' in type_line or 'enchant ' in oracle_text or 'enchanted creature' in oracle_text:
-                job = 'aura support'
-                evidence = 'supports the enchantment package'
+                job = 'aura utility'
+                evidence = 'adds a tutorable enchantment utility effect'
                 score = 78
                 add_evidence('enabler')
+                if self._has_card_draw_text(oracle_text):
+                    job = 'card-draw aura'
+                    evidence = 'turns combat damage into card flow'
+                    score = 80
+                elif 'graveyard' in oracle_text or 'return target creature card' in oracle_text:
+                    job = 'aura recursion'
+                    evidence = 'turns the graveyard into creature access'
+                    score = 80
+                    add_evidence('recursion')
+                elif any(term in oracle_text for term in ['loses all abilities', "can't attack", 'cannot attack', "can't block", 'base power and toughness']):
+                    job = 'aura removal'
+                    evidence = 'turns an opposing creature into a safer permanent'
+                    score = 80
+                    add_evidence('interaction')
+                if (
+                    commander_constraints.get('max_enchantment_cmc') is not None and
+                    'enchantment' in type_line and
+                    card_data.get('cmc', 0) <= commander_constraints['max_enchantment_cmc']
+                ):
+                    add_evidence('tutorable_enchantment')
         elif synergy == 'landfall':
             if 'additional land' in oracle_text or 'you may play lands' in oracle_text:
                 job = 'extra land drop'
@@ -2973,12 +2998,16 @@ class EnhancedSuggestionEngine:
         card_data: Dict,
         commander_name: str,
         synergy: str,
-        quality: Dict
+        quality: Dict,
+        commander_card: Optional[Dict] = None
     ) -> str:
         """Build why-it-fits copy only from validated evidence and penalties."""
         card_name = card_data.get('name', 'This card')
         oracle_text = card_data.get('oracle_text', '').lower()
         type_line = card_data.get('type_line', '').lower()
+        commander_text = self._combined_oracle_text(commander_card or {})
+        commander_constraints = self._get_commander_constraints(commander_card or {})
+        cmc = card_data.get('cmc', 0)
         evidence_tags = set(quality.get('evidence_tags', []))
         penalty_tags = set(quality.get('penalty_tags', []))
         job = quality.get('job', synergy.replace('_', ' '))
@@ -3003,6 +3032,35 @@ class EnhancedSuggestionEngine:
         elif 'enabler' in evidence_tags:
             action = f"{card_name} is an enabler for the deck's {synergy.replace('_', ' ')} plan."
 
+        if synergy == 'enchantment':
+            tutor_limit = commander_constraints.get('max_enchantment_cmc')
+            tutor_clause = ""
+            if 'tutorable_enchantment' in evidence_tags and tutor_limit is not None:
+                tutor_clause = f" It is mana value {cmc:g}, so {commander_name} can find it inside the {tutor_limit}-mana enchantment window."
+
+            if 'card_flow' in evidence_tags and ('aura' in type_line or 'enchanted creature' in oracle_text):
+                action = f"{card_name} is a card-draw Aura, not just an enchantment-count filler."
+                if 'deals damage' in oracle_text or 'combat damage' in oracle_text:
+                    fit = f"That matters for {commander_name} because an evasive or protected attacker can turn combat damage into extra cards while still serving as a toolbox target.{tutor_clause}"
+                else:
+                    fit = f"That matters for {commander_name} because it converts an enchanted creature into repeatable card flow while staying inside the enchantment plan.{tutor_clause}"
+                return f"{action} {fit}"
+
+            if 'recursion' in evidence_tags:
+                action = f"{card_name} is an Aura-based recursion piece."
+                fit = f"That matters for {commander_name} because the enchantment slot also turns a graveyard creature into board presence instead of only raising enchantment density.{tutor_clause}"
+                return f"{action} {fit}"
+
+            if 'interaction' in evidence_tags:
+                action = f"{card_name} is enchantment-based interaction."
+                fit = f"That matters for {commander_name} because the Aura can neutralize a creature while remaining part of the commander's enchantment toolbox.{tutor_clause}"
+                return f"{action} {fit}"
+
+            if 'tutorable_enchantment' in evidence_tags:
+                action = f"{card_name} is a tutorable enchantment utility piece."
+                fit = f"That matters for {commander_name} because the card gives the attack trigger a specific job to find instead of being generic enchantment density.{tutor_clause}"
+                return f"{action} {fit}"
+
         fit = f"That matters for {commander_name} because the validated match is {quality.get('evidence', synergy.replace('_', ' '))}."
         if synergy == 'board_conversion':
             fit = f"That matters for {commander_name} because board-conversion commanders need material or team-wide combat support before the payoff turn."
@@ -3018,6 +3076,11 @@ class EnhancedSuggestionEngine:
             fit = f"That matters for {commander_name} because sacrifice decks need outlets, fodder, or payoffs that turn deaths into resources."
         elif synergy == 'blink':
             fit = f"That matters for {commander_name} because blink decks need reusable ETB targets or ways to reset and protect permanents."
+        elif synergy == 'enchantment':
+            if 'enchantment card' in commander_text or 'enchantment' in commander_text:
+                fit = f"That matters for {commander_name} because the card has a specific enchantment job, not just matching the type line."
+            else:
+                fit = f"That matters for {commander_name} because it advances the enchantment plan with a validated effect instead of only sharing a card type."
 
         caution = ""
         if 'high_mana_value' in penalty_tags:
@@ -3421,7 +3484,8 @@ class EnhancedSuggestionEngine:
             card_extracted,
             commander_name,
             synergy,
-            quality
+            quality,
+            commander_card
         )
 
         return {
