@@ -86,23 +86,44 @@ function RoleBadge({ role, tone = 'add' }) {
 }
 
 function CardImages({ suggestion, compact = false }) {
+  const hasBack = Boolean(suggestion.image_url_back);
+  const wrapperClass = [
+    'card-image-pair',
+    compact ? 'compact' : '',
+    hasBack ? 'double-faced' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className={compact ? 'card-image-pair compact' : 'card-image-pair'}>
+    <div className={wrapperClass}>
       {suggestion.image_url && (
-        <img
-          src={suggestion.image_url}
-          alt={`${suggestion.card_name} front`}
-          className="recommendation-image"
+        <button
+          type="button"
+          className="card-face-frame"
           onClick={() => window.open(suggestion.image_url, '_blank')}
-        />
+          aria-label={`Open ${suggestion.card_name} front image`}
+        >
+          {hasBack && <span>Front</span>}
+          <img
+            src={suggestion.image_url}
+            alt={`${suggestion.card_name} front`}
+            className="recommendation-image"
+          />
+        </button>
       )}
       {suggestion.image_url_back && (
-        <img
-          src={suggestion.image_url_back}
-          alt={`${suggestion.card_name} back`}
-          className="recommendation-image"
+        <button
+          type="button"
+          className="card-face-frame"
           onClick={() => window.open(suggestion.image_url_back, '_blank')}
-        />
+          aria-label={`Open ${suggestion.card_name} back image`}
+        >
+          <span>Back</span>
+          <img
+            src={suggestion.image_url_back}
+            alt={`${suggestion.card_name} back`}
+            className="recommendation-image"
+          />
+        </button>
       )}
     </div>
   );
@@ -338,6 +359,7 @@ export default function AnalysisResults() {
     || commanderCard?.card_faces?.[0]?.image_uris?.normal
     || null;
   const commanderTypeLine = commanderCard?.type_line || commanderCard?.card_faces?.[0]?.type_line || 'Commander';
+  const analysisDepth = analysis?.analysis_depth === 'deep' ? 'Deep Analysis' : 'Fast Analysis';
 
   return (
     <div className="analysis-shell min-h-screen">
@@ -394,6 +416,7 @@ export default function AnalysisResults() {
               )}
             </p>
             <div className="command-zone-tags">
+              <span className="theme-pill">{analysisDepth}</span>
               <ManaPips colors={colorIdentity} />
               {deckThemes.slice(0, 6).map((theme, idx) => (
                 <span key={`${theme}-${idx}`} className="theme-pill">{titleCase(theme)}</span>

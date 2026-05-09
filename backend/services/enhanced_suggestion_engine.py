@@ -184,18 +184,28 @@ class EnhancedSuggestionEngine:
             color_identity,
             commander_data,
         )
+        if deep:
+            playstyle_tips.extend(self._generate_deep_deck_playstyle_tips(
+                stats,
+                commander_synergies,
+                detected_themes,
+                commander,
+                cards,
+                color_identity,
+            ))
         
         # Generate combo suggestions
         combo_suggestions = self._generate_combo_suggestions(commander, commander_synergies, cards)
         
         return {
-            'suggestions_add': suggestions_add[:10],
-            'suggestions_cut': suggestions_cut[:10],
+            'suggestions_add': suggestions_add[:15 if deep else 10],
+            'suggestions_cut': suggestions_cut[:12 if deep else 10],
             'stats': stats,
             'commander_synergies': commander_synergies,
             'detected_themes': detected_themes,
             'playstyle_tips': playstyle_tips,
-            'combo_suggestions': combo_suggestions
+            'combo_suggestions': combo_suggestions,
+            'analysis_depth': 'deep' if deep else 'fast',
         }
     
     def _detect_commander_synergies(self, commander_card: Dict) -> List[str]:
@@ -795,6 +805,67 @@ class EnhancedSuggestionEngine:
             else:
                 tips.append(f"Add a few low-cost protection or disruption pieces that fit your colors so {commander_name}'s main engine can survive removal-heavy tables.")
         
+        return tips
+
+    def _generate_deep_deck_playstyle_tips(
+        self,
+        stats: Dict,
+        commander_synergies: List[str],
+        detected_themes: List[str],
+        commander: Optional[str],
+        cards: List[Dict],
+        color_identity: Optional[List[str]] = None,
+    ) -> List[str]:
+        """Add visibly deeper deterministic notes for opt-in deck analysis."""
+        tips = []
+        commander_name = commander or "your commander"
+        role_counts = stats.get('role_counts', {})
+        total_cards = max(stats.get('total_cards', 0), 1)
+        themes = list(dict.fromkeys([*commander_synergies, *detected_themes]))
+        nonland_cards = [
+            card for card in cards
+            if 'land' not in card.get('type_line', '').lower()
+        ]
+        high_mv_cards = [
+            card for card in nonland_cards
+            if card.get('cmc', 0) >= 5
+        ]
+        early_cards = [
+            card for card in nonland_cards
+            if card.get('cmc', 0) <= 2
+        ]
+
+        if themes:
+            tips.append(
+                f"Deep Analysis - Theme Density: The deeper pass is checking whether support cards reinforce {', '.join(themes[:4])} instead of only filling generic Commander roles. Off-theme cards should justify their slot with unusually strong draw, ramp, removal, or protection."
+            )
+
+        if high_mv_cards:
+            high_mv_share = round((len(high_mv_cards) / total_cards) * 100)
+            tips.append(
+                f"Deep Analysis - Curve Pressure: {len(high_mv_cards)} nonland cards cost five or more mana ({high_mv_share}% of the deck). Keep the expensive cards that directly close games or multiply {commander_name}'s engine, then trim expensive value pieces first."
+            )
+
+        if early_cards:
+            tips.append(
+                f"Deep Analysis - Setup Window: {len(early_cards)} nonland cards cost two or less. Use those slots to establish ramp, protection, or theme material before {commander_name} arrives, not just low-impact filler."
+            )
+
+        low_roles = []
+        for role, target in self.role_targets.items():
+            count = role_counts.get(role, 0)
+            if count < target[0]:
+                low_roles.append(f"{role} ({count}/{target[0]})")
+        if low_roles:
+            tips.append(
+                f"Deep Analysis - Role Coverage: The weakest role bands are {', '.join(low_roles[:4])}. Prioritize upgrades that patch one of these gaps while still matching the commander's main plan."
+            )
+
+        if color_identity:
+            tips.append(
+                "Deep Analysis - Color Discipline: Recommendations stay inside commander color identity, but color fixing still matters. Favor flexible fixing when the deck has several double-pip spells or wants to cast the commander on curve."
+            )
+
         return tips
     
     def _generate_combo_suggestions(self, commander: Optional[str], 

@@ -228,6 +228,7 @@ class AnalysisRun(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     deck_id: str
     user_id: str
+    analysis_depth: str = "fast"
     suggestions_add: List[Suggestion] = []
     suggestions_cut: List[Suggestion] = []
     stats: Dict[str, Any] = {}
@@ -822,10 +823,11 @@ async def get_deck_cards_with_images(deck_id: str, current_user: Dict = Depends(
         # Fetch fresh Scryfall data for image
         scryfall_card = await scryfall_service.search_card(card['name'])
         if scryfall_card:
-            image_uris = scryfall_card.get('image_uris', {})
+            images = suggestion_engine._get_card_images(scryfall_card)
             card_with_image = {
                 **card,
-                'image_url': image_uris.get('normal') or image_uris.get('small'),
+                'image_url': images['front'],
+                'image_url_back': images['back'],
                 'scryfall_uri': scryfall_card.get('scryfall_uri')
             }
             cards_with_images.append(card_with_image)
@@ -898,6 +900,7 @@ async def run_deck_analysis(deck_id: str, user_id: str, categories: Optional[Lis
         analysis = AnalysisRun(
             deck_id=deck_id,
             user_id=user_id,
+            analysis_depth='deep' if deep else 'fast',
             suggestions_add=result['suggestions_add'],
             suggestions_cut=result['suggestions_cut'],
             stats=result['stats'],
@@ -909,7 +912,6 @@ async def run_deck_analysis(deck_id: str, user_id: str, categories: Optional[Lis
         
         analysis_dict = analysis.model_dump()
         analysis_dict['created_at'] = analysis_dict['created_at'].isoformat()
-        analysis_dict['analysis_depth'] = 'deep' if deep else 'fast'
         
         await db.analysis_runs.insert_one(analysis_dict)
         

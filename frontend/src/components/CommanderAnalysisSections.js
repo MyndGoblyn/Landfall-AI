@@ -92,20 +92,20 @@ export function RecommendedCardsPager({
       <SectionTabs sections={sections} activeId={activeId} onChange={setActiveId} />
       <div className="grid md:grid-cols-2 gap-4">
         {activeSection.cards.map((card, idx) => (
-          <div key={`${activeSection.id}-${card.name}-${idx}`} className="card deck-card-theme flex gap-4">
-            <div className="flex gap-2 flex-shrink-0">
+          <div key={`${activeSection.id}-${card.name}-${idx}`} className="card deck-card-theme commander-recommendation-card">
+            <div className={`commander-card-images ${card.image_url_back ? 'double-faced' : ''}`}>
               {card.image_url && (
                 <img
                   src={card.image_url}
                   alt={card.name}
-                  className="w-24 h-32 object-cover rounded-lg"
+                  className="commander-card-image"
                 />
               )}
               {card.image_url_back && (
                 <img
                   src={card.image_url_back}
                   alt={`${card.name} (back)`}
-                  className="w-24 h-32 object-cover rounded-lg"
+                  className="commander-card-image"
                 />
               )}
             </div>

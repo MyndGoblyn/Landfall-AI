@@ -89,11 +89,20 @@ export default function DeckViewer() {
             <div key={idx} data-testid={`card-${idx}`} className="group relative">
               {card.image_url ? (
                 <div className="relative">
-                  <img
-                    src={card.image_url}
-                    alt={card.name}
-                    className="w-full rounded-lg shadow-lg transition-transform group-hover:scale-105 group-hover:shadow-2xl"
-                  />
+                  <div className={card.image_url_back ? 'deck-card-faces' : ''}>
+                    <img
+                      src={card.image_url}
+                      alt={card.name}
+                      className="deck-view-card-image"
+                    />
+                    {card.image_url_back && (
+                      <img
+                        src={card.image_url_back}
+                        alt={`${card.name} back`}
+                        className="deck-view-card-image"
+                      />
+                    )}
+                  </div>
                   {card.qty > 1 && (
                     <div className="absolute top-2 right-2 bg-amber-500 text-black px-2 py-1 rounded-full text-sm font-bold">
                       {card.qty}x

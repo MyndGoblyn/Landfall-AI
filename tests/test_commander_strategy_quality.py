@@ -20,6 +20,7 @@ class FakeScryfall:
     def __init__(self):
         self.queries = []
         self.results = []
+        self.named_cards = {}
 
     def extract_card_data(self, scryfall_card):
         return {
@@ -39,6 +40,9 @@ class FakeScryfall:
     async def search_cards_by_criteria(self, query, limit=20):
         self.queries.append((query, limit))
         return self.results
+
+    async def search_card(self, name):
+        return self.named_cards.get(name)
 
 
 def test_playstyle_tips_do_not_assume_specific_unrelated_counter_or_token_plans():
@@ -751,6 +755,73 @@ def test_board_conversion_recommendation_search_returns_nonland_material():
     assert [card["name"] for card in cards] == ["Servo Engine"]
     assert cards[0]["job"] == "wide-board material"
     assert cards[0]["evidence"] == "adds creature material for the commander to convert"
+
+
+def test_deep_deck_analysis_is_visibly_distinct_from_fast_analysis():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.named_cards["Wide Board Converter"] = {
+        "name": "Wide Board Converter",
+        "oracle_text": "Other creatures you control have base power and toughness 4/2. Creatures you control attack each combat if able.",
+        "type_line": "Legendary Creature",
+        "color_identity": ["R"],
+    }
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    cards = [
+        {
+            "name": "Mountain",
+            "qty": 36,
+            "type_line": "Basic Land - Mountain",
+            "oracle_text": "",
+            "cmc": 0,
+            "colors": [],
+            "tags": [],
+        },
+        {
+            "name": "Servo Engine",
+            "qty": 16,
+            "type_line": "Artifact Creature",
+            "oracle_text": "When Servo Engine enters the battlefield, create two 1/1 colorless Servo artifact creature tokens.",
+            "cmc": 2,
+            "colors": [],
+            "tags": ["tokens"],
+        },
+        {
+            "name": "Expensive Value Creature",
+            "qty": 8,
+            "type_line": "Creature",
+            "oracle_text": "When this creature enters the battlefield, draw a card.",
+            "cmc": 6,
+            "colors": ["R"],
+            "tags": [],
+        },
+    ]
+    deck = {
+        "name": "Deep Test",
+        "commander": "Wide Board Converter",
+        "cards": cards,
+        "color_identity": ["R"],
+    }
+
+    fast = asyncio.run(engine.analyze_deck(deck, deep=False))
+    deep = asyncio.run(engine.analyze_deck(deck, deep=True))
+
+    assert fast["analysis_depth"] == "fast"
+    assert deep["analysis_depth"] == "deep"
+    assert len(deep["playstyle_tips"]) > len(fast["playstyle_tips"])
+    assert any("Deep Analysis -" in tip for tip in deep["playstyle_tips"])
+
+
+def test_double_faced_card_images_return_front_and_back():
+    engine = make_engine()
+    images = engine._get_card_images({
+        "name": "Double Faced Test",
+        "card_faces": [
+            {"image_uris": {"normal": "front.jpg"}},
+            {"image_uris": {"normal": "back.jpg"}},
+        ],
+    })
+
+    assert images == {"front": "front.jpg", "back": "back.jpg"}
 
 
 def test_sections_are_built_for_paged_strategy_and_recommendations():
