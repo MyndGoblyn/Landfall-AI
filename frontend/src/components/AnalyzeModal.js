@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import { Sparkles, X } from 'lucide-react';
 
+const ANALYSIS_CATEGORIES = [
+  { id: 'ramp', label: 'Ramp', description: 'Mana acceleration' },
+  { id: 'draw', label: 'Card Draw', description: 'Card advantage' },
+  { id: 'removal', label: 'Removal', description: 'Destroy/exile threats' },
+  { id: 'counter', label: 'Counterspells', description: 'Stack interaction' },
+  { id: 'recursion', label: 'Recursion', description: 'Graveyard recovery' },
+  { id: 'tutor', label: 'Tutors', description: 'Search library' },
+  { id: 'protection', label: 'Protection', description: 'Hexproof/indestructible' },
+  { id: 'sweeper', label: 'Board Wipes', description: 'Mass removal' }
+];
+
 export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
   const [selectedCategories, setSelectedCategories] = useState([]);
   if (!isOpen || !deck) return null;
-
-  const categories = [
-    { id: 'ramp', label: 'Ramp', description: 'Mana acceleration' },
-    { id: 'draw', label: 'Card Draw', description: 'Card advantage' },
-    { id: 'removal', label: 'Removal', description: 'Destroy/exile threats' },
-    { id: 'counter', label: 'Counterspells', description: 'Stack interaction' },
-    { id: 'recursion', label: 'Recursion', description: 'Graveyard recovery' },
-    { id: 'tutor', label: 'Tutors', description: 'Search library' },
-    { id: 'protection', label: 'Protection', description: 'Hexproof/indestructible' },
-    { id: 'sweeper', label: 'Board Wipes', description: 'Mass removal' }
-  ];
 
   const toggleCategory = (catId) => {
     if (selectedCategories.includes(catId)) {
@@ -60,7 +60,7 @@ export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
             Select only the parts of the deck you want the analysis engine to prioritize.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {categories.map((cat) => (
+            {ANALYSIS_CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
                 data-testid={`category-${cat.id}`}
@@ -81,7 +81,7 @@ export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
         {selectedCategories.length > 0 && (
           <div className="tip-panel mb-6 p-4">
             <p className="text-sm text-amber-300">
-              Selected: {selectedCategories.map(c => categories.find(cat => cat.id === c)?.label).join(', ')}
+              Selected: {selectedCategories.map(c => ANALYSIS_CATEGORIES.find(cat => cat.id === c)?.label).join(', ')}
             </p>
           </div>
         )}

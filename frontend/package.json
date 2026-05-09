@@ -57,7 +57,8 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "test": "craco test"
+    "test": "craco test",
+    "smoke:source": "node scripts/source-smoke.mjs"
   },
   "browserslist": {
     "production": [

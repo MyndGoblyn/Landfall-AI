@@ -85,7 +85,8 @@ h1, h2, h3, h4, h5, h6 {
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .topbar-nav {
@@ -125,6 +126,7 @@ h1, h2, h3, h4, h5, h6 {
 .topbar-meta {
   color: #d5ccbc;
   font-size: 0.9rem;
+  min-width: 0;
 }
 
 .page-hero {
@@ -181,8 +183,13 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Button styles */
 .btn-primary {
+  align-items: center;
   background: linear-gradient(135deg, #d4a94f 0%, #087142 100%);
   color: #fff8e8;
+  display: inline-flex;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
   padding: 12px 28px;
   border-radius: 8px;
   font-weight: 700;
@@ -197,8 +204,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-secondary {
+  align-items: center;
   background: rgba(255, 255, 255, 0.045);
   color: #f4efe3;
+  display: inline-flex;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
   padding: 12px 28px;
   border-radius: 8px;
   font-weight: 700;
@@ -711,6 +723,7 @@ textarea.input {
   background: linear-gradient(135deg, rgba(18, 18, 20, 0.92), rgba(11, 15, 14, 0.96));
   color: #fff8e8;
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  width: 100%;
 }
 
 .commander-option-card:hover,
@@ -829,6 +842,7 @@ textarea.input {
   display: grid;
   grid-template-columns: minmax(120px, 160px) 1fr;
   gap: 16px;
+  min-width: 0;
 }
 
 .commander-card-images {
@@ -836,6 +850,7 @@ textarea.input {
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   align-content: start;
+  max-width: 160px;
 }
 
 .commander-card-images.double-faced {
@@ -1030,6 +1045,7 @@ textarea.input {
   border: 1px solid rgba(221, 184, 103, 0.18);
   border-radius: 8px;
   background: rgba(15, 16, 18, 0.9);
+  min-width: 0;
 }
 
 .deck-identity-panel {
@@ -1080,6 +1096,7 @@ textarea.input {
   color: #d9c8a6;
   font-size: 0.82rem;
   max-width: 260px;
+  min-width: 180px;
 }
 
 .loading-status-panel,
@@ -1341,7 +1358,13 @@ textarea.input {
   gap: 8px;
   min-height: 38px;
   padding: 8px 12px;
+  min-width: 0;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.section-pager-tab span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .section-pager-tab:hover {
@@ -1386,6 +1409,10 @@ textarea.input {
   justify-content: space-between;
   margin-top: 2px;
   padding-top: 18px;
+}
+
+.find-more-row .btn-secondary {
+  flex-shrink: 0;
 }
 
 .info-grid,
@@ -1480,6 +1507,14 @@ textarea.input {
 }
 
 @media (max-width: 900px) {
+  .app-topbar .container {
+    align-items: stretch;
+  }
+
+  .topbar-actions {
+    justify-content: flex-start;
+  }
+
   .command-zone-panel {
     grid-template-columns: 1fr;
   }
@@ -1495,9 +1530,12 @@ textarea.input {
 
   .recommendation-card,
   .swap-card,
-  .commander-recommendation-card,
   .deck-tech-grid {
     grid-template-columns: 1fr;
+  }
+
+  .commander-recommendation-card {
+    grid-template-columns: minmax(108px, 138px) 1fr;
   }
 
   .commander-spotlight {
@@ -1515,9 +1553,41 @@ textarea.input {
 }
 
 @media (max-width: 640px) {
+  .app-shell,
+  .analysis-shell {
+    background-attachment: scroll;
+    background-size: auto 100%;
+  }
+
+  .app-topbar .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .topbar-brand {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .topbar-actions {
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .topbar-actions > .btn-secondary,
+  .topbar-actions > .btn-primary {
+    width: 100%;
+  }
+
   .page-hero {
     align-items: flex-start;
     flex-direction: column;
+    padding: 18px;
+  }
+
+  .page-title,
+  .command-zone-copy h2 {
+    overflow-wrap: anywhere;
   }
 
   .page-hero .btn-primary,
@@ -1539,6 +1609,16 @@ textarea.input {
     justify-content: center;
   }
 
+  .analysis-progress-banner {
+    align-items: flex-start;
+    border-left: 0;
+    border-right: 0;
+    flex-direction: column;
+    margin-top: 0;
+    max-width: none;
+    position: static;
+  }
+
   .section-heading,
   .recommendation-title-row {
     align-items: flex-start;
@@ -1547,6 +1627,63 @@ textarea.input {
 
   .deck-stat-grid {
     grid-template-columns: 1fr;
+  }
+
+  .commander-option-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .commander-option-card {
+    grid-template-columns: 64px minmax(0, 1fr);
+    min-height: auto;
+  }
+
+  .commander-option-image {
+    width: 64px;
+  }
+
+  .commander-recommendation-card,
+  .recommendation-card {
+    grid-template-columns: 1fr;
+  }
+
+  .commander-card-images,
+  .card-image-pair {
+    max-width: min(210px, 100%);
+  }
+
+  .commander-card-images.double-faced,
+  .card-image-pair.double-faced {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 100%;
+  }
+
+  .commander-card-image,
+  .recommendation-image {
+    max-width: 100%;
+  }
+
+  .section-pager-tabs {
+    flex-wrap: nowrap;
+    margin-left: -2px;
+    margin-right: -2px;
+    overflow-x: auto;
+    padding: 2px 2px 8px;
+    scrollbar-width: thin;
+  }
+
+  .section-pager-tab {
+    flex: 0 0 auto;
+    max-width: 210px;
+  }
+
+  .find-more-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .find-more-row .btn-secondary {
+    width: 100%;
   }
 
   .card-image-pair {
@@ -1566,5 +1703,6 @@ textarea.input {
   .commander-spotlight-image img,
   .commander-portrait-fallback {
     max-height: none;
+    min-height: 240px;
   }
 }

@@ -7,6 +7,16 @@ import { RecommendedCardsPager, StrategyPager } from '../components/CommanderAna
 import { ManaPipRow } from '../components/ManaSymbols';
 import { useAuth } from '../context/AuthContext';
 import { API } from '../lib/api';
+import { appendMoreRecommendedCards } from '../lib/recommendations';
+
+const COLOR_OPTIONS = [
+  { id: 'C', label: 'Colorless', color: '#898577' },
+  { id: 'W', label: 'White', color: '#f8f6d8' },
+  { id: 'U', label: 'Blue', color: '#0e68ab' },
+  { id: 'B', label: 'Black', color: '#150b00' },
+  { id: 'R', label: 'Red', color: '#d3202a' },
+  { id: 'G', label: 'Green', color: '#00733e' }
+];
 
 export default function RandomCommander() {
   const [loading, setLoading] = useState(false);
@@ -20,15 +30,6 @@ export default function RandomCommander() {
   const { getAuthHeaders } = useAuth();
   const suggestedCards = commanderData?.suggested_cards || [];
   const combos = commanderData?.combos || [];
-
-  const colorOptions = [
-    { id: 'C', label: 'Colorless', color: '#898577' },
-    { id: 'W', label: 'White', color: '#f8f6d8' },
-    { id: 'U', label: 'Blue', color: '#0e68ab' },
-    { id: 'B', label: 'Black', color: '#150b00' },
-    { id: 'R', label: 'Red', color: '#d3202a' },
-    { id: 'G', label: 'Green', color: '#00733e' }
-  ];
 
   const toggleColor = (colorId) => {
     if (colorId === 'C') {
@@ -90,26 +91,7 @@ export default function RandomCommander() {
         return;
       }
 
-      setCommanderData((current) => {
-        const currentCards = current?.suggested_cards || [];
-        const existingMore = current?.recommended_sections?.find((section) => section.id === 'more_finds')?.cards || [];
-        const baseSections = (current?.recommended_sections || [])
-          .filter((section) => section.id !== 'more_finds')
-          .map((section) => ({ ...section, cards: section.cards || [] }));
-
-        return {
-          ...current,
-          suggested_cards: [...currentCards, ...newCards],
-          recommended_sections: [
-            ...baseSections,
-            {
-              id: 'more_finds',
-              label: 'More Finds',
-              cards: [...existingMore, ...newCards],
-            },
-          ],
-        };
-      });
+      setCommanderData((current) => appendMoreRecommendedCards(current, newCards));
       toast.success(`Found ${newCards.length} more cards.`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Could not find more cards');
@@ -136,7 +118,7 @@ export default function RandomCommander() {
           <div className="mb-6">
             <label className="block text-sm font-medium mb-3">Color Identity</label>
             <div className="flex flex-wrap gap-3">
-              {colorOptions.map((color) => (
+              {COLOR_OPTIONS.map((color) => (
                 <button
                   key={color.id}
                   onClick={() => toggleColor(color.id)}

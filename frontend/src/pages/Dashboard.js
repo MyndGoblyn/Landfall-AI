@@ -10,6 +10,13 @@ import { ManaPip } from '../components/ManaSymbols';
 import { API } from '../lib/api';
 import useRotatingStatus from '../hooks/useRotatingStatus';
 
+const ANALYSIS_STATUS_MESSAGES = [
+  'Reading deck roles and commander themes',
+  'Checking synergy tags and role coverage',
+  'Building pilot notes and risk checks',
+  'Scoring upgrade and cut candidates',
+];
+
 export default function Dashboard() {
   const [decks, setDecks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,12 +27,7 @@ export default function Dashboard() {
   const [analysisLoadingMode, setAnalysisLoadingMode] = useState(null);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
-  const analysisStatus = useRotatingStatus(Boolean(analysisLoadingMode), [
-    'Reading deck roles and commander themes',
-    'Checking synergy tags and role coverage',
-    'Building pilot notes and risk checks',
-    'Scoring upgrade and cut candidates',
-  ]);
+  const analysisStatus = useRotatingStatus(Boolean(analysisLoadingMode), ANALYSIS_STATUS_MESSAGES);
 
   useEffect(() => {
     fetchDecks();

@@ -8,6 +8,13 @@ import AppTopbar from '../components/AppTopbar';
 import { API } from '../lib/api';
 import useRotatingStatus from '../hooks/useRotatingStatus';
 
+const IMPORT_STATUS_MESSAGES = [
+  'Fetching card data from Scryfall',
+  'Validating names, faces, and color identity',
+  'Reading oracle text and card types',
+  'Saving the deck for analysis',
+];
+
 export default function DeckImport() {
   const { deckId } = useParams();
   const [deck, setDeck] = useState(null);
@@ -17,12 +24,7 @@ export default function DeckImport() {
   const [loading, setLoading] = useState(false);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
-  const importStatus = useRotatingStatus(loading, [
-    'Fetching card data from Scryfall',
-    'Validating names, faces, and color identity',
-    'Reading oracle text and card types',
-    'Saving the deck for analysis',
-  ]);
+  const importStatus = useRotatingStatus(loading, IMPORT_STATUS_MESSAGES);
 
   useEffect(() => {
     fetchDeck();

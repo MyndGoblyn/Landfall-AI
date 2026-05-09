@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import AppTopbar from '../components/AppTopbar';
+import { SectionTabs } from '../components/CommanderAnalysisSections';
 import { ManaPipRow } from '../components/ManaSymbols';
 import { API } from '../lib/api';
 import useRotatingStatus from '../hooks/useRotatingStatus';
@@ -249,6 +250,13 @@ const pilotNoteSections = [
   { id: 'deep', label: 'Deep Analysis', prefixes: ['Deep Analysis -'] },
 ];
 
+const DEEP_STATUS_MESSAGES = [
+  'Running deeper deterministic passes',
+  'Checking role coverage against commander themes',
+  'Building pilot notes and risk checks',
+  'Scoring upgrade and cut candidates',
+];
+
 function buildPilotNoteSections(tips = []) {
   const remaining = tips.map((tip, index) => ({ tip, index }));
   const sections = pilotNoteSections.map((section) => {
@@ -289,8 +297,10 @@ function PilotNotesPager({ tips = [] }) {
   const [activeId, setActiveId] = useState(sections[0]?.id || '');
 
   useEffect(() => {
-    setActiveId(sections[0]?.id || '');
-  }, [tips, sections]);
+    if (!sections.some((section) => section.id === activeId)) {
+      setActiveId(sections[0]?.id || '');
+    }
+  }, [activeId, sections]);
 
   const activeSection = sections.find((section) => section.id === activeId) || sections[0];
 
@@ -298,21 +308,12 @@ function PilotNotesPager({ tips = [] }) {
 
   return (
     <div className="pilot-note-pager">
-      {sections.length > 1 && (
-        <div className="section-pager-tabs" role="tablist" aria-label="Pilot note sections">
-          {sections.map((section) => (
-            <button
-              key={section.id}
-              type="button"
-              className={`section-pager-tab ${activeSection.id === section.id ? 'active' : ''}`}
-              onClick={() => setActiveId(section.id)}
-            >
-              <span>{section.label}</span>
-              <span className="section-pager-count">{section.tips.length}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      <SectionTabs
+        sections={sections}
+        activeId={activeId}
+        onChange={setActiveId}
+        ariaLabel="Pilot note sections"
+      />
       <div className="pilot-note-list">
         {activeSection.tips.map((tip, idx) => (
           <div key={`${activeSection.id}-${idx}`} className="pilot-note">
@@ -334,12 +335,7 @@ export default function AnalysisResults() {
   const [deepLoading, setDeepLoading] = useState(false);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
-  const deepStatus = useRotatingStatus(deepLoading, [
-    'Running deeper deterministic passes',
-    'Checking role coverage against commander themes',
-    'Building pilot notes and risk checks',
-    'Scoring upgrade and cut candidates',
-  ]);
+  const deepStatus = useRotatingStatus(deepLoading, DEEP_STATUS_MESSAGES);
 
   useEffect(() => {
     fetchAnalysis();

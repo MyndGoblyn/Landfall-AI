@@ -7,6 +7,7 @@ import { RecommendedCardsPager, StrategyPager } from '../components/CommanderAna
 import { ManaPipRow } from '../components/ManaSymbols';
 import { useAuth } from '../context/AuthContext';
 import { API } from '../lib/api';
+import { appendMoreRecommendedCards } from '../lib/recommendations';
 
 export default function CommanderLookup() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -110,26 +111,7 @@ export default function CommanderLookup() {
         return;
       }
 
-      setCommanderData((current) => {
-        const currentCards = current?.suggested_cards || [];
-        const existingMore = current?.recommended_sections?.find((section) => section.id === 'more_finds')?.cards || [];
-        const baseSections = (current?.recommended_sections || [])
-          .filter((section) => section.id !== 'more_finds')
-          .map((section) => ({ ...section, cards: section.cards || [] }));
-
-        return {
-          ...current,
-          suggested_cards: [...currentCards, ...newCards],
-          recommended_sections: [
-            ...baseSections,
-            {
-              id: 'more_finds',
-              label: 'More Finds',
-              cards: [...existingMore, ...newCards],
-            },
-          ],
-        };
-      });
+      setCommanderData((current) => appendMoreRecommendedCards(current, newCards));
       toast.success(`Found ${newCards.length} more cards.`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Could not find more cards');

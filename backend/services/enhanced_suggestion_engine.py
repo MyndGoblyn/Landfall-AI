@@ -3559,16 +3559,16 @@ class EnhancedSuggestionEngine:
             minimum_score=84,
             concurrency=3,
         )
-        if not suggested_cards and synergies:
+        if deep and not suggested_cards and synergies:
             suggested_cards = await self._search_commander_recommendations(
                 commander_card=commander_card,
                 synergies=synergies,
                 color_identity=color_identity,
                 commander_constraints=commander_constraints,
                 max_cards=3,
-                search_budget=6 if not deep else 8,
+                search_budget=3,
                 per_synergy_limit=3,
-                query_limit=28 if not deep else 36,
+                query_limit=36,
                 minimum_score=78,
                 concurrency=3,
             )

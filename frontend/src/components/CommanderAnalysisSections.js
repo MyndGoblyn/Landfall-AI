@@ -1,27 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 
-function useActiveSection(sections, resetKey) {
+function useActiveSection(sections) {
   const [activeId, setActiveId] = useState(sections[0]?.id || '');
 
   useEffect(() => {
-    setActiveId(sections[0]?.id || '');
-  }, [resetKey, sections]);
+    if (!sections.some((section) => section.id === activeId)) {
+      setActiveId(sections[0]?.id || '');
+    }
+  }, [activeId, sections]);
 
   const activeSection = sections.find((section) => section.id === activeId) || sections[0];
   return [activeSection, activeId, setActiveId];
 }
 
-function SectionTabs({ sections, activeId, onChange }) {
+export function SectionTabs({ sections, activeId, onChange, ariaLabel = 'Analysis sections' }) {
   if (sections.length <= 1) return null;
 
   return (
-    <div className="section-pager-tabs" role="tablist" aria-label="Analysis sections">
+    <div className="section-pager-tabs" role="tablist" aria-label={ariaLabel}>
       {sections.map((section) => (
         <button
           key={section.id}
           type="button"
           className={`section-pager-tab ${activeId === section.id ? 'active' : ''}`}
+          aria-selected={activeId === section.id}
+          data-testid={`section-tab-${section.id}`}
           onClick={() => onChange(section.id)}
         >
           <span>{section.label}</span>
@@ -43,8 +47,7 @@ export function StrategyPager({ commanderData }) {
     return tips.length > 0 ? [{ id: 'strategy', label: 'Strategy', tips }] : [];
   }, [commanderData]);
 
-  const resetKey = `${commanderData?.name || 'none'}-${commanderData?.analysis_depth || 'fast'}-strategy`;
-  const [activeSection, activeId, setActiveId] = useActiveSection(sections, resetKey);
+  const [activeSection, activeId, setActiveId] = useActiveSection(sections);
 
   if (!activeSection) {
     return <p className="page-copy">No strategy notes are available yet.</p>;
@@ -80,8 +83,7 @@ export function RecommendedCardsPager({
     return cards.length > 0 ? [{ id: 'cards', label: 'Recommended', cards }] : [];
   }, [commanderData]);
 
-  const resetKey = `${commanderData?.name || 'none'}-${commanderData?.analysis_depth || 'fast'}-cards`;
-  const [activeSection, activeId, setActiveId] = useActiveSection(sections, resetKey);
+  const [activeSection, activeId, setActiveId] = useActiveSection(sections);
 
   if (!activeSection) {
     return <p className="page-copy">{emptyMessage}</p>;
