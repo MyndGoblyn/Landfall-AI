@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Search, Shuffle } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
-import ForestManaIcon from '../components/ForestManaIcon';
+import AppTopbar from '../components/AppTopbar';
 import { RecommendedCardsPager, StrategyPager } from '../components/CommanderAnalysisSections';
 import { ManaPipRow } from '../components/ManaSymbols';
 import { useAuth } from '../context/AuthContext';
@@ -19,7 +18,6 @@ export default function RandomCommander() {
     max_cmc: null
   });
   const { getAuthHeaders } = useAuth();
-  const navigate = useNavigate();
   const suggestedCards = commanderData?.suggested_cards || [];
   const combos = commanderData?.combos || [];
 
@@ -122,20 +120,7 @@ export default function RandomCommander() {
 
   return (
     <div className="app-shell">
-      <header className="app-topbar">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <ForestManaIcon className="w-8 h-8" />
-            <h1 className="text-2xl font-bold brand-title">LandFall AI</h1>
-          </div>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="btn-secondary py-2 px-4"
-          >
-            Back to Dashboard
-          </button>
-        </div>
-      </header>
+      <AppTopbar />
 
       <main className="container mx-auto px-6 py-12 max-w-6xl">
         <div className="page-hero text-center mb-12">

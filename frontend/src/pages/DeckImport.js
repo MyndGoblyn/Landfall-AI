@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { ArrowLeft, Link as LinkIcon, FileText, Upload } from 'lucide-react';
+import { Link as LinkIcon, FileText, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import AppTopbar from '../components/AppTopbar';
 import { API } from '../lib/api';
 
 export default function DeckImport() {
@@ -69,19 +70,7 @@ export default function DeckImport() {
 
   return (
     <div className="app-shell">
-      <header className="app-topbar">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <button
-            data-testid="back-btn"
-            onClick={() => navigate('/dashboard')}
-            className="btn-secondary py-2 px-4"
-          >
-            <ArrowLeft className="w-4 h-4 inline mr-2" />
-            Back to Dashboard
-          </button>
-          <div className="text-sm brand-title">LandFall AI</div>
-        </div>
-      </header>
+      <AppTopbar />
 
       <main className="container mx-auto px-6 py-12 max-w-4xl">
         <div className="page-hero mb-8">

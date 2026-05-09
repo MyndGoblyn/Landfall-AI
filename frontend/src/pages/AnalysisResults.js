@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
-  ArrowLeft,
   BarChart3,
   Download,
   ExternalLink,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import AppTopbar from '../components/AppTopbar';
 import { ManaPipRow } from '../components/ManaSymbols';
 import { API } from '../lib/api';
 
@@ -341,17 +341,9 @@ export default function AnalysisResults() {
 
   return (
     <div className="analysis-shell min-h-screen">
-      <header className="analysis-topbar">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center gap-4">
-          <button
-            data-testid="back-btn"
-            onClick={() => navigate('/dashboard')}
-            className="btn-secondary py-2 px-4"
-          >
-            <ArrowLeft className="w-4 h-4 inline mr-2" />
-            Back to Dashboard
-          </button>
-          <div className="flex items-center gap-3">
+      <AppTopbar
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
             <button
               data-testid="deep-analysis-btn"
               onClick={handleDeepAnalysis}
@@ -379,8 +371,8 @@ export default function AnalysisResults() {
               Export Markdown
             </button>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <main className="container mx-auto px-6 py-10 max-w-7xl">
         <section className="command-zone-panel mb-8">

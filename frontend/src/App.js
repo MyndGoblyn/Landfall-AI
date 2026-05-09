@@ -9,6 +9,7 @@ import DeckViewer from './pages/DeckViewer';
 import AnalysisResults from './pages/AnalysisResults';
 import CommanderLookup from './pages/CommanderLookup';
 import RandomCommander from './pages/RandomCommander';
+import HowItWorks from './pages/HowItWorks';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyEmailSent from './pages/VerifyEmailSent';
 import ResetPassword from './pages/ResetPassword';
@@ -79,6 +80,11 @@ function App() {
           <Route path="/random-commander" element={
             <ProtectedRoute>
               <RandomCommander />
+            </ProtectedRoute>
+          } />
+          <Route path="/how-it-works" element={
+            <ProtectedRoute>
+              <HowItWorks />
             </ProtectedRoute>
           } />
         </Routes>

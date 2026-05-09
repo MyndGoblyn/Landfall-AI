@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { Plus, FileText, Trash2, Play, LogOut } from 'lucide-react';
+import { Plus, FileText, Trash2, Play } from 'lucide-react';
 import { toast } from 'sonner';
-import ForestManaIcon from '../components/ForestManaIcon';
+import AppTopbar from '../components/AppTopbar';
 import AnalyzeModal from '../components/AnalyzeModal';
 import { ManaPip } from '../components/ManaSymbols';
 import { API } from '../lib/api';
@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [showAnalyzeModal, setShowAnalyzeModal] = useState(false);
   const [selectedDeck, setSelectedDeck] = useState(null);
   const [newDeckName, setNewDeckName] = useState('');
-  const { user, logout, getAuthHeaders } = useAuth();
+  const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -100,29 +100,7 @@ export default function Dashboard() {
 
   return (
     <div className="app-shell">
-      {/* Header */}
-      <header className="app-topbar">
-        <div className="container mx-auto px-6 py-4 flex flex-col md:flex-row gap-4 md:justify-between md:items-center">
-          <div className="flex items-center space-x-2">
-            <ForestManaIcon className="w-8 h-8" />
-            <h1 className="text-2xl font-bold brand-title">LandFall AI</h1>
-          </div>
-          <div className="flex w-full md:w-auto items-center justify-between md:justify-end gap-4">
-            <span data-testid="user-email" className="text-sm text-gray-200 truncate">{user?.email}</span>
-            <button
-              data-testid="logout-btn"
-              onClick={() => {
-                logout();
-                navigate('/');
-              }}
-              className="btn-secondary py-2 px-4"
-            >
-              <LogOut className="w-4 h-4 inline mr-2" />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+      <AppTopbar showLogout />
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12 max-w-7xl">

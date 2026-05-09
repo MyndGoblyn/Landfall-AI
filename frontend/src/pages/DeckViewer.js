@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import AppTopbar from '../components/AppTopbar';
 import { API } from '../lib/api';
 
 export default function DeckViewer() {
@@ -57,21 +58,7 @@ export default function DeckViewer() {
 
   return (
     <div className="app-shell">
-      <header className="app-topbar">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <button
-            data-testid="back-btn"
-            onClick={() => navigate('/dashboard')}
-            className="btn-secondary py-2 px-4"
-          >
-            <ArrowLeft className="w-4 h-4 inline mr-2" />
-            Back to Dashboard
-          </button>
-          <div className="text-sm page-copy">
-            {totalCards} cards total
-          </div>
-        </div>
-      </header>
+      <AppTopbar meta={`${totalCards} cards total`} />
 
       <main className="container mx-auto px-6 py-12 max-w-7xl">
         <div className="page-hero mb-8">
