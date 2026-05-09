@@ -844,6 +844,201 @@ def test_commander_recommendations_score_full_batch_before_synergy_cap():
     assert "card_flow" in cards[0]["evidence_tags"]
 
 
+def test_deck_analysis_scores_full_batch_before_accepting_additions():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.results = [
+        {
+            "name": "Token Doubler",
+            "oracle_text": "If you would create one or more tokens, create twice that many of those tokens instead.",
+            "type_line": "Enchantment",
+            "cmc": 4,
+            "color_identity": ["G"],
+        },
+        {
+            "name": "Insightful Token Doubler",
+            "oracle_text": "If you would create one or more tokens, create twice that many of those tokens instead. Draw a card.",
+            "type_line": "Enchantment",
+            "cmc": 4,
+            "color_identity": ["G"],
+        },
+    ]
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    commander = {
+        "name": "Token Commander",
+        "oracle_text": "Whenever you create one or more creature tokens, draw a card.",
+        "type_line": "Legendary Creature",
+        "color_identity": ["G"],
+    }
+
+    cards = asyncio.run(engine._generate_additions(
+        gaps={"roles": {}, "lands": {}, "colors": {}, "synergy": ["tokens"]},
+        commander="Token Commander",
+        color_identity=["G"],
+        current_cards=[],
+        commander_synergies=["tokens"],
+        commander_data=commander,
+        categories=None,
+        commander_constraints=engine._get_commander_constraints(commander),
+        search_budget=1,
+    ))
+
+    assert cards[0]["card_name"] == "Insightful Token Doubler"
+    assert "card_flow" in cards[0]["evidence_tags"]
+
+
+def test_deck_analysis_rewards_role_fixes_that_overlap_commander_theme():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.results = [
+        {
+            "name": "Generic Draw Spell",
+            "oracle_text": "Draw two cards.",
+            "type_line": "Sorcery",
+            "cmc": 3,
+            "color_identity": ["G"],
+        },
+        {
+            "name": "Token Draw Engine",
+            "oracle_text": "Whenever a creature token enters the battlefield under your control, draw a card.",
+            "type_line": "Enchantment",
+            "cmc": 3,
+            "color_identity": ["G"],
+        },
+    ]
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    commander = {
+        "name": "Token Commander",
+        "oracle_text": "Whenever you create one or more creature tokens, draw a card.",
+        "type_line": "Legendary Creature",
+        "color_identity": ["G"],
+    }
+
+    cards = asyncio.run(engine._generate_additions(
+        gaps={"roles": {"draw": 2}, "lands": {}, "colors": {}, "synergy": ["tokens"]},
+        commander="Token Commander",
+        color_identity=["G"],
+        current_cards=[],
+        commander_synergies=["tokens"],
+        commander_data=commander,
+        categories=["draw"],
+        commander_constraints=engine._get_commander_constraints(commander),
+        search_budget=1,
+    ))
+
+    assert cards[0]["card_name"] == "Token Draw Engine"
+    assert "commander_theme_overlap" in cards[0]["evidence_tags"]
+
+
+def test_deck_analysis_synergy_additions_exclude_lands():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.results = [
+        {
+            "name": "Sacrifice Tower",
+            "oracle_text": "{T}, Sacrifice a creature: Add {B}{B}.",
+            "type_line": "Land",
+            "cmc": 0,
+            "color_identity": [],
+        },
+        {
+            "name": "Sacrifice Outlet",
+            "oracle_text": "Sacrifice a creature: Scry 1.",
+            "type_line": "Creature",
+            "cmc": 1,
+            "color_identity": ["B"],
+        },
+    ]
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    commander = {
+        "name": "Sacrifice Commander",
+        "oracle_text": "Whenever you sacrifice a creature, draw a card.",
+        "type_line": "Legendary Creature",
+        "color_identity": ["B"],
+    }
+
+    cards = asyncio.run(engine._generate_additions(
+        gaps={"roles": {}, "lands": {}, "colors": {}, "synergy": ["sacrifice"]},
+        commander="Sacrifice Commander",
+        color_identity=["B"],
+        current_cards=[],
+        commander_synergies=["sacrifice"],
+        commander_data=commander,
+        categories=None,
+        commander_constraints=engine._get_commander_constraints(commander),
+        search_budget=1,
+    ))
+
+    assert [card["card_name"] for card in cards] == ["Sacrifice Outlet"]
+
+
+def test_deck_analysis_role_additions_exclude_lands():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.results = [
+        {
+            "name": "Fetch Land",
+            "oracle_text": "{T}, Sacrifice Fetch Land: Search your library for a basic land card.",
+            "type_line": "Land",
+            "cmc": 0,
+            "color_identity": [],
+        },
+        {
+            "name": "Ramp Spell",
+            "oracle_text": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+            "type_line": "Sorcery",
+            "cmc": 2,
+            "color_identity": ["G"],
+        },
+    ]
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+
+    cards = asyncio.run(engine._generate_additions(
+        gaps={"roles": {"ramp": 2}, "lands": {}, "colors": {}, "synergy": []},
+        commander=None,
+        color_identity=["G"],
+        current_cards=[],
+        commander_synergies=[],
+        commander_data=None,
+        categories=["ramp"],
+        commander_constraints={"commander_color_identity": ["G"]},
+        search_budget=1,
+    ))
+
+    assert [card["card_name"] for card in cards] == ["Ramp Spell"]
+
+
+def test_deck_analysis_cut_suggestions_flag_redundant_off_theme_roles():
+    fake_scryfall = FakeScryfall()
+    engine = EnhancedSuggestionEngine(fake_scryfall)
+    redundant_draw = {
+        "name": "Off Theme Draw Engine",
+        "oracle_text": "At the beginning of your upkeep, draw a card.",
+        "type_line": "Enchantment",
+        "cmc": 3,
+        "tags": [],
+    }
+    cards = [redundant_draw] + [
+        {
+            "name": f"Cheap Draw {index}",
+            "oracle_text": "Draw a card.",
+            "type_line": "Instant",
+            "cmc": 1,
+            "tags": [],
+        }
+        for index in range(13)
+    ]
+    stats = {"role_counts": {"draw": 13}}
+
+    cuts = asyncio.run(engine._generate_cuts(
+        cards=cards,
+        gaps={"roles": {}, "lands": {}},
+        stats=stats,
+        commander_synergies=["tokens"],
+        detected_themes=["tokens"],
+    ))
+
+    assert cuts[0]["card_name"] == "Off Theme Draw Engine"
+    assert cuts[0]["role_tag"] == "role_redundancy"
+    assert "already has enough" in cuts[0]["reason"]
+
+
 def test_recommendation_selection_applies_soft_job_diversity():
     engine = make_engine()
     candidates = [
