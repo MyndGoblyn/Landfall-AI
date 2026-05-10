@@ -120,7 +120,7 @@ def test_random_commander_query_translates_freeform_terms_to_scryfall_syntax():
     )
 
     assert query.startswith("is:commander t:creature f:commander")
-    assert "id:bg" in query
+    assert "id=bg" in query
     assert "cmc<=4" in query
     assert "otag:lifegain" in query
     assert "o:graveyard" in query
@@ -179,8 +179,59 @@ def test_random_commander_colorless_filter_is_exact_color_identity():
 
     query = engine._build_random_commander_query(colors=["C"])
 
-    assert "id:c" in query
-    assert "id:w" not in query
+    assert "id=c" in query
+    assert "id=w" not in query
+
+
+def test_random_commander_multicolor_filter_is_exact_and_canonical():
+    engine = make_engine()
+
+    query = engine._build_random_commander_query(colors=["R", "U"])
+
+    assert "id=ur" in query
+    assert "id<=ur" not in query
+    assert "id=c" not in query
+
+
+def test_random_commander_colored_filter_ignores_accidental_colorless_marker():
+    engine = make_engine()
+
+    query = engine._build_random_commander_query(colors=["C", "G"])
+
+    assert "id=g" in query
+    assert "id=c" not in query
+
+
+def test_random_commander_fallback_preserves_selected_color_identity():
+    class SequencedScryfall(FakeScryfall):
+        def __init__(self):
+            super().__init__()
+            self.calls = 0
+
+        async def search_cards_by_criteria(self, query, limit=20):
+            self.queries.append((query, limit))
+            self.calls += 1
+            if self.calls == 2:
+                return [{
+                    "name": "Izzet Commander",
+                    "type_line": "Legendary Creature - Wizard",
+                    "oracle_text": "Whenever you cast an instant or sorcery spell, draw a card.",
+                    "cmc": 3,
+                    "colors": ["U", "R"],
+                    "color_identity": ["U", "R"],
+                    "legalities": {"commander": "legal"},
+                }]
+            return []
+
+    fake = SequencedScryfall()
+    engine = EnhancedSuggestionEngine(fake)
+
+    result = asyncio.run(engine.get_random_commander(colors=["R", "U"], search_text="unlikely"))
+    queries = [query for query, _limit in fake.queries[:2]]
+
+    assert result["name"] == "Izzet Commander"
+    assert all("id=ur" in query for query in queries)
+    assert result["search_query"] == "is:commander t:creature f:commander id=ur"
 
 
 def test_random_commander_scores_semantic_matches_above_loose_text_hits():

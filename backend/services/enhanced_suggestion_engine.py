@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 class EnhancedSuggestionEngine:
     """Enhanced deterministic Commander deck suggestion engine with commander synergy"""
+    COLOR_ORDER = ("W", "U", "B", "R", "G")
     
     def __init__(self, scryfall_service: ScryfallService):
         self.scryfall = scryfall_service
@@ -5232,15 +5233,53 @@ class EnhancedSuggestionEngine:
     
     def _colors_to_query(self, color_identity: List[str]) -> str:
         """Convert color identity to Scryfall query format"""
-        if not color_identity:
+        normalized = self._normalize_colored_identity(color_identity)
+        if not normalized:
             return "c:c"
-        return "".join(color_identity).lower()
+        return "".join(normalized).lower()
 
     def _color_identity_filter(self, color_identity: List[str]) -> str:
         """Build a Scryfall Commander legality filter for card color identity."""
-        if not color_identity:
+        normalized = self._normalize_colored_identity(color_identity)
+        if not normalized:
             return "id:c"
-        return f"id<={''.join(color_identity).lower()}"
+        return f"id<={''.join(normalized).lower()}"
+
+    def _normalize_colored_identity(self, color_identity: Optional[List[str]]) -> List[str]:
+        """Return a canonical WUBRG-ordered color identity, excluding colorless markers."""
+        normalized = {str(color).upper() for color in color_identity or [] if color}
+        return [color for color in self.COLOR_ORDER if color in normalized]
+
+    def _selected_random_commander_identity(self, colors: Optional[List[str]]) -> Optional[List[str]]:
+        """Normalize selected random-commander colors, preserving None as no filter."""
+        if not colors:
+            return None
+
+        colored_identity = self._normalize_colored_identity(colors)
+        if colored_identity:
+            return colored_identity
+
+        normalized = {str(color).upper() for color in colors if color}
+        if "C" in normalized:
+            return []
+        return None
+
+    def _exact_color_identity_filter(self, color_identity: List[str]) -> str:
+        """Build an exact Scryfall color identity filter for commander discovery."""
+        normalized = self._normalize_colored_identity(color_identity)
+        if not normalized:
+            return "id=c"
+        return f"id={''.join(normalized).lower()}"
+
+    def _matches_selected_random_commander_identity(
+        self,
+        card: Dict,
+        selected_identity: Optional[List[str]],
+    ) -> bool:
+        """Keep random commander results inside the exact selected color identity."""
+        if selected_identity is None:
+            return True
+        return self._normalize_colored_identity(card.get("color_identity", [])) == selected_identity
 
     def _build_query_for_synergy(
         self,
@@ -6026,13 +6065,9 @@ class EnhancedSuggestionEngine:
         """Build a budget-friendly Scryfall query for random commander discovery."""
         query_parts = ["is:commander", "t:creature", "f:commander"]
 
-        if colors:
-            normalized_colors = [color.upper() for color in colors]
-            if 'C' in normalized_colors:
-                query_parts.append("id:c")
-            else:
-                color_str = "".join(normalized_colors).lower()
-                query_parts.append(f"id:{color_str}")
+        selected_identity = self._selected_random_commander_identity(colors)
+        if selected_identity is not None:
+            query_parts.append(self._exact_color_identity_filter(selected_identity))
 
         if max_cmc:
             query_parts.append(f"cmc<={max_cmc}")
@@ -6393,20 +6428,37 @@ class EnhancedSuggestionEngine:
         )
         
         try:
+            selected_identity = self._selected_random_commander_identity(colors)
+            active_query = query
             results = await self.scryfall.search_cards_by_criteria(query, limit=100)
-            results = [card for card in results if self._is_commander_eligible(card, creature_only=True)]
+            results = [
+                card for card in results
+                if self._is_commander_eligible(card, creature_only=True)
+                and self._matches_selected_random_commander_identity(card, selected_identity)
+            ]
             if not results:
-                # Fallback to any commander
-                results = await self.scryfall.search_cards_by_criteria("is:commander t:creature f:commander", limit=100)
-                results = [card for card in results if self._is_commander_eligible(card, creature_only=True)]
+                fallback_query = self._build_random_commander_query(
+                    colors=colors,
+                    max_cmc=max_cmc,
+                )
+                if fallback_query != query:
+                    active_query = fallback_query
+                    results = await self.scryfall.search_cards_by_criteria(fallback_query, limit=100)
+                    results = [
+                        card for card in results
+                        if self._is_commander_eligible(card, creature_only=True)
+                        and self._matches_selected_random_commander_identity(card, selected_identity)
+                    ]
             
             intent = self._random_commander_search_intent(search_text, keywords)
-            selected = self._select_random_commander_candidate(results, intent, query=query)
+            selected = self._select_random_commander_candidate(results, intent, query=active_query)
             commander_card = selected['card'] if selected else None
             
             if commander_card:
                 result = await self.analyze_commander(commander_card)
-                result['search_query'] = query
+                result['search_query'] = active_query
+                if active_query != query:
+                    result['requested_search_query'] = query
                 result['random_selection'] = selected.get('selection_metadata', {}) if selected else {}
                 return result
             else:
