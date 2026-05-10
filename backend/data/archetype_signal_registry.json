@@ -568,7 +568,8 @@
     "reject_signals": [
       "artifact_count_matters",
       "spell_cast_trigger",
-      "combat_only_payoff"
+      "combat_only_payoff",
+      "vanilla_creature_payoff"
     ],
     "primary_needs": [
       "graveyard_setup",
@@ -751,6 +752,70 @@
       "Defiant Strike",
       "Twinferno",
       "Gods Willing"
+    ]
+  },
+  {
+    "id": "vanilla_creature_matters",
+    "name": "Vanilla Creature Matters",
+    "summary": "A strategy that rewards creatures with no abilities, turning simple bodies into combat pressure, recursion targets, or payoff material.",
+    "archetype_family": "creatures",
+    "confidence_floor": "high",
+    "required_signals": [
+      "vanilla_creature_payoff"
+    ],
+    "supporting_signals": [
+      "graveyard_recursion",
+      "attack_trigger",
+      "anthem_payoff",
+      "combat_damage_trigger",
+      "low_mana_value_commander"
+    ],
+    "reject_signals": [
+      "typal_payoff",
+      "equipment_payoff",
+      "spell_cast_trigger"
+    ],
+    "primary_needs": [
+      "vanilla_creature_density",
+      "combat_payoffs",
+      "recursion",
+      "protection"
+    ],
+    "secondary_needs": [
+      "card_draw",
+      "ramp",
+      "interaction"
+    ],
+    "recommendation_focus": [
+      "creatures with no abilities",
+      "cards that reward no-ability creatures",
+      "recursion for simple bodies",
+      "team-wide combat support"
+    ],
+    "avoid_recommendations": [
+      "generic typal lords",
+      "ability-heavy value creatures",
+      "normal reanimator targets that ignore the no-abilities restriction"
+    ],
+    "pilot_note_guidance": [
+      "Explain that creatures with no abilities are a real density requirement.",
+      "Separate no-ability bodies from normal value creatures.",
+      "Mention that payoff cards need enough simple creatures before they matter.",
+      "Clarify when recursion is recovering no-ability bodies rather than running a normal reanimator plan."
+    ],
+    "reason_builder_guidance": [
+      "The reason should say whether the card is a no-ability body or a payoff for those bodies.",
+      "Do not recommend normal value creatures as synergy unless they explicitly support the no-ability plan.",
+      "For recursion, explain that it returns the restricted creature class rather than any generic threat."
+    ],
+    "false_positive_notes": "Do not classify every creature deck as this archetype. It needs explicit no-abilities text.",
+    "example_commanders": [
+      "Ruxa, Patient Professor"
+    ],
+    "example_support_cards": [
+      "Muraganda Petroglyphs",
+      "Gigantosaurus",
+      "Leatherback Baloth"
     ]
   },
   {
@@ -1387,7 +1452,8 @@
     "reject_signals": [
       "commander_damage_pressure",
       "spell_cast_trigger",
-      "enchantment_count_matters"
+      "enchantment_count_matters",
+      "self_forced_attack_drawback"
     ],
     "primary_needs": [
       "goad_effects",
@@ -1720,6 +1786,9 @@
       "temporary_drawback_abuse",
       "combat_damage_trigger",
       "forced_combat",
+      "goad_payoff",
+      "counter_placement",
+      "attack_trigger",
       "opponent_hand_size_pressure",
       "tax_or_lock_pressure"
     ],

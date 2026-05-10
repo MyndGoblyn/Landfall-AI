@@ -68,30 +68,31 @@ class EnhancedSuggestionEngine:
             'control_finisher': 6,
             'hand_size_pressure': 7,
             'flash_control': 8,
-            'target_spells': 9,
-            'donation': 10,
-            'temporary_drawback': 11,
-            'colorless_big_mana': 12,
-            'typal': 13,
-            'extra_combat': 14,
-            'attack_triggers': 15,
-            'combat_damage': 16,
-            'goad': 17,
-            'blink': 18,
-            'landfall': 19,
-            'artifact_tokens': 20,
-            'sacrifice': 21,
-            'counters': 22,
-            'voltron': 23,
-            'enchantment': 24,
-            'artifact': 25,
-            'graveyard': 26,
-            'tokens': 27,
-            'lifegain': 28,
-            'instant_sorcery': 29,
-            'creature': 30,
-            'exile': 31,
-            'board_conversion': 32,
+            'vanilla_creatures': 9,
+            'target_spells': 10,
+            'donation': 11,
+            'temporary_drawback': 12,
+            'colorless_big_mana': 13,
+            'typal': 14,
+            'extra_combat': 15,
+            'attack_triggers': 16,
+            'combat_damage': 17,
+            'goad': 18,
+            'blink': 19,
+            'landfall': 20,
+            'artifact_tokens': 21,
+            'sacrifice': 22,
+            'counters': 23,
+            'voltron': 24,
+            'enchantment': 25,
+            'artifact': 26,
+            'graveyard': 27,
+            'tokens': 28,
+            'lifegain': 29,
+            'instant_sorcery': 30,
+            'creature': 31,
+            'exile': 32,
+            'board_conversion': 33,
         }
 
     def _combined_type_line(self, card: Dict) -> str:
@@ -422,6 +423,8 @@ class EnhancedSuggestionEngine:
         if any(term in oracle_text for term in ["commander damage", "equipped creature", "enchanted creature"]):
             signals.add("commander_damage_pressure")
             signals.add("evasion_needed")
+        if self._has_vanilla_creature_plan_text(oracle_text):
+            signals.add("vanilla_creature_payoff")
         if self._has_large_card_draw_text(oracle_text):
             signals.add("large_card_draw")
         if any(term in oracle_text for term in ["scry", "surveil", "look at the top", "reveal the top", "top card of your library"]):
@@ -429,7 +432,7 @@ class EnhancedSuggestionEngine:
         if "whenever you discard" in oracle_text or "discard a card:" in oracle_text or "discard one or more" in oracle_text:
             signals.add("discard_payoff")
         if self._is_graveyard_value_card(oracle_text, type_line):
-            if any(term in oracle_text for term in ["return", "cast", "play", "reanimate", "escape", "unearth"]):
+            if self._has_graveyard_recursion_text(oracle_text):
                 signals.add("graveyard_recursion")
             if any(term in oracle_text for term in ["mill", "surveil", "put into your graveyard"]):
                 signals.add("self_mill")
@@ -493,11 +496,11 @@ class EnhancedSuggestionEngine:
         if "land card" in oracle_text and "graveyard" in oracle_text:
             signals.add("land_recursion")
         counter_plan = self._counter_plan_for_text(oracle_text)
-        if counter_plan:
+        if counter_plan and counter_plan != "zone_counters":
             signals.add("counter_placement")
             if counter_plan in {"named_counters", "negative_counters"}:
                 signals.add("counter_type_specific")
-        if "proliferate" in oracle_text:
+        if "proliferate" in oracle_text and counter_plan != "zone_counters":
             signals.add("proliferate_payoff")
         if self._has_lifegain_reward_text(oracle_text) or re.search(r"\bgain(?:s|ed)? life\b", oracle_text):
             signals.add("lifegain_trigger")
@@ -522,9 +525,11 @@ class EnhancedSuggestionEngine:
             "can't block",
         ]):
             signals.add("tax_or_lock_pressure")
-        if "goad" in oracle_text or "must attack" in oracle_text or "attacks each combat if able" in oracle_text:
+        if self._has_true_goad_text(oracle_text):
             signals.add("forced_combat")
             signals.add("goad_payoff")
+        if self._has_self_forced_attack_text(oracle_text):
+            signals.add("self_forced_attack_drawback")
         if self._has_donation_text(oracle_text):
             signals.add("donation_payoff")
         if self._has_temporary_drawback_text(oracle_text):
@@ -592,7 +597,7 @@ class EnhancedSuggestionEngine:
         if stats.get("role_counts", {}).get("ramp", 0) >= 10:
             signals.add("mana_acceleration")
         if "graveyard" in detected_themes:
-            signals.add("graveyard_recursion")
+            signals.add("self_mill")
         if "tokens" in detected_themes:
             signals.add("creature_token_creation")
         if "artifact_tokens" in detected_themes:
@@ -641,6 +646,7 @@ class EnhancedSuggestionEngine:
             "graveyard_reanimator": ["graveyard"],
             "spellslinger_value_engine": ["instant_sorcery"],
             "targeting_combo_spells": ["target_spells"],
+            "vanilla_creature_matters": ["vanilla_creatures", "creature"],
             "lands_value_engine": ["landfall"],
             "lands_graveyard_combo": ["landfall", "graveyard"],
             "counters_engine": ["counters"],
@@ -686,8 +692,71 @@ class EnhancedSuggestionEngine:
         """Match creature-card text without treating noncreature cards as creatures."""
         return re.search(r'(?<!non)creature card', text) is not None
 
+    def _has_true_goad_text(self, text: str) -> bool:
+        """Detect real goad/elsewhere-attack pressure, not self forced-attack drawbacks."""
+        if any(phrase in text for phrase in [
+            'goad',
+            'attack a player other than you',
+            'attacks a player other than you',
+            'attack someone other than you',
+            'attacks someone other than you',
+        ]):
+            return True
+        if "can't attack" in text or "cannot attack" in text:
+            return False
+        return any(re.search(pattern, text) is not None for pattern in [
+            r'creatures? your opponents control attack',
+            r"opponents?'? creatures? attack",
+            r'each opponent attacks',
+            r'target creature attacks(?: this turn)? if able',
+        ])
+
+    def _has_self_forced_attack_text(self, text: str) -> bool:
+        """Detect cards forced to attack themselves without implying goad."""
+        return (
+            'attacks each combat if able' in text and
+            not self._has_true_goad_text(text)
+        )
+
+    def _has_vanilla_creature_plan_text(self, text: str) -> bool:
+        """Detect commanders that specifically reward creatures with no abilities."""
+        return any(phrase in text for phrase in [
+            'creature card with no abilities',
+            'creature cards with no abilities',
+            'creatures you control with no abilities',
+            'creature you control with no abilities',
+            'creature with no abilities',
+            'creatures with no abilities',
+            'creature card without abilities',
+            'creature cards without abilities',
+            'creatures without abilities',
+        ])
+
+    def _is_vanilla_creature_card(self, oracle_text: str, type_line: str) -> bool:
+        """True for creatures that satisfy no-ability/vanilla-matters plans."""
+        if 'creature' not in type_line:
+            return False
+        text = re.sub(r'\([^)]*\)', '', oracle_text or '').strip()
+        return not text or self._has_vanilla_creature_plan_text(text)
+
+    def _has_exile_zone_counter_text(self, text: str) -> bool:
+        """Counters on exiled cards are tracking markers, not proliferate targets."""
+        return (
+            'exile' in text and
+            re.search(r'\b[a-z][a-z -]+ counters?\b', text) is not None and
+            any(phrase in text for phrase in [
+                'cards you own in exile with',
+                'cards in exile with',
+                'exile it with',
+                'exile them with',
+                'exiled with',
+            ])
+        )
+
     def _counter_plan_for_text(self, text: str) -> Optional[str]:
         """Classify counter text so recommendations do not treat all counters alike."""
+        if self._has_exile_zone_counter_text(text):
+            return 'zone_counters'
         if 'proliferate' in text:
             return 'proliferate'
         if self._named_counter_terms(text):
@@ -868,13 +937,16 @@ class EnhancedSuggestionEngine:
             add_once('graveyard')
         if self._has_lifegain_reward_text(oracle_text):
             add_once('lifegain')
+        counter_plan = self._counter_plan_for_text(oracle_text)
+        if self._has_vanilla_creature_plan_text(oracle_text):
+            add_once('vanilla_creatures')
         if (
             '+1/+1 counter' in oracle_text or
             'proliferate' in oracle_text or
             'counter on' in oracle_text or
             'one or more counters' in oracle_text or
             'that many plus one' in oracle_text
-        ):
+        ) and counter_plan != 'zone_counters':
             add_once('counters')
         if 'token' in oracle_text and any(phrase in oracle_text for phrase in ['create', 'populate', 'copy']):
             if self._has_artifact_token_text(oracle_text) and 'creature token' not in oracle_text:
@@ -907,7 +979,7 @@ class EnhancedSuggestionEngine:
         ]
         if any(phrase in oracle_text for phrase in blink_phrases):
             add_once('blink')
-        elif 'exile' in oracle_text:
+        elif self._is_exile_value_card(oracle_text):
             add_once('exile')
         if 'target creature' in oracle_text and 'exile' in oracle_text and 'return' in oracle_text:
             add_once('creature')
@@ -954,7 +1026,7 @@ class EnhancedSuggestionEngine:
             add_once('temporary_drawback')
         if self._has_forced_reanimation_text(oracle_text):
             add_once('forced_reanimation')
-        if 'goad' in oracle_text:
+        if self._has_true_goad_text(oracle_text):
             add_once('goad')
 
         if self.mechanics_registry and self.mechanics_registry.count() > 0:
@@ -974,7 +1046,7 @@ class EnhancedSuggestionEngine:
                 for synergy_type in self.mechanics_registry.synergies_for_signal(signal):
                     if synergy_type == 'instant_sorcery' and not self._is_spell_stack_plan(oracle_text, type_line):
                         continue
-                    if synergy_type == 'exile' and 'blink' in synergies:
+                    if synergy_type == 'exile' and ('blink' in synergies or not self._is_exile_value_card(oracle_text)):
                         continue
                     add_once(synergy_type)
 
@@ -1012,11 +1084,13 @@ class EnhancedSuggestionEngine:
             constraints['temporary_drawback_plan'] = True
         if self._has_forced_reanimation_text(oracle_text):
             constraints['forced_reanimation_plan'] = True
-        if 'goad' in oracle_text:
+        if self._has_true_goad_text(oracle_text):
             constraints['goad_plan'] = True
         counter_plan = self._counter_plan_for_text(oracle_text)
-        if counter_plan:
+        if counter_plan and counter_plan != 'zone_counters':
             constraints['counter_plan'] = counter_plan
+        elif counter_plan == 'zone_counters':
+            constraints['zone_counter_plan'] = True
         
         enchantment_tutor_match = re.search(r'enchantment card with mana (?:value|cost) (\d+) or less', oracle_text)
         if enchantment_tutor_match:
@@ -1039,8 +1113,7 @@ class EnhancedSuggestionEngine:
         if 'sisay' in name:
             constraints['legendary_only'] = True
         
-        # Atla Palani: only creatures with no abilities
-        if 'atla' in name:
+        if self._has_vanilla_creature_plan_text(oracle_text):
             constraints['vanilla_creatures'] = True
         
         # Match "mana value X or less" patterns
@@ -1222,6 +1295,10 @@ class EnhancedSuggestionEngine:
                 if self._is_spell_stack_plan(oracle_text, type_line):
                     synergies.append(synergy_type)
                 continue
+            if synergy_type == 'exile':
+                if self._is_exile_value_card(oracle_text):
+                    synergies.append(synergy_type)
+                continue
             if synergy_type == 'sacrifice':
                 if self._has_sacrifice_plan_text(oracle_text):
                     synergies.append(synergy_type)
@@ -1279,8 +1356,13 @@ class EnhancedSuggestionEngine:
             synergies.append('temporary_drawback')
         if self._has_forced_reanimation_text(oracle_text) and 'forced_reanimation' not in synergies:
             synergies.append('forced_reanimation')
-        if 'goad' in oracle_text and 'goad' not in synergies:
+        if self._has_true_goad_text(oracle_text) and 'goad' not in synergies:
             synergies.append('goad')
+        if (
+            self._is_vanilla_creature_card(oracle_text, type_line) or
+            self._has_vanilla_creature_plan_text(oracle_text)
+        ) and 'vanilla_creatures' not in synergies:
+            synergies.append('vanilla_creatures')
         if (
             self._is_generic_mana_card({'oracle_text': oracle_text, 'type_line': type_line, 'name': ''}) or
             self._card_matches_role({'oracle_text': oracle_text, 'type_line': type_line, 'name': ''}, 'interaction') or
@@ -1307,6 +1389,8 @@ class EnhancedSuggestionEngine:
                     continue
                 for synergy_type in self.mechanics_registry.synergies_for_signal(signal):
                     if synergy_type == 'instant_sorcery' and not self._is_spell_stack_plan(oracle_text, type_line):
+                        continue
+                    if synergy_type == 'exile' and not self._is_exile_value_card(oracle_text):
                         continue
                     if synergy_type not in synergies:
                         synergies.append(synergy_type)
@@ -1622,6 +1706,8 @@ class EnhancedSuggestionEngine:
             flags.add('combat_exposure')
 
         resource_needs = []
+        if 'vanilla_creatures' in themes:
+            resource_needs.append('no-ability creature density and payoffs')
         if any(theme in themes for theme in ['creature', 'tokens', 'board_conversion']):
             resource_needs.append('creature material')
         if 'artifact_tokens' in themes:
@@ -1629,7 +1715,12 @@ class EnhancedSuggestionEngine:
         if 'artifact' in themes:
             resource_needs.append('purposeful artifacts')
         if 'graveyard' in themes:
-            resource_needs.append('graveyard access and recursion')
+            if 'graveyard_recursion' in archetype_signals:
+                resource_needs.append('graveyard access and recursion')
+            elif counter_plan == 'zone_counters':
+                resource_needs.append('self-mill and protected exile access')
+            else:
+                resource_needs.append('graveyard setup and payoff access')
         if 'landfall' in themes:
             resource_needs.append('extra land drops or fetch effects')
         if 'blink' in themes:
@@ -1720,6 +1811,10 @@ class EnhancedSuggestionEngine:
                 return f"Game Plan - {commander_name} rewards instant-speed discipline: hold up interaction, deploy threats at safer windows, and avoid tapping out before the table commits."
             if archetype_id == 'stax_tax_lock':
                 return f"Game Plan - {commander_name} is a pressure-control plan; the deck should slow opponents while keeping enough mana and cards to break parity."
+            if archetype_id == 'donation_drawback_abuse':
+                return f"Game Plan - {commander_name} is a control-exchange plan: pick permanents that are harmless or punishing to give away, then get paid for ownership asymmetry."
+            if archetype_id == 'vanilla_creature_matters':
+                return f"Game Plan - {commander_name} explicitly rewards creatures with no abilities, so simple bodies and no-ability payoffs are stronger than normal value creatures."
             if top.get('summary'):
                 return f"Game Plan - {commander_name} matches {top.get('name')}: {top.get('summary')}"
         if 'board_conversion' in primary:
@@ -1746,6 +1841,8 @@ class EnhancedSuggestionEngine:
             return f"Game Plan - {commander_name} needs creatures to connect with players, so evasion, tempo, and protection are engine pieces rather than cosmetic upgrades."
         if 'goad' in primary:
             return f"Game Plan - {commander_name} uses combat to control the table, so reliable damage and goad payoffs matter more than generic creature size."
+        if 'vanilla_creatures' in primary:
+            return f"Game Plan - {commander_name} explicitly rewards creatures with no abilities, so simple bodies and no-ability payoffs are stronger than normal value creatures."
         if 'graveyard' in primary:
             return f"Game Plan - {commander_name} wants the graveyard to function like a resource zone, so the deck should stock it deliberately and convert it into cards, bodies, or mana."
         if 'blink' in primary:
@@ -1812,6 +1909,8 @@ class EnhancedSuggestionEngine:
 
         if 'combat_damage_trigger' in flags or 'attack_trigger' in flags or 'voltron' in primary or 'combat_damage' in primary:
             notes.append("Sequencing - Do not expose the commander before it can connect or be protected. Haste, evasion, and instant-speed protection often matter more than another payoff.")
+        elif 'vanilla_creatures' in primary:
+            notes.append("Sequencing - Develop no-ability creatures before payoff pieces where possible; the payoff cards are weakest when the battlefield is only normal value creatures.")
         elif 'board_conversion' in primary or 'tokens' in primary:
             notes.append("Sequencing - Build the board first, then deploy payoffs once a wipe or removal spell will not strand the entire plan.")
         elif 'graveyard' in primary:
@@ -3164,6 +3263,27 @@ class EnhancedSuggestionEngine:
         ]
         return any(pattern in oracle_text for pattern in hate_patterns)
 
+    def _has_graveyard_recursion_text(self, oracle_text: str) -> bool:
+        """Confirm text actually retrieves, casts, or plays cards from a graveyard."""
+        if self._is_graveyard_hate(oracle_text):
+            return False
+        if any(phrase in oracle_text for phrase in [
+            'from your graveyard',
+            'from a graveyard',
+            'from the graveyard',
+            'from its owner\'s graveyard',
+            'from their graveyard',
+            'cast spells from your graveyard',
+            'cast cards from your graveyard',
+            'play lands from your graveyard',
+            'reanimate',
+            'escape',
+            'flashback',
+            'unearth',
+        ]):
+            return True
+        return re.search(r'return .* from (?:your|a|the|that|target player\'s) graveyard', oracle_text) is not None
+
     def _is_graveyard_value_card(self, oracle_text: str, type_line: str) -> bool:
         """Confirm graveyard cards advance recursion, death, self-mill, or reusable resources."""
         if self._is_graveyard_hate(oracle_text):
@@ -3203,6 +3323,14 @@ class EnhancedSuggestionEngine:
         """Confirm exile cards support impulse draw/casting from exile rather than hate/removal."""
         if self._is_graveyard_hate(oracle_text):
             return False
+        if 'in exile' in oracle_text and any(phrase in oracle_text for phrase in [
+            'you may play',
+            'you may cast',
+            'cast spells from among',
+            'play lands and cast spells',
+            'cards you own in exile',
+        ]):
+            return True
         value_patterns = [
             'exile the top',
             'play that card',
@@ -3512,7 +3640,9 @@ class EnhancedSuggestionEngine:
         if synergy == 'forced_reanimation':
             return self._has_forced_reanimation_text(oracle_text) or self._has_bad_gift_creature_text(oracle_text)
         if synergy == 'goad':
-            return 'goad' in oracle_text or 'must attack' in oracle_text
+            return self._has_true_goad_text(oracle_text)
+        if synergy == 'vanilla_creatures':
+            return self._is_vanilla_creature_card(oracle_text, type_line) or self._has_vanilla_creature_plan_text(oracle_text)
 
         if synergy == 'control_finisher':
             return (
@@ -3586,6 +3716,8 @@ class EnhancedSuggestionEngine:
                 return 'aura' in type_line or any(term in oracle_text for term in ['aura', 'enchant ', 'enchanted'])
 
         if synergy == 'creature':
+            if self._has_vanilla_creature_plan_text(commander_text):
+                return self._card_matches_synergy(card_data, 'vanilla_creatures')
             if self._has_creature_spell_text(commander_text):
                 return 'creature' in type_line or self._has_creature_spell_text(oracle_text)
             if any(term in commander_text for term in ['enters the battlefield', 'creature enters']):
@@ -3642,6 +3774,8 @@ class EnhancedSuggestionEngine:
         if synergy == 'counters':
             counter_plan = self._counter_plan_for_text(commander_text)
             if not counter_plan:
+                return False
+            if counter_plan == 'zone_counters':
                 return False
             if 'proliferate' in oracle_text and counter_plan not in ['proliferate', 'named_counters']:
                 return False
@@ -3765,7 +3899,12 @@ class EnhancedSuggestionEngine:
             return self._has_forced_reanimation_text(oracle_text) or self._has_bad_gift_creature_text(oracle_text)
 
         if synergy == 'goad':
-            return 'goad' in oracle_text or 'must attack' in oracle_text or self._has_combat_damage_trigger_text(oracle_text)
+            return self._has_true_goad_text(oracle_text)
+
+        if synergy == 'vanilla_creatures':
+            if not self._has_vanilla_creature_plan_text(commander_text):
+                return False
+            return self._card_matches_synergy(card_data, 'vanilla_creatures')
 
         if synergy == 'control_finisher':
             commander_constraints = self._get_commander_constraints(commander_card)
@@ -4107,6 +4246,24 @@ class EnhancedSuggestionEngine:
                 evidence = 'supports creature-entry loops'
                 score = 80
                 add_evidence('role_value')
+        elif synergy == 'vanilla_creatures':
+            if self._has_vanilla_creature_plan_text(oracle_text):
+                job = 'no-ability payoff'
+                evidence = 'explicitly rewards creatures with no abilities'
+                score = 88
+                add_evidence('direct_synergy')
+                add_evidence('payoff')
+                add_evidence('vanilla_creature_plan')
+            elif self._is_vanilla_creature_card(oracle_text, type_line):
+                job = 'no-ability creature'
+                evidence = 'raises no-ability creature density'
+                score = 84
+                add_evidence('direct_synergy')
+                add_evidence('creature_density')
+                add_evidence('vanilla_creature_density')
+                if card_data.get('cmc', 0) <= 3:
+                    score += 2
+                    add_evidence('low_setup_cost')
         elif synergy == 'board_conversion':
             if self._creates_own_creature_tokens(oracle_text):
                 job = 'wide-board material'
@@ -4477,16 +4634,11 @@ class EnhancedSuggestionEngine:
                 score = 72
                 add_evidence('enabler')
         elif synergy == 'goad':
-            if 'goad' in oracle_text:
+            if self._has_true_goad_text(oracle_text):
                 job = 'goad engine'
                 evidence = 'forces opposing creatures into combat'
                 score = 84
                 add_evidence('direct_synergy')
-            elif self._has_combat_damage_trigger_text(oracle_text):
-                job = 'goad enabler'
-                evidence = 'helps trigger combat-control effects'
-                score = 78
-                add_evidence('enabler')
         elif synergy == 'control_finisher':
             if self._is_generic_mana_card(card_data):
                 job = 'high-mana setup'
@@ -4672,6 +4824,10 @@ class EnhancedSuggestionEngine:
             action = f"{card_name} protects the commander or key permanents."
         elif 'card_flow' in evidence_tags:
             action = f"{card_name} adds card flow through its {job} text."
+        elif 'vanilla_creature_density' in evidence_tags:
+            action = f"{card_name} is a no-ability creature for the deck's density requirement."
+        elif 'vanilla_creature_plan' in evidence_tags:
+            action = f"{card_name} explicitly rewards creatures with no abilities."
         elif job == 'bad gift creature':
             action = f"{card_name} is a bad gift creature with a real drawback."
         elif 'payoff' in evidence_tags:
@@ -4741,6 +4897,11 @@ class EnhancedSuggestionEngine:
                 fit = f"That matters for {commander_name} because it supplies bodies for attacks, sacrifice lines, or creature-count payoffs."
             else:
                 fit = f"That matters for {commander_name} because the creature slot advances the commander's board plan with a concrete job."
+        elif synergy == 'vanilla_creatures':
+            if 'vanilla_creature_density' in evidence_tags:
+                fit = f"That matters for {commander_name} because no-ability creatures are the actual material the commander or payoff suite rewards."
+            else:
+                fit = f"That matters for {commander_name} because the card names the no-ability creature plan directly instead of being generic creature support."
         elif 'board_support' in evidence_tags:
             fit = f"That matters for {commander_name} because the card rewards or improves the board after the deck has assembled creatures."
         elif synergy == 'artifact_tokens':
@@ -4991,6 +5152,9 @@ class EnhancedSuggestionEngine:
         if synergy == 'flash_control':
             return f'(o:flash OR o:"as though they had flash" OR o:"counter target spell" OR t:instant) {color_filter} f:commander'
 
+        if synergy == 'vanilla_creatures':
+            return f'((t:creature -o:/./) OR o:"creatures with no abilities" OR o:"creature card with no abilities" OR o:"creature cards with no abilities") {color_filter} f:commander'
+
         synergy_queries = {
             'artifact': '(o:"artifact card" OR o:"artifact spell" OR o:"artifacts you control" OR o:"whenever an artifact" OR o:"sacrifice an artifact" OR t:equipment OR o:equip)',
             'board_conversion': '(t:creature OR o:"creature token" OR o:"creature tokens" OR o:"create a 1/1" OR o:"create two" OR o:"create three" OR o:"create X" OR o:thopter OR o:servo OR o:myr OR o:construct OR o:"creatures you control have" OR o:"creatures you control gain" OR o:"attacking creatures")',
@@ -5002,7 +5166,7 @@ class EnhancedSuggestionEngine:
             'donation': '(o:"gains control of target permanent" OR o:"exchange control" OR o:"you own" OR o:"opponents control")',
             'exile': '(o:"exile the top" OR o:"play that card" OR o:"cast that card" OR o:"from exile" OR o:"until end of your next turn")',
             'forced_reanimation': "(t:creature (o:\"skip your next turn\" OR o:\"you lose the game\" OR o:\"you can't win\" OR o:\"you can't draw cards\" OR o:\"exile your library\" OR o:\"your life total becomes\" OR o:\"that player sacrifices it\" OR o:\"under their control\"))",
-            'goad': '(o:goad OR o:"must attack")',
+            'goad': '(o:goad OR o:"attack a player other than you" OR o:"attacks a player other than you" OR o:"creatures your opponents control attack")',
             'graveyard': '(o:"from your graveyard" OR o:"put into your graveyard" OR o:dies OR o:reanimate OR o:flashback OR o:escape OR o:unearth)',
             'instant_sorcery': '(t:instant OR t:sorcery OR o:"instant or sorcery")',
             'landfall': '(o:landfall OR o:"additional land" OR o:"land you control enters")',
@@ -5084,8 +5248,13 @@ class EnhancedSuggestionEngine:
             tips.append(f"{commander_name} turns quantity into combat pressure. Build the board first with cheap bodies, token makers, and creatures that leave multiple attackers behind, then let the commander convert that material into damage.")
             tips.append("Avoid leaning on expensive single threats that do not multiply the board. This profile improves most when one card creates several attackers or makes the whole team safer in combat.")
 
+        if 'vanilla_creatures' in synergies:
+            tips.append(f"{commander_name} cares about creatures with no abilities as a real deck-building constraint. Count simple bodies and explicit no-ability payoffs separately from normal value creatures so the payoff cards have enough material.")
+
         if 'creature' in synergies:
             if 'board_conversion' in synergies:
+                pass
+            elif 'vanilla_creatures' in synergies:
                 pass
             elif self._has_creature_spell_text(oracle_text):
                 tips.append(f"{commander_name} rewards casting creatures, so use a curve with enough low and mid-cost creatures to double-spell. ETB creatures are especially useful because they still matter if the commander is removed.")
@@ -5097,7 +5266,9 @@ class EnhancedSuggestionEngine:
                 tips.append(f"Keep the creature package synergistic: bodies should draw cards, ramp, recur, remove threats, or multiply the commander's main trigger rather than only filling the curve.")
 
         if 'graveyard' in synergies:
-            if self._has_creature_card_text(oracle_text) and 'graveyard' in oracle_text:
+            if commander_constraints.get('zone_counter_plan'):
+                tips.append(f"{commander_name} uses the graveyard as a routing zone, not a normal reanimator plan. Prioritize self-mill, attack enablers, and ways to keep access to the exiled cards rather than generic recursion packages.")
+            elif self._has_creature_card_text(oracle_text) and 'graveyard' in oracle_text:
                 tips.append(f"{commander_name} wants creatures that are useful both on board and in the graveyard. Self-mill, discard outlets, and recursion are strongest when the creatures have ETB, death, or cast value.")
             elif 'artifact card' in oracle_text and 'graveyard' in oracle_text:
                 tips.append(f"Stock the graveyard with artifacts deliberately. Self-mill and sacrifice outlets become card advantage when the artifact package includes reusable value pieces.")
@@ -5250,6 +5421,8 @@ class EnhancedSuggestionEngine:
         if 'creature' in synergies:
             if 'board_conversion' in synergies:
                 notes.append("Deep Strategy - Board Conversion: Count setup cards by how much material they create before the commander arrives. Cheap bodies, repeatable token makers, and team evasion matter more than standalone value creatures.")
+            elif 'vanilla_creatures' in synergies:
+                notes.append("Deep Strategy - No-Ability Density: Separate creatures with no abilities from normal value creatures during deck review. The payoff engine only improves when enough slots are true no-ability bodies or cards that explicitly reward them.")
             elif self._has_creature_spell_text(oracle_text):
                 notes.append("Deep Strategy - Creature Casting: Bias toward creatures that replace themselves, ramp, or interact when cast. That keeps the commander trigger productive even when the table removes the first board.")
             elif 'enters the battlefield' in oracle_text or 'creature enters' in oracle_text:
@@ -5688,6 +5861,7 @@ class EnhancedSuggestionEngine:
             ('first', 'strike'): 'first strike',
             ('life', 'gain'): 'life gain',
             ('card', 'draw'): 'card draw',
+            ('no', 'abilities'): 'no abilities',
         }
         while index < len(terms):
             pair = tuple(terms[index:index + 2])
@@ -5760,6 +5934,9 @@ class EnhancedSuggestionEngine:
             'draw': '(o:"draw a card" OR o:"draw cards" OR otag:card-advantage)',
             'card draw': '(o:"draw a card" OR o:"draw cards" OR otag:card-advantage)',
             'mill': '(o:mill OR otag:mill)',
+            'vanilla': '(o:"creatures with no abilities" OR o:"creature card with no abilities" OR o:"creature cards with no abilities")',
+            'no abilities': '(o:"creatures with no abilities" OR o:"creature card with no abilities" OR o:"creature cards with no abilities")',
+            'no-ability': '(o:"creatures with no abilities" OR o:"creature card with no abilities" OR o:"creature cards with no abilities")',
             'zombies': '(t:zombie OR o:zombie)',
             'zombie': '(t:zombie OR o:zombie)',
             'elves': '(t:elf OR o:elf)',
@@ -5837,6 +6014,9 @@ class EnhancedSuggestionEngine:
             'lands': {'landfall'},
             'mill': {'graveyard'},
             'goad': {'goad'},
+            'vanilla': {'vanilla_creatures'},
+            'no abilities': {'vanilla_creatures'},
+            'no-ability': {'vanilla_creatures'},
             'target': {'target_spells'},
             'flash': {'flash_control'},
             'draw': set(),
@@ -5853,6 +6033,9 @@ class EnhancedSuggestionEngine:
             'voltron': {'aura_voltron', 'equipment_voltron'},
             'landfall': {'lands_value_engine'},
             'blink': {'blink_etb_value'},
+            'vanilla': {'vanilla_creature_matters'},
+            'no abilities': {'vanilla_creature_matters'},
+            'no-ability': {'vanilla_creature_matters'},
         }
         term_signal_map = {
             'draw': {'large_card_draw', 'repeatable_value_engine'},
@@ -5864,6 +6047,9 @@ class EnhancedSuggestionEngine:
             'flash': {'flash_timing', 'instant_speed_play'},
             'control': {'tax_or_lock_pressure', 'counterspell_protection'},
             'stax': {'tax_or_lock_pressure'},
+            'vanilla': {'vanilla_creature_payoff'},
+            'no abilities': {'vanilla_creature_payoff'},
+            'no-ability': {'vanilla_creature_payoff'},
         }
 
         for term in terms:

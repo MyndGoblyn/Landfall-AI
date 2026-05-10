@@ -1625,6 +1625,7 @@ def test_archetype_registry_loads_composite_strategy_layer():
     assert "late_game_control_finisher" in archetype_ids
     assert "flash_reactive_control" in archetype_ids
     assert "hand_size_pressure_control" in archetype_ids
+    assert "vanilla_creature_matters" in archetype_ids
 
 
 def test_composite_control_finisher_detection_is_not_commander_specific():
@@ -1738,3 +1739,161 @@ def test_no_maximum_hand_size_is_not_opponent_hand_pressure():
     assert quality["job"] == "large-hand support"
     assert quality["score"] < 84
     assert "direct_synergy" not in quality["evidence_tags"]
+
+
+def test_self_forced_attack_is_not_goad_or_forced_combat():
+    engine = make_engine()
+    toski_like = {
+        "name": "Self Forced Attack Commander",
+        "type_line": "Legendary Creature - Squirrel",
+        "oracle_text": (
+            "This spell can't be countered. Indestructible. "
+            "Self Forced Attack Commander attacks each combat if able. "
+            "Whenever a creature you control deals combat damage to a player, draw a card."
+        ),
+        "color_identity": ["G"],
+    }
+    true_goad = "Whenever this creature deals combat damage to a player, goad target creature that player controls."
+
+    synergies = engine._detect_commander_synergies(toski_like)
+    signals = engine._extract_archetype_signals(toski_like)
+
+    assert "goad" not in synergies
+    assert "forced_combat" not in signals
+    assert "self_forced_attack_drawback" in signals
+    assert engine._has_true_goad_text(true_goad)
+
+
+def test_exile_zone_counters_do_not_become_counter_or_proliferate_plan():
+    engine = make_engine()
+    grolnok_like = {
+        "name": "Zone Counter Commander",
+        "type_line": "Legendary Creature - Frog",
+        "oracle_text": (
+            "Whenever a Frog you control attacks, mill three cards. "
+            "Whenever a permanent card is put into your graveyard from your library, exile it with a croak counter on it. "
+            "You may play lands and cast spells from among cards you own in exile with croak counters on them."
+        ),
+        "color_identity": ["G", "U"],
+    }
+    evolution_sage = {
+        "name": "Evolution Sage",
+        "type_line": "Creature - Elf Druid",
+        "oracle_text": "Landfall - Whenever a land enters the battlefield under your control, proliferate.",
+        "cmc": 3,
+    }
+
+    synergies = engine._detect_commander_synergies(grolnok_like)
+    archetypes = engine._detect_commander_archetypes(grolnok_like)
+    constraints = engine._get_commander_constraints(grolnok_like)
+    tips = engine._generate_commander_strategy_tips(grolnok_like, synergies, constraints)
+    joined = " ".join(tips).lower()
+
+    assert engine._counter_plan_for_text(engine._combined_oracle_text(grolnok_like)) == "zone_counters"
+    assert "counters" not in synergies
+    assert "exile" in synergies
+    assert "graveyard_reanimator" not in {archetype["id"] for archetype in archetypes}
+    assert "graveyard_recursion" not in engine._extract_archetype_signals(grolnok_like)
+    assert constraints["zone_counter_plan"] is True
+    assert "counter_plan" not in constraints
+    assert not engine._card_matches_commander_context(evolution_sage, "counters", grolnok_like)
+    assert "proliferate" not in joined
+
+
+def test_timing_drawback_text_does_not_create_generic_exile_card_access():
+    engine = make_engine()
+    timing_commander = {
+        "name": "Timing Commander",
+        "type_line": "Legendary Creature",
+        "oracle_text": (
+            "Tap: End the turn. "
+            "Whenever you create a token, exile it at the beginning of the next end step."
+        ),
+        "color_identity": ["U", "B"],
+    }
+
+    synergies = engine._detect_commander_synergies(timing_commander)
+    tips = engine._generate_commander_strategy_tips(
+        timing_commander,
+        synergies,
+        engine._get_commander_constraints(timing_commander),
+    )
+    joined = " ".join(tips).lower()
+
+    assert "temporary_drawback" in synergies
+    assert "exile" not in synergies
+    assert "exile should be treated as card access" not in joined
+
+
+def test_vanilla_creature_plan_rejects_normal_value_creatures():
+    engine = make_engine()
+    ruxa_like = {
+        "name": "No-Ability Commander",
+        "type_line": "Legendary Creature - Bear",
+        "oracle_text": (
+            "When No-Ability Commander enters the battlefield, return target creature card with no abilities "
+            "from your graveyard to your hand. Creatures you control with no abilities get +1/+1. "
+            "You may have creatures you control with no abilities assign their combat damage as though they weren't blocked."
+        ),
+        "color_identity": ["G"],
+    }
+    normal_value_creature = {
+        "name": "Elvish Visionary",
+        "type_line": "Creature - Elf Shaman",
+        "oracle_text": "When Elvish Visionary enters the battlefield, draw a card.",
+        "cmc": 2,
+    }
+    vanilla_body = {
+        "name": "Gigantosaurus",
+        "type_line": "Creature - Dinosaur",
+        "oracle_text": "",
+        "cmc": 5,
+    }
+    vanilla_payoff = {
+        "name": "Muraganda Petroglyphs",
+        "type_line": "Enchantment",
+        "oracle_text": "Creatures with no abilities get +2/+2.",
+        "cmc": 4,
+    }
+
+    synergies = engine._detect_commander_synergies(ruxa_like)
+    archetypes = engine._detect_commander_archetypes(ruxa_like)
+    payoff_quality = engine._recommendation_quality_metadata(vanilla_payoff, "vanilla_creatures", ruxa_like)
+    body_quality = engine._recommendation_quality_metadata(vanilla_body, "vanilla_creatures", ruxa_like)
+
+    assert synergies[0] == "vanilla_creatures"
+    assert archetypes[0]["id"] == "vanilla_creature_matters"
+    assert not engine._card_matches_commander_context(normal_value_creature, "creature", ruxa_like)
+    assert engine._card_matches_commander_context(vanilla_body, "creature", ruxa_like)
+    assert engine._card_matches_synergy(vanilla_payoff, "vanilla_creatures")
+    assert payoff_quality["job"] == "no-ability payoff"
+    assert body_quality["job"] == "no-ability creature"
+
+
+def test_donation_archetype_outranks_incidental_combat_and_counters():
+    engine = make_engine()
+    jon_like = {
+        "name": "Control Exchange Commander",
+        "type_line": "Legendary Creature - Human Wizard",
+        "oracle_text": (
+            "At the beginning of your end step, target opponent gains control of up to one target creature you control. "
+            "Put two +1/+1 counters on it and tap it. It's goaded for the rest of the game and gains "
+            "\"This creature can't be sacrificed.\" Whenever a creature you own but don't control attacks, you draw a card."
+        ),
+        "color_identity": ["U", "B"],
+    }
+
+    archetypes = engine._detect_commander_archetypes(jon_like)
+    synergies = engine._detect_commander_synergies(jon_like)
+    tips = engine._generate_commander_strategy_tips(
+        jon_like,
+        synergies,
+        engine._get_commander_constraints(jon_like),
+    )
+    joined = " ".join(tips).lower()
+
+    assert archetypes[0]["id"] == "donation_drawback_abuse"
+    assert synergies[0] == "donation"
+    assert "goad" in synergies
+    assert "control-exchange plan" in joined
+    assert "counter cards" not in joined
