@@ -205,17 +205,22 @@ class EnhancedSuggestionEngine:
             detected.append('chosen type')
 
         for creature_type in sorted(self.creature_type_terms):
-            plural = f"{creature_type}s"
+            plural = {
+                "dwarf": "dwarves",
+                "elf": "elves",
+                "faerie": "faeries",
+            }.get(creature_type, f"{creature_type}s")
             type_ref = rf"(?:{creature_type}|{plural})"
-            token_only_types = {'construct', 'servo', 'thopter', 'myr'}
             patterns = [
                 rf"\b{type_ref} spells?\b",
                 rf"\bother {type_ref}\b",
-                rf"\bwhenever .* {type_ref}\b",
-                rf"\b{type_ref} card\b",
+                rf"\bwhenever (?:you cast|another|a|one or more) {type_ref}\b",
+                rf"\b{type_ref} creature cards?\b",
+                rf"\b{type_ref} you (?:already )?control\b",
+                rf"\b{type_ref} creatures? you control\b",
+                rf"\bfor each {type_ref}\b",
+                rf"\bnumber of {plural}\b",
             ]
-            if creature_type not in token_only_types:
-                patterns.append(rf"\bcreates?\b.* {creature_type}\b")
             if any(re.search(pattern, text) for pattern in patterns):
                 detected.append(creature_type)
 
@@ -276,12 +281,15 @@ class EnhancedSuggestionEngine:
             'magecraft',
             'copy target instant',
             'copy target sorcery',
+            'noncreature, nonland',
+            'noncreature nonland',
             'whenever you cast a spell',
             'whenever you cast an instant',
             'whenever you cast a sorcery',
             'whenever you cast a noncreature spell',
             'whenever you cast or copy',
             'whenever you copy',
+            'prowess',
         ]
         return any(term in oracle_text for term in spell_plan_terms) or self._has_target_cost_modifier_text(oracle_text)
 
@@ -562,6 +570,9 @@ class EnhancedSuggestionEngine:
                 signals.add("graveyard_recursion")
             if any(term in oracle_text for term in ["mill", "surveil", "put into your graveyard"]):
                 signals.add("self_mill")
+        if "mill" in oracle_text and re.search(r"put .* creature card .* onto the battlefield", oracle_text):
+            signals.add("graveyard_recursion")
+            signals.add("reanimation_target_density")
         if re.search(r"\b(dies|dying|death)\b", oracle_text) or "put into a graveyard from the battlefield" in oracle_text:
             signals.add("death_trigger")
         if any(term in self._sacrifice_relevant_text(oracle_text) for term in [
@@ -621,11 +632,16 @@ class EnhancedSuggestionEngine:
             signals.add("extra_land_play")
         if "land card" in oracle_text and "graveyard" in oracle_text:
             signals.add("land_recursion")
+        if re.search(r"lands? (?:is|are) put into (?:your|a|the) graveyard", oracle_text):
+            signals.add("land_recursion")
         counter_plan = self._counter_plan_for_text(oracle_text)
         if counter_plan and counter_plan != "zone_counters":
             signals.add("counter_placement")
             if counter_plan in {"named_counters", "negative_counters"}:
                 signals.add("counter_type_specific")
+        if "modified creature" in oracle_text or "modified creatures" in oracle_text:
+            signals.add("counter_placement")
+            signals.add("evasion_needed")
         if "proliferate" in oracle_text and counter_plan != "zone_counters":
             signals.add("proliferate_payoff")
         if self._has_lifegain_reward_text(oracle_text) or re.search(r"\bgain(?:s|ed)? life\b", oracle_text):
@@ -682,6 +698,15 @@ class EnhancedSuggestionEngine:
         if self._supports_existing_creature_board(oracle_text):
             signals.add("anthem_payoff")
         if self._is_blink_support(oracle_text, type_line):
+            signals.add("blink_or_flicker_effect")
+        if (
+            ("wasn't cast" in oracle_text or "was not cast" in oracle_text)
+            and (
+                "enters the battlefield under your control" in oracle_text or
+                "enters under your control" in oracle_text or
+                "enters, if it wasn't cast" in oracle_text
+            )
+        ):
             signals.add("blink_or_flicker_effect")
         if "draw a card" in oracle_text and ("target" in oracle_text or "instant" in type_line or "sorcery" in type_line):
             signals.add("cantrip_density")
@@ -1053,6 +1078,8 @@ class EnhancedSuggestionEngine:
         creature_theme_phrases = [
             'creatures you control',
             'nontoken creature',
+            'creature you control with power',
+            'creature with power',
             'whenever another creature',
             'whenever a creature enters',
             'whenever one or more creatures',
@@ -1071,6 +1098,7 @@ class EnhancedSuggestionEngine:
             add_once('instant_sorcery')
         if (
             'graveyard' in oracle_text or
+            'mill' in oracle_text or
             re.search(r'\b(dies|dying|death)\b', oracle_text) or
             'reanimate' in oracle_text or
             'put into a graveyard' in oracle_text
@@ -1086,7 +1114,9 @@ class EnhancedSuggestionEngine:
             'proliferate' in oracle_text or
             'counter on' in oracle_text or
             'one or more counters' in oracle_text or
-            'that many plus one' in oracle_text
+            'that many plus one' in oracle_text or
+            'modified creature' in oracle_text or
+            'modified creatures' in oracle_text
         ) and counter_plan != 'zone_counters':
             add_once('counters')
         if 'token' in oracle_text and any(phrase in oracle_text for phrase in ['create', 'populate', 'copy']):
@@ -1099,6 +1129,9 @@ class EnhancedSuggestionEngine:
             'token copy of target artifact',
             'token that is a copy of target artifact',
             "token that's a copy of target artifact",
+            'token copy of target noncreature artifact',
+            'token that is a copy of target noncreature artifact',
+            "token that's a copy of target noncreature artifact",
             'tokens that are copies of target artifact',
             'tokens that are copies of the exiled card',
         ]):
@@ -1106,7 +1139,13 @@ class EnhancedSuggestionEngine:
         sacrifice_text = self._sacrifice_relevant_text(oracle_text)
         if 'whenever you sacrifice a permanent' in sacrifice_text or 'sacrifice a permanent' in sacrifice_text:
             add_once('artifact_tokens')
-        if 'landfall' in oracle_text or 'additional land' in oracle_text or 'land you control enters' in oracle_text:
+        if (
+            'landfall' in oracle_text or
+            'additional land' in oracle_text or
+            'land you control enters' in oracle_text or
+            ('land card' in oracle_text and 'graveyard' in oracle_text) or
+            re.search(r"lands? (?:is|are) put into (?:your|a|the) graveyard", oracle_text)
+        ):
             add_once('landfall')
         if self._has_sacrifice_plan_text(oracle_text):
             add_once('sacrifice')
@@ -1119,6 +1158,15 @@ class EnhancedSuggestionEngine:
             'flicker',
         ]
         if any(phrase in oracle_text for phrase in blink_phrases):
+            add_once('blink')
+        elif (
+            ("wasn't cast" in oracle_text or "was not cast" in oracle_text)
+            and (
+                "enters the battlefield under your control" in oracle_text or
+                "enters under your control" in oracle_text or
+                "enters, if it wasn't cast" in oracle_text
+            )
+        ):
             add_once('blink')
         elif self._is_exile_value_card(oracle_text):
             add_once('exile')
@@ -3300,6 +3348,12 @@ class EnhancedSuggestionEngine:
             'food token',
             'blood token',
             'artifact token',
+            'token copy of target artifact',
+            'token copy of target noncreature artifact',
+            'token that is a copy of target artifact',
+            'token that is a copy of target noncreature artifact',
+            "token that's a copy of target artifact",
+            "token that's a copy of target noncreature artifact",
             'investigate',
             'clues',
             'clue',
