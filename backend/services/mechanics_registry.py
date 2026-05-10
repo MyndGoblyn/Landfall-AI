@@ -197,6 +197,18 @@ class MechanicsRegistry:
             "menace",
             "can't be blocked",
         ],
+        "fodder permanents": [
+            "artifact, enchantment, or token",
+            "artifact, enchantment, or a token",
+            "creature token",
+            "treasure token",
+            "food token",
+            "clue token",
+            "blood token",
+            "sacrifice an artifact",
+            "sacrifice a creature",
+            "sacrifice a token",
+        ],
     }
 
     FAMILY_SYNERGY_MAP = {

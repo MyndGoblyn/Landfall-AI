@@ -1554,3 +1554,127 @@ def test_reason_builder_names_exact_mechanic_when_it_adds_evidence():
     assert "Treasure" in reason
     assert "concrete evidence" in reason
     assert "validated match" not in reason
+
+
+def test_archetype_registry_loads_composite_strategy_layer():
+    engine = make_engine()
+
+    assert engine.archetype_registry.count() >= 25
+    archetype_ids = {entry.get("id") for entry in engine.archetype_registry.entries}
+
+    assert "late_game_control_finisher" in archetype_ids
+    assert "flash_reactive_control" in archetype_ids
+    assert "hand_size_pressure_control" in archetype_ids
+
+
+def test_composite_control_finisher_detection_is_not_commander_specific():
+    engine = make_engine()
+    commander = {
+        "name": "Synthetic Praetor",
+        "type_line": "Legendary Creature - Praetor",
+        "oracle_text": (
+            "Flash. At the beginning of your end step, draw seven cards. "
+            "Each opponent's maximum hand size is reduced by seven."
+        ),
+        "cmc": 10,
+        "color_identity": ["U"],
+    }
+
+    signals = engine._extract_archetype_signals(commander)
+    archetypes = {match["id"] for match in engine._detect_commander_archetypes(commander)}
+    synergies = engine._detect_commander_synergies(commander)
+    tips = engine._generate_commander_strategy_tips(
+        commander,
+        synergies,
+        engine._get_commander_constraints(commander),
+    )
+    joined = " ".join(tips).lower()
+
+    assert "high_mana_value_commander" in signals
+    assert "large_card_draw" in signals
+    assert "opponent_hand_size_pressure" in signals
+    assert "late_game_control_finisher" in archetypes
+    assert "hand_size_pressure_control" in archetypes
+    assert "flash_reactive_control" in archetypes
+    assert "control_finisher" in synergies
+    assert "hand_size_pressure" in synergies
+    assert "flash_control" in synergies
+    assert "instant_sorcery" not in synergies
+    assert "late-game control finisher" in joined
+    assert "cheap cantrips" not in joined
+
+
+def test_flash_alone_does_not_create_spell_trigger_plan():
+    engine = make_engine()
+    commander = {
+        "name": "Flash Body",
+        "type_line": "Legendary Creature - Wizard",
+        "oracle_text": "Flash.",
+        "cmc": 4,
+        "color_identity": ["U"],
+    }
+
+    synergies = engine._detect_commander_synergies(commander)
+    archetypes = engine._detect_commander_archetypes(commander)
+
+    assert "instant_sorcery" not in synergies
+    assert "flash_control" not in synergies
+    assert archetypes == []
+
+
+def test_hand_size_pressure_rejects_self_discard_looting():
+    engine = make_engine()
+    commander = {
+        "name": "Hand Pressure Commander",
+        "type_line": "Legendary Creature",
+        "oracle_text": "Each opponent's maximum hand size is reduced by seven.",
+        "cmc": 6,
+        "color_identity": ["U"],
+    }
+    mask_of_memory = {
+        "name": "Mask of Memory",
+        "type_line": "Artifact - Equipment",
+        "oracle_text": (
+            "Whenever equipped creature deals combat damage to a player, "
+            "you may draw two cards. If you do, discard a card."
+        ),
+        "cmc": 2,
+    }
+
+    assert not engine._card_matches_synergy(mask_of_memory, "hand_size_pressure")
+
+    quality = engine._recommendation_quality_metadata(
+        mask_of_memory,
+        "hand_size_pressure",
+        commander,
+    )
+
+    assert quality["score"] < 76
+    assert quality["fit_tier"] == "Speculative"
+
+
+def test_no_maximum_hand_size_is_not_opponent_hand_pressure():
+    engine = make_engine()
+    commander = {
+        "name": "Hand Pressure Commander",
+        "type_line": "Legendary Creature",
+        "oracle_text": "Each opponent's maximum hand size is reduced by seven.",
+        "cmc": 6,
+        "color_identity": ["U"],
+    }
+    support_card = {
+        "name": "Large Hand Support",
+        "type_line": "Creature",
+        "oracle_text": "You have no maximum hand size. Whenever an opponent casts a noncreature spell, draw a card.",
+        "cmc": 7,
+    }
+
+    quality = engine._recommendation_quality_metadata(
+        support_card,
+        "hand_size_pressure",
+        commander,
+    )
+
+    assert quality["job"] == "large-hand support"
+    assert quality["score"] < 84
+    assert "direct_synergy" not in quality["evidence_tags"]

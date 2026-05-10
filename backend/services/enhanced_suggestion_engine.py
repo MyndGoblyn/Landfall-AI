@@ -3,6 +3,7 @@ import asyncio
 import logging
 import re
 from collections import Counter, defaultdict
+from services.archetype_registry import ArchetypeRegistry
 from services.mechanics_registry import MechanicsRegistry
 from services.scryfall_service import ScryfallService
 
@@ -14,6 +15,7 @@ class EnhancedSuggestionEngine:
     def __init__(self, scryfall_service: ScryfallService):
         self.scryfall = scryfall_service
         self.mechanics_registry = MechanicsRegistry.load_default()
+        self.archetype_registry = ArchetypeRegistry.load_default()
         
         # Role targets
         self.role_targets = {
@@ -63,30 +65,33 @@ class EnhancedSuggestionEngine:
         }
         self.synergy_priority = {
             'forced_reanimation': 5,
-            'target_spells': 6,
-            'donation': 7,
-            'temporary_drawback': 8,
-            'colorless_big_mana': 9,
-            'typal': 10,
-            'extra_combat': 11,
-            'attack_triggers': 12,
-            'combat_damage': 13,
-            'goad': 14,
-            'blink': 15,
-            'landfall': 16,
-            'artifact_tokens': 17,
-            'sacrifice': 18,
-            'counters': 19,
-            'voltron': 20,
-            'enchantment': 21,
-            'artifact': 22,
-            'graveyard': 23,
-            'tokens': 24,
-            'lifegain': 25,
-            'instant_sorcery': 26,
-            'creature': 27,
-            'exile': 28,
-            'board_conversion': 29,
+            'control_finisher': 6,
+            'hand_size_pressure': 7,
+            'flash_control': 8,
+            'target_spells': 9,
+            'donation': 10,
+            'temporary_drawback': 11,
+            'colorless_big_mana': 12,
+            'typal': 13,
+            'extra_combat': 14,
+            'attack_triggers': 15,
+            'combat_damage': 16,
+            'goad': 17,
+            'blink': 18,
+            'landfall': 19,
+            'artifact_tokens': 20,
+            'sacrifice': 21,
+            'counters': 22,
+            'voltron': 23,
+            'enchantment': 24,
+            'artifact': 25,
+            'graveyard': 26,
+            'tokens': 27,
+            'lifegain': 28,
+            'instant_sorcery': 29,
+            'creature': 30,
+            'exile': 31,
+            'board_conversion': 32,
         }
 
     def _combined_type_line(self, card: Dict) -> str:
@@ -309,8 +314,356 @@ class EnhancedSuggestionEngine:
             if signal['evidence_strength'] != 'reject'
             and signal['score'] >= 2
             and (signal['can_define_deck'] or not signal['support_only'])
+            and (signal['requirements_met'] or signal['evidence_strength'] == 'core')
         ]
         return filtered[:limit]
+
+    def _has_large_card_draw_text(self, oracle_text: str) -> bool:
+        """Detect large draw bursts separately from normal cantrip/card-flow text."""
+        number_words = {
+            "two": 2,
+            "three": 3,
+            "four": 4,
+            "five": 5,
+            "six": 6,
+            "seven": 7,
+            "eight": 8,
+            "nine": 9,
+            "ten": 10,
+        }
+        for match in re.finditer(r"\bdraw (two|three|four|five|six|seven|eight|nine|ten|\d+) cards?\b", oracle_text):
+            value = match.group(1)
+            amount = int(value) if value.isdigit() else number_words.get(value, 0)
+            if amount >= 3:
+                return True
+        return any(phrase in oracle_text for phrase in [
+            "draw cards equal",
+            "draw that many cards",
+            "draw x cards",
+            "draw a card for each",
+            "draw cards for each",
+        ])
+
+    def _has_major_payoff_text(self, oracle_text: str, mana_value: float = 0) -> bool:
+        """True when text creates a real resource, lock, or closing payoff."""
+        payoff_terms = [
+            "draw",
+            "create",
+            "return target",
+            "return a",
+            "cast",
+            "copy",
+            "add ",
+            "gain life",
+            "loses life",
+            "deals damage",
+            "maximum hand size",
+            "can't",
+            "cannot",
+            "costs",
+            "double",
+            "twice",
+            "extra combat",
+            "additional combat",
+            "proliferate",
+            "reanimate",
+            "gains control",
+            "exchange control",
+        ]
+        repeatable_window = any(term in oracle_text for term in [
+            "whenever",
+            "at the beginning",
+            "each time",
+            "once each turn",
+            "during each",
+            "for each",
+        ])
+        return (
+            self._has_large_card_draw_text(oracle_text) or
+            ("maximum hand size" in oracle_text and "opponent" in oracle_text) or
+            (repeatable_window and any(term in oracle_text for term in payoff_terms)) or
+            (mana_value >= 7 and any(term in oracle_text for term in payoff_terms))
+        )
+
+    def _extract_archetype_signals(
+        self,
+        commander_card: Optional[Dict],
+        stats: Optional[Dict] = None,
+        detected_themes: Optional[List[str]] = None,
+    ) -> Set[str]:
+        """Extract reusable semantic signals without naming specific commanders."""
+        stats = stats or {}
+        detected_themes = detected_themes or []
+        commander_card = commander_card or {}
+        oracle_text = self._combined_oracle_text(commander_card)
+        type_line = self._combined_type_line(commander_card)
+        keywords = {str(keyword).lower() for keyword in commander_card.get("keywords", []) or []}
+        mana_value = commander_card.get("cmc", 0) or 0
+        color_identity = commander_card.get("color_identity", []) or []
+        signals: Set[str] = set()
+
+        if mana_value >= 7:
+            signals.add("high_mana_value_commander")
+        if 0 < mana_value <= 3:
+            signals.add("low_mana_value_commander")
+        if self._has_major_payoff_text(oracle_text, mana_value):
+            signals.add("major_payoff_text")
+        if any(term in oracle_text for term in ["whenever", "at the beginning", "each time", "once each turn"]):
+            if self._has_major_payoff_text(oracle_text, mana_value):
+                signals.add("repeatable_value_engine")
+        if self._has_attack_trigger_text(oracle_text):
+            signals.add("attack_trigger")
+        if self._has_combat_damage_trigger_text(oracle_text):
+            signals.add("combat_damage_trigger")
+            signals.add("evasion_needed")
+        if self._is_board_conversion_commander(oracle_text):
+            signals.add("combat_only_payoff")
+            signals.add("straightforward_combat_plan")
+        if any(term in oracle_text for term in ["commander damage", "equipped creature", "enchanted creature"]):
+            signals.add("commander_damage_pressure")
+            signals.add("evasion_needed")
+        if self._has_large_card_draw_text(oracle_text):
+            signals.add("large_card_draw")
+        if any(term in oracle_text for term in ["scry", "surveil", "look at the top", "reveal the top", "top card of your library"]):
+            signals.add("card_selection")
+        if "whenever you discard" in oracle_text or "discard a card:" in oracle_text or "discard one or more" in oracle_text:
+            signals.add("discard_payoff")
+        if self._is_graveyard_value_card(oracle_text, type_line):
+            if any(term in oracle_text for term in ["return", "cast", "play", "reanimate", "escape", "unearth"]):
+                signals.add("graveyard_recursion")
+            if any(term in oracle_text for term in ["mill", "surveil", "put into your graveyard"]):
+                signals.add("self_mill")
+        if re.search(r"\b(dies|dying|death)\b", oracle_text) or "put into a graveyard from the battlefield" in oracle_text:
+            signals.add("death_trigger")
+        if any(term in self._sacrifice_relevant_text(oracle_text) for term in [
+            "sacrifice a",
+            "sacrifice another",
+            "sacrifice one",
+            "sacrifice two",
+            "whenever you sacrifice",
+        ]):
+            signals.add("sacrifice_outlet")
+        if self._creates_own_creature_tokens(oracle_text):
+            signals.add("creature_token_creation")
+            signals.add("token_fodder")
+        if self._has_artifact_token_text(oracle_text):
+            signals.add("artifact_token_creation")
+            if "treasure token" in oracle_text:
+                signals.add("treasure_creation")
+            if "treasure token" in oracle_text or "add " in oracle_text:
+                signals.add("mana_acceleration")
+        if any(term in oracle_text for term in [
+            "artifact you control",
+            "artifacts you control",
+            "whenever an artifact",
+            "artifact card",
+            "artifact spell",
+            "sacrifice an artifact",
+        ]):
+            signals.add("artifact_count_matters")
+        if any(term in oracle_text for term in [
+            "enchantment you control",
+            "enchantments you control",
+            "whenever an enchantment",
+            "enchantment card",
+            "enchantment spell",
+            "aura card",
+        ]):
+            signals.add("enchantment_count_matters")
+        if "aura card" in oracle_text and "search your library" in oracle_text:
+            signals.add("aura_tutor")
+        if any(term in oracle_text for term in ["equipment", "equip ", "equipped creature", "attach"]):
+            signals.add("equipment_payoff")
+        if re.search(r"mana (?:value|cost) \d+ or less", oracle_text):
+            signals.add("mana_value_restriction")
+        if self._is_spell_stack_plan(oracle_text, type_line):
+            signals.add("spell_cast_trigger")
+            if "instant" in oracle_text or "sorcery" in oracle_text:
+                signals.add("instant_sorcery_payoff")
+        if "copy target instant" in oracle_text or "copy target sorcery" in oracle_text or "whenever you copy" in oracle_text:
+            signals.add("copy_spell_payoff")
+        if self._has_target_cost_modifier_text(oracle_text) or self._has_scalable_target_spell_text(oracle_text):
+            signals.add("targeting_payoff")
+        if any(term in oracle_text for term in ["costs less", "cost less", "reduce the cost", "rather than pay"]):
+            signals.add("cost_reduction")
+        if "landfall" in oracle_text or "land you control enters" in oracle_text:
+            signals.add("landfall_trigger")
+        if "additional land" in oracle_text or "you may play lands" in oracle_text:
+            signals.add("extra_land_play")
+        if "land card" in oracle_text and "graveyard" in oracle_text:
+            signals.add("land_recursion")
+        counter_plan = self._counter_plan_for_text(oracle_text)
+        if counter_plan:
+            signals.add("counter_placement")
+            if counter_plan in {"named_counters", "negative_counters"}:
+                signals.add("counter_type_specific")
+        if "proliferate" in oracle_text:
+            signals.add("proliferate_payoff")
+        if self._has_lifegain_reward_text(oracle_text) or re.search(r"\bgain(?:s|ed)? life\b", oracle_text):
+            signals.add("lifegain_trigger")
+        if "life total" in oracle_text or "life you gained" in oracle_text:
+            signals.add("life_total_payoff")
+        typal_types = self._detect_typal_creature_types(oracle_text, type_line)
+        if typal_types:
+            signals.add("typal_payoff")
+            signals.add("specific_subtype_required")
+        if re.search(r"opponents?'?s? maximum hand size", oracle_text) or "each opponent's maximum hand size" in oracle_text:
+            signals.add("opponent_hand_size_pressure")
+            signals.add("tax_or_lock_pressure")
+        if any(term in oracle_text for term in [
+            "opponents can't",
+            "opponents cannot",
+            "spells your opponents cast cost",
+            "activated abilities",
+            "skip",
+            "maximum hand size",
+            "can't untap",
+            "can't attack",
+            "can't block",
+        ]):
+            signals.add("tax_or_lock_pressure")
+        if "goad" in oracle_text or "must attack" in oracle_text or "attacks each combat if able" in oracle_text:
+            signals.add("forced_combat")
+            signals.add("goad_payoff")
+        if self._has_donation_text(oracle_text):
+            signals.add("donation_payoff")
+        if self._has_temporary_drawback_text(oracle_text):
+            signals.add("temporary_drawback_abuse")
+        if "flash" in oracle_text or "flash" in keywords:
+            signals.add("flash_timing")
+            if self._has_major_payoff_text(oracle_text, mana_value) or any(term in oracle_text for term in [
+                "as though they had flash",
+                "any time you could cast an instant",
+                "counter target spell",
+            ]):
+                signals.add("instant_speed_play")
+        if "as though they had flash" in oracle_text or "any time you could cast an instant" in oracle_text:
+            signals.add("instant_speed_play")
+        if "counter target spell" in oracle_text or "counter target activated" in oracle_text or "counter target triggered" in oracle_text:
+            signals.add("counterspell_protection")
+        if mana_value >= 6:
+            signals.add("artifact_ramp_needed")
+            signals.add("mana_acceleration")
+        if not color_identity and (
+            "colorless" in oracle_text or "eldrazi" in type_line or mana_value >= 4
+        ):
+            signals.add("colorless_mana_scaling")
+        if self._supports_existing_creature_board(oracle_text):
+            signals.add("anthem_payoff")
+        if self._is_blink_support(oracle_text, type_line):
+            signals.add("blink_or_flicker_effect")
+        if "draw a card" in oracle_text and ("target" in oracle_text or "instant" in type_line or "sorcery" in type_line):
+            signals.add("cantrip_density")
+        if mana_value <= 3 and (self._has_attack_trigger_text(oracle_text) or self._has_combat_damage_trigger_text(oracle_text)):
+            signals.add("cheap_aggressive_commander")
+        if len(color_identity) >= 3:
+            signals.add("colored_pip_dependency")
+        if (self._has_attack_trigger_text(oracle_text) or self._has_combat_damage_trigger_text(oracle_text)) and not any(
+            term in oracle_text for term in ["draw", "create", "return", "cast", "copy", "add ", "sacrifice", "graveyard", "search your library"]
+        ):
+            signals.add("combat_only_payoff")
+            signals.add("straightforward_combat_plan")
+        if "enters the battlefield" in oracle_text or "enters under your control" in oracle_text:
+            signals.add("creature_etb_payoff")
+        if "additional combat phase" in oracle_text or "extra combat phase" in oracle_text:
+            signals.add("extra_combat_payoff")
+        if "return target creature card from your graveyard" in oracle_text or "reanimate" in oracle_text:
+            signals.add("normal_reanimation_plan")
+            signals.add("reanimation_target_density")
+        if "planeswalker" in oracle_text or "loyalty counter" in oracle_text:
+            signals.add("planeswalker_payoff")
+        if "poison counter" in oracle_text or "toxic" in oracle_text or "infect" in oracle_text:
+            signals.add("poison_counter_pressure")
+        if "commander_exposure" in self._build_exposure_flags(oracle_text, mana_value):
+            signals.add("protection_needed")
+        if "activate only as a sorcery" in oracle_text or "cast only as a sorcery" in oracle_text:
+            signals.add("sorcery_speed_engine_required")
+        if self._detect_typal_creature_types(oracle_text, type_line) and len(signals - {"typal_payoff", "specific_subtype_required"}) <= 2:
+            signals.add("typal_only_payoff")
+        if any(term in oracle_text for term in [
+            "double the number of tokens",
+            "twice that many tokens",
+            "populate",
+            "create a token that's a copy",
+            "create a token that is a copy",
+        ]):
+            signals.add("token_multiplier")
+
+        if stats.get("role_counts", {}).get("ramp", 0) >= 10:
+            signals.add("mana_acceleration")
+        if "graveyard" in detected_themes:
+            signals.add("graveyard_recursion")
+        if "tokens" in detected_themes:
+            signals.add("creature_token_creation")
+        if "artifact_tokens" in detected_themes:
+            signals.add("artifact_token_creation")
+
+        return signals
+
+    def _build_exposure_flags(self, oracle_text: str, mana_value: float) -> Set[str]:
+        flags = set()
+        if "commander" in oracle_text or mana_value >= 5 or self._has_attack_trigger_text(oracle_text) or self._has_combat_damage_trigger_text(oracle_text):
+            flags.add("commander_exposure")
+        return flags
+
+    def _detect_commander_archetypes(
+        self,
+        commander_card: Optional[Dict],
+        stats: Optional[Dict] = None,
+        detected_themes: Optional[List[str]] = None,
+        limit: int = 5,
+    ) -> List[Dict]:
+        if not self.archetype_registry or self.archetype_registry.count() == 0:
+            return []
+        signals = self._extract_archetype_signals(
+            commander_card,
+            stats=stats,
+            detected_themes=detected_themes,
+        )
+        return [
+            match.as_dict()
+            for match in self.archetype_registry.detect_archetypes(signals, limit=limit)
+        ]
+
+    def _archetype_synergies(self, archetypes: List[Dict]) -> List[str]:
+        """Map composite archetypes back to stable search/recommendation lanes."""
+        mapping = {
+            "late_game_control_finisher": ["control_finisher"],
+            "flash_reactive_control": ["flash_control"],
+            "hand_size_pressure_control": ["hand_size_pressure"],
+            "low_curve_value_engine": ["creature"],
+            "enchantment_toolbox_engine": ["enchantment"],
+            "aura_voltron": ["voltron", "enchantment"],
+            "equipment_voltron": ["voltron", "artifact"],
+            "artifact_recursion_engine": ["artifact", "graveyard"],
+            "artifact_token_economy": ["artifact_tokens"],
+            "aristocrats_sacrifice_engine": ["sacrifice", "tokens"],
+            "graveyard_reanimator": ["graveyard"],
+            "spellslinger_value_engine": ["instant_sorcery"],
+            "targeting_combo_spells": ["target_spells"],
+            "lands_value_engine": ["landfall"],
+            "lands_graveyard_combo": ["landfall", "graveyard"],
+            "counters_engine": ["counters"],
+            "proliferate_superstructure": ["counters"],
+            "blink_etb_value": ["blink", "creature"],
+            "creature_token_swarm": ["tokens"],
+            "typal_synergy_engine": ["typal"],
+            "attack_trigger_combat_engine": ["attack_triggers"],
+            "combat_damage_value": ["combat_damage"],
+            "goad_forced_combat": ["goad", "combat_damage"],
+            "lifegain_payoff_engine": ["lifegain"],
+            "discard_graveyard_value": ["graveyard"],
+            "stax_tax_lock": ["control_finisher"],
+            "colorless_big_mana": ["colorless_big_mana"],
+            "donation_drawback_abuse": ["donation", "temporary_drawback"],
+            "temporary_effect_abuse": ["temporary_drawback"],
+        }
+        synergies = []
+        for archetype in archetypes:
+            for synergy in mapping.get(archetype.get("id"), []):
+                if synergy not in synergies:
+                    synergies.append(synergy)
+        return synergies
 
     def _is_commander_eligible(self, card: Dict, creature_only: bool = False) -> bool:
         """True when the card can actually be chosen as a commander."""
@@ -406,11 +759,13 @@ class EnhancedSuggestionEngine:
         commander_data = None
         commander_synergies = []
         commander_constraints = {}
+        commander_archetypes = []
         if commander:
             commander_data = await self.scryfall.search_card(commander)
             if commander_data:
                 commander_synergies = self._detect_commander_synergies(commander_data)
                 commander_constraints = self._get_commander_constraints(commander_data)
+                commander_archetypes = self._detect_commander_archetypes(commander_data)
         
         # Calculate deck statistics
         stats = self._calculate_stats(cards, commander, commander_synergies)
@@ -463,6 +818,7 @@ class EnhancedSuggestionEngine:
             'suggestions_cut': suggestions_cut[:12 if deep else 10],
             'stats': stats,
             'commander_synergies': commander_synergies,
+            'commander_archetypes': commander_archetypes,
             'detected_themes': detected_themes,
             'playstyle_tips': playstyle_tips,
             'combo_suggestions': combo_suggestions,
@@ -621,6 +977,9 @@ class EnhancedSuggestionEngine:
                     if synergy_type == 'exile' and 'blink' in synergies:
                         continue
                     add_once(synergy_type)
+
+        for synergy_type in self._archetype_synergies(self._detect_commander_archetypes(commander_card)):
+            add_once(synergy_type)
         
         return self._prioritize_synergies(synergies)
     
@@ -693,6 +1052,19 @@ class EnhancedSuggestionEngine:
         power_match = re.search(r'power (\d+) or less', oracle_text)
         if power_match:
             constraints['max_power'] = int(power_match.group(1))
+
+        archetype_signals = self._extract_archetype_signals(commander_card)
+        if archetype_signals:
+            constraints['archetype_signals'] = sorted(archetype_signals)
+        archetypes = self._detect_commander_archetypes(commander_card, limit=4)
+        if archetypes:
+            constraints['archetypes'] = [archetype['id'] for archetype in archetypes]
+        if 'high_mana_value_commander' in archetype_signals:
+            constraints['high_mana_commander'] = True
+        if 'opponent_hand_size_pressure' in archetype_signals:
+            constraints['hand_size_pressure'] = True
+        if 'flash_timing' in archetype_signals:
+            constraints['flash_timing'] = True
         
         return constraints
     
@@ -909,6 +1281,17 @@ class EnhancedSuggestionEngine:
             synergies.append('forced_reanimation')
         if 'goad' in oracle_text and 'goad' not in synergies:
             synergies.append('goad')
+        if (
+            self._is_generic_mana_card({'oracle_text': oracle_text, 'type_line': type_line, 'name': ''}) or
+            self._card_matches_role({'oracle_text': oracle_text, 'type_line': type_line, 'name': ''}, 'interaction') or
+            self._card_matches_role({'oracle_text': oracle_text, 'type_line': type_line, 'name': ''}, 'protection') or
+            'no maximum hand size' in oracle_text
+        ) and 'control_finisher' not in synergies:
+            synergies.append('control_finisher')
+        if any(term in oracle_text for term in ['maximum hand size', 'no maximum hand size', 'each opponent discards']) and 'hand_size_pressure' not in synergies:
+            synergies.append('hand_size_pressure')
+        if ('flash' in oracle_text or 'instant' in type_line or 'as though they had flash' in oracle_text) and 'flash_control' not in synergies:
+            synergies.append('flash_control')
 
         if self.mechanics_registry and self.mechanics_registry.count() > 0:
             registry_signals = self.mechanics_registry.detect_signals(
@@ -1210,6 +1593,17 @@ class EnhancedSuggestionEngine:
         role_counts = stats.get('role_counts', {})
         mana_value = (commander_card or {}).get('cmc', 0) or 0
         counter_plan = self._counter_plan_for_text(oracle_text) if oracle_text else None
+        archetype_signals = self._extract_archetype_signals(
+            commander_card,
+            stats=stats,
+            detected_themes=detected_themes,
+        )
+        archetypes = self._detect_commander_archetypes(
+            commander_card,
+            stats=stats,
+            detected_themes=detected_themes,
+            limit=4,
+        )
 
         flags = set()
         if re.search(r'combat damage to (?:a|one or more) players?', oracle_text):
@@ -1271,10 +1665,32 @@ class EnhancedSuggestionEngine:
             resource_needs.append('graveyard creatures that hurt opponents')
         if 'goad' in themes:
             resource_needs.append('reliable combat-damage pressure')
+        archetype_need_labels = {
+            'ramp': 'mana acceleration',
+            'protection': 'protection for key permanents',
+            'interaction': 'cheap interaction',
+            'mana_efficiency': 'mana-efficient setup',
+            'card_selection': 'card selection',
+            'win_condition_support': 'closing pressure',
+            'backup_engine': 'backup engines',
+            'evasion': 'evasion',
+            'token_production': 'repeatable token production',
+            'sacrifice_outlets': 'sacrifice outlets',
+            'graveyard_setup': 'graveyard setup',
+            'theme_density': 'theme density',
+            'payoff_density': 'payoff density',
+        }
+        for archetype in archetypes[:2]:
+            for need in archetype.get('primary_needs', [])[:3]:
+                label = archetype_need_labels.get(need, need.replace('_', ' '))
+                if label not in resource_needs:
+                    resource_needs.append(label)
 
         profile = {
             'primary_synergies': synergies or [],
             'themes': themes,
+            'archetypes': archetypes,
+            'archetype_signals': sorted(archetype_signals),
             'oracle_text': oracle_text,
             'type_line': type_line,
             'mana_value': mana_value,
@@ -1292,6 +1708,20 @@ class EnhancedSuggestionEngine:
         themes = profile.get('themes', [])
         primary = profile.get('primary_synergies') or themes
         needs = profile.get('resource_needs', [])
+        archetypes = profile.get('archetypes', [])
+        if archetypes:
+            top = archetypes[0]
+            archetype_id = top.get('id')
+            if archetype_id == 'late_game_control_finisher':
+                return f"Game Plan - {commander_name} reads as a late-game control finisher: spend the early game on mana, protection, and interaction, then resolve the commander when its payoff can take over."
+            if archetype_id == 'hand_size_pressure_control':
+                return f"Game Plan - {commander_name} creates hand-size pressure, so the deck should protect the engine and force opponents to rebuild from fewer cards."
+            if archetype_id == 'flash_reactive_control':
+                return f"Game Plan - {commander_name} rewards instant-speed discipline: hold up interaction, deploy threats at safer windows, and avoid tapping out before the table commits."
+            if archetype_id == 'stax_tax_lock':
+                return f"Game Plan - {commander_name} is a pressure-control plan; the deck should slow opponents while keeping enough mana and cards to break parity."
+            if top.get('summary'):
+                return f"Game Plan - {commander_name} matches {top.get('name')}: {top.get('summary')}"
         if 'board_conversion' in primary:
             return f"Game Plan - {commander_name} is a board-conversion plan: build material first, then turn a wide board into pressure once the payoff is online."
         if 'artifact_tokens' in primary:
@@ -1357,6 +1787,7 @@ class EnhancedSuggestionEngine:
         role_counts = profile.get('role_counts', {})
         land_count = profile.get('land_count', 0)
         mana_value = profile.get('mana_value', 0)
+        archetypes = profile.get('archetypes', [])
 
         if needs:
             notes.append(f"Setup Priority - Establish {', '.join(needs[:3])} before loading up on payoff-only cards; payoffs are weakest when the deck has not created material for them yet.")
@@ -1364,6 +1795,20 @@ class EnhancedSuggestionEngine:
             notes.append(f"Setup Priority - Because the commander costs {mana_value} mana, early turns should favor ramp, fixing, and protection over slow value pieces.")
         else:
             notes.append("Setup Priority - Keep early plays purposeful: ramp, card flow, protection, or the first piece of the commander's engine.")
+
+        if archetypes:
+            top_archetype = archetypes[0]
+            guidance = top_archetype.get('pilot_note_guidance', [])
+            primary_needs = [
+                need.replace('_', ' ')
+                for need in top_archetype.get('primary_needs', [])[:3]
+            ]
+            if primary_needs:
+                notes.append(
+                    f"Archetype Check - {top_archetype.get('name')} needs {', '.join(primary_needs)} first. Cards outside those jobs should prove direct synergy before earning a slot."
+                )
+            if guidance and deep:
+                notes.append(f"Deep Strategy - {top_archetype.get('name')}: {guidance[0]}")
 
         if 'combat_damage_trigger' in flags or 'attack_trigger' in flags or 'voltron' in primary or 'combat_damage' in primary:
             notes.append("Sequencing - Do not expose the commander before it can connect or be protected. Haste, evasion, and instant-speed protection often matter more than another payoff.")
@@ -2348,6 +2793,8 @@ class EnhancedSuggestionEngine:
             'direct_synergy': 24,
             'card_flow': 10,
             'protection': 10,
+            'archetype_need_match': 14,
+            'mana_development': 8,
             'needed_role': 8,
         }.items():
             if tag in evidence_tags:
@@ -2597,8 +3044,8 @@ class EnhancedSuggestionEngine:
     def _has_card_draw_text(self, oracle_text: str) -> bool:
         """Detect actual card draw without matching phrases like draw step."""
         return bool(
-            re.search(r'\bdraw (?:a card|two cards|three cards|four cards|x cards|that many cards|cards equal|cards?)\b', oracle_text) or
-            re.search(r'\bdraws? (?:a card|two cards|three cards|cards?)\b', oracle_text) or
+            re.search(r'\bdraw (?:a card|one card|two cards|three cards|four cards|five cards|six cards|seven cards|eight cards|nine cards|ten cards|\d+ cards|x cards|that many cards|cards equal|cards?)\b', oracle_text) or
+            re.search(r'\bdraws? (?:a card|one card|two cards|three cards|four cards|five cards|six cards|seven cards|eight cards|nine cards|ten cards|\d+ cards|cards?)\b', oracle_text) or
             'investigate' in oracle_text
         )
 
@@ -2916,6 +3363,7 @@ class EnhancedSuggestionEngine:
             'arcane signet',
             'chromatic lantern',
             'command sphere',
+            "commander's sphere",
             'everflowing chalice',
             'fellwar stone',
             'gilded lotus',
@@ -3065,6 +3513,35 @@ class EnhancedSuggestionEngine:
             return self._has_forced_reanimation_text(oracle_text) or self._has_bad_gift_creature_text(oracle_text)
         if synergy == 'goad':
             return 'goad' in oracle_text or 'must attack' in oracle_text
+
+        if synergy == 'control_finisher':
+            return (
+                self._is_generic_mana_card(card_data) or
+                self._card_matches_role(card_data, 'protection') or
+                self._card_matches_role(card_data, 'interaction') or
+                self._has_card_draw_text(oracle_text) or
+                'no maximum hand size' in oracle_text or
+                "can't be countered" in oracle_text or
+                'costs less' in oracle_text
+            )
+
+        if synergy == 'hand_size_pressure':
+            return any(term in oracle_text for term in [
+                'maximum hand size',
+                'no maximum hand size',
+                'each opponent discards',
+                'each player discards',
+                'target opponent discards',
+            ]) or self._has_large_card_draw_text(oracle_text)
+
+        if synergy == 'flash_control':
+            return (
+                'flash' in oracle_text or
+                'as though they had flash' in oracle_text or
+                'instant' in type_line or
+                self._card_matches_role(card_data, 'interaction') or
+                self._card_matches_role(card_data, 'protection')
+            )
 
         registry_scores = self._registry_synergy_scores_for_card(
             {
@@ -3289,6 +3766,38 @@ class EnhancedSuggestionEngine:
 
         if synergy == 'goad':
             return 'goad' in oracle_text or 'must attack' in oracle_text or self._has_combat_damage_trigger_text(oracle_text)
+
+        if synergy == 'control_finisher':
+            commander_constraints = self._get_commander_constraints(commander_card)
+            if commander_constraints.get('high_mana_commander'):
+                return (
+                    self._is_generic_mana_card(card_data) or
+                    self._card_matches_role(card_data, 'protection') or
+                    self._card_matches_role(card_data, 'interaction') or
+                    self._has_card_draw_text(oracle_text) or
+                    'no maximum hand size' in oracle_text or
+                    "can't be countered" in oracle_text or
+                    'costs less' in oracle_text
+                )
+            return False
+
+        if synergy == 'hand_size_pressure':
+            return any(term in oracle_text for term in [
+                'maximum hand size',
+                'no maximum hand size',
+                'each opponent discards',
+                'each player discards',
+                'target opponent discards',
+            ]) or self._has_large_card_draw_text(oracle_text)
+
+        if synergy == 'flash_control':
+            return (
+                'flash' in oracle_text or
+                'as though they had flash' in oracle_text or
+                'instant' in type_line or
+                self._card_matches_role(card_data, 'interaction') or
+                self._card_matches_role(card_data, 'protection')
+            )
 
         return True
 
@@ -3544,6 +4053,19 @@ class EnhancedSuggestionEngine:
                 registry_signals,
                 synergy,
             )
+
+        protects_key_permanent = any(term in oracle_text for term in [
+            'target permanent you control',
+            'permanents you control',
+            'creatures you control gain',
+            'creatures you control have',
+            'target creature you control',
+            'equipped creature has',
+            'enchanted creature has',
+        ]) or (
+            ('equipment' in type_line or 'aura' in type_line) and
+            any(term in oracle_text for term in ['hexproof', 'indestructible', 'ward', 'shroud', 'protection from'])
+        )
 
         if synergy == 'blink':
             if 'enters the battlefield' in oracle_text and not ('exile' in oracle_text and 'return' in oracle_text):
@@ -3965,6 +4487,84 @@ class EnhancedSuggestionEngine:
                 evidence = 'helps trigger combat-control effects'
                 score = 78
                 add_evidence('enabler')
+        elif synergy == 'control_finisher':
+            if self._is_generic_mana_card(card_data):
+                job = 'high-mana setup'
+                evidence = 'accelerates an expensive commander'
+                score = 88
+                add_evidence('archetype_need_match')
+                add_evidence('mana_development')
+            elif self._card_matches_role(card_data, 'interaction'):
+                job = 'control protection'
+                evidence = 'keeps the resolving turn safe'
+                score = 84
+                add_evidence('archetype_need_match')
+                add_evidence('interaction')
+            elif protects_key_permanent or "can't be countered" in oracle_text:
+                job = 'commander protection'
+                evidence = 'protects the top-end engine'
+                score = 84
+                add_evidence('archetype_need_match')
+                add_evidence('protection')
+            elif 'no maximum hand size' in oracle_text:
+                job = 'large-hand support'
+                evidence = 'converts large draw turns into kept resources'
+                score = 80
+                add_evidence('archetype_need_match')
+                add_evidence('card_flow')
+            elif self._has_card_draw_text(oracle_text):
+                job = 'backup card engine'
+                evidence = 'keeps cards moving before the commander resolves'
+                score = 78
+                add_evidence('archetype_need_match')
+                add_evidence('card_flow')
+        elif synergy == 'hand_size_pressure':
+            opponent_hand_limit = (
+                re.search(r"opponents?'?s? maximum hand size", oracle_text) is not None or
+                "each opponent's maximum hand size" in oracle_text
+            )
+            if opponent_hand_limit:
+                job = 'hand-size pressure'
+                evidence = 'attacks opponents resources through hand size'
+                score = 86
+                add_evidence('direct_synergy')
+                add_evidence('archetype_need_match')
+            elif any(term in oracle_text for term in ['each opponent discards', 'each player discards', 'target opponent discards']):
+                job = 'discard pressure'
+                evidence = 'turns the hand-size plan into resource denial'
+                score = 80
+                add_evidence('archetype_need_match')
+            elif 'no maximum hand size' in oracle_text or self._has_large_card_draw_text(oracle_text):
+                job = 'large-hand support'
+                evidence = 'supports the large hand created by the commander'
+                score = 78
+                add_evidence('archetype_need_match')
+                add_evidence('card_flow')
+        elif synergy == 'flash_control':
+            if 'flash' in oracle_text or 'as though they had flash' in oracle_text:
+                job = 'instant-speed enabler'
+                evidence = 'keeps the deck operating at safer timing windows'
+                score = 84
+                add_evidence('archetype_need_match')
+                add_evidence('enabler')
+            elif 'instant' in type_line and (self._has_card_draw_text(oracle_text) or 'scry' in oracle_text):
+                job = 'instant-speed card selection'
+                evidence = 'keeps mana open while finding setup'
+                score = 78
+                add_evidence('archetype_need_match')
+                add_evidence('card_flow')
+            elif self._card_matches_role(card_data, 'interaction') or 'instant' in type_line:
+                job = 'instant-speed interaction'
+                evidence = 'lets the deck hold up answers before committing'
+                score = 82
+                add_evidence('archetype_need_match')
+                add_evidence('interaction')
+            elif self._card_matches_role(card_data, 'protection'):
+                job = 'instant-speed protection'
+                evidence = 'protects the commander during the key window'
+                score = 82
+                add_evidence('archetype_need_match')
+                add_evidence('protection')
 
         if registry_signal:
             add_evidence('mechanic_match')
@@ -3993,8 +4593,12 @@ class EnhancedSuggestionEngine:
             add_penalty('one_shot_effect')
             score -= 5
         if self._is_generic_mana_card(card_data):
-            add_penalty('generic_staple')
-            score -= 12
+            if synergy == 'control_finisher' and 'mana_development' in evidence_tags:
+                add_penalty('generic_staple')
+                score -= 4
+            else:
+                add_penalty('generic_staple')
+                score -= 12
         if not evidence_tags:
             add_penalty('low_theme_overlap')
             score = min(score, 64)
@@ -4062,6 +4666,8 @@ class EnhancedSuggestionEngine:
             action = f"{card_name} adds proliferate or counter-scaling text."
         elif 'counter_placement' in evidence_tags:
             action = f"{card_name} increases the counters your engine creates."
+        elif 'archetype_need_match' in evidence_tags:
+            action = f"{card_name} solves a {job} need."
         elif 'protection' in evidence_tags:
             action = f"{card_name} protects the commander or key permanents."
         elif 'card_flow' in evidence_tags:
@@ -4207,6 +4813,19 @@ class EnhancedSuggestionEngine:
             fit = f"That matters for {commander_name} because normal reanimation targets can help opponents, while bad gifts or temporary creatures turn the graveyard into pressure."
         elif synergy == 'goad':
             fit = f"That matters for {commander_name} because goad plans need opponents' creatures attacking elsewhere while your deck keeps connecting safely."
+        elif synergy == 'control_finisher':
+            if 'mana_development' in evidence_tags:
+                fit = f"That matters for {commander_name} because the commander is a top-end engine; accelerating into it safely is part of the plan, not a loose staple recommendation."
+            elif 'interaction' in evidence_tags:
+                fit = f"That matters for {commander_name} because late-game control finishers need to resolve with mana held up instead of tapping out and hoping the payoff survives."
+            elif 'protection' in evidence_tags:
+                fit = f"That matters for {commander_name} because the deck's biggest swing happens when the commander sticks through the first removal window."
+            else:
+                fit = f"That matters for {commander_name} because this archetype needs setup cards that reach, protect, or convert the commander turn into lasting advantage."
+        elif synergy == 'hand_size_pressure':
+            fit = f"That matters for {commander_name} because hand-size pressure only becomes a real advantage when the deck keeps opponents low on resources while preserving its own cards."
+        elif synergy == 'flash_control':
+            fit = f"That matters for {commander_name} because instant-speed control decks win by choosing safer windows to act while keeping answers available."
 
         mechanic_clause = ""
         if (
@@ -4363,6 +4982,15 @@ class EnhancedSuggestionEngine:
         if synergy == 'target_spells':
             return f'((t:instant OR t:sorcery) (o:"any number of target" OR o:"for each target" OR o:"up to two target" OR o:"up to three target" OR o:"up to four target" OR o:"up to five target" OR o:"divided as you choose" OR o:"X target")) {color_filter} f:commander'
 
+        if synergy == 'control_finisher':
+            return f'(o:"counter target spell" OR o:hexproof OR o:indestructible OR o:"can\'t be countered" OR o:"draw cards" OR o:"no maximum hand size" OR (t:artifact o:add o:mana)) {color_filter} f:commander'
+
+        if synergy == 'hand_size_pressure':
+            return f'(o:"maximum hand size" OR o:"each opponent discards" OR o:"each player discards" OR o:"target opponent discards" OR o:"draw seven" OR o:"no maximum hand size") {color_filter} f:commander'
+
+        if synergy == 'flash_control':
+            return f'(o:flash OR o:"as though they had flash" OR o:"counter target spell" OR t:instant) {color_filter} f:commander'
+
         synergy_queries = {
             'artifact': '(o:"artifact card" OR o:"artifact spell" OR o:"artifacts you control" OR o:"whenever an artifact" OR o:"sacrifice an artifact" OR t:equipment OR o:equip)',
             'board_conversion': '(t:creature OR o:"creature token" OR o:"creature tokens" OR o:"create a 1/1" OR o:"create two" OR o:"create three" OR o:"create X" OR o:thopter OR o:servo OR o:myr OR o:construct OR o:"creatures you control have" OR o:"creatures you control gain" OR o:"attacking creatures")',
@@ -4424,6 +5052,8 @@ class EnhancedSuggestionEngine:
             deck_context=False,
         )
         for mechanic in self._top_registry_mechanics(commander_card, limit=2, include_texture=False):
+            if mechanic.get('support_only') and mechanic.get('name', '').lower() in {'flash', 'flying', 'trample', 'menace', 'reach'}:
+                continue
             strategy_language = mechanic.get('strategy_language')
             if strategy_language and all(strategy_language not in tip for tip in tips):
                 tips.append(f"Mechanic Focus - {mechanic['name']}: {strategy_language}")
@@ -4539,6 +5169,15 @@ class EnhancedSuggestionEngine:
         if 'colorless_big_mana' in synergies:
             tips.append("Colorless decks cannot lean on colored ramp, removal, or card draw. Use artifacts, utility lands, and high-impact colorless payoffs that justify the slower setup.")
 
+        if 'control_finisher' in synergies:
+            tips.append(f"{commander_name} should be treated as a finisher, not the first engine. Prioritize mana acceleration, protection, and interaction so the commander resolves when its payoff can immediately change the game.")
+
+        if 'hand_size_pressure' in synergies:
+            tips.append(f"Hand-size pressure is strongest after opponents spend resources. Protect {commander_name}, then use discard, bounce, or counterplay to keep opponents from rebuilding before cleanup.")
+
+        if 'flash_control' in synergies:
+            tips.append(f"Flash changes the timing plan. Hold up answers, let opponents commit first, then deploy {commander_name} at an end step or protected window instead of tapping out early.")
+
         if 'target_spells' in synergies:
             tips.append(f"{commander_name} rewards targeted spells with meaningful target counts. Prioritize scalable interaction and X-spells that actually target over generic cantrips or burn.")
 
@@ -4584,6 +5223,8 @@ class EnhancedSuggestionEngine:
             deck_context=False,
         )[4:]
         for mechanic in self._top_registry_mechanics(commander_card, limit=4, include_texture=False):
+            if mechanic.get('support_only') and mechanic.get('name', '').lower() in {'flash', 'flying', 'trample', 'menace', 'reach'}:
+                continue
             strategy_language = mechanic.get('strategy_language')
             if strategy_language:
                 notes.append(f"Deep Strategy - {mechanic['name']}: {strategy_language}")
@@ -4623,6 +5264,12 @@ class EnhancedSuggestionEngine:
             notes.append("Deep Strategy - Sequencing: Favor cards that generate value over multiple turns or zones. This kind of commander improves when setup pieces replace themselves instead of asking you to spend a full card for setup only.")
         if any(theme in synergies for theme in ['voltron', 'counters', 'lifegain']):
             notes.append(f"Deep Strategy - Protection Check: {commander_name} likely needs protection before payoff density. Haste, ward/hexproof, and instant-speed saves make the engine much less fragile.")
+        if 'control_finisher' in synergies:
+            notes.append("Deep Strategy - Finisher Window: Count the turn the commander resolves as a protected setup turn. The best support cards either accelerate that turn, defend it, or convert the follow-up hand into a win.")
+        if 'hand_size_pressure' in synergies:
+            notes.append("Deep Strategy - Resource Lock: Hand-size pressure is not normal discard. It needs timing, protection, and table control so opponents are forced to discard after committing cards.")
+        if 'flash_control' in synergies:
+            notes.append("Deep Strategy - Reactive Timing: Instant-speed play lets the deck pass with answers open. Favor cards that keep choices available until the table reveals the real threat.")
 
         interaction_examples = self._role_examples('interaction', color_identity, synergies)
         if interaction_examples:
@@ -4651,7 +5298,7 @@ class EnhancedSuggestionEngine:
         if self._is_land_card(card_extracted):
             return False
 
-        if self._is_generic_mana_card(card_extracted):
+        if self._is_generic_mana_card(card_extracted) and not commander_constraints.get('high_mana_commander'):
             return False
 
         if commander_constraints.get('aura_tutor_chain'):
@@ -4743,6 +5390,8 @@ class EnhancedSuggestionEngine:
             'tutorable_enchantment': 16,
             'card_flow': 12,
             'protection': 10,
+            'archetype_need_match': 12,
+            'mana_development': 8,
             'payoff': 8,
             'enabler': 6,
         }.items():
@@ -4916,6 +5565,7 @@ class EnhancedSuggestionEngine:
         synergies = self._detect_commander_synergies(commander_card)
         color_identity = extracted['color_identity']
         commander_constraints = self._get_commander_constraints(commander_card)
+        commander_archetypes = self._detect_commander_archetypes(commander_card)
         tips = self._generate_commander_strategy_tips(commander_card, synergies, commander_constraints)
         if deep:
             tips.extend(self._generate_deep_commander_strategy_tips(commander_card, synergies, commander_constraints))
@@ -4959,6 +5609,7 @@ class EnhancedSuggestionEngine:
             'toughness': commander_card.get('toughness'),
             'image_url': self._get_card_image(commander_card),
             'synergies': synergies,
+            'archetypes': commander_archetypes,
             'mechanics': self._top_registry_mechanics(commander_card, limit=6, include_texture=False),
             'strategy_tips': tips,
             'strategy_sections': self._build_strategy_sections(tips),

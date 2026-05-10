@@ -1,0 +1,1980 @@
+[
+  {
+    "id": "late_game_control_finisher",
+    "name": "Late-Game Control Finisher",
+    "summary": "A high-mana commander that stabilizes or dominates the game after resolving.",
+    "archetype_family": "control",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "high_mana_value_commander",
+      "major_payoff_text"
+    ],
+    "supporting_signals": [
+      "large_card_draw",
+      "flash_timing",
+      "opponent_hand_size_pressure",
+      "tax_or_lock_pressure",
+      "counterspell_protection",
+      "artifact_ramp_needed"
+    ],
+    "reject_signals": [
+      "cheap_aggressive_commander",
+      "combat_only_payoff",
+      "typal_only_payoff"
+    ],
+    "primary_needs": [
+      "ramp",
+      "protection",
+      "interaction",
+      "mana_efficiency"
+    ],
+    "secondary_needs": [
+      "card_selection",
+      "win_condition_support",
+      "backup_engine"
+    ],
+    "recommendation_focus": [
+      "mana rocks",
+      "protection spells",
+      "countermagic",
+      "cost reducers",
+      "cards that convert large hands into advantage"
+    ],
+    "avoid_recommendations": [
+      "small unrelated value creatures",
+      "generic combat tricks",
+      "theme cards that only match one word of the commander"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the commander is not the early engine.",
+      "Prioritize reaching the commander safely.",
+      "Emphasize protection and timing around the turn the commander resolves.",
+      "Mention that the deck should still function before the commander arrives."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain which resource need the card solves.",
+      "Do not claim direct synergy unless the card interacts with the commander text.",
+      "For ramp cards, explain that they support the commander's mana requirement rather than its mechanic."
+    ],
+    "false_positive_notes": "Do not classify every expensive commander as this archetype. The commander also needs a meaningful payoff, lock piece, or stabilizing effect.",
+    "example_commanders": [
+      "Jin-Gitaxias, Core Augur",
+      "Koma, Cosmos Serpent",
+      "Toxrill, the Corrosive"
+    ],
+    "example_support_cards": [
+      "Thran Dynamo",
+      "Swan Song",
+      "Lightning Greaves"
+    ]
+  },
+  {
+    "id": "low_curve_value_engine",
+    "name": "Low-Curve Value Engine",
+    "summary": "A cheap commander that turns repeated small game actions into sustained advantage.",
+    "archetype_family": "value",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "low_mana_value_commander",
+      "repeatable_value_engine"
+    ],
+    "supporting_signals": [
+      "card_selection",
+      "spell_cast_trigger",
+      "death_trigger",
+      "lifegain_trigger",
+      "artifact_token_creation",
+      "creature_token_creation"
+    ],
+    "reject_signals": [
+      "high_mana_value_commander",
+      "commander_damage_pressure",
+      "combat_only_payoff"
+    ],
+    "primary_needs": [
+      "cheap_enablers",
+      "protection",
+      "card_flow",
+      "mana_efficiency"
+    ],
+    "secondary_needs": [
+      "scaling_payoffs",
+      "interaction",
+      "recursion"
+    ],
+    "recommendation_focus": [
+      "one and two mana enablers",
+      "cheap protection",
+      "repeatable draw engines",
+      "low-cost interaction",
+      "cards that trigger the commander multiple times"
+    ],
+    "avoid_recommendations": [
+      "expensive splashy cards with no engine role",
+      "high-cost finishers that slow the deck down",
+      "narrow cards that only match a word"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the commander should come down early.",
+      "Prioritize efficient setup pieces that can trigger the commander repeatedly.",
+      "Mention that small value compounds over multiple turns.",
+      "Warn against overloading the deck with cards that are powerful but too slow."
+    ],
+    "reason_builder_guidance": [
+      "The reason should identify the repeatable action that the card supports.",
+      "Explain whether the card is an enabler, payoff, or protection piece.",
+      "Avoid claiming the card is core synergy if it only shares a card type."
+    ],
+    "false_positive_notes": "Do not classify a cheap commander this way unless it actually produces repeatable advantage or reliably enables a repeatable advantage loop.",
+    "example_commanders": [
+      "Sythis, Harvest's Hand",
+      "Esper Sentinel",
+      "Lonis, Cryptozoologist"
+    ],
+    "example_support_cards": [
+      "Skullclamp",
+      "Tamiyo's Safekeeping",
+      "Esper Sentinel"
+    ]
+  },
+  {
+    "id": "enchantment_toolbox_engine",
+    "name": "Enchantment Toolbox Engine",
+    "summary": "A strategy that uses enchantment density, enchantment payoffs, and selective tutoring or recursion to assemble value and control pieces.",
+    "archetype_family": "enchantment",
+    "confidence_floor": "high",
+    "required_signals": [
+      "enchantment_count_matters"
+    ],
+    "supporting_signals": [
+      "aura_tutor",
+      "repeatable_value_engine",
+      "lifegain_trigger",
+      "tax_or_lock_pressure",
+      "graveyard_recursion",
+      "mana_value_restriction"
+    ],
+    "reject_signals": [
+      "equipment_payoff",
+      "artifact_count_matters",
+      "combat_only_payoff"
+    ],
+    "primary_needs": [
+      "enchantment_density",
+      "protection",
+      "card_draw",
+      "tutorable_answers"
+    ],
+    "secondary_needs": [
+      "recursion",
+      "mana_fixing",
+      "win_condition_support"
+    ],
+    "recommendation_focus": [
+      "enchantment draw engines",
+      "protective enchantments",
+      "tutorable removal enchantments",
+      "enchantment recursion",
+      "aura packages when the commander supports them"
+    ],
+    "avoid_recommendations": [
+      "generic aura combat tricks in non-Voltron builds",
+      "artifact synergy cards",
+      "creatures that only happen to mention enchantments once"
+    ],
+    "pilot_note_guidance": [
+      "Explain whether the deck is using enchantments as a value engine, a toolbox, or a finisher package.",
+      "Prioritize enchantment density when the commander rewards casting or controlling them.",
+      "Mention that removal and protection can be included as enchantments to preserve synergy.",
+      "Clarify when aura cards are actually part of the plan versus a false Voltron read."
+    ],
+    "reason_builder_guidance": [
+      "The reason should say whether the card increases enchantment density, triggers the commander, solves a toolbox need, or protects the engine.",
+      "Do not describe every enchantment as a direct combo piece.",
+      "For tutors, explain the type of target the card can find."
+    ],
+    "false_positive_notes": "Do not classify a deck as enchantment toolbox just because it uses a few powerful enchantments. The commander or deck plan must reward enchantment density, tutoring, or recursion.",
+    "example_commanders": [
+      "Sythis, Harvest's Hand",
+      "Zur the Enchanter",
+      "Go-Shintai of Life's Origin"
+    ],
+    "example_support_cards": [
+      "Sterling Grove",
+      "Enchantress's Presence",
+      "Grasp of Fate"
+    ]
+  },
+  {
+    "id": "aura_voltron",
+    "name": "Aura Voltron",
+    "summary": "A commander-damage strategy that uses Auras to make one threat evasive, protected, and lethal.",
+    "archetype_family": "voltron",
+    "confidence_floor": "high",
+    "required_signals": [
+      "commander_damage_pressure",
+      "aura_tutor"
+    ],
+    "supporting_signals": [
+      "evasion_needed",
+      "enchantment_count_matters",
+      "low_mana_value_commander",
+      "combat_damage_trigger",
+      "protection_needed"
+    ],
+    "reject_signals": [
+      "artifact_count_matters",
+      "creature_token_creation",
+      "typal_payoff",
+      "tax_or_lock_pressure"
+    ],
+    "primary_needs": [
+      "auras",
+      "protection",
+      "evasion",
+      "card_draw"
+    ],
+    "secondary_needs": [
+      "recursion",
+      "interaction",
+      "backup_threats"
+    ],
+    "recommendation_focus": [
+      "cheap protective Auras",
+      "evasive Auras",
+      "Aura tutors",
+      "enchantment-based draw",
+      "ways to recover after commander removal"
+    ],
+    "avoid_recommendations": [
+      "generic enchantment pillow-fort cards",
+      "wide-board token payoffs",
+      "equipment packages unless the commander also supports them"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck is trying to win through one enhanced attacker.",
+      "Prioritize protecting the commander before committing too many Auras.",
+      "Mention evasion and commander-damage clocks.",
+      "Warn that overextending into removal is a major risk."
+    ],
+    "reason_builder_guidance": [
+      "The reason should identify whether the card provides protection, evasion, damage scaling, draw, or recovery.",
+      "Do not call an Aura good solely because it is an enchantment.",
+      "When recommending draw, connect it to Aura casting or enchanted-creature attacks."
+    ],
+    "false_positive_notes": "Do not classify every enchantment deck as Aura Voltron. The commander must pressure life totals or commander damage through one enhanced body.",
+    "example_commanders": [
+      "Light-Paws, Emperor's Voice",
+      "Tuvasa the Sunlit",
+      "Bruna, Light of Alabaster"
+    ],
+    "example_support_cards": [
+      "All That Glitters",
+      "Ethereal Armor",
+      "Shielded by Faith"
+    ]
+  },
+  {
+    "id": "equipment_voltron",
+    "name": "Equipment Voltron",
+    "summary": "A commander-damage strategy that uses Equipment to build a resilient single-attacker threat.",
+    "archetype_family": "voltron",
+    "confidence_floor": "high",
+    "required_signals": [
+      "commander_damage_pressure",
+      "equipment_payoff"
+    ],
+    "supporting_signals": [
+      "evasion_needed",
+      "combat_damage_trigger",
+      "attack_trigger",
+      "cost_reduction",
+      "low_mana_value_commander"
+    ],
+    "reject_signals": [
+      "enchantment_count_matters",
+      "creature_token_creation",
+      "spell_cast_trigger",
+      "typal_payoff"
+    ],
+    "primary_needs": [
+      "equipment",
+      "protection",
+      "evasion",
+      "mana_efficiency"
+    ],
+    "secondary_needs": [
+      "card_draw",
+      "recursion",
+      "backup_carriers"
+    ],
+    "recommendation_focus": [
+      "efficient Equipment",
+      "equip-cost reducers",
+      "protection Equipment",
+      "evasion Equipment",
+      "combat-damage draw engines"
+    ],
+    "avoid_recommendations": [
+      "generic artifact value cards with no combat role",
+      "wide token payoffs",
+      "unrelated Auras unless the commander supports mixed Voltron"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck wants to suit up one primary attacker.",
+      "Prioritize Equipment that solves damage, evasion, or protection.",
+      "Mention equip costs and tempo as major constraints.",
+      "Warn that artifact count alone is not the same as an Equipment plan."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain what combat role the Equipment fills.",
+      "For cost reducers, explain how they improve tempo rather than claiming direct damage synergy.",
+      "Do not recommend artifacts just because the commander mentions Equipment."
+    ],
+    "false_positive_notes": "Do not classify artifact decks as Equipment Voltron unless the commander and support cards reward attacking with equipped creatures.",
+    "example_commanders": [
+      "Wyleth, Soul of Steel",
+      "Sram, Senior Edificer",
+      "Akiri, Fearless Voyager"
+    ],
+    "example_support_cards": [
+      "Colossus Hammer",
+      "Swiftfoot Boots",
+      "Puresteel Paladin"
+    ]
+  },
+  {
+    "id": "artifact_recursion_engine",
+    "name": "Artifact Recursion Engine",
+    "summary": "A strategy that repeatedly reuses artifacts from the graveyard or exile to create value, combo loops, or board presence.",
+    "archetype_family": "artifact",
+    "confidence_floor": "high",
+    "required_signals": [
+      "artifact_count_matters",
+      "graveyard_recursion"
+    ],
+    "supporting_signals": [
+      "sacrifice_outlet",
+      "artifact_token_creation",
+      "cost_reduction",
+      "repeatable_value_engine",
+      "mana_value_restriction"
+    ],
+    "reject_signals": [
+      "enchantment_count_matters",
+      "typal_payoff",
+      "combat_only_payoff"
+    ],
+    "primary_needs": [
+      "artifact_density",
+      "sacrifice_enablers",
+      "graveyard_setup",
+      "mana_efficiency"
+    ],
+    "secondary_needs": [
+      "protection",
+      "card_selection",
+      "combo_finishers"
+    ],
+    "recommendation_focus": [
+      "cheap artifacts",
+      "artifacts with sacrifice value",
+      "graveyard setup",
+      "artifact recursion pieces",
+      "cost reducers"
+    ],
+    "avoid_recommendations": [
+      "generic graveyard creatures",
+      "equipment-only cards without recursion value",
+      "artifact cards that are expensive and do not recur well"
+    ],
+    "pilot_note_guidance": [
+      "Explain that artifacts are resources to be reused, not just permanents to keep in play.",
+      "Prioritize cheap artifacts that can be sacrificed or replayed.",
+      "Mention graveyard setup and recursion timing.",
+      "Clarify whether the plan is value-based or combo-oriented."
+    ],
+    "reason_builder_guidance": [
+      "The reason should say how the card enters, leaves, or returns from the artifact loop.",
+      "Do not label a card as synergy only because it is an artifact.",
+      "For sacrifice outlets, explain what artifact resource they convert into value."
+    ],
+    "false_positive_notes": "Do not classify Treasure decks or Equipment decks as artifact recursion unless artifacts are intentionally reused from the graveyard or exile.",
+    "example_commanders": [
+      "Emry, Lurker of the Loch",
+      "Osgir, the Reconstructor",
+      "Teshar, Ancestor's Apostle"
+    ],
+    "example_support_cards": [
+      "Mishra's Bauble",
+      "Scrap Trawler",
+      "Goblin Engineer"
+    ]
+  },
+  {
+    "id": "artifact_token_economy",
+    "name": "Artifact Token Economy",
+    "summary": "A strategy that uses Treasure, Clue, Food, Blood, Map, or Construct tokens as an engine for mana, cards, sacrifice value, or scaling payoffs.",
+    "archetype_family": "artifact",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "artifact_token_creation"
+    ],
+    "supporting_signals": [
+      "treasure_creation",
+      "artifact_count_matters",
+      "sacrifice_outlet",
+      "repeatable_value_engine",
+      "token_multiplier",
+      "mana_acceleration"
+    ],
+    "reject_signals": [
+      "creature_token_creation",
+      "equipment_payoff",
+      "enchantment_count_matters"
+    ],
+    "primary_needs": [
+      "artifact_token_generation",
+      "payoffs",
+      "sacrifice_conversion",
+      "card_draw"
+    ],
+    "secondary_needs": [
+      "recursion",
+      "protection",
+      "mana_sinks"
+    ],
+    "recommendation_focus": [
+      "repeatable artifact-token makers",
+      "artifact-count payoffs",
+      "sacrifice outlets",
+      "token doublers",
+      "cards that convert tokens into cards or mana"
+    ],
+    "avoid_recommendations": [
+      "creature-token anthem cards",
+      "equipment-only packages",
+      "generic artifacts with no token interaction"
+    ],
+    "pilot_note_guidance": [
+      "Explain what the artifact tokens are used for: mana, cards, sacrifice, or board scaling.",
+      "Prioritize repeatable token production over one-shot token bursts unless the deck has payoff density.",
+      "Mention that Treasure, Clue, Food, Blood, and Constructs can support different versions of the same economy.",
+      "Clarify when the deck wants to spend tokens versus keep them in play."
+    ],
+    "reason_builder_guidance": [
+      "The reason should name the artifact token role the card supports.",
+      "Do not treat all token support as relevant if it only buffs creature tokens.",
+      "For Treasure cards, explain whether they are ramp, sacrifice fodder, or artifact-count enablers."
+    ],
+    "false_positive_notes": "Do not classify a deck as artifact-token economy from one or two Treasure makers. The tokens need to be a repeated resource or payoff axis.",
+    "example_commanders": [
+      "Magda, Brazen Outlaw",
+      "Lonis, Cryptozoologist",
+      "Urza, Lord High Artificer"
+    ],
+    "example_support_cards": [
+      "Academy Manufactor",
+      "Revel in Riches",
+      "Cyberdrive Awakener"
+    ]
+  },
+  {
+    "id": "aristocrats_sacrifice_engine",
+    "name": "Aristocrats Sacrifice Engine",
+    "summary": "A strategy that converts creatures dying or being sacrificed into drain, cards, mana, counters, or repeatable advantage.",
+    "archetype_family": "graveyard",
+    "confidence_floor": "high",
+    "required_signals": [
+      "death_trigger",
+      "sacrifice_outlet"
+    ],
+    "supporting_signals": [
+      "token_fodder",
+      "creature_token_creation",
+      "graveyard_recursion",
+      "lifegain_trigger",
+      "repeatable_value_engine",
+      "counter_placement"
+    ],
+    "reject_signals": [
+      "combat_only_payoff",
+      "equipment_payoff",
+      "spell_cast_trigger"
+    ],
+    "primary_needs": [
+      "sacrifice_outlets",
+      "fodder",
+      "death_payoffs",
+      "recursion"
+    ],
+    "secondary_needs": [
+      "card_draw",
+      "mana_generation",
+      "protection"
+    ],
+    "recommendation_focus": [
+      "free sacrifice outlets",
+      "death-trigger payoffs",
+      "recursive creatures",
+      "token makers",
+      "drain effects"
+    ],
+    "avoid_recommendations": [
+      "large creatures with no death value",
+      "combat tricks",
+      "graveyard cards that do not support sacrifice loops"
+    ],
+    "pilot_note_guidance": [
+      "Explain that creatures are resources to be converted into value.",
+      "Prioritize having both fodder and outlets before relying on payoffs.",
+      "Mention that the deck wins by compounding death triggers, not necessarily by combat.",
+      "Warn against hands with payoffs but no sacrifice outlet or fodder."
+    ],
+    "reason_builder_guidance": [
+      "The reason should identify whether the card is fodder, outlet, payoff, or recursion.",
+      "Do not claim aristocrat synergy from a creature merely dying incidentally.",
+      "For token makers, explain that they provide repeatable sacrifice material."
+    ],
+    "false_positive_notes": "Do not classify a deck as aristocrats because it contains black creatures or graveyard cards. It needs sacrifice outlets and death payoffs together.",
+    "example_commanders": [
+      "Teysa Karlov",
+      "Meren of Clan Nel Toth",
+      "Elas il-Kor, Sadistic Pilgrim"
+    ],
+    "example_support_cards": [
+      "Viscera Seer",
+      "Blood Artist",
+      "Reassembling Skeleton"
+    ]
+  },
+  {
+    "id": "graveyard_reanimator",
+    "name": "Graveyard Reanimator",
+    "summary": "A strategy that intentionally fills the graveyard and returns high-impact cards to the battlefield or hand ahead of curve.",
+    "archetype_family": "graveyard",
+    "confidence_floor": "high",
+    "required_signals": [
+      "graveyard_recursion"
+    ],
+    "supporting_signals": [
+      "self_mill",
+      "discard_payoff",
+      "high_mana_value_commander",
+      "major_payoff_text",
+      "death_trigger",
+      "sacrifice_outlet"
+    ],
+    "reject_signals": [
+      "artifact_count_matters",
+      "spell_cast_trigger",
+      "combat_only_payoff"
+    ],
+    "primary_needs": [
+      "graveyard_setup",
+      "reanimation_targets",
+      "recursion_spells",
+      "interaction"
+    ],
+    "secondary_needs": [
+      "discard_outlets",
+      "protection",
+      "backup_win_conditions"
+    ],
+    "recommendation_focus": [
+      "self-mill",
+      "discard outlets",
+      "reanimation spells",
+      "high-impact creatures",
+      "graveyard protection"
+    ],
+    "avoid_recommendations": [
+      "small creatures with no recursion value",
+      "artifact recursion cards unless artifacts are the target",
+      "combat-only buffs"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the graveyard is an extension of the hand.",
+      "Prioritize ways to put the right cards into the graveyard.",
+      "Mention timing around reanimation and removal.",
+      "Clarify whether the deck reanimates large threats, loops value creatures, or recurs permanents repeatedly."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain whether the card fills the graveyard, returns a threat, or is a good reanimation target.",
+      "Do not claim synergy from a card merely being expensive.",
+      "For self-mill cards, explain what they enable instead of presenting them as generic card advantage."
+    ],
+    "false_positive_notes": "Do not classify every graveyard deck as reanimator. Reanimator needs intentional setup plus cards that return threats or engines from the graveyard.",
+    "example_commanders": [
+      "Karador, Ghost Chieftain",
+      "Chainer, Nightmare Adept",
+      "Muldrotha, the Gravetide"
+    ],
+    "example_support_cards": [
+      "Entomb",
+      "Animate Dead",
+      "Victimize"
+    ]
+  },
+  {
+    "id": "spellslinger_value_engine",
+    "name": "Spellslinger Value Engine",
+    "summary": "A strategy that turns casting instants and sorceries into repeatable damage, cards, tokens, copies, or other value.",
+    "archetype_family": "spells",
+    "confidence_floor": "high",
+    "required_signals": [
+      "spell_cast_trigger",
+      "instant_sorcery_payoff"
+    ],
+    "supporting_signals": [
+      "copy_spell_payoff",
+      "targeting_payoff",
+      "cost_reduction",
+      "large_card_draw",
+      "card_selection",
+      "graveyard_recursion"
+    ],
+    "reject_signals": [
+      "typal_payoff",
+      "equipment_payoff",
+      "combat_only_payoff"
+    ],
+    "primary_needs": [
+      "cheap_spells",
+      "card_draw",
+      "mana_efficiency",
+      "payoff_density"
+    ],
+    "secondary_needs": [
+      "protection",
+      "graveyard_reuse",
+      "storm_finishers"
+    ],
+    "recommendation_focus": [
+      "cantrips",
+      "cheap interaction",
+      "spell-copy effects",
+      "cost reducers",
+      "cards that reward casting instants and sorceries"
+    ],
+    "avoid_recommendations": [
+      "expensive sorceries with no payoff role",
+      "creatures that do not interact with spells",
+      "combat tricks unless targeting matters"
+    ],
+    "pilot_note_guidance": [
+      "Explain that cheap spells are fuel for the commander or payoff engine.",
+      "Prioritize maintaining hand size and mana efficiency.",
+      "Mention sequencing spells to maximize triggers.",
+      "Clarify whether the deck is value spellslinger, storm, or copy-focused."
+    ],
+    "reason_builder_guidance": [
+      "The reason should say whether the card is fuel, payoff, protection, or a finisher.",
+      "Do not recommend an instant or sorcery just because it has the right card type.",
+      "For copy effects, explain what kinds of spells become better when copied."
+    ],
+    "false_positive_notes": "Do not classify a deck as spellslinger solely because it runs many interaction spells. The commander or deck needs spell-cast payoffs.",
+    "example_commanders": [
+      "Veyran, Voice of Duality",
+      "Mizzix of the Izmagnus",
+      "Kess, Dissident Mage"
+    ],
+    "example_support_cards": [
+      "Ponder",
+      "Storm-Kiln Artist",
+      "Expansion // Explosion"
+    ]
+  },
+  {
+    "id": "targeting_combo_spells",
+    "name": "Targeting Combo Spells",
+    "summary": "A spell-based strategy that rewards targeting creatures or permanents, often creating copy chains or explosive one-turn kills.",
+    "archetype_family": "combo",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "targeting_payoff"
+    ],
+    "supporting_signals": [
+      "copy_spell_payoff",
+      "spell_cast_trigger",
+      "low_mana_value_commander",
+      "combat_damage_trigger",
+      "cost_reduction",
+      "cantrip_density"
+    ],
+    "reject_signals": [
+      "tax_or_lock_pressure",
+      "typal_payoff",
+      "high_mana_value_commander"
+    ],
+    "primary_needs": [
+      "cheap_targeting_spells",
+      "card_draw",
+      "protection",
+      "combo_payoffs"
+    ],
+    "secondary_needs": [
+      "mana_generation",
+      "backup_targets",
+      "interaction"
+    ],
+    "recommendation_focus": [
+      "one-mana targeting spells",
+      "cantrips that target",
+      "copy payoffs",
+      "protection spells",
+      "cards that scale with many spell targets"
+    ],
+    "avoid_recommendations": [
+      "generic removal that cannot target your own plan profitably",
+      "expensive spells that break the chain",
+      "non-targeted board wipes"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck wants to chain many targeted spells in one turn.",
+      "Prioritize cheap spells and card velocity.",
+      "Mention protecting the key creature before committing a combo turn.",
+      "Clarify that not every combat trick is useful unless it replaces itself or scales."
+    ],
+    "reason_builder_guidance": [
+      "The reason should identify the target, trigger, or copy interaction.",
+      "Do not call a spell synergistic merely because it is cheap.",
+      "For protection, explain that it preserves the key target during a combo turn."
+    ],
+    "false_positive_notes": "Do not classify all spellslinger decks as targeting combo. The commander or payoff must specifically care about targeting or copying targeted spells.",
+    "example_commanders": [
+      "Zada, Hedron Grinder",
+      "Feather, the Redeemed",
+      "Hinata, Dawn-Crowned"
+    ],
+    "example_support_cards": [
+      "Defiant Strike",
+      "Twinferno",
+      "Gods Willing"
+    ]
+  },
+  {
+    "id": "lands_value_engine",
+    "name": "Lands Value Engine",
+    "summary": "A strategy that treats land drops, land recursion, and lands entering the battlefield as repeatable sources of cards, mana, damage, or board presence.",
+    "archetype_family": "lands",
+    "confidence_floor": "high",
+    "required_signals": [
+      "landfall_trigger"
+    ],
+    "supporting_signals": [
+      "extra_land_play",
+      "land_recursion",
+      "repeatable_value_engine",
+      "large_card_draw",
+      "graveyard_recursion",
+      "token_fodder"
+    ],
+    "reject_signals": [
+      "spell_cast_trigger",
+      "equipment_payoff",
+      "typal_only_payoff"
+    ],
+    "primary_needs": [
+      "extra_land_drops",
+      "land_ramp",
+      "land_recursion",
+      "payoffs"
+    ],
+    "secondary_needs": [
+      "card_draw",
+      "interaction",
+      "graveyard_protection"
+    ],
+    "recommendation_focus": [
+      "extra land-drop effects",
+      "fetch lands or land-search effects",
+      "land recursion",
+      "landfall payoffs",
+      "ways to convert land drops into cards or damage"
+    ],
+    "avoid_recommendations": [
+      "generic ramp with no land synergy when better land-based ramp exists",
+      "creature combat buffs",
+      "graveyard cards that do not recur lands"
+    ],
+    "pilot_note_guidance": [
+      "Explain that land drops are the deck's main engine.",
+      "Prioritize cards that create multiple landfall events or recur lands.",
+      "Mention sequencing lands after payoffs are on board.",
+      "Clarify whether the deck is ramping, grinding value, or setting up a land combo."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain how the card creates, repeats, or profits from land drops.",
+      "Do not call a ramp card synergy unless it puts lands into play or directly supports the land engine.",
+      "For recursion cards, name the lands or effects they help reuse."
+    ],
+    "false_positive_notes": "Do not classify a deck as lands value just because it ramps. The deck needs land-entry, land-recursion, or land-count payoffs.",
+    "example_commanders": [
+      "Aesi, Tyrant of Gyre Strait",
+      "Tatyova, Benthic Druid",
+      "Omnath, Locus of Creation"
+    ],
+    "example_support_cards": [
+      "Exploration",
+      "Ramunap Excavator",
+      "Scapeshift"
+    ]
+  },
+  {
+    "id": "lands_graveyard_combo",
+    "name": "Lands Graveyard Combo",
+    "summary": "A lands strategy that uses lands entering and leaving the graveyard to generate repeatable draw, mana, sacrifice value, or combo loops.",
+    "archetype_family": "lands",
+    "confidence_floor": "high",
+    "required_signals": [
+      "land_recursion",
+      "graveyard_recursion"
+    ],
+    "supporting_signals": [
+      "self_mill",
+      "sacrifice_outlet",
+      "extra_land_play",
+      "landfall_trigger",
+      "discard_payoff",
+      "repeatable_value_engine"
+    ],
+    "reject_signals": [
+      "equipment_payoff",
+      "typal_payoff",
+      "artifact_count_matters"
+    ],
+    "primary_needs": [
+      "land_recursion",
+      "graveyard_setup",
+      "sacrifice_enablers",
+      "extra_land_drops"
+    ],
+    "secondary_needs": [
+      "protection",
+      "payoffs",
+      "interaction"
+    ],
+    "recommendation_focus": [
+      "lands that sacrifice themselves",
+      "land recursion engines",
+      "self-mill",
+      "extra land drops",
+      "payoffs for lands entering or leaving the graveyard"
+    ],
+    "avoid_recommendations": [
+      "generic landfall cards that only reward lands entering without supporting recursion",
+      "large creatures with no graveyard role",
+      "artifact ramp that ignores the land engine"
+    ],
+    "pilot_note_guidance": [
+      "Explain that lands are reusable resources rather than one-time mana sources.",
+      "Prioritize cards that put lands into the graveyard and replay them.",
+      "Mention that sequencing land drops matters because the same land can trigger multiple effects.",
+      "Clarify how the deck protects or rebuilds its graveyard engine."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain how the card moves lands between battlefield, graveyard, and hand.",
+      "Do not treat general ramp as core synergy.",
+      "For sacrifice lands, explain what repeatable value they unlock."
+    ],
+    "false_positive_notes": "Do not classify normal landfall as lands graveyard combo unless the deck intentionally uses lands in the graveyard as a reusable resource.",
+    "example_commanders": [
+      "The Gitrog Monster",
+      "Lord Windgrace",
+      "Soul of Windgrace"
+    ],
+    "example_support_cards": [
+      "Life from the Loam",
+      "Dakmor Salvage",
+      "Zuran Orb"
+    ]
+  },
+  {
+    "id": "counters_engine",
+    "name": "Counters Engine",
+    "summary": "A strategy that repeatedly places, modifies, doubles, or benefits from counters on permanents or players.",
+    "archetype_family": "value",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "counter_placement"
+    ],
+    "supporting_signals": [
+      "counter_type_specific",
+      "repeatable_value_engine",
+      "proliferate_payoff",
+      "attack_trigger",
+      "lifegain_trigger",
+      "creature_token_creation"
+    ],
+    "reject_signals": [
+      "equipment_payoff",
+      "spell_cast_trigger",
+      "combat_only_payoff"
+    ],
+    "primary_needs": [
+      "counter_enablers",
+      "counter_payoffs",
+      "protection",
+      "scaling_threats"
+    ],
+    "secondary_needs": [
+      "card_draw",
+      "evasion",
+      "interaction"
+    ],
+    "recommendation_focus": [
+      "repeatable counter placement",
+      "counter doublers",
+      "payoffs for modified creatures",
+      "protection for built-up threats",
+      "cards that move or reuse counters"
+    ],
+    "avoid_recommendations": [
+      "one-shot pump spells with no lasting counters",
+      "generic big creatures",
+      "proliferate cards with too few counters to multiply"
+    ],
+    "pilot_note_guidance": [
+      "Explain what type of counters the deck cares about.",
+      "Prioritize repeatable counter placement over isolated pump effects.",
+      "Mention protecting threats that have accumulated counters.",
+      "Clarify when the deck goes tall, wide, or both."
+    ],
+    "reason_builder_guidance": [
+      "The reason should name the counter type and the card's role in placing or rewarding it.",
+      "Do not blur +1/+1 counters with unrelated counter types.",
+      "For proliferate cards, explain what existing counters they improve."
+    ],
+    "false_positive_notes": "Do not classify a deck as counters because a commander occasionally receives a counter. It needs repeatable counter placement or meaningful counter payoffs.",
+    "example_commanders": [
+      "Ezuri, Claw of Progress",
+      "Lae'zel, Vlaakith's Champion",
+      "Shalai and Hallar"
+    ],
+    "example_support_cards": [
+      "Hardened Scales",
+      "Winding Constrictor",
+      "Kami of Whispered Hopes"
+    ]
+  },
+  {
+    "id": "proliferate_superstructure",
+    "name": "Proliferate Superstructure",
+    "summary": "A counter strategy that uses proliferate to scale multiple counter types across creatures, planeswalkers, artifacts, or players.",
+    "archetype_family": "value",
+    "confidence_floor": "high",
+    "required_signals": [
+      "proliferate_payoff"
+    ],
+    "supporting_signals": [
+      "counter_type_specific",
+      "counter_placement",
+      "poison_counter_pressure",
+      "planeswalker_payoff",
+      "artifact_count_matters",
+      "repeatable_value_engine"
+    ],
+    "reject_signals": [
+      "combat_only_payoff",
+      "equipment_payoff",
+      "typal_only_payoff"
+    ],
+    "primary_needs": [
+      "initial_counter_sources",
+      "repeatable_proliferate",
+      "payoffs",
+      "interaction"
+    ],
+    "secondary_needs": [
+      "card_draw",
+      "mana_ramp",
+      "protection"
+    ],
+    "recommendation_focus": [
+      "repeatable proliferate",
+      "cards that place multiple useful counter types",
+      "planeswalker or poison support when appropriate",
+      "counter doublers",
+      "interaction that leaves counters intact"
+    ],
+    "avoid_recommendations": [
+      "proliferate cards without enough counters to multiply",
+      "generic +1/+1 counter cards when the deck cares about other counter types",
+      "unrelated infect cards without poison support"
+    ],
+    "pilot_note_guidance": [
+      "Explain that proliferate needs counters already present before it becomes powerful.",
+      "Prioritize diverse counter sources if the deck rewards multiple counter types.",
+      "Mention timing proliferate after important counters are established.",
+      "Clarify whether the deck wins through creatures, poison, planeswalkers, or value engines."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain which counters the card adds or multiplies.",
+      "Do not assume every proliferate card supports +1/+1 counters only.",
+      "For poison or planeswalker cards, state why that counter type matters to this build."
+    ],
+    "false_positive_notes": "Do not classify a deck as proliferate just because it has counters. Proliferate must be an explicit payoff or repeated scaling plan.",
+    "example_commanders": [
+      "Atraxa, Praetors' Voice",
+      "Tekuthal, Inquiry Dominus",
+      "Ezuri, Stalker of Spheres"
+    ],
+    "example_support_cards": [
+      "Evolution Sage",
+      "Flux Channeler",
+      "Inexorable Tide"
+    ]
+  },
+  {
+    "id": "blink_etb_value",
+    "name": "Blink ETB Value",
+    "summary": "A strategy that repeatedly exiles and returns permanents to reuse enter-the-battlefield effects and protect key pieces.",
+    "archetype_family": "value",
+    "confidence_floor": "high",
+    "required_signals": [
+      "blink_or_flicker_effect"
+    ],
+    "supporting_signals": [
+      "repeatable_value_engine",
+      "creature_etb_payoff",
+      "flash_timing",
+      "instant_speed_play",
+      "tax_or_lock_pressure",
+      "large_card_draw"
+    ],
+    "reject_signals": [
+      "graveyard_recursion",
+      "combat_only_payoff",
+      "equipment_payoff"
+    ],
+    "primary_needs": [
+      "etb_creatures",
+      "blink_engines",
+      "interaction",
+      "protection"
+    ],
+    "secondary_needs": [
+      "card_draw",
+      "mana_ramp",
+      "finishers"
+    ],
+    "recommendation_focus": [
+      "creatures with strong ETB effects",
+      "repeatable blink effects",
+      "instant-speed blink protection",
+      "Panharmonicon-style payoffs",
+      "value permanents that reset profitably"
+    ],
+    "avoid_recommendations": [
+      "death-trigger cards with no ETB value",
+      "reanimation cards unless the deck also uses the graveyard",
+      "combat buffs that do not support ETB loops"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck reuses ETB effects rather than relying on raw stats.",
+      "Prioritize permanents that produce value every time they re-enter.",
+      "Mention using blink defensively to dodge removal.",
+      "Clarify the difference between blink, bounce, and reanimation."
+    ],
+    "reason_builder_guidance": [
+      "The reason should identify the ETB or blink role the card provides.",
+      "Do not call a creature good just because it has an ETB if the ETB is too minor.",
+      "For instant-speed blink, explain both value and protection modes."
+    ],
+    "false_positive_notes": "Do not classify a deck as blink because it has ETB creatures. It needs exile-and-return effects or a commander that enables repeated blinking.",
+    "example_commanders": [
+      "Brago, King Eternal",
+      "Roon of the Hidden Realm",
+      "Yorion, Sky Nomad"
+    ],
+    "example_support_cards": [
+      "Ephemerate",
+      "Teleportation Circle",
+      "Panharmonicon"
+    ]
+  },
+  {
+    "id": "creature_token_swarm",
+    "name": "Creature Token Swarm",
+    "summary": "A strategy that creates many creature tokens and converts board width into damage, sacrifice value, convoke, or anthem scaling.",
+    "archetype_family": "tokens",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "creature_token_creation"
+    ],
+    "supporting_signals": [
+      "token_fodder",
+      "attack_trigger",
+      "typal_payoff",
+      "death_trigger",
+      "lifegain_trigger",
+      "counter_placement",
+      "anthem_payoff"
+    ],
+    "reject_signals": [
+      "artifact_token_creation",
+      "equipment_payoff",
+      "commander_damage_pressure"
+    ],
+    "primary_needs": [
+      "token_makers",
+      "payoffs",
+      "board_protection",
+      "card_draw"
+    ],
+    "secondary_needs": [
+      "sacrifice_outlets",
+      "finishers",
+      "recursion"
+    ],
+    "recommendation_focus": [
+      "repeatable creature-token makers",
+      "anthems",
+      "death payoffs",
+      "go-wide finishers",
+      "cards that protect wide boards"
+    ],
+    "avoid_recommendations": [
+      "artifact-token payoffs unless tokens are artifacts",
+      "single-creature Voltron pieces",
+      "expensive creatures that do not make or reward tokens"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck wants board width.",
+      "Prioritize repeatable token production and payoffs that scale with many creatures.",
+      "Mention protecting the board from sweepers.",
+      "Clarify whether tokens are for combat, sacrifice, or both."
+    ],
+    "reason_builder_guidance": [
+      "The reason should identify whether the card makes tokens, rewards tokens, protects them, or converts them into another resource.",
+      "Do not recommend token cards that make the wrong token type for the payoff.",
+      "For sacrifice cards, explain the token-fodder connection."
+    ],
+    "false_positive_notes": "Do not classify artifact-token decks as creature token swarm unless the deck specifically creates and rewards creature tokens.",
+    "example_commanders": [
+      "Adeline, Resplendent Cathar",
+      "Rhys the Redeemed",
+      "Jetmir, Nexus of Revels"
+    ],
+    "example_support_cards": [
+      "Secure the Wastes",
+      "Skullclamp",
+      "Cathars' Crusade"
+    ]
+  },
+  {
+    "id": "typal_synergy_engine",
+    "name": "Typal Synergy Engine",
+    "summary": "A strategy that rewards playing a high density of one creature type through lords, cost reduction, tokens, recursion, or attack triggers.",
+    "archetype_family": "typal",
+    "confidence_floor": "high",
+    "required_signals": [
+      "typal_payoff",
+      "specific_subtype_required"
+    ],
+    "supporting_signals": [
+      "creature_token_creation",
+      "attack_trigger",
+      "cost_reduction",
+      "graveyard_recursion",
+      "counter_placement",
+      "combat_damage_trigger"
+    ],
+    "reject_signals": [
+      "artifact_count_matters",
+      "enchantment_count_matters",
+      "spell_cast_trigger"
+    ],
+    "primary_needs": [
+      "creature_type_density",
+      "typal_payoffs",
+      "card_draw",
+      "interaction"
+    ],
+    "secondary_needs": [
+      "protection",
+      "anthem_effects",
+      "recursion"
+    ],
+    "recommendation_focus": [
+      "creatures of the required type",
+      "typal lords",
+      "type-specific draw",
+      "type-specific token makers",
+      "type-specific recursion or tutors"
+    ],
+    "avoid_recommendations": [
+      "strong creatures of the wrong type",
+      "generic tribal cards that do not name the correct type",
+      "cards that only share color identity"
+    ],
+    "pilot_note_guidance": [
+      "Explain that creature-type density is a deck-building requirement.",
+      "Prioritize cards that are both good individually and match the required subtype.",
+      "Mention whether the typal plan is aggressive, value-based, or combo-oriented.",
+      "Warn against diluting the type count with unrelated staples."
+    ],
+    "reason_builder_guidance": [
+      "The reason should name the relevant subtype and why the card supports that subtype plan.",
+      "Do not claim typal synergy from a card that only shares the commander's creature type without payoff.",
+      "For off-type cards, explain the non-typal role clearly."
+    ],
+    "false_positive_notes": "Do not classify a deck as typal solely because the commander has a creature type. It must reward or require a specific subtype density.",
+    "example_commanders": [
+      "Edgar Markov",
+      "The Ur-Dragon",
+      "Wilhelt, the Rotcleaver"
+    ],
+    "example_support_cards": [
+      "Vanquisher's Banner",
+      "Kindred Discovery",
+      "Herald's Horn"
+    ]
+  },
+  {
+    "id": "attack_trigger_combat_engine",
+    "name": "Attack-Trigger Combat Engine",
+    "summary": "A combat strategy that generates value when creatures attack, often rewarding wide attacks, extra combats, or doubled attack triggers.",
+    "archetype_family": "combat",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "attack_trigger"
+    ],
+    "supporting_signals": [
+      "creature_token_creation",
+      "forced_combat",
+      "goad_payoff",
+      "extra_combat_payoff",
+      "evasion_needed",
+      "typal_payoff"
+    ],
+    "reject_signals": [
+      "commander_damage_pressure",
+      "spell_cast_trigger",
+      "tax_or_lock_pressure"
+    ],
+    "primary_needs": [
+      "attackers",
+      "haste_or_evasion",
+      "combat_payoffs",
+      "protection"
+    ],
+    "secondary_needs": [
+      "token_makers",
+      "extra_combat",
+      "card_draw"
+    ],
+    "recommendation_focus": [
+      "creatures that attack profitably",
+      "haste enablers",
+      "attack-trigger payoffs",
+      "extra combat cards",
+      "ways to protect attacking boards"
+    ],
+    "avoid_recommendations": [
+      "single-threat Voltron cards unless the commander supports them",
+      "defensive control pieces that do not support attacking",
+      "combat tricks that do not scale with attack triggers"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck wants to declare attacks to generate value.",
+      "Prioritize cards that create safe or profitable attacks.",
+      "Mention the difference between attack triggers and combat-damage triggers.",
+      "Clarify whether the deck attacks wide, tall, or with repeated combat steps."
+    ],
+    "reason_builder_guidance": [
+      "The reason should identify the attack trigger or the way the card enables better attacks.",
+      "Do not confuse dealing combat damage with attacking.",
+      "For extra combat cards, explain what triggers become repeatable."
+    ],
+    "false_positive_notes": "Do not classify a deck as attack-trigger combat simply because it wins through combat. It needs meaningful triggers on attacking.",
+    "example_commanders": [
+      "Isshin, Two Heavens as One",
+      "Aurelia, the Warleader",
+      "Adriana, Captain of the Guard"
+    ],
+    "example_support_cards": [
+      "Reconnaissance",
+      "Karlach, Fury of Avernus",
+      "Shared Animosity"
+    ]
+  },
+  {
+    "id": "combat_damage_value",
+    "name": "Combat-Damage Value",
+    "summary": "A strategy that connects with players to draw cards, make tokens, force discard, goad opponents, or unlock repeatable combat rewards.",
+    "archetype_family": "combat",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "combat_damage_trigger"
+    ],
+    "supporting_signals": [
+      "evasion_needed",
+      "forced_combat",
+      "goad_payoff",
+      "large_card_draw",
+      "discard_payoff",
+      "creature_token_creation"
+    ],
+    "reject_signals": [
+      "commander_damage_pressure",
+      "equipment_payoff",
+      "spell_cast_trigger"
+    ],
+    "primary_needs": [
+      "evasive_attackers",
+      "protection",
+      "combat_payoffs",
+      "interaction"
+    ],
+    "secondary_needs": [
+      "token_makers",
+      "card_draw",
+      "political_tools"
+    ],
+    "recommendation_focus": [
+      "evasive creatures",
+      "ways to make creatures unblockable",
+      "combat-damage draw",
+      "protection for attackers",
+      "cards that reward hitting multiple opponents"
+    ],
+    "avoid_recommendations": [
+      "pure power boosts without evasion",
+      "Voltron-only pieces unless commander damage is the plan",
+      "defensive cards that prevent attacking"
+    ],
+    "pilot_note_guidance": [
+      "Explain that connecting with opponents matters more than raw combat stats.",
+      "Prioritize evasion and safe attacks.",
+      "Mention that damage triggers usually require successful combat damage, not just attacking.",
+      "Clarify whether the commander or the whole board needs to connect."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain how the card helps creatures connect or rewards combat damage.",
+      "Do not describe attack triggers as combat-damage triggers.",
+      "For evasion cards, connect them to enabling the payoff rather than generic aggression."
+    ],
+    "false_positive_notes": "Do not classify every combat deck as combat-damage value. The commander or support cards must reward actually dealing combat damage to players.",
+    "example_commanders": [
+      "Edric, Spymaster of Trest",
+      "Marisi, Breaker of the Coil",
+      "Bident-style coastal piracy commanders"
+    ],
+    "example_support_cards": [
+      "Bident of Thassa",
+      "Rogue's Passage",
+      "Tetsuko Umezawa, Fugitive"
+    ]
+  },
+  {
+    "id": "goad_forced_combat",
+    "name": "Goad and Forced Combat",
+    "summary": "A political combat strategy that forces opponents to attack each other while profiting from combat chaos.",
+    "archetype_family": "combat",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "forced_combat"
+    ],
+    "supporting_signals": [
+      "goad_payoff",
+      "combat_damage_trigger",
+      "tax_or_lock_pressure",
+      "creature_token_creation",
+      "opponent_hand_size_pressure"
+    ],
+    "reject_signals": [
+      "commander_damage_pressure",
+      "spell_cast_trigger",
+      "enchantment_count_matters"
+    ],
+    "primary_needs": [
+      "goad_effects",
+      "defensive_tools",
+      "political_payoffs",
+      "interaction"
+    ],
+    "secondary_needs": [
+      "card_draw",
+      "life_buffer",
+      "finishers"
+    ],
+    "recommendation_focus": [
+      "repeatable goad",
+      "pillow-fort protection",
+      "combat punishment",
+      "cards that profit from opponents attacking",
+      "board control that leaves opponents able to fight each other"
+    ],
+    "avoid_recommendations": [
+      "cards that prevent all combat without a payoff",
+      "single-attacker Voltron cards",
+      "generic aggro cards that only attack your own opponents directly"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck manipulates opponents' combat rather than simply attacking.",
+      "Prioritize staying protected while opponents damage each other.",
+      "Mention that goad can create openings but does not replace win conditions.",
+      "Clarify when to encourage combat and when to hold interaction."
+    ],
+    "reason_builder_guidance": [
+      "The reason should say whether the card goads, protects you, or rewards forced combat.",
+      "Do not recommend normal combat cards unless they support the political combat plan.",
+      "For pillow-fort cards, explain how they redirect pressure away from you."
+    ],
+    "false_positive_notes": "Do not classify a deck as forced combat just because it attacks often. It needs to manipulate opponents' attacks or reward goaded combat.",
+    "example_commanders": [
+      "Marisi, Breaker of the Coil",
+      "Baeloth Barrityl, Entertainer",
+      "Firkraag, Cunning Instigator"
+    ],
+    "example_support_cards": [
+      "Disrupt Decorum",
+      "Vengeful Ancestor",
+      "Ghostly Prison"
+    ]
+  },
+  {
+    "id": "lifegain_payoff_engine",
+    "name": "Lifegain Payoff Engine",
+    "summary": "A strategy that repeatedly gains life and converts life total changes into cards, counters, tokens, drain, or alternate win conditions.",
+    "archetype_family": "value",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "lifegain_trigger"
+    ],
+    "supporting_signals": [
+      "life_total_payoff",
+      "counter_placement",
+      "creature_token_creation",
+      "death_trigger",
+      "repeatable_value_engine",
+      "large_card_draw"
+    ],
+    "reject_signals": [
+      "combat_only_payoff",
+      "equipment_payoff",
+      "artifact_count_matters"
+    ],
+    "primary_needs": [
+      "repeatable_lifegain",
+      "lifegain_payoffs",
+      "card_draw",
+      "interaction"
+    ],
+    "secondary_needs": [
+      "life_total_scalers",
+      "drain_finishers",
+      "protection"
+    ],
+    "recommendation_focus": [
+      "repeatable lifegain sources",
+      "cards that trigger when life is gained",
+      "life-total payoffs",
+      "drain effects",
+      "cards that convert life into cards or damage"
+    ],
+    "avoid_recommendations": [
+      "one-shot lifegain with no payoff",
+      "generic life padding",
+      "combat lifelink cards when the deck lacks payoff density"
+    ],
+    "pilot_note_guidance": [
+      "Explain that lifegain is the trigger fuel, not the win condition by itself.",
+      "Prioritize repeatable lifegain over large one-time life bursts.",
+      "Mention payoff density and ways to convert life into advantage.",
+      "Clarify whether the deck wins through drain, counters, tokens, or alternate win conditions."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain whether the card gains life repeatedly, rewards life gain, or converts life into a resource.",
+      "Do not recommend lifegain cards just because they increase life total.",
+      "For payoffs, explain what repeated triggers accomplish."
+    ],
+    "false_positive_notes": "Do not classify a deck as lifegain because it has incidental lifelink. It needs repeated lifegain triggers or life-total payoff cards.",
+    "example_commanders": [
+      "Lathiel, the Bounteous Dawn",
+      "Karlov of the Ghost Council",
+      "Heliod, Sun-Crowned"
+    ],
+    "example_support_cards": [
+      "Soul Warden",
+      "Ajani's Pridemate",
+      "Aetherflux Reservoir"
+    ]
+  },
+  {
+    "id": "discard_graveyard_value",
+    "name": "Discard Graveyard Value",
+    "summary": "A strategy that turns discarding cards into card advantage, graveyard setup, reanimation, madness, or other repeatable value.",
+    "archetype_family": "graveyard",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "discard_payoff"
+    ],
+    "supporting_signals": [
+      "graveyard_recursion",
+      "self_mill",
+      "large_card_draw",
+      "repeatable_value_engine",
+      "reanimation_target_density",
+      "spell_cast_trigger"
+    ],
+    "reject_signals": [
+      "equipment_payoff",
+      "typal_only_payoff",
+      "combat_only_payoff"
+    ],
+    "primary_needs": [
+      "discard_outlets",
+      "graveyard_payoffs",
+      "card_flow",
+      "recursion"
+    ],
+    "secondary_needs": [
+      "madness_or_flashback_cards",
+      "interaction",
+      "finishers"
+    ],
+    "recommendation_focus": [
+      "repeatable discard outlets",
+      "cards that reward discarding",
+      "graveyard recursion",
+      "madness or flashback cards",
+      "draw-discard engines"
+    ],
+    "avoid_recommendations": [
+      "random wheel effects with no discard payoff",
+      "graveyard hate that undermines the plan",
+      "cards that discard as a cost without payoff support"
+    ],
+    "pilot_note_guidance": [
+      "Explain that discarding is a setup tool or value engine, not just a downside.",
+      "Prioritize outlets that can be used repeatedly or at useful timing windows.",
+      "Mention which cards are meant to be discarded.",
+      "Clarify whether the deck wants reanimation, madness, or hand-cycling value."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain whether the card is a discard outlet, discard payoff, or graveyard payoff.",
+      "Do not recommend discard cards that only create card disadvantage.",
+      "For wheels, explain whether they refill the hand, trigger payoffs, or load the graveyard."
+    ],
+    "false_positive_notes": "Do not classify a deck as discard value just because it has looting. The deck must reward discarding or use discard as a core setup mechanism.",
+    "example_commanders": [
+      "Anje Falkenrath",
+      "Chainer, Nightmare Adept",
+      "Rielle, the Everwise"
+    ],
+    "example_support_cards": [
+      "Faithless Looting",
+      "Big Game Hunter",
+      "Containment Construct"
+    ]
+  },
+  {
+    "id": "stax_tax_lock",
+    "name": "Stax, Tax, and Lock",
+    "summary": "A strategy that slows opponents with taxes, restrictions, resource denial, or lock pieces while advancing its own asymmetric plan.",
+    "archetype_family": "stax",
+    "confidence_floor": "high",
+    "required_signals": [
+      "tax_or_lock_pressure"
+    ],
+    "supporting_signals": [
+      "opponent_hand_size_pressure",
+      "artifact_ramp_needed",
+      "low_mana_value_commander",
+      "enchantment_count_matters",
+      "repeatable_value_engine",
+      "instant_speed_play"
+    ],
+    "reject_signals": [
+      "combat_only_payoff",
+      "creature_token_creation",
+      "commander_damage_pressure"
+    ],
+    "primary_needs": [
+      "asymmetric_lock_pieces",
+      "mana_advantage",
+      "protection",
+      "win_condition_support"
+    ],
+    "secondary_needs": [
+      "card_selection",
+      "recursion",
+      "interaction"
+    ],
+    "recommendation_focus": [
+      "tax effects",
+      "rule-setting permanents",
+      "resource-denial pieces",
+      "cheap interaction",
+      "win conditions that operate under the lock"
+    ],
+    "avoid_recommendations": [
+      "symmetric lock pieces that hurt the deck more than opponents",
+      "unrelated value creatures",
+      "combat-only finishers that cannot function through the lock"
+    ],
+    "pilot_note_guidance": [
+      "Explain what resource the deck is restricting.",
+      "Prioritize asymmetry so the deck can still function.",
+      "Mention that the deck must close games after slowing opponents.",
+      "Clarify sequencing: develop mana before deploying restrictive pieces when needed."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain what the card restricts and why the deck can operate through it.",
+      "Do not recommend stax pieces generically without explaining asymmetry.",
+      "For ramp cards, explain how they break parity under tax effects."
+    ],
+    "false_positive_notes": "Do not classify control decks as stax unless they rely on persistent restrictions or lock pieces rather than normal interaction.",
+    "example_commanders": [
+      "Grand Arbiter Augustin IV",
+      "Derevi, Empyrial Tactician",
+      "Zur the Enchanter"
+    ],
+    "example_support_cards": [
+      "Rule of Law",
+      "Winter Orb",
+      "Smothering Tithe"
+    ]
+  },
+  {
+    "id": "colorless_big_mana",
+    "name": "Colorless Big Mana",
+    "summary": "A colorless strategy that uses artifact ramp, utility lands, and colorless mana scaling to cast oversized threats or expensive engines.",
+    "archetype_family": "colorless",
+    "confidence_floor": "high",
+    "required_signals": [
+      "colorless_mana_scaling"
+    ],
+    "supporting_signals": [
+      "high_mana_value_commander",
+      "artifact_ramp_needed",
+      "major_payoff_text",
+      "artifact_count_matters",
+      "cost_reduction",
+      "large_card_draw"
+    ],
+    "reject_signals": [
+      "colored_pip_dependency",
+      "enchantment_count_matters",
+      "spell_cast_trigger"
+    ],
+    "primary_needs": [
+      "artifact_ramp",
+      "utility_lands",
+      "card_draw",
+      "interaction"
+    ],
+    "secondary_needs": [
+      "protection",
+      "cost_reduction",
+      "graveyard_recursion"
+    ],
+    "recommendation_focus": [
+      "mana rocks",
+      "colorless utility lands",
+      "Eldrazi or large artifact payoffs",
+      "cost reducers",
+      "colorless card draw"
+    ],
+    "avoid_recommendations": [
+      "colored-mana cards",
+      "small artifacts with no ramp or payoff role",
+      "generic artifact synergies that do not support big mana"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck's main constraint is producing enough colorless mana.",
+      "Prioritize ramp and utility lands before expensive threats.",
+      "Mention that colorless lacks some normal interaction and needs specialized answers.",
+      "Clarify whether the deck is Eldrazi, artifact big mana, or generic colorless value."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain how the card solves ramp, card draw, interaction, or payoff needs in a colorless shell.",
+      "Do not recommend artifacts only because the deck is colorless.",
+      "For lands, explain the mana or utility role."
+    ],
+    "false_positive_notes": "Do not classify colored artifact decks as colorless big mana. The deck must have a colorless commander or a clear colorless-mana scaling requirement.",
+    "example_commanders": [
+      "Kozilek, the Great Distortion",
+      "Zhulodok, Void Gorger",
+      "Karn, Legacy Reforged"
+    ],
+    "example_support_cards": [
+      "Sol Ring",
+      "Forsaken Monument",
+      "Ancient Tomb"
+    ]
+  },
+  {
+    "id": "donation_drawback_abuse",
+    "name": "Donation and Drawback Abuse",
+    "summary": "A strategy that gives opponents permanents, temporary threats, or drawback-heavy cards while profiting from ownership, control changes, or delayed consequences.",
+    "archetype_family": "control",
+    "confidence_floor": "high",
+    "required_signals": [
+      "donation_payoff"
+    ],
+    "supporting_signals": [
+      "temporary_drawback_abuse",
+      "combat_damage_trigger",
+      "forced_combat",
+      "opponent_hand_size_pressure",
+      "tax_or_lock_pressure"
+    ],
+    "reject_signals": [
+      "typal_payoff",
+      "equipment_payoff",
+      "normal_reanimation_plan"
+    ],
+    "primary_needs": [
+      "donation_targets",
+      "control_exchange_effects",
+      "protection",
+      "political_tools"
+    ],
+    "secondary_needs": [
+      "card_draw",
+      "removal",
+      "win_condition_support"
+    ],
+    "recommendation_focus": [
+      "bad permanents to donate",
+      "control-exchange effects",
+      "cards that punish opponents for owning or controlling permanents",
+      "defensive tools",
+      "political value cards"
+    ],
+    "avoid_recommendations": [
+      "normal value permanents that opponents are happy to receive",
+      "generic reanimator cards without donation payoff",
+      "combat tricks that do not help connect or donate"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck weaponizes ownership or control changes.",
+      "Prioritize cards that are actively harmful or strategically awkward for opponents to receive.",
+      "Mention the multiplayer politics of choosing who gets a permanent.",
+      "Clarify timing around temporary effects and end-step drawbacks."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain why the card is useful to give away or how it profits from giving things away.",
+      "Do not recommend a card just because it can target an opponent.",
+      "For drawback cards, explain how the deck shifts or avoids the downside."
+    ],
+    "false_positive_notes": "Do not classify a deck as donation because it has one exchange spell. Donation must be a recurring plan or central commander payoff.",
+    "example_commanders": [
+      "Zedruu the Greathearted",
+      "Blim, Comedic Genius",
+      "The Beamtown Bullies"
+    ],
+    "example_support_cards": [
+      "Harmless Offering",
+      "Aggressive Mining",
+      "Steel Golem"
+    ]
+  },
+  {
+    "id": "temporary_effect_abuse",
+    "name": "Temporary Effect Abuse",
+    "summary": "A rules-heavy strategy that exploits end-the-turn effects, delayed triggers, temporary control changes, or temporary tokens to keep benefits and avoid drawbacks.",
+    "archetype_family": "combo",
+    "confidence_floor": "high",
+    "required_signals": [
+      "temporary_drawback_abuse"
+    ],
+    "supporting_signals": [
+      "instant_speed_play",
+      "flash_timing",
+      "donation_payoff",
+      "combat_damage_trigger",
+      "graveyard_recursion",
+      "major_payoff_text"
+    ],
+    "reject_signals": [
+      "typal_payoff",
+      "equipment_payoff",
+      "straightforward_combat_plan"
+    ],
+    "primary_needs": [
+      "timing_tools",
+      "temporary_effects",
+      "protection",
+      "rules_payoffs"
+    ],
+    "secondary_needs": [
+      "card_selection",
+      "recursion",
+      "backup_value"
+    ],
+    "recommendation_focus": [
+      "end-the-turn effects",
+      "temporary theft effects",
+      "temporary token makers",
+      "cards with delayed sacrifice or exile triggers",
+      "instant-speed protection"
+    ],
+    "avoid_recommendations": [
+      "normal permanent value cards with no temporary drawback",
+      "combat-only cards that do not exploit timing",
+      "generic blink cards unless they interact with the delayed trigger"
+    ],
+    "pilot_note_guidance": [
+      "Explain the timing rule the deck is exploiting.",
+      "Prioritize cards whose drawbacks can be skipped, ended, or reassigned.",
+      "Mention that sequencing and priority matter more than raw card quality.",
+      "Clarify which effects are actually temporary and which are not."
+    ],
+    "reason_builder_guidance": [
+      "The reason should name the delayed trigger or temporary drawback being abused.",
+      "Do not overstate synergy if the card's drawback cannot actually be avoided.",
+      "For instant-speed cards, explain the timing window they enable."
+    ],
+    "false_positive_notes": "Do not classify a deck as temporary effect abuse because it has temporary tokens or theft once. The commander or deck must repeatedly exploit timing or delayed drawbacks.",
+    "example_commanders": [
+      "Obeka, Brute Chronologist",
+      "Mishra, Eminent One",
+      "Sundial-style commanders"
+    ],
+    "example_support_cards": [
+      "Sundial of the Infinite",
+      "Act of Treason",
+      "Feldon of the Third Path"
+    ]
+  },
+  {
+    "id": "flash_reactive_control",
+    "name": "Flash Reactive Control",
+    "summary": "A strategy that plays primarily at instant speed, holding up interaction while developing threats or engines on opponents' turns.",
+    "archetype_family": "control",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "instant_speed_play"
+    ],
+    "supporting_signals": [
+      "flash_timing",
+      "counterspell_protection",
+      "large_card_draw",
+      "spell_cast_trigger",
+      "tax_or_lock_pressure",
+      "repeatable_value_engine"
+    ],
+    "reject_signals": [
+      "combat_only_payoff",
+      "sorcery_speed_engine_required",
+      "equipment_payoff"
+    ],
+    "primary_needs": [
+      "instant_speed_interaction",
+      "flash_threats",
+      "card_draw",
+      "mana_efficiency"
+    ],
+    "secondary_needs": [
+      "win_conditions",
+      "protection",
+      "recursion"
+    ],
+    "recommendation_focus": [
+      "countermagic",
+      "instant-speed draw",
+      "flash creatures",
+      "modal interaction",
+      "ways to spend unused mana efficiently"
+    ],
+    "avoid_recommendations": [
+      "sorcery-speed engines that force shields down",
+      "expensive tap-out threats without immediate impact",
+      "combat tricks that do not protect or generate value"
+    ],
+    "pilot_note_guidance": [
+      "Explain that the deck wants to pass with mana open.",
+      "Prioritize flexible instant-speed plays.",
+      "Mention using unused mana at the last safe opportunity.",
+      "Clarify when it is acceptable to tap out for a major payoff."
+    ],
+    "reason_builder_guidance": [
+      "The reason should explain how the card supports reactive play or uses mana at instant speed.",
+      "Do not recommend counters generically without tying them to protecting the game plan.",
+      "For flash threats, explain why timing matters."
+    ],
+    "false_positive_notes": "Do not classify a deck as flash control because it has counterspells. It needs an instant-speed development plan or commander payoff.",
+    "example_commanders": [
+      "Rashmi, Eternities Crafter",
+      "Yeva, Nature's Herald",
+      "Talion, the Kindly Lord"
+    ],
+    "example_support_cards": [
+      "Mystic Confluence",
+      "Leyline of Anticipation",
+      "Seedborn Muse"
+    ]
+  },
+  {
+    "id": "hand_size_pressure_control",
+    "name": "Hand-Size Pressure Control",
+    "summary": "A control strategy that punishes opponents for drawing, holding many cards, or failing to empty their hands while using cards in hand as a resource.",
+    "archetype_family": "control",
+    "confidence_floor": "medium",
+    "required_signals": [
+      "opponent_hand_size_pressure"
+    ],
+    "supporting_signals": [
+      "large_card_draw",
+      "tax_or_lock_pressure",
+      "discard_payoff",
+      "counterspell_protection",
+      "repeatable_value_engine"
+    ],
+    "reject_signals": [
+      "combat_only_payoff",
+      "typal_payoff",
+      "creature_token_creation"
+    ],
+    "primary_needs": [
+      "card_draw",
+      "hand_size_payoffs",
+      "interaction",
+      "protection"
+    ],
+    "secondary_needs": [
+      "mana_ramp",
+      "finishers",
+      "discard_or_wheel_support"
+    ],
+    "recommendation_focus": [
+      "large-hand payoffs",
+      "wheel effects when appropriate",
+      "draw punishment",
+      "countermagic",
+      "cards that convert hand size into damage or control"
+    ],
+    "avoid_recommendations": [
+      "small aggressive creatures",
+      "random discard without payoff",
+      "cards that empty your own hand without rebuilding"
+    ],
+    "pilot_note_guidance": [
+      "Explain whether the deck is growing its own hand, pressuring opponents' hands, or both.",
+      "Prioritize cards that keep the controller ahead on resources.",
+      "Mention that hand-size payoff decks need enough mana to use the cards they draw.",
+      "Clarify whether wheels help or hurt the strategy."
+    ],
+    "reason_builder_guidance": [
+      "The reason should connect the card to hand size, draw volume, or opponent hand pressure.",
+      "Do not call every draw spell synergy unless hand size matters.",
+      "For wheel effects, explain the payoff they trigger or the pressure they create."
+    ],
+    "false_positive_notes": "Do not classify a deck as hand-size pressure because it draws cards. The commander or support cards must explicitly care about hand size, drawing, or opponents holding cards.",
+    "example_commanders": [
+      "Nekusar, the Mindrazer",
+      "Jin-Gitaxias, Core Augur",
+      "Queza, Augur of Agonies"
+    ],
+    "example_support_cards": [
+      "Windfall",
+      "Psychosis Crawler",
+      "Teferi's Ageless Insight"
+    ]
+  }
+]
