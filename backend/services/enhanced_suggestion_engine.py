@@ -1,6 +1,8 @@
 from typing import Dict, List, Optional, Set
 import asyncio
+import copy
 import logging
+import os
 import re
 import time
 from collections import Counter, defaultdict
@@ -23,6 +25,12 @@ class EnhancedSuggestionEngine:
         self._random_pool_cache = {}
         self._random_pool_cache_ttl = 900
         self._random_pool_cache_max_entries = 80
+        self._commander_analysis_cache = {}
+        self._commander_analysis_cache_ttl = 900
+        self._commander_analysis_cache_max_entries = 160
+        self.random_commander_recommendation_timeout = float(
+            os.environ.get("RANDOM_COMMANDER_RECOMMENDATION_TIMEOUT_SECONDS", "4")
+        )
         
         # Role targets
         self.role_targets = {
@@ -195,6 +203,49 @@ class EnhancedSuggestionEngine:
 
     def _random_pool_cache_key(self, query: str, intent: Dict) -> tuple:
         return (query, self._random_intent_key(intent))
+
+    def _commander_analysis_cache_key(
+        self,
+        commander_card: Dict,
+        deep: bool,
+        search_budget: int,
+        per_synergy_limit: int,
+        query_limit: int,
+        minimum_score: int,
+        recommendation_timeout: Optional[float],
+    ) -> tuple:
+        timeout_bucket = round(recommendation_timeout, 1) if recommendation_timeout else None
+        return (
+            self._card_cache_key(commander_card),
+            bool(deep),
+            search_budget,
+            per_synergy_limit,
+            query_limit,
+            minimum_score,
+            timeout_bucket,
+        )
+
+    def _commander_analysis_cache_get(self, key: tuple) -> Optional[Dict]:
+        cached = self._commander_analysis_cache.get(key)
+        if not cached:
+            return None
+        if cached['expires_at'] <= time.monotonic():
+            self._commander_analysis_cache.pop(key, None)
+            return None
+        return copy.deepcopy(cached['value'])
+
+    def _commander_analysis_cache_set(self, key: tuple, value: Dict) -> Dict:
+        if len(self._commander_analysis_cache) >= self._commander_analysis_cache_max_entries:
+            oldest_key = min(
+                self._commander_analysis_cache,
+                key=lambda cache_key: self._commander_analysis_cache[cache_key]['expires_at']
+            )
+            self._commander_analysis_cache.pop(oldest_key, None)
+        self._commander_analysis_cache[key] = {
+            'expires_at': time.monotonic() + self._commander_analysis_cache_ttl,
+            'value': copy.deepcopy(value),
+        }
+        return copy.deepcopy(value)
 
     def _detect_typal_creature_types(self, oracle_text: str, type_line: str = "") -> List[str]:
         """Detect creature-type plans from rules text without using commander names."""
@@ -5876,6 +5927,7 @@ class EnhancedSuggestionEngine:
         minimum_score: int,
         exclude_names: Optional[Set[str]] = None,
         concurrency: int = 3,
+        per_query_timeout: Optional[float] = None,
     ) -> List[Dict]:
         """Search Scryfall in bounded parallel and keep only commander-specific cards."""
         extracted = self.scryfall.extract_card_data(commander_card)
@@ -5896,8 +5948,19 @@ class EnhancedSuggestionEngine:
 
         async def run_search(synergy_index: int, synergy: str, query: str):
             async with semaphore:
-                results = await self.scryfall.search_cards_by_criteria(query, limit=query_limit)
-                return synergy_index, synergy, results
+                try:
+                    search_task = self.scryfall.search_cards_by_criteria(query, limit=query_limit)
+                    if per_query_timeout:
+                        results = await asyncio.wait_for(search_task, timeout=per_query_timeout)
+                    else:
+                        results = await search_task
+                    return synergy_index, synergy, results
+                except asyncio.TimeoutError:
+                    logger.warning("Timed out Scryfall recommendation query for %s after %.1fs", synergy, per_query_timeout)
+                    return synergy_index, synergy, []
+                except Exception as exc:
+                    logger.warning("Scryfall recommendation query failed for %s: %s", synergy, exc)
+                    return synergy_index, synergy, []
 
         search_results = await asyncio.gather(
             *(run_search(synergy_index, synergy, query) for synergy_index, synergy, query in search_specs)
@@ -5965,8 +6028,33 @@ class EnhancedSuggestionEngine:
             card.pop('_rank_score', None)
         return candidates
 
-    async def analyze_commander(self, commander_card: Dict, deep: bool = False) -> Dict:
+    async def analyze_commander(
+        self,
+        commander_card: Dict,
+        deep: bool = False,
+        recommendation_timeout: Optional[float] = None,
+        recommendation_search_budget: Optional[int] = None,
+        recommendation_query_limit: Optional[int] = None,
+        recommendation_concurrency: int = 3,
+    ) -> Dict:
         """Analyze a commander and provide strategy tips"""
+        search_budget = recommendation_search_budget if recommendation_search_budget is not None else (5 if deep else 3)
+        per_synergy_limit = 4 if deep else 3
+        query_limit = recommendation_query_limit if recommendation_query_limit is not None else (24 if deep else 16)
+        minimum_score = 84
+        cache_key = self._commander_analysis_cache_key(
+            commander_card,
+            deep,
+            search_budget,
+            per_synergy_limit,
+            query_limit,
+            minimum_score,
+            recommendation_timeout,
+        )
+        cached = self._commander_analysis_cache_get(cache_key)
+        if cached is not None:
+            return cached
+
         extracted = self.scryfall.extract_card_data(commander_card)
 
         # Detect synergies
@@ -5984,11 +6072,12 @@ class EnhancedSuggestionEngine:
             color_identity=color_identity,
             commander_constraints=commander_constraints,
             max_cards=5,
-            search_budget=5 if deep else 3,
-            per_synergy_limit=4 if deep else 3,
-            query_limit=24 if deep else 16,
-            minimum_score=84,
-            concurrency=3,
+            search_budget=search_budget,
+            per_synergy_limit=per_synergy_limit,
+            query_limit=query_limit,
+            minimum_score=minimum_score,
+            concurrency=recommendation_concurrency,
+            per_query_timeout=recommendation_timeout,
         )
         if deep and not suggested_cards and synergies:
             suggested_cards = await self._search_commander_recommendations(
@@ -6001,13 +6090,14 @@ class EnhancedSuggestionEngine:
                 per_synergy_limit=3,
                 query_limit=36,
                 minimum_score=78,
-                concurrency=3,
+                concurrency=recommendation_concurrency,
+                per_query_timeout=recommendation_timeout,
             )
         
         # Generate combos
         combos = self._generate_combo_suggestions(extracted['name'], synergies, [])
         
-        return {
+        result = {
             'name': extracted['name'],
             'type_line': extracted['type_line'],
             'oracle_text': extracted['oracle_text'],
@@ -6026,6 +6116,7 @@ class EnhancedSuggestionEngine:
             'combos': combos,
             'analysis_depth': 'deep' if deep else 'fast'
         }
+        return self._commander_analysis_cache_set(cache_key, result)
 
     async def find_more_commander_recommendations(
         self,
@@ -6509,7 +6600,12 @@ class EnhancedSuggestionEngine:
             commander_card = selected['card'] if selected else None
             
             if commander_card:
-                result = await self.analyze_commander(commander_card)
+                result = await self.analyze_commander(
+                    commander_card,
+                    recommendation_timeout=self.random_commander_recommendation_timeout,
+                    recommendation_query_limit=12,
+                    recommendation_concurrency=3,
+                )
                 result['search_query'] = active_query
                 if active_query != query:
                     result['requested_search_query'] = query

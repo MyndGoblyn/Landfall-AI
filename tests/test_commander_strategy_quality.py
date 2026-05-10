@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 import asyncio
+import time
 
 import pytest
 
@@ -334,6 +335,78 @@ def test_random_commander_reuses_ranked_pool_for_same_filter():
     assert first["card"]["name"]
     assert second["card"]["name"]
     assert rank_calls == 1
+
+
+def test_commander_recommendation_search_skips_slow_scryfall_queries():
+    class SlowRecommendationScryfall(FakeScryfall):
+        async def search_cards_by_criteria(self, query, limit=20):
+            self.queries.append((query, limit))
+            if "instant or sorcery" in query:
+                return [{
+                    "name": "Archmage Emeritus",
+                    "type_line": "Creature - Human Wizard",
+                    "oracle_text": "Magecraft - Whenever you cast or copy an instant or sorcery spell, draw a card.",
+                    "cmc": 4,
+                    "colors": ["U"],
+                    "color_identity": ["U"],
+                    "legalities": {"commander": "legal"},
+                }]
+            await asyncio.sleep(0.05)
+            return []
+
+    commander = {
+        "name": "Izzet Spell Commander",
+        "type_line": "Legendary Creature - Wizard",
+        "oracle_text": "Whenever you cast an instant or sorcery spell, draw a card. Whenever you sacrifice a creature, draw a card.",
+        "cmc": 3,
+        "color_identity": ["U", "R"],
+    }
+    fake = SlowRecommendationScryfall()
+    engine = EnhancedSuggestionEngine(fake)
+
+    start = time.perf_counter()
+    recommendations = asyncio.run(engine._search_commander_recommendations(
+        commander_card=commander,
+        synergies=["instant_sorcery", "sacrifice"],
+        color_identity=["U", "R"],
+        commander_constraints={"commander_color_identity": ["U", "R"]},
+        max_cards=3,
+        search_budget=2,
+        per_synergy_limit=2,
+        query_limit=8,
+        minimum_score=0,
+        per_query_timeout=0.01,
+    ))
+    elapsed = time.perf_counter() - start
+
+    assert elapsed < 0.2
+    assert [card["name"] for card in recommendations] == ["Archmage Emeritus"]
+
+
+def test_commander_analysis_reuses_cached_result_for_same_budget_profile():
+    class CountingRecommendationScryfall(FakeScryfall):
+        async def search_cards_by_criteria(self, query, limit=20):
+            self.queries.append((query, limit))
+            return []
+
+    commander = {
+        "id": "cached-spell-commander",
+        "name": "Cached Spell Commander",
+        "type_line": "Legendary Creature - Wizard",
+        "oracle_text": "Whenever you cast an instant or sorcery spell, draw a card.",
+        "cmc": 3,
+        "color_identity": ["U", "R"],
+    }
+    fake = CountingRecommendationScryfall()
+    engine = EnhancedSuggestionEngine(fake)
+
+    first = asyncio.run(engine.analyze_commander(commander, recommendation_timeout=0.01))
+    first_query_count = len(fake.queries)
+    second = asyncio.run(engine.analyze_commander(commander, recommendation_timeout=0.01))
+
+    assert first["name"] == second["name"] == "Cached Spell Commander"
+    assert first_query_count > 0
+    assert len(fake.queries) == first_query_count
 
 
 def test_commander_synergy_detection_does_not_use_type_line_only_artifact_theme():

@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 from typing import Dict, List, Optional
 import logging
+import os
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,9 @@ class ScryfallService:
         self.cache_expiry: Dict[str, datetime] = {}
         self.cache_ttl = timedelta(hours=24)
         self.session: Optional[aiohttp.ClientSession] = None
+        self.request_timeout = aiohttp.ClientTimeout(
+            total=float(os.environ.get("SCRYFALL_REQUEST_TIMEOUT_SECONDS", "12"))
+        )
     
     async def get_session(self) -> aiohttp.ClientSession:
         if self.session is None or self.session.closed:
@@ -51,7 +55,7 @@ class ScryfallService:
             params = {"fuzzy" if fuzzy else "exact": name}
             
             for attempt in range(3):
-                async with session.get(f"{self.BASE_URL}{endpoint}", params=params) as response:
+                async with session.get(f"{self.BASE_URL}{endpoint}", params=params, timeout=self.request_timeout) as response:
                     if response.status == 200:
                         data = await response.json()
                         self.cache[cache_key] = data
@@ -91,7 +95,7 @@ class ScryfallService:
             params = {"q": query, "unique": "cards", "order": "edhrec"}
             
             for attempt in range(3):
-                async with session.get(f"{self.BASE_URL}/cards/search", params=params) as response:
+                async with session.get(f"{self.BASE_URL}/cards/search", params=params, timeout=self.request_timeout) as response:
                     if response.status == 200:
                         data = await response.json()
                         results = data.get('data', [])[:limit]
