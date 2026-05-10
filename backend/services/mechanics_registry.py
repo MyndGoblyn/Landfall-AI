@@ -495,3 +495,7 @@ class MechanicsRegistry:
         if len(query_terms) == 1:
             return query_terms[0]
         return "(" + " OR ".join(query_terms[:4]) + ")"
+
+    def entry_for_term(self, term: str) -> Optional[Dict]:
+        """Return a registry entry by name or alias for local scoring helpers."""
+        return self._by_term.get(self.normalize_text(term))

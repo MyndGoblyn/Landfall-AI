@@ -5793,6 +5793,220 @@ class EnhancedSuggestionEngine:
 
         return " ".join(query_parts)
 
+    def _random_commander_search_intent(
+        self,
+        search_text: Optional[str] = None,
+        keywords: Optional[List[str]] = None,
+    ) -> Dict:
+        """Translate random-commander free text into local scoring intent."""
+        terms = self._parse_search_terms(search_text, keywords)
+        desired_synergies = set()
+        desired_archetypes = set()
+        desired_signals = set()
+        desired_types = set()
+
+        term_synergy_map = {
+            'artifact': {'artifact'},
+            'artifacts': {'artifact'},
+            'equipment': {'artifact', 'voltron'},
+            'voltron': {'voltron'},
+            'aura': {'enchantment', 'voltron'},
+            'auras': {'enchantment', 'voltron'},
+            'enchantment': {'enchantment'},
+            'enchantments': {'enchantment'},
+            'graveyard': {'graveyard'},
+            'recursion': {'graveyard'},
+            'reanimator': {'graveyard'},
+            'sacrifice': {'sacrifice'},
+            'aristocrats': {'sacrifice'},
+            'tokens': {'tokens'},
+            'token': {'tokens'},
+            'treasure': {'artifact_tokens'},
+            'lifegain': {'lifegain'},
+            'life gain': {'lifegain'},
+            'counters': {'counters'},
+            'counter': {'counters'},
+            'proliferate': {'counters'},
+            'spellslinger': {'instant_sorcery'},
+            'instant': {'instant_sorcery'},
+            'sorcery': {'instant_sorcery'},
+            'blink': {'blink'},
+            'flicker': {'blink'},
+            'exile': {'exile'},
+            'landfall': {'landfall'},
+            'lands': {'landfall'},
+            'mill': {'graveyard'},
+            'goad': {'goad'},
+            'target': {'target_spells'},
+            'flash': {'flash_control'},
+            'draw': set(),
+            'card draw': set(),
+        }
+        term_archetype_map = {
+            'control': {'late_game_control_finisher', 'stax_tax_lock', 'flash_reactive_control'},
+            'stax': {'stax_tax_lock'},
+            'flash': {'flash_reactive_control'},
+            'big mana': {'colorless_big_mana', 'late_game_control_finisher'},
+            'reanimator': {'graveyard_reanimator'},
+            'aristocrats': {'aristocrats_sacrifice_engine'},
+            'spellslinger': {'spellslinger_value_engine'},
+            'voltron': {'aura_voltron', 'equipment_voltron'},
+            'landfall': {'lands_value_engine'},
+            'blink': {'blink_etb_value'},
+        }
+        term_signal_map = {
+            'draw': {'large_card_draw', 'repeatable_value_engine'},
+            'card draw': {'large_card_draw', 'repeatable_value_engine'},
+            'mill': {'self_mill'},
+            'treasure': {'treasure_creation', 'artifact_token_creation'},
+            'proliferate': {'proliferate_payoff'},
+            'target': {'targeting_payoff'},
+            'flash': {'flash_timing', 'instant_speed_play'},
+            'control': {'tax_or_lock_pressure', 'counterspell_protection'},
+            'stax': {'tax_or_lock_pressure'},
+        }
+
+        for term in terms:
+            desired_synergies.update(term_synergy_map.get(term, set()))
+            desired_archetypes.update(term_archetype_map.get(term, set()))
+            desired_signals.update(term_signal_map.get(term, set()))
+            singular = term[:-1] if term.endswith('s') else term
+            if singular in self.creature_type_terms:
+                desired_types.add(singular)
+
+            if self.mechanics_registry and self.mechanics_registry.query_for_term(term):
+                entry = self.mechanics_registry.entry_for_term(term)
+                if entry:
+                    for family in [entry.get('theme_family', ''), *(entry.get('subthemes') or [])]:
+                        normalized_family = family.replace('-', '_')
+                        if normalized_family in self.synergy_priority:
+                            desired_synergies.add(normalized_family)
+
+        return {
+            'terms': terms,
+            'desired_synergies': desired_synergies,
+            'desired_archetypes': desired_archetypes,
+            'desired_signals': desired_signals,
+            'desired_types': desired_types,
+            'has_strategy_terms': bool(
+                desired_synergies or desired_archetypes or desired_signals or desired_types
+            ),
+        }
+
+    def _score_random_commander_candidate(self, card: Dict, intent: Dict) -> Dict:
+        """Score a candidate before the random pick so output feels intentional."""
+        oracle_text = self._combined_oracle_text(card)
+        type_line = self._combined_type_line(card)
+        name = card.get('name', '')
+        synergies = set(self._detect_commander_synergies(card))
+        archetypes = self._detect_commander_archetypes(card)
+        archetype_ids = {archetype.get('id') for archetype in archetypes}
+        signals = self._extract_archetype_signals(card)
+        typal_types = set(self._detect_typal_creature_types(oracle_text, type_line))
+
+        score = 0
+        matched_terms = []
+        matched_synergies = sorted(synergies & intent.get('desired_synergies', set()))
+        matched_archetypes = sorted(archetype_ids & intent.get('desired_archetypes', set()))
+        matched_signals = sorted(signals & intent.get('desired_signals', set()))
+        matched_types = sorted((typal_types | set(re.findall(r"\b[a-z]+\b", type_line))) & intent.get('desired_types', set()))
+
+        score += min(len(synergies) * 3, 12)
+        if archetypes:
+            score += min(archetypes[0].get('score', 0), 18)
+            score += min(max(len(archetypes) - 1, 0) * 2, 6)
+
+        score += len(matched_synergies) * 24
+        score += len(matched_archetypes) * 30
+        score += len(matched_signals) * 12
+        score += len(matched_types) * 24
+
+        searchable_text = f"{name} {type_line} {oracle_text}".lower()
+        for term in intent.get('terms', []):
+            if term and term in searchable_text:
+                matched_terms.append(term)
+                score += 4
+
+        if intent.get('has_strategy_terms'):
+            if not any([matched_synergies, matched_archetypes, matched_signals, matched_types, matched_terms]):
+                score -= 28
+            if not synergies and not archetypes:
+                score -= 16
+        elif not synergies and not archetypes:
+            score -= 8
+
+        if 'typal_only_payoff' in signals and not intent.get('desired_types'):
+            score -= 8
+        if 'combat_only_payoff' in signals and not (intent.get('desired_synergies', set()) & {'combat_damage', 'attack_triggers', 'voltron'}):
+            score -= 6
+
+        score = max(0, score)
+        return {
+            'score': score,
+            'synergies': sorted(synergies),
+            'archetypes': sorted(archetype_ids),
+            'signals': sorted(signals),
+            'matched_terms': matched_terms,
+            'matched_synergies': matched_synergies,
+            'matched_archetypes': matched_archetypes,
+            'matched_signals': matched_signals,
+            'matched_types': matched_types,
+        }
+
+    def _rank_random_commander_candidates(self, candidates: List[Dict], intent: Dict) -> List[Dict]:
+        """Return candidates with score metadata, strongest first."""
+        ranked = []
+        for index, card in enumerate(candidates):
+            metadata = self._score_random_commander_candidate(card, intent)
+            ranked.append({
+                'card': card,
+                'score': metadata['score'],
+                'metadata': metadata,
+                'source_index': index,
+            })
+
+        ranked.sort(key=lambda item: (
+            -item['score'],
+            item['source_index'],
+            item['card'].get('name', ''),
+        ))
+        return ranked
+
+    def _select_random_commander_candidate(self, candidates: List[Dict], intent: Dict) -> Optional[Dict]:
+        """Pick randomly from the best semantic band, preserving discovery variety."""
+        if not candidates:
+            return None
+
+        ranked = self._rank_random_commander_candidates(candidates, intent)
+        top_score = ranked[0]['score']
+        if intent.get('has_strategy_terms'):
+            floor = max(20, top_score - 12)
+            pool = [item for item in ranked if item['score'] >= floor][:20]
+            if not pool:
+                pool = ranked[:20]
+        else:
+            floor = max(0, top_score - 18)
+            pool = [item for item in ranked if item['score'] >= floor][:30]
+            if not pool:
+                pool = ranked[:30]
+
+        import random
+        selected = random.choice(pool)
+        return {
+            'card': selected['card'],
+            'selection_metadata': {
+                'candidate_count': len(candidates),
+                'selection_pool_count': len(pool),
+                'selected_score': selected['score'],
+                'top_score': top_score,
+                'intent_terms': intent.get('terms', []),
+                'matched_synergies': selected['metadata']['matched_synergies'],
+                'matched_archetypes': selected['metadata']['matched_archetypes'],
+                'matched_signals': selected['metadata']['matched_signals'],
+                'matched_types': selected['metadata']['matched_types'],
+            },
+        }
+
     async def get_random_commander(self, colors: Optional[List[str]] = None,
                                    keywords: Optional[List[str]] = None,
                                    max_cmc: Optional[int] = None,
@@ -5813,13 +6027,14 @@ class EnhancedSuggestionEngine:
                 results = await self.scryfall.search_cards_by_criteria("is:commander t:creature f:commander", limit=100)
                 results = [card for card in results if self._is_commander_eligible(card, creature_only=True)]
             
-            # Pick random
-            import random
-            commander_card = random.choice(results) if results else None
+            intent = self._random_commander_search_intent(search_text, keywords)
+            selected = self._select_random_commander_candidate(results, intent)
+            commander_card = selected['card'] if selected else None
             
             if commander_card:
                 result = await self.analyze_commander(commander_card)
                 result['search_query'] = query
+                result['random_selection'] = selected.get('selection_metadata', {}) if selected else {}
                 return result
             else:
                 raise ValueError("No commanders found matching criteria")

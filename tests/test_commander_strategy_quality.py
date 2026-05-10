@@ -183,6 +183,66 @@ def test_random_commander_colorless_filter_is_exact_color_identity():
     assert "id:w" not in query
 
 
+def test_random_commander_scores_semantic_matches_above_loose_text_hits():
+    engine = make_engine()
+    intent = engine._random_commander_search_intent(search_text="artifact graveyard")
+    artifact_graveyard_commander = {
+        "name": "Artifact Graveyard Commander",
+        "type_line": "Legendary Artifact Creature - Artificer",
+        "oracle_text": (
+            "Whenever an artifact card is put into your graveyard from anywhere, "
+            "return another target artifact card from your graveyard to your hand."
+        ),
+        "cmc": 3,
+        "color_identity": ["U", "B"],
+    }
+    loose_artifact_body = {
+        "name": "Loose Artifact Body",
+        "type_line": "Legendary Artifact Creature - Construct",
+        "oracle_text": "Vigilance.",
+        "cmc": 4,
+        "color_identity": [],
+    }
+
+    strong = engine._score_random_commander_candidate(artifact_graveyard_commander, intent)
+    loose = engine._score_random_commander_candidate(loose_artifact_body, intent)
+
+    assert {"artifact", "graveyard"}.issubset(set(strong["matched_synergies"]))
+    assert strong["score"] >= loose["score"] + 30
+
+
+def test_random_commander_flash_search_prefers_real_reactive_engine():
+    engine = make_engine()
+    intent = engine._random_commander_search_intent(search_text="flash")
+    flash_body = {
+        "name": "Flash Body",
+        "type_line": "Legendary Creature - Wizard",
+        "oracle_text": "Flash.",
+        "cmc": 4,
+        "color_identity": ["U"],
+    }
+    flash_engine = {
+        "name": "Reactive Flash Engine",
+        "type_line": "Legendary Creature - Wizard",
+        "oracle_text": (
+            "Flash. You may cast creature spells as though they had flash. "
+            "At the beginning of each end step, if you cast a spell this turn, draw a card."
+        ),
+        "cmc": 5,
+        "color_identity": ["U", "G"],
+    }
+
+    body_score = engine._score_random_commander_candidate(flash_body, intent)
+    engine_score = engine._score_random_commander_candidate(flash_engine, intent)
+    ranked = engine._rank_random_commander_candidates([flash_body, flash_engine], intent)
+
+    assert "flash_reactive_control" in engine_score["matched_archetypes"]
+    assert "flash_control" in engine_score["matched_synergies"]
+    assert body_score["matched_archetypes"] == []
+    assert engine_score["score"] > body_score["score"]
+    assert ranked[0]["card"]["name"] == "Reactive Flash Engine"
+
+
 def test_commander_synergy_detection_does_not_use_type_line_only_artifact_theme():
     engine = make_engine()
     artifact_body = {
