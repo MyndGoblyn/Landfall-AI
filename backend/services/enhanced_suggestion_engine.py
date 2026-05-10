@@ -2,6 +2,7 @@ from typing import Dict, List, Optional, Set
 import asyncio
 import logging
 import re
+import time
 from collections import Counter, defaultdict
 from services.archetype_registry import ArchetypeRegistry
 from services.mechanics_registry import MechanicsRegistry
@@ -16,6 +17,11 @@ class EnhancedSuggestionEngine:
         self.scryfall = scryfall_service
         self.mechanics_registry = MechanicsRegistry.load_default()
         self.archetype_registry = ArchetypeRegistry.load_default()
+        self._semantic_cache = {}
+        self._semantic_cache_max_entries = 2500
+        self._random_pool_cache = {}
+        self._random_pool_cache_ttl = 900
+        self._random_pool_cache_max_entries = 80
         
         # Role targets
         self.role_targets = {
@@ -111,6 +117,83 @@ class EnhancedSuggestionEngine:
         """Keep specific commander plans ahead of broad support themes."""
         unique = list(dict.fromkeys(synergies))
         return sorted(unique, key=lambda synergy: self.synergy_priority.get(synergy, 100))
+
+    def _card_cache_key(self, card: Optional[Dict]) -> str:
+        """Build a stable key for short-lived in-process semantic caches."""
+        if not card:
+            return "none"
+        if card.get('id'):
+            return f"id:{card.get('id')}"
+        if card.get('oracle_id'):
+            return f"oracle:{card.get('oracle_id')}"
+        color_identity = ''.join(card.get('color_identity', []) or [])
+        return "|".join([
+            str(card.get('name', '')).lower(),
+            str(card.get('type_line', '')).lower(),
+            str(card.get('oracle_text', '')).lower(),
+            str(card.get('cmc', '')),
+            color_identity,
+        ])
+
+    def _semantic_context_key(
+        self,
+        stats: Optional[Dict] = None,
+        detected_themes: Optional[List[str]] = None,
+    ) -> tuple:
+        stats = stats or {}
+        role_counts = tuple(sorted((stats.get('role_counts') or {}).items()))
+        return (
+            stats.get('total_lands', 0),
+            stats.get('total_cards', 0),
+            role_counts,
+            tuple(sorted(detected_themes or [])),
+        )
+
+    def _clone_cached_value(self, value):
+        if isinstance(value, frozenset):
+            return set(value)
+        if isinstance(value, tuple):
+            return list(value)
+        if isinstance(value, list):
+            return [dict(item) if isinstance(item, dict) else item for item in value]
+        if isinstance(value, dict):
+            return {
+                key: list(item) if isinstance(item, list) else set(item) if isinstance(item, set) else item
+                for key, item in value.items()
+            }
+        return value
+
+    def _semantic_cache_get(self, key):
+        if key not in self._semantic_cache:
+            return None
+        return self._clone_cached_value(self._semantic_cache[key])
+
+    def _semantic_cache_set(self, key, value):
+        if key not in self._semantic_cache and len(self._semantic_cache) >= self._semantic_cache_max_entries:
+            self._semantic_cache.pop(next(iter(self._semantic_cache)))
+        if isinstance(value, set):
+            stored = frozenset(value)
+        elif isinstance(value, list):
+            stored = [dict(item) if isinstance(item, dict) else item for item in value]
+        elif isinstance(value, dict):
+            stored = dict(value)
+        else:
+            stored = value
+        self._semantic_cache[key] = stored
+        return self._clone_cached_value(stored)
+
+    def _random_intent_key(self, intent: Dict) -> tuple:
+        return (
+            tuple(intent.get('terms', [])),
+            tuple(sorted(intent.get('desired_synergies', set()))),
+            tuple(sorted(intent.get('desired_archetypes', set()))),
+            tuple(sorted(intent.get('desired_signals', set()))),
+            tuple(sorted(intent.get('desired_types', set()))),
+            bool(intent.get('has_strategy_terms')),
+        )
+
+    def _random_pool_cache_key(self, query: str, intent: Dict) -> tuple:
+        return (query, self._random_intent_key(intent))
 
     def _detect_typal_creature_types(self, oracle_text: str, type_line: str = "") -> List[str]:
         """Detect creature-type plans from rules text without using commander names."""
@@ -271,8 +354,32 @@ class EnhancedSuggestionEngine:
         include_texture: bool = True,
     ) -> List[Dict]:
         """Detect exact mechanics with the registry while keeping output serializable."""
+        signals = self._registry_signal_objects_for_card(
+            card,
+            context_card=context_card,
+            include_texture=include_texture,
+        )
+        return [signal.as_dict() for signal in signals]
+
+    def _registry_signal_objects_for_card(
+        self,
+        card: Dict,
+        context_card: Optional[Dict] = None,
+        include_texture: bool = True,
+    ) -> List:
+        """Detect exact mechanics with short-lived caching for repeated semantic passes."""
         if not self.mechanics_registry or self.mechanics_registry.count() == 0:
             return []
+
+        cache_key = (
+            'registry_signals',
+            self._card_cache_key(card),
+            self._card_cache_key(context_card),
+            include_texture,
+        )
+        cached = self._semantic_cache_get(cache_key)
+        if cached is not None:
+            return cached
 
         context_text = self._combined_oracle_text(context_card) if context_card else None
         signals = self.mechanics_registry.detect_signals(
@@ -281,7 +388,7 @@ class EnhancedSuggestionEngine:
             context_text=context_text,
             include_texture=include_texture,
         )
-        return [signal.as_dict() for signal in signals]
+        return self._semantic_cache_set(cache_key, signals)
 
     def _registry_synergy_scores_for_card(
         self,
@@ -293,14 +400,23 @@ class EnhancedSuggestionEngine:
         if not self.mechanics_registry or self.mechanics_registry.count() == 0:
             return {}
 
-        context_text = self._combined_oracle_text(context_card) if context_card else None
-        signals = self.mechanics_registry.detect_signals(
-            self._combined_oracle_text(card),
-            self._combined_type_line(card),
-            context_text=context_text,
+        cache_key = (
+            'registry_synergy_scores',
+            self._card_cache_key(card),
+            self._card_cache_key(context_card),
+            include_texture,
+        )
+        cached = self._semantic_cache_get(cache_key)
+        if cached is not None:
+            return cached
+
+        signals = self._registry_signal_objects_for_card(
+            card,
+            context_card=context_card,
             include_texture=include_texture,
         )
-        return self.mechanics_registry.synergy_scores(signals)
+        scores = self.mechanics_registry.synergy_scores(signals)
+        return self._semantic_cache_set(cache_key, scores)
 
     def _top_registry_mechanics(
         self,
@@ -401,6 +517,15 @@ class EnhancedSuggestionEngine:
         keywords = {str(keyword).lower() for keyword in commander_card.get("keywords", []) or []}
         mana_value = commander_card.get("cmc", 0) or 0
         color_identity = commander_card.get("color_identity", []) or []
+        cache_key = (
+            'archetype_signals',
+            self._card_cache_key(commander_card),
+            self._semantic_context_key(stats, detected_themes),
+        )
+        cached = self._semantic_cache_get(cache_key)
+        if cached is not None:
+            return cached
+
         signals: Set[str] = set()
 
         if mana_value >= 7:
@@ -603,7 +728,7 @@ class EnhancedSuggestionEngine:
         if "artifact_tokens" in detected_themes:
             signals.add("artifact_token_creation")
 
-        return signals
+        return self._semantic_cache_set(cache_key, signals)
 
     def _build_exposure_flags(self, oracle_text: str, mana_value: float) -> Set[str]:
         flags = set()
@@ -620,15 +745,25 @@ class EnhancedSuggestionEngine:
     ) -> List[Dict]:
         if not self.archetype_registry or self.archetype_registry.count() == 0:
             return []
+        cache_key = (
+            'commander_archetypes',
+            self._card_cache_key(commander_card),
+            self._semantic_context_key(stats, detected_themes),
+            limit,
+        )
+        cached = self._semantic_cache_get(cache_key)
+        if cached is not None:
+            return cached
         signals = self._extract_archetype_signals(
             commander_card,
             stats=stats,
             detected_themes=detected_themes,
         )
-        return [
+        archetypes = [
             match.as_dict()
             for match in self.archetype_registry.detect_archetypes(signals, limit=limit)
         ]
+        return self._semantic_cache_set(cache_key, archetypes)
 
     def _archetype_synergies(self, archetypes: List[Dict]) -> List[str]:
         """Map composite archetypes back to stable search/recommendation lanes."""
@@ -896,6 +1031,11 @@ class EnhancedSuggestionEngine:
     
     def _detect_commander_synergies(self, commander_card: Dict) -> List[str]:
         """Detect what synergies the commander cares about"""
+        cache_key = ('commander_synergies', self._card_cache_key(commander_card))
+        cached = self._semantic_cache_get(cache_key)
+        if cached is not None:
+            return cached
+
         oracle_text = self._combined_oracle_text(commander_card)
         type_line = self._combined_type_line(commander_card)
         
@@ -1030,10 +1170,9 @@ class EnhancedSuggestionEngine:
             add_once('goad')
 
         if self.mechanics_registry and self.mechanics_registry.count() > 0:
-            registry_signals = self.mechanics_registry.detect_signals(
-                oracle_text,
-                type_line,
-                context_text=oracle_text,
+            registry_signals = self._registry_signal_objects_for_card(
+                commander_card,
+                context_card=commander_card,
                 include_texture=False,
             )
             for signal in registry_signals:
@@ -1053,12 +1192,16 @@ class EnhancedSuggestionEngine:
         for synergy_type in self._archetype_synergies(self._detect_commander_archetypes(commander_card)):
             add_once(synergy_type)
         
-        return self._prioritize_synergies(synergies)
+        return self._semantic_cache_set(cache_key, self._prioritize_synergies(synergies))
     
     def _get_commander_constraints(self, commander_card: Dict) -> Dict:
         """Extract specific constraints from commander abilities"""
         if not commander_card:
             return {}
+        cache_key = ('commander_constraints', self._card_cache_key(commander_card))
+        cached = self._semantic_cache_get(cache_key)
+        if cached is not None:
+            return cached
         
         oracle_text = commander_card.get('oracle_text', '').lower()
         name = commander_card.get('name', '').lower()
@@ -1139,7 +1282,7 @@ class EnhancedSuggestionEngine:
         if 'flash_timing' in archetype_signals:
             constraints['flash_timing'] = True
         
-        return constraints
+        return self._semantic_cache_set(cache_key, constraints)
     
     def _calculate_effective_cmc(self, card: Dict) -> int:
         """
@@ -1376,10 +1519,10 @@ class EnhancedSuggestionEngine:
             synergies.append('flash_control')
 
         if self.mechanics_registry and self.mechanics_registry.count() > 0:
-            registry_signals = self.mechanics_registry.detect_signals(
-                oracle_text,
-                type_line,
-                context_text=oracle_text,
+            registry_card = {'oracle_text': oracle_text, 'type_line': type_line}
+            registry_signals = self._registry_signal_objects_for_card(
+                registry_card,
+                context_card=registry_card,
                 include_texture=False,
             )
             for signal in registry_signals:
@@ -1503,10 +1646,10 @@ class EnhancedSuggestionEngine:
                 theme_counts['spellslinger'] += 1
 
             if self.mechanics_registry and self.mechanics_registry.count() > 0:
-                registry_signals = self.mechanics_registry.detect_signals(
-                    oracle_text,
-                    type_line,
-                    context_text=oracle_text,
+                registry_card = {'oracle_text': oracle_text, 'type_line': type_line}
+                registry_signals = self._registry_signal_objects_for_card(
+                    registry_card,
+                    context_card=registry_card,
                     include_texture=False,
                 )
                 for signal in registry_signals:
@@ -4182,10 +4325,9 @@ class EnhancedSuggestionEngine:
 
         registry_signal = None
         if self.mechanics_registry and self.mechanics_registry.count() > 0:
-            registry_signals = self.mechanics_registry.detect_signals(
-                oracle_text,
-                type_line,
-                context_text=commander_text,
+            registry_signals = self._registry_signal_objects_for_card(
+                card_data,
+                context_card=commander_card,
                 include_texture=True,
             )
             registry_signal = self.mechanics_registry.best_signal_for_synergy(
@@ -6081,6 +6223,15 @@ class EnhancedSuggestionEngine:
 
     def _score_random_commander_candidate(self, card: Dict, intent: Dict) -> Dict:
         """Score a candidate before the random pick so output feels intentional."""
+        cache_key = (
+            'random_candidate_score',
+            self._card_cache_key(card),
+            self._random_intent_key(intent),
+        )
+        cached = self._semantic_cache_get(cache_key)
+        if cached is not None:
+            return cached
+
         oracle_text = self._combined_oracle_text(card)
         type_line = self._combined_type_line(card)
         name = card.get('name', '')
@@ -6127,7 +6278,7 @@ class EnhancedSuggestionEngine:
             score -= 6
 
         score = max(0, score)
-        return {
+        metadata = {
             'score': score,
             'synergies': sorted(synergies),
             'archetypes': sorted(archetype_ids),
@@ -6138,6 +6289,7 @@ class EnhancedSuggestionEngine:
             'matched_signals': matched_signals,
             'matched_types': matched_types,
         }
+        return self._semantic_cache_set(cache_key, metadata)
 
     def _rank_random_commander_candidates(self, candidates: List[Dict], intent: Dict) -> List[Dict]:
         """Return candidates with score metadata, strongest first."""
@@ -6158,12 +6310,47 @@ class EnhancedSuggestionEngine:
         ))
         return ranked
 
-    def _select_random_commander_candidate(self, candidates: List[Dict], intent: Dict) -> Optional[Dict]:
+    def _ranked_random_candidates_for_query(
+        self,
+        query: str,
+        candidates: List[Dict],
+        intent: Dict,
+    ) -> List[Dict]:
+        """Reuse scored random pools for repeated randomizations with the same filters."""
+        cache_key = self._random_pool_cache_key(query, intent)
+        now = time.monotonic()
+        cached = self._random_pool_cache.get(cache_key)
+        if cached and cached['expires_at'] > now:
+            return cached['ranked']
+
+        ranked = self._rank_random_commander_candidates(candidates, intent)
+        if len(self._random_pool_cache) >= self._random_pool_cache_max_entries:
+            oldest_key = min(
+                self._random_pool_cache,
+                key=lambda key: self._random_pool_cache[key]['expires_at']
+            )
+            self._random_pool_cache.pop(oldest_key, None)
+        self._random_pool_cache[cache_key] = {
+            'expires_at': now + self._random_pool_cache_ttl,
+            'ranked': ranked,
+        }
+        return ranked
+
+    def _select_random_commander_candidate(
+        self,
+        candidates: List[Dict],
+        intent: Dict,
+        query: Optional[str] = None,
+    ) -> Optional[Dict]:
         """Pick randomly from the best semantic band, preserving discovery variety."""
         if not candidates:
             return None
 
-        ranked = self._rank_random_commander_candidates(candidates, intent)
+        ranked = (
+            self._ranked_random_candidates_for_query(query, candidates, intent)
+            if query
+            else self._rank_random_commander_candidates(candidates, intent)
+        )
         top_score = ranked[0]['score']
         if intent.get('has_strategy_terms'):
             floor = max(20, top_score - 12)
@@ -6214,7 +6401,7 @@ class EnhancedSuggestionEngine:
                 results = [card for card in results if self._is_commander_eligible(card, creature_only=True)]
             
             intent = self._random_commander_search_intent(search_text, keywords)
-            selected = self._select_random_commander_candidate(results, intent)
+            selected = self._select_random_commander_candidate(results, intent, query=query)
             commander_card = selected['card'] if selected else None
             
             if commander_card:

@@ -243,6 +243,48 @@ def test_random_commander_flash_search_prefers_real_reactive_engine():
     assert ranked[0]["card"]["name"] == "Reactive Flash Engine"
 
 
+def test_random_commander_reuses_ranked_pool_for_same_filter():
+    engine = make_engine()
+    intent = engine._random_commander_search_intent(search_text="artifact graveyard")
+    candidates = [
+        {
+            "name": "Artifact Graveyard Commander",
+            "type_line": "Legendary Artifact Creature - Artificer",
+            "oracle_text": (
+                "Whenever an artifact card is put into your graveyard from anywhere, "
+                "return another target artifact card from your graveyard to your hand."
+            ),
+            "cmc": 3,
+            "color_identity": ["U", "B"],
+            "legalities": {"commander": "legal"},
+        },
+        {
+            "name": "Loose Artifact Body",
+            "type_line": "Legendary Artifact Creature - Construct",
+            "oracle_text": "Vigilance.",
+            "cmc": 4,
+            "color_identity": [],
+            "legalities": {"commander": "legal"},
+        },
+    ]
+    rank_calls = 0
+    original_rank = engine._rank_random_commander_candidates
+
+    def counting_rank(cards, ranking_intent):
+        nonlocal rank_calls
+        rank_calls += 1
+        return original_rank(cards, ranking_intent)
+
+    engine._rank_random_commander_candidates = counting_rank
+
+    first = engine._select_random_commander_candidate(candidates, intent, query="cached-query")
+    second = engine._select_random_commander_candidate(candidates, intent, query="cached-query")
+
+    assert first["card"]["name"]
+    assert second["card"]["name"]
+    assert rank_calls == 1
+
+
 def test_commander_synergy_detection_does_not_use_type_line_only_artifact_theme():
     engine = make_engine()
     artifact_body = {
