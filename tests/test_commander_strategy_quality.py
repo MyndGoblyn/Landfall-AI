@@ -409,6 +409,135 @@ def test_commander_analysis_reuses_cached_result_for_same_budget_profile():
     assert len(fake.queries) == first_query_count
 
 
+def test_rat_typal_commander_is_not_reduced_to_generic_graveyard_hate():
+    engine = make_engine()
+    lord_skitter = {
+        "name": "Lord Skitter, Sewer King",
+        "type_line": "Legendary Creature - Rat Noble",
+        "oracle_text": (
+            "Whenever another Rat you control enters, exile up to one target card from an opponent's graveyard.\n"
+            "At the beginning of combat on your turn, create a 1/1 black Rat creature token with "
+            "\"This token can't block.\""
+        ),
+        "cmc": 3,
+        "color_identity": ["B"],
+    }
+
+    synergies = engine._detect_commander_synergies(lord_skitter)
+    constraints = engine._get_commander_constraints(lord_skitter)
+
+    assert "typal" in synergies
+    assert "tokens" in synergies
+    assert "graveyard" not in synergies
+    assert constraints["typal_types"] == ["rat"]
+
+
+def test_colorless_big_mana_rejects_dead_identity_mana_rocks():
+    engine = make_engine()
+    constraints = {"colorless_identity": True, "high_mana_commander": True}
+    commanders_sphere = {
+        "name": "Commander's Sphere",
+        "type_line": "Artifact",
+        "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+        "cmc": 3,
+    }
+    fellwar_stone = {
+        "name": "Fellwar Stone",
+        "type_line": "Artifact",
+        "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+        "cmc": 2,
+    }
+    mind_stone = {
+        "name": "Mind Stone",
+        "type_line": "Artifact",
+        "oracle_text": "{T}: Add {C}. {1}, {T}, Sacrifice Mind Stone: Draw a card.",
+        "cmc": 2,
+    }
+
+    assert not engine._passes_commander_recommendation_constraints(commanders_sphere, 3, constraints)
+    assert not engine._passes_commander_recommendation_constraints(fellwar_stone, 2, constraints)
+    assert engine._passes_commander_recommendation_constraints(mind_stone, 2, constraints)
+    assert not engine._card_matches_synergy(commanders_sphere, "colorless_big_mana")
+    assert engine._card_matches_synergy(mind_stone, "colorless_big_mana")
+
+
+def test_typal_matching_uses_word_boundaries_not_substrings():
+    engine = make_engine()
+    lord_skitter = {
+        "name": "Lord Skitter, Sewer King",
+        "type_line": "Legendary Creature - Rat Noble",
+        "oracle_text": "Whenever another Rat you control enters, exile up to one target card from an opponent's graveyard.",
+    }
+    yawgmoth = {
+        "name": "Yawgmoth, Thran Physician",
+        "type_line": "Legendary Creature - Human Cleric",
+        "oracle_text": "Pay 1 life, Sacrifice another creature: Put a -1/-1 counter on up to one target creature and draw a card. Proliferate.",
+        "cmc": 4,
+    }
+
+    assert not engine._card_matches_commander_context(yawgmoth, "typal", lord_skitter)
+
+
+def test_cheap_spell_fuel_can_clear_spellslinger_quality_floor():
+    engine = make_engine()
+    commander = {
+        "name": "Spell Chain Commander",
+        "type_line": "Legendary Creature - Wizard",
+        "oracle_text": "Whenever you cast your second spell each turn, draw a card. Copy target instant or sorcery spell you control.",
+        "color_identity": ["U", "R"],
+    }
+    consider = {
+        "name": "Consider",
+        "type_line": "Instant",
+        "oracle_text": "Surveil 1. Draw a card.",
+        "cmc": 1,
+        "color_identity": ["U"],
+    }
+
+    quality = engine._recommendation_quality_metadata(consider, "instant_sorcery", commander)
+
+    assert quality["score"] >= 84
+    assert "low_setup_cost" in quality["evidence_tags"]
+    assert "card_flow" in quality["evidence_tags"]
+
+
+def test_spell_commanders_prioritize_spell_lane_over_incidental_tokens():
+    engine = make_engine()
+    commander = {
+        "name": "Baral and Kari Zev",
+        "type_line": "Legendary Creature - Human",
+        "oracle_text": (
+            "Whenever you cast your first instant or sorcery spell each turn, you may cast a spell with lesser mana value "
+            "that shares a card type with it from your hand without paying its mana cost. If you don't, create First Mate Ragavan, "
+            "a legendary 2/1 red Monkey Pirate creature token."
+        ),
+        "color_identity": ["U", "R"],
+    }
+
+    synergies = engine._detect_commander_synergies(commander)
+
+    assert synergies.index("instant_sorcery") < synergies.index("tokens")
+
+
+def test_deck_theme_detection_does_not_call_normal_black_interaction_spellslinger_or_voltron():
+    engine = make_engine()
+    cards = [
+        {"name": "Village Rites", "type_line": "Instant", "oracle_text": "As an additional cost to cast this spell, sacrifice a creature. Draw two cards."},
+        {"name": "Deadly Dispute", "type_line": "Instant", "oracle_text": "As an additional cost to cast this spell, sacrifice an artifact or creature. Draw two cards and create a Treasure token."},
+        {"name": "Sign in Blood", "type_line": "Sorcery", "oracle_text": "Target player draws two cards and loses 2 life."},
+        {"name": "Night's Whisper", "type_line": "Sorcery", "oracle_text": "You draw two cards and you lose 2 life."},
+        {"name": "Skullclamp", "type_line": "Artifact - Equipment", "oracle_text": "Equipped creature gets +1/-1. Whenever equipped creature dies, draw two cards. Equip {1}."},
+        {"name": "Piper of the Swarm", "type_line": "Creature - Human Warlock", "oracle_text": "Rats you control have menace. Create a 1/1 black Rat creature token."},
+        {"name": "Ogre Slumlord", "type_line": "Creature - Ogre Rogue", "oracle_text": "Whenever another nontoken creature dies, you may create a 1/1 black Rat creature token."},
+        {"name": "Karumonix, the Rat King", "type_line": "Legendary Creature - Phyrexian Rat", "oracle_text": "Toxic 1. Other Rats you control have toxic 1."},
+    ]
+
+    themes = engine._detect_deck_themes(cards, commander_synergies=["typal", "tokens"])
+
+    assert "spellslinger" not in themes
+    assert "voltron" not in themes
+
+
 def test_commander_synergy_detection_does_not_use_type_line_only_artifact_theme():
     engine = make_engine()
     artifact_body = {

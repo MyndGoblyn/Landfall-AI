@@ -32,12 +32,17 @@ class InMemoryCollection:
     async def insert_one(self, doc):
         self.docs.append(deepcopy(doc))
 
-    async def update_one(self, query, update):
+    async def update_one(self, query, update, upsert=False):
         for doc in self.docs:
             if self._matches(doc, query):
                 if "$set" in update:
                     doc.update(deepcopy(update["$set"]))
                 return
+        if upsert:
+            new_doc = deepcopy(query)
+            if "$set" in update:
+                new_doc.update(deepcopy(update["$set"]))
+            self.docs.append(new_doc)
 
     async def delete_one(self, query):
         for index, doc in enumerate(self.docs):
@@ -64,7 +69,14 @@ class InMemoryCollection:
         return InMemoryCursor(docs)
 
     def _matches(self, doc, query):
-        return all(doc.get(key) == value for key, value in query.items())
+        for key, value in query.items():
+            doc_value = doc.get(key)
+            if isinstance(doc_value, list):
+                if value not in doc_value:
+                    return False
+            elif doc_value != value:
+                return False
+        return True
 
     def _project(self, doc, projection):
         result = deepcopy(doc)
@@ -82,6 +94,8 @@ class InMemoryDB:
         self.analysis_runs = InMemoryCollection()
         self.auth_tokens = InMemoryCollection()
         self.rate_limits = InMemoryCollection()
+        self.scryfall_cards = InMemoryCollection()
+        self.scryfall_searches = InMemoryCollection()
 
 
 class InMemoryClient:

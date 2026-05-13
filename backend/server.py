@@ -109,7 +109,7 @@ app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
 # Initialize services
-scryfall_service = ScryfallService()
+scryfall_service = ScryfallService(db=db)
 deck_parser = DeckParser(scryfall_service)
 suggestion_engine = EnhancedSuggestionEngine(scryfall_service)
 
@@ -1221,8 +1221,14 @@ async def prepare_database():
             await db.auth_tokens.create_index('token_hash', unique=True)
             await db.auth_tokens.create_index('expires_at')
             await db.rate_limits.create_index('key', unique=True)
+            await db.scryfall_cards.create_index('name_lower', unique=True)
+            await db.scryfall_cards.create_index('lookup_keys')
+            await db.scryfall_cards.create_index('oracle_id', sparse=True)
+            await db.scryfall_cards.create_index('fetched_at', expireAfterSeconds=2592000)
+            await db.scryfall_searches.create_index('query_key', unique=True)
+            await db.scryfall_searches.create_index('fetched_at', expireAfterSeconds=604800)
         except Exception as exc:
-            logger.warning("Could not ensure auth database indexes: %s", exc)
+            logger.warning("Could not ensure database indexes: %s", exc)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

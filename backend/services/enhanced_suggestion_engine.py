@@ -72,11 +72,13 @@ class EnhancedSuggestionEngine:
 
         self.creature_type_terms = {
             'advisor', 'ally', 'angel', 'artificer', 'assassin', 'barbarian', 'bird',
-            'cleric', 'construct', 'demon', 'dragon', 'druid', 'dwarf', 'eldrazi',
-            'elemental', 'elf', 'faerie', 'goblin', 'god', 'golem', 'human',
-            'insect', 'knight', 'merfolk', 'myr', 'pirate', 'rogue', 'samurai',
-            'shaman', 'sliver', 'soldier', 'sphinx', 'spirit', 'squirrel',
-            'thopter', 'vampire', 'warlock', 'warrior', 'wizard', 'zombie',
+            'beast', 'cat', 'cleric', 'construct', 'demon', 'dog', 'dragon',
+            'druid', 'dwarf', 'eldrazi', 'elemental', 'elf', 'faerie', 'fungus',
+            'goblin', 'god', 'golem', 'horror', 'human', 'insect', 'knight',
+            'merfolk', 'myr', 'ninja', 'pirate', 'phyrexian', 'rat', 'rogue',
+            'samurai', 'shaman', 'skeleton', 'sliver', 'snake', 'soldier',
+            'sphinx', 'spider', 'spirit', 'squirrel', 'thopter', 'vampire',
+            'warlock', 'warrior', 'werewolf', 'wizard', 'wolf', 'zombie',
         }
         self.synergy_priority = {
             'forced_reanimation': 5,
@@ -93,6 +95,7 @@ class EnhancedSuggestionEngine:
             'attack_triggers': 16,
             'combat_damage': 17,
             'goad': 18,
+            'instant_sorcery': 19,
             'blink': 19,
             'landfall': 20,
             'artifact_tokens': 21,
@@ -104,7 +107,6 @@ class EnhancedSuggestionEngine:
             'graveyard': 27,
             'tokens': 28,
             'lifegain': 29,
-            'instant_sorcery': 30,
             'creature': 31,
             'exile': 32,
             'board_conversion': 33,
@@ -247,20 +249,36 @@ class EnhancedSuggestionEngine:
         }
         return copy.deepcopy(value)
 
+    def _creature_type_forms(self, creature_type: str) -> List[str]:
+        irregular = {
+            "dwarf": "dwarves",
+            "elf": "elves",
+            "faerie": "faeries",
+            "phyrexian": "phyrexians",
+        }
+        return [creature_type, irregular.get(creature_type, f"{creature_type}s")]
+
+    def _contains_creature_type_reference(self, text: str, type_line: str, creature_type: str) -> bool:
+        forms = self._creature_type_forms(creature_type)
+        type_ref = "|".join(re.escape(form) for form in forms)
+        return (
+            re.search(rf"\b(?:{type_ref})\b", text) is not None or
+            re.search(rf"\b(?:{type_ref})\b", type_line) is not None
+        )
+
     def _detect_typal_creature_types(self, oracle_text: str, type_line: str = "") -> List[str]:
         """Detect creature-type plans from rules text without using commander names."""
         text = oracle_text.lower()
         detected = []
+        text_words = set(re.findall(r"[a-z]+", text))
 
         if 'choose a creature type' in text or 'creatures of the chosen type' in text or 'kindred' in type_line.lower():
             detected.append('chosen type')
 
         for creature_type in sorted(self.creature_type_terms):
-            plural = {
-                "dwarf": "dwarves",
-                "elf": "elves",
-                "faerie": "faeries",
-            }.get(creature_type, f"{creature_type}s")
+            _singular, plural = self._creature_type_forms(creature_type)
+            if creature_type not in text_words and plural not in text_words:
+                continue
             type_ref = rf"(?:{creature_type}|{plural})"
             patterns = [
                 rf"\b{type_ref} spells?\b",
@@ -302,6 +320,28 @@ class EnhancedSuggestionEngine:
                 return True
         return False
 
+    def _has_spell_stack_payoff_text(self, oracle_text: str) -> bool:
+        """Detect cards that reward, copy, discount, or multiply spell casting."""
+        return any(term in oracle_text for term in [
+            'instant or sorcery',
+            'instant and sorcery',
+            'instant card',
+            'sorcery card',
+            'instant spell',
+            'sorcery spell',
+            'noncreature spell',
+            'magecraft',
+            'copy target instant',
+            'copy target sorcery',
+            'whenever you cast a spell',
+            'whenever you cast an instant',
+            'whenever you cast a sorcery',
+            'whenever you cast a noncreature spell',
+            'whenever you cast or copy',
+            'whenever you copy',
+            'prowess',
+        ]) or self._has_target_cost_modifier_text(oracle_text)
+
     def _has_scalable_target_spell_text(self, oracle_text: str) -> bool:
         return any(phrase in oracle_text for phrase in [
             'any number of target',
@@ -321,28 +361,10 @@ class EnhancedSuggestionEngine:
         if 'instant' in type_line or 'sorcery' in type_line:
             return True
 
-        spell_plan_terms = [
-            'instant or sorcery',
-            'instant and sorcery',
-            'instant card',
-            'sorcery card',
-            'instant spell',
-            'sorcery spell',
-            'noncreature spell',
-            'magecraft',
-            'copy target instant',
-            'copy target sorcery',
+        return self._has_spell_stack_payoff_text(oracle_text) or any(term in oracle_text for term in [
             'noncreature, nonland',
             'noncreature nonland',
-            'whenever you cast a spell',
-            'whenever you cast an instant',
-            'whenever you cast a sorcery',
-            'whenever you cast a noncreature spell',
-            'whenever you cast or copy',
-            'whenever you copy',
-            'prowess',
-        ]
-        return any(term in oracle_text for term in spell_plan_terms) or self._has_target_cost_modifier_text(oracle_text)
+        ])
 
     def _sacrifice_relevant_text(self, oracle_text: str) -> str:
         """Drop negated sacrifice wording before checking for sacrifice plans."""
@@ -1153,7 +1175,7 @@ class EnhancedSuggestionEngine:
             re.search(r'\b(dies|dying|death)\b', oracle_text) or
             'reanimate' in oracle_text or
             'put into a graveyard' in oracle_text
-        ):
+        ) and not self._is_opponent_graveyard_hate_only(oracle_text):
             add_once('graveyard')
         if self._has_lifegain_reward_text(oracle_text):
             add_once('lifegain')
@@ -1714,10 +1736,15 @@ class EnhancedSuggestionEngine:
         """Detect prominent mechanical themes in the deck"""
         theme_counts = defaultdict(int)
         registry_theme_scores = defaultdict(int)
+        spell_card_count = 0
+        spell_payoff_count = 0
         
         for card in cards:
             oracle_text = card.get('oracle_text', '').lower()
             type_line = card.get('type_line', '').lower()
+            is_spell_card = 'instant' in type_line or 'sorcery' in type_line
+            if is_spell_card:
+                spell_card_count += 1
             
             # Count theme occurrences
             if 'enchantment' in type_line and any(phrase in oracle_text for phrase in [
@@ -1742,7 +1769,8 @@ class EnhancedSuggestionEngine:
                 theme_counts['landfall'] += 1
             if self._has_sacrifice_plan_text(oracle_text):
                 theme_counts['aristocrats'] += 1
-            if self._is_spell_stack_plan(oracle_text, type_line):
+            if self._has_spell_stack_payoff_text(oracle_text):
+                spell_payoff_count += 1
                 theme_counts['spellslinger'] += 1
 
             if self.mechanics_registry and self.mechanics_registry.count() > 0:
@@ -1758,7 +1786,7 @@ class EnhancedSuggestionEngine:
                     if signal.support_only and not signal.requirements_met:
                         continue
                     for synergy in self.mechanics_registry.synergies_for_signal(signal):
-                        if synergy == 'instant_sorcery' and not self._is_spell_stack_plan(oracle_text, type_line):
+                        if synergy == 'instant_sorcery' and not self._has_spell_stack_payoff_text(oracle_text):
                             continue
                         if synergy == 'instant_sorcery':
                             registry_theme_scores['spellslinger'] += signal.score
@@ -1776,7 +1804,7 @@ class EnhancedSuggestionEngine:
         theme_thresholds = {
             'enchantress': 3,
             'artifacts': 8,
-            'voltron': 4,
+            'voltron': 5,
             'graveyard': 5,
             'counters': 4,
             'tokens': 4,
@@ -1787,7 +1815,7 @@ class EnhancedSuggestionEngine:
         registry_thresholds = {
             'enchantress': 12,
             'artifacts': 24,
-            'voltron': 12,
+            'voltron': 20,
             'graveyard': 16,
             'counters': 12,
             'tokens': 12,
@@ -1805,6 +1833,12 @@ class EnhancedSuggestionEngine:
         for theme, score in registry_theme_scores.items():
             if score >= registry_thresholds.get(theme, 16) and theme not in detected:
                 detected.append(theme)
+        if (
+            'spellslinger' not in detected and
+            spell_card_count >= 14 and
+            (spell_payoff_count >= 1 or 'instant_sorcery' in commander_synergies)
+        ):
+            detected.append('spellslinger')
         return detected
 
     def _legal_example_names(
@@ -3499,6 +3533,7 @@ class EnhancedSuggestionEngine:
         """Filter out graveyard hate from graveyard-value recommendations."""
         hate_patterns = [
             'exile all cards from',
+            "an opponent's graveyard",
             "exile target player's graveyard",
             "exile target opponent's graveyard",
             'exile all graveyards',
@@ -3511,6 +3546,47 @@ class EnhancedSuggestionEngine:
             'graveyards cannot',
         ]
         return any(pattern in oracle_text for pattern in hate_patterns)
+
+    def _is_opponent_graveyard_hate_only(self, oracle_text: str) -> bool:
+        """True when graveyard text is only denying opponents resources."""
+        if not self._is_graveyard_hate(oracle_text):
+            return False
+        value_terms = [
+            'you may cast',
+            'you may play',
+            'from your graveyard',
+            'return',
+            'reanimate',
+            'flashback',
+            'escape',
+            'unearth',
+            'mill',
+            'dies',
+            'whenever a creature dies',
+            'whenever another creature dies',
+        ]
+        return not any(term in oracle_text for term in value_terms)
+
+    def _is_dead_colorless_mana_card(self, card_data: Dict) -> bool:
+        """Mana rocks whose text produces no mana in a true colorless identity."""
+        name = card_data.get('name', '').lower()
+        if name in {
+            'arcane signet',
+            "commander's sphere",
+            'command sphere',
+            'chrome mox',
+            'fellwar stone',
+            'mox amber',
+        }:
+            return True
+
+        oracle_text = card_data.get('oracle_text', '').lower()
+        dead_phrases = [
+            "add one mana of any color in your commander's color identity",
+            "add one mana of any color among legendary creatures and planeswalkers you control",
+            "add one mana of any of the exiled card's colors",
+        ]
+        return any(phrase in oracle_text for phrase in dead_phrases)
 
     def _has_graveyard_recursion_text(self, oracle_text: str) -> bool:
         """Confirm text actually retrieves, casts, or plays cards from a graveyard."""
@@ -3879,7 +3955,16 @@ class EnhancedSuggestionEngine:
         if synergy == 'extra_combat':
             return any(term in oracle_text for term in ['additional combat phase', 'extra combat phase', 'untap all creatures'])
         if synergy == 'colorless_big_mana':
-            return 'artifact' in type_line or 'colorless' in oracle_text or card_data.get('cmc', 0) >= 7
+            if self._is_dead_colorless_mana_card(card_data):
+                return False
+            return (
+                card_data.get('cmc', 0) >= 7 or
+                'eldrazi' in type_line or
+                'colorless mana' in oracle_text or
+                re.search(r'add \{c\}', oracle_text) is not None or
+                self._has_card_draw_text(oracle_text) or
+                any(term in oracle_text for term in ['untap', 'hexproof', 'indestructible'])
+            )
         if synergy == 'target_spells':
             return self._has_target_cost_modifier_text(oracle_text) or ('target' in oracle_text and ('instant' in type_line or 'sorcery' in type_line))
         if synergy == 'donation':
@@ -4109,7 +4194,7 @@ class EnhancedSuggestionEngine:
         if synergy == 'typal':
             typal_types = self._detect_typal_creature_types(commander_text)
             if typal_types and typal_types[0] != 'chosen type':
-                return typal_types[0] in oracle_text or typal_types[0] in type_line
+                return self._contains_creature_type_reference(oracle_text, type_line, typal_types[0])
             return bool(self._detect_typal_creature_types(oracle_text, type_line)) or 'creature' in type_line
 
         if synergy == 'combat_damage':
@@ -4129,7 +4214,16 @@ class EnhancedSuggestionEngine:
             ])
 
         if synergy == 'colorless_big_mana':
-            return 'artifact' in type_line or 'colorless' in oracle_text or card_data.get('cmc', 0) >= 7
+            if self._is_dead_colorless_mana_card(card_data):
+                return False
+            return (
+                card_data.get('cmc', 0) >= 7 or
+                'eldrazi' in type_line or
+                'colorless mana' in oracle_text or
+                re.search(r'add \{c\}', oracle_text) is not None or
+                self._has_card_draw_text(oracle_text) or
+                any(term in oracle_text for term in ['untap', 'hexproof', 'indestructible'])
+            )
 
         if synergy == 'target_spells':
             return self._has_target_cost_modifier_text(oracle_text) or (
@@ -4765,9 +4859,35 @@ class EnhancedSuggestionEngine:
                 evidence = 'multiplies key spells'
                 score = 80
                 add_evidence('payoff')
+            elif ('instant' in type_line or 'sorcery' in type_line) and card_data.get('cmc', 0) <= 3:
+                spell_fuel_terms = [
+                    'draw',
+                    'scry',
+                    'surveil',
+                    'copy',
+                    'create a treasure',
+                    'add {r}',
+                    'untap',
+                    'return target instant',
+                    'return target sorcery',
+                ]
+                if any(term in oracle_text for term in spell_fuel_terms):
+                    job = 'cheap spell fuel'
+                    evidence = 'keeps the spell chain moving'
+                    score = 84
+                    add_evidence('enabler')
+                    add_evidence('low_setup_cost')
+                    if self._has_card_draw_text(oracle_text):
+                        add_evidence('card_flow')
         elif synergy == 'typal':
             typal_types = self._detect_typal_creature_types(commander_text)
-            matching_type = next((term for term in typal_types if term != 'chosen type' and (term in oracle_text or term in type_line)), None)
+            matching_type = next(
+                (
+                    term for term in typal_types
+                    if term != 'chosen type' and self._contains_creature_type_reference(oracle_text, type_line, term)
+                ),
+                None
+            )
             if matching_type:
                 job = f'{matching_type} typal support'
                 evidence = f'adds {matching_type} density or payoff text'
@@ -4819,6 +4939,15 @@ class EnhancedSuggestionEngine:
                 evidence = 'uses the colorless ramp plan'
                 score = 84
                 add_evidence('payoff')
+            elif self._is_dead_colorless_mana_card(card_data):
+                add_penalty('dead_colorless_mana')
+                score = 30
+            elif re.search(r'add \{c\}', oracle_text) is not None or 'colorless mana' in oracle_text:
+                job = 'usable colorless ramp'
+                evidence = 'produces colorless mana'
+                score = 86
+                add_evidence('mana_development')
+                add_evidence('enabler')
             elif 'artifact' in type_line or 'colorless' in oracle_text:
                 job = 'colorless setup'
                 evidence = 'fits colorless deck-building constraints'
@@ -5419,12 +5548,22 @@ class EnhancedSuggestionEngine:
         if synergy == 'typal':
             typal_types = [t for t in commander_constraints.get('typal_types', []) if t != 'chosen type']
             if typal_types:
-                type_term = self._quote_scryfall_phrase(typal_types[0])
-                return f'(t:{type_term} OR o:{type_term}) {color_filter} f:commander'
+                type_term = re.sub(r'[^A-Za-z0-9 +/#\'-]', ' ', typal_types[0]).strip()
+                type_forms = [
+                    re.sub(r'[^A-Za-z0-9 +/#\'-]', ' ', form).strip()
+                    for form in self._creature_type_forms(typal_types[0])
+                ]
+                regex_forms = "|".join(re.escape(form) for form in type_forms if form)
+                return f'(t:{self._quote_scryfall_phrase(type_term)} OR o:/\\b(?:{regex_forms})\\b/) {color_filter} f:commander'
             return f'(o:"choose a creature type" OR o:"creatures of the chosen type" OR t:kindred) {color_filter} f:commander'
 
         if synergy == 'colorless_big_mana':
-            return f'(t:artifact OR t:eldrazi OR o:"colorless mana" OR o:"mana value 7" OR o:"mana value 8") {color_filter} f:commander'
+            return (
+                f'((t:artifact (o:"add {{C}}" OR o:"add {{C}}{{C}}" OR o:"add {{C}}{{C}}{{C}}" '
+                f'OR o:"colorless mana" OR o:"draw a card" OR o:untap OR o:hexproof OR o:indestructible)) '
+                f'OR t:eldrazi OR o:"mana value 7" OR o:"mana value 8") {color_filter} f:commander '
+                f'-!"Arcane Signet" -!"Commander\'s Sphere" -!"Chrome Mox" -!"Mox Amber"'
+            )
 
         if synergy == 'target_spells':
             return f'((t:instant OR t:sorcery) (o:"any number of target" OR o:"for each target" OR o:"up to two target" OR o:"up to three target" OR o:"up to four target" OR o:"up to five target" OR o:"divided as you choose" OR o:"X target")) {color_filter} f:commander'
@@ -5454,7 +5593,7 @@ class EnhancedSuggestionEngine:
             'forced_reanimation': "(t:creature (o:\"skip your next turn\" OR o:\"you lose the game\" OR o:\"you can't win\" OR o:\"you can't draw cards\" OR o:\"exile your library\" OR o:\"your life total becomes\" OR o:\"that player sacrifices it\" OR o:\"under their control\"))",
             'goad': '(o:goad OR o:"attack a player other than you" OR o:"attacks a player other than you" OR o:"creatures your opponents control attack")',
             'graveyard': '(o:"from your graveyard" OR o:"put into your graveyard" OR o:dies OR o:reanimate OR o:flashback OR o:escape OR o:unearth)',
-            'instant_sorcery': '(t:instant OR t:sorcery OR o:"instant or sorcery")',
+            'instant_sorcery': '(((t:instant OR t:sorcery) (cmc<=3) (o:draw OR o:scry OR o:copy OR o:"create a Treasure" OR o:"add {R}" OR o:untap OR o:"return target instant" OR o:"return target sorcery")) OR o:"instant or sorcery" OR o:magecraft)',
             'landfall': '(o:landfall OR o:"additional land" OR o:"land you control enters")',
             'lifegain': '(o:"whenever you gain life" OR o:"if you gained life" OR o:"life total" OR o:"life you gained")',
             'sacrifice': '(o:"sacrifice a creature" OR o:"sacrifice another creature" OR o:"whenever you sacrifice" OR o:"whenever a creature dies" OR o:"whenever another creature dies" OR o:"creature token")',
@@ -5755,6 +5894,9 @@ class EnhancedSuggestionEngine:
     ) -> bool:
         """Apply commander-specific hard constraints after relevance validation."""
         if self._is_land_card(card_extracted):
+            return False
+
+        if commander_constraints.get('colorless_identity') and self._is_dead_colorless_mana_card(card_extracted):
             return False
 
         if self._is_generic_mana_card(card_extracted) and not commander_constraints.get('high_mana_commander'):
