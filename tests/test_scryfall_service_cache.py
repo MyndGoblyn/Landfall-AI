@@ -1,4 +1,6 @@
 import asyncio
+import importlib
+import os
 import sys
 from pathlib import Path
 
@@ -108,5 +110,64 @@ def test_l2_search_cache_hydrates_ordered_slim_cards():
         hydrated = await service._read_search_from_l2("spells::2")
 
         assert [card["name"] for card in hydrated] == ["Opt", "Ponder"]
+
+    asyncio.run(run())
+
+
+def test_cache_status_tracks_l2_then_l1_hits():
+    async def run():
+        db = InMemoryDB()
+        service = ScryfallService(db=db)
+        await service._write_card_to_l2(
+            {"name": "Opt", "type_line": "Instant", "oracle_text": "Scry 1. Draw a card.", "cmc": 1},
+            lookup_key="opt",
+        )
+
+        _card, source = await service._search_card_with_source("Opt")
+        assert source == "l2"
+        _card, source = await service._search_card_with_source("Opt")
+        assert source == "l1"
+
+        status = service.get_cache_status()
+        assert status["persistent_cache_enabled"] is True
+        assert status["l1_valid_entries"] == 1
+        assert status["counters"]["card_l2_hits"] == 1
+        assert status["counters"]["card_l1_hits"] == 1
+
+    asyncio.run(run())
+
+
+def test_admin_scryfall_cache_status_uses_existing_admin_key():
+    async def run():
+        env_keys = ["USE_IN_MEMORY_DB", "CAPTCHA_REQUIRED", "REQUIRE_EMAIL_VERIFICATION", "RESET_ACCOUNTS_KEY"]
+        previous_env = {key: os.environ.get(key) for key in env_keys}
+        previous_server = sys.modules.get("server")
+        try:
+            os.environ["USE_IN_MEMORY_DB"] = "true"
+            os.environ["CAPTCHA_REQUIRED"] = "false"
+            os.environ["REQUIRE_EMAIL_VERIFICATION"] = "false"
+            os.environ["RESET_ACCOUNTS_KEY"] = "diagnostic-key"
+            sys.modules.pop("server", None)
+            server = importlib.import_module("server")
+
+            await server.scryfall_service._write_card_to_l2(
+                {"name": "Sol Ring", "type_line": "Artifact", "oracle_text": "{T}: Add {C}{C}.", "cmc": 1},
+                lookup_key="sol ring",
+            )
+
+            response = await server.scryfall_cache_status(x_reset_key="diagnostic-key")
+
+            assert response.persistent_cache_enabled is True
+            assert response.collection_counts["scryfall_cards"] == 1
+            assert response.collection_counts["scryfall_searches"] == 0
+        finally:
+            sys.modules.pop("server", None)
+            if previous_server is not None:
+                sys.modules["server"] = previous_server
+            for key, value in previous_env.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
 
     asyncio.run(run())

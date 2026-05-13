@@ -28,6 +28,19 @@ class ScryfallService:
         self.request_timeout = aiohttp.ClientTimeout(
             total=float(os.environ.get("SCRYFALL_REQUEST_TIMEOUT_SECONDS", "12"))
         )
+        self.cache_stats = {
+            "card_l1_hits": 0,
+            "card_l2_hits": 0,
+            "card_network_misses": 0,
+            "card_not_found": 0,
+            "card_errors": 0,
+            "search_l1_hits": 0,
+            "search_l2_hits": 0,
+            "search_network_misses": 0,
+            "search_errors": 0,
+            "l2_read_errors": 0,
+            "l2_write_errors": 0,
+        }
     
     async def get_session(self) -> aiohttp.ClientSession:
         if self.session is None or self.session.closed:
@@ -50,6 +63,23 @@ class ScryfallService:
 
     def _normalize_key(self, value: str) -> str:
         return (value or "").strip().lower()
+
+    def _record_cache_stat(self, key: str):
+        if key in self.cache_stats:
+            self.cache_stats[key] += 1
+
+    def get_cache_status(self) -> Dict:
+        valid_l1_entries = sum(1 for key in self.cache if self._is_cache_valid(key))
+        return {
+            "persistent_cache_enabled": (
+                self.db is not None
+                and hasattr(self.db, "scryfall_cards")
+                and hasattr(self.db, "scryfall_searches")
+            ),
+            "l1_entries": len(self.cache),
+            "l1_valid_entries": valid_l1_entries,
+            "counters": dict(self.cache_stats),
+        }
     
     def _is_cache_valid(self, key: str) -> bool:
         if key not in self.cache:
@@ -89,6 +119,7 @@ class ScryfallService:
         try:
             doc = await self.db.scryfall_cards.find_one(query)
         except Exception as exc:
+            self._record_cache_stat("l2_read_errors")
             logger.warning("Scryfall L2 card cache read failed: %s", exc)
             return None
 
@@ -126,6 +157,7 @@ class ScryfallService:
                 upsert=True,
             )
         except Exception as exc:
+            self._record_cache_stat("l2_write_errors")
             logger.warning("Scryfall L2 card cache write failed: %s", exc)
 
     async def _read_search_from_l2(self, query_key: str) -> Optional[List[Dict]]:
@@ -135,6 +167,7 @@ class ScryfallService:
         try:
             doc = await self.db.scryfall_searches.find_one({"query_key": query_key})
         except Exception as exc:
+            self._record_cache_stat("l2_read_errors")
             logger.warning("Scryfall L2 search cache read failed: %s", exc)
             return None
 
@@ -175,6 +208,7 @@ class ScryfallService:
                 upsert=True,
             )
         except Exception as exc:
+            self._record_cache_stat("l2_write_errors")
             logger.warning("Scryfall L2 search cache write failed: %s", exc)
     
     async def search_card(self, name: str, fuzzy: bool = True) -> Optional[Dict]:
@@ -188,11 +222,13 @@ class ScryfallService:
         cache_key = f"card:{mode}:{lookup_key}"
         
         if self._is_cache_valid(cache_key):
+            self._record_cache_stat("card_l1_hits")
             logger.info("Scryfall cache hit tier=L1 kind=card key=%s", lookup_key)
             return self.cache[cache_key], "l1"
 
         l2_card = await self._read_card_from_l2(name, fuzzy=fuzzy)
         if l2_card:
+            self._record_cache_stat("card_l2_hits")
             logger.info("Scryfall cache hit tier=L2 kind=card key=%s", lookup_key)
             self._store_l1(cache_key, l2_card)
             return l2_card, "l2"
@@ -209,9 +245,11 @@ class ScryfallService:
                         slim_data = self._slim_card(data)
                         await self._write_card_to_l2(slim_data, lookup_key=lookup_key)
                         self._store_l1(cache_key, slim_data)
+                        self._record_cache_stat("card_network_misses")
                         logger.info("Scryfall cache miss tier=network kind=card key=%s", lookup_key)
                         return slim_data, "network"
                     elif response.status == 404:
+                        self._record_cache_stat("card_not_found")
                         logger.warning(f"Card not found: {name}")
                         return None, "missing"
                     elif response.status in {429, 500, 502, 503, 504} and attempt < 2:
@@ -219,9 +257,11 @@ class ScryfallService:
                         logger.warning(f"Scryfall card lookup retry {attempt + 1} for {name}: {response.status}")
                         await asyncio.sleep(wait_time)
                     else:
+                        self._record_cache_stat("card_errors")
                         logger.error(f"Scryfall API error: {response.status}")
                         return None, "error"
         except Exception as e:
+            self._record_cache_stat("card_errors")
             logger.error(f"Error fetching card {name}: {str(e)}")
             return None, "error"
     
@@ -240,11 +280,13 @@ class ScryfallService:
         query_key = f"{query.lower()}::{limit}"
         cache_key = f"search:{query_key}"
         if self._is_cache_valid(cache_key):
+            self._record_cache_stat("search_l1_hits")
             logger.info("Scryfall cache hit tier=L1 kind=search key=%s", query_key)
             return self.cache[cache_key]
 
         l2_results = await self._read_search_from_l2(query_key)
         if l2_results is not None:
+            self._record_cache_stat("search_l2_hits")
             logger.info("Scryfall cache hit tier=L2 kind=search key=%s", query_key)
             self._store_l1(cache_key, l2_results)
             return l2_results
@@ -260,6 +302,7 @@ class ScryfallService:
                         results = [self._slim_card(card) for card in data.get('data', [])[:limit]]
                         await self._write_search_to_l2(query_key, query, limit, results)
                         self._store_l1(cache_key, results)
+                        self._record_cache_stat("search_network_misses")
                         logger.info("Scryfall cache miss tier=network kind=search key=%s", query_key)
                         return results
                     elif response.status in {429, 500, 502, 503, 504} and attempt < 2:
@@ -267,9 +310,11 @@ class ScryfallService:
                         logger.warning(f"Scryfall search retry {attempt + 1}: {response.status}")
                         await asyncio.sleep(wait_time)
                     else:
+                        self._record_cache_stat("search_errors")
                         logger.error(f"Scryfall search error: {response.status}")
                         return []
         except Exception as e:
+            self._record_cache_stat("search_errors")
             logger.error(f"Error searching cards: {str(e)}")
             return []
     

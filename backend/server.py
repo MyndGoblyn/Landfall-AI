@@ -157,6 +157,13 @@ class TestEmailResponse(BaseModel):
     message: str
     smtp: Dict[str, Any]
 
+class ScryfallCacheStatusResponse(BaseModel):
+    persistent_cache_enabled: bool
+    l1_entries: int
+    l1_valid_entries: int
+    counters: Dict[str, int]
+    collection_counts: Dict[str, Optional[int]]
+
 class PasswordForgotRequest(BaseModel):
     email: EmailStr
     captcha_token: Optional[str] = None
@@ -777,6 +784,32 @@ async def test_email(
         smtp=smtp_summary,
     )
 
+async def count_collection_documents(collection) -> Optional[int]:
+    if not hasattr(collection, "count_documents"):
+        return None
+    try:
+        return await collection.count_documents({})
+    except Exception as exc:
+        logger.warning("Could not count collection documents: %s", exc)
+        return None
+
+@api_router.get("/admin/scryfall-cache", response_model=ScryfallCacheStatusResponse)
+async def scryfall_cache_status(x_reset_key: Optional[str] = Header(default=None, alias="X-Reset-Key")):
+    if not RESET_ACCOUNTS_KEY:
+        raise HTTPException(status_code=404, detail="Admin diagnostics endpoint is disabled")
+    if not x_reset_key or not secrets.compare_digest(x_reset_key, RESET_ACCOUNTS_KEY):
+        raise HTTPException(status_code=403, detail="Invalid admin key")
+
+    status_payload = scryfall_service.get_cache_status()
+    collection_counts = {
+        "scryfall_cards": await count_collection_documents(getattr(db, "scryfall_cards", None)),
+        "scryfall_searches": await count_collection_documents(getattr(db, "scryfall_searches", None)),
+    }
+    return ScryfallCacheStatusResponse(
+        **status_payload,
+        collection_counts=collection_counts,
+    )
+
 @api_router.get("/auth/me", response_model=User)
 async def get_me(current_user: Dict = Depends(get_current_user)):
     user = User(**current_user)
@@ -1229,6 +1262,10 @@ async def prepare_database():
             await db.scryfall_searches.create_index('fetched_at', expireAfterSeconds=604800)
         except Exception as exc:
             logger.warning("Could not ensure database indexes: %s", exc)
+    logger.warning(
+        "Scryfall persistent cache enabled=%s",
+        scryfall_service.get_cache_status()["persistent_cache_enabled"],
+    )
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

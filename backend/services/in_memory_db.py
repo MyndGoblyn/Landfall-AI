@@ -60,6 +60,13 @@ class InMemoryCollection:
         ]
         return DeleteResult(original_count - len(self.docs))
 
+    async def count_documents(self, query):
+        return len([
+            doc
+            for doc in self.docs
+            if self._matches(doc, query)
+        ])
+
     def find(self, query, projection=None):
         docs = [
             self._project(doc, projection)
