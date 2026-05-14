@@ -89,6 +89,8 @@ h1, h2, h3, h4, h5, h6 {
 .landing-brand-logo {
   width: min(100%, 520px);
   max-height: 294px;
+  background: #08090a;
+  filter: none;
 }
 
 .auth-brand-logo {
@@ -189,17 +191,7 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 -28px 10px;
   padding: 20px 28px 60px;
   background:
-    linear-gradient(180deg, #020405 0%, #020405 54%, rgba(2, 4, 5, 0.88) 70%, rgba(2, 4, 5, 0.42) 86%, rgba(2, 4, 5, 0) 100%),
-    radial-gradient(circle at 50% 28%, rgba(212, 169, 79, 0.18), transparent 34%);
-}
-
-.landing-brand-masthead::after {
-  content: "";
-  position: absolute;
-  inset: auto 8% 18px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212, 169, 79, 0.5), transparent);
-  opacity: 0.76;
+    linear-gradient(180deg, #08090a 0%, #08090a 84%, rgba(8, 9, 10, 0.86) 90%, rgba(8, 9, 10, 0.36) 96%, rgba(8, 9, 10, 0) 100%);
 }
 
 .landing-hero-content {
