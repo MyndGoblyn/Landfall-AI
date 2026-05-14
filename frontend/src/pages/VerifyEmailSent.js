@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, MailCheck } from 'lucide-react';
-import ForestManaIcon from '../components/ForestManaIcon';
+import BrandEmblem from '../components/BrandEmblem';
 
 export default function VerifyEmailSent() {
   const [searchParams] = useSearchParams();
@@ -11,7 +11,7 @@ export default function VerifyEmailSent() {
     <div className="app-shell min-h-screen flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-lg">
         <div className="glass-panel p-8 text-center">
-          <ForestManaIcon className="w-14 h-14 mx-auto mb-5" />
+          <BrandEmblem className="auth-brand-emblem mx-auto mb-5" />
           <MailCheck className="w-12 h-12 mx-auto mb-4 text-emerald-300" />
           <p className="page-eyebrow mb-2">Verification sent</p>
           <h1 className="text-3xl font-bold mb-3 brand-title">Check Your Email</h1>

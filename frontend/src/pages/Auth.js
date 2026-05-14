@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Lock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
-import ForestManaIcon from '../components/ForestManaIcon';
+import BrandLogo from '../components/BrandLogo';
 import TurnstileCaptcha from '../components/TurnstileCaptcha';
 
 export default function Auth() {
@@ -103,9 +103,9 @@ export default function Auth() {
     <div className="app-shell min-h-screen flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8 page-hero">
-          <ForestManaIcon className="w-16 h-16 mx-auto mb-4" />
+          <BrandLogo className="auth-brand-logo mx-auto mb-4" />
+          <h1 className="sr-only">LandFall AI</h1>
           <p className="page-eyebrow mb-2">Command zone access</p>
-          <h1 className="text-4xl font-bold mb-2 brand-title">LandFall AI</h1>
           <p className="page-copy">Sign in to import, tune, and track your Commander decks.</p>
         </div>
 

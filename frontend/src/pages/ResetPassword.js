@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
-import ForestManaIcon from '../components/ForestManaIcon';
+import BrandEmblem from '../components/BrandEmblem';
 import TurnstileCaptcha from '../components/TurnstileCaptcha';
 
 export default function ResetPassword() {
@@ -53,7 +53,7 @@ export default function ResetPassword() {
     <div className="app-shell min-h-screen flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8 page-hero">
-          <ForestManaIcon className="w-16 h-16 mx-auto mb-4" />
+          <BrandEmblem className="auth-brand-emblem mx-auto mb-4" />
           <p className="page-eyebrow mb-2">Account recovery</p>
           <h1 className="text-4xl font-bold mb-2 brand-title">Reset Password</h1>
           <p className="page-copy">Choose a new password for your LandFall AI account.</p>

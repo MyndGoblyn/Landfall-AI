@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, LayoutDashboard, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
-import ForestManaIcon from '../components/ForestManaIcon';
+import BrandEmblem from '../components/BrandEmblem';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -43,7 +43,7 @@ export default function VerifyEmail() {
   return (
     <div className="app-shell min-h-screen flex items-center justify-center px-6 py-12">
       <div className="glass-panel w-full max-w-md p-8 text-center">
-        <ForestManaIcon className="w-14 h-14 mx-auto mb-5" />
+        <BrandEmblem className="auth-brand-emblem mx-auto mb-5" />
         {failed ? (
           <XCircle className="w-10 h-10 mx-auto mb-4 text-red-300" />
         ) : (

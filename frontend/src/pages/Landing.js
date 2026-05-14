@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Heart, LibraryBig, Sparkles, Target, TrendingUp, Zap } from 'lucide-react';
-import ForestManaIcon from '../components/ForestManaIcon';
+import BrandEmblem from '../components/BrandEmblem';
+import BrandLogo from '../components/BrandLogo';
 import { ManaPipRow } from '../components/ManaSymbols';
 
 export default function Landing() {
@@ -34,7 +35,7 @@ export default function Landing() {
       <header className="fixed top-0 w-full z-50 app-topbar">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <ForestManaIcon className="w-8 h-8" />
+            <BrandEmblem className="topbar-brand-mark" />
             <h1 className="text-2xl font-bold brand-title">LandFall AI</h1>
           </div>
           <button data-testid="header-login-btn" onClick={() => navigate('/auth')} className="btn-secondary">
@@ -45,6 +46,7 @@ export default function Landing() {
 
       <section className="pt-32 pb-20 px-6">
         <div className="container mx-auto text-center max-w-5xl page-hero">
+          <BrandLogo className="landing-brand-logo mx-auto mb-8" />
           <ManaPipRow colors={['W', 'U', 'B', 'R', 'G']} className="hero-mana-row" />
           <p className="page-eyebrow mb-4">Commander deck tech and upgrade mapping</p>
           <h2 data-testid="hero-title" className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight page-title">

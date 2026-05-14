@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { HelpCircle, LayoutDashboard, LogOut } from 'lucide-react';
-import ForestManaIcon from './ForestManaIcon';
+import BrandEmblem from './BrandEmblem';
 import { useAuth } from '../context/AuthContext';
 
 export default function AppTopbar({ actions = null, meta = null, showLogout = false }) {
@@ -25,7 +25,7 @@ export default function AppTopbar({ actions = null, meta = null, showLogout = fa
           className="topbar-brand"
           data-testid="topbar-brand"
         >
-          <ForestManaIcon className="w-8 h-8" />
+          <BrandEmblem className="topbar-brand-mark" />
           <span className="text-2xl font-bold brand-title">LandFall AI</span>
         </button>
 

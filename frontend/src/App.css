@@ -72,6 +72,35 @@ h1, h2, h3, h4, h5, h6 {
   text-shadow: 0 0 18px rgba(212, 169, 79, 0.24);
 }
 
+.brand-emblem,
+.brand-logo {
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(212, 169, 79, 0.22));
+}
+
+.topbar-brand-mark {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.landing-brand-logo {
+  width: min(100%, 480px);
+  max-height: 272px;
+}
+
+.auth-brand-logo {
+  width: min(100%, 310px);
+  max-height: 176px;
+}
+
+.auth-brand-emblem {
+  width: 76px;
+  height: 76px;
+}
+
 .topbar-brand {
   display: inline-flex;
   align-items: center;
