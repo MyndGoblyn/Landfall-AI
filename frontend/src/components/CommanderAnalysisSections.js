@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Info, Sparkles } from 'lucide-react';
 
 function useActiveSection(sections) {
   const [activeId, setActiveId] = useState(sections[0]?.id || '');
@@ -63,6 +63,33 @@ export function StrategyPager({ commanderData }) {
             <p className="text-gray-100">{tip}</p>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+export function CoverageNotice({ data }) {
+  const level = data?.coverage_level;
+  if (!level || level === 'deep') return null;
+
+  const title = level === 'exploratory' ? 'Exploratory Coverage' : 'Partial Coverage';
+  const signals = data?.coverage_signals || [];
+
+  return (
+    <div className={`coverage-notice coverage-${level}`} data-testid="coverage-notice">
+      <Info className="coverage-notice-icon" />
+      <div className="coverage-notice-copy">
+        <div className="coverage-notice-title">{title}</div>
+        <p>{data?.coverage_notes || 'This result is based on limited deterministic coverage.'}</p>
+        {signals.length > 0 && (
+          <div className="coverage-signal-row">
+            {signals.slice(0, 5).map((signal, idx) => (
+              <span key={`${signal.type}-${signal.label}-${idx}`} className="theme-pill">
+                {signal.label}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

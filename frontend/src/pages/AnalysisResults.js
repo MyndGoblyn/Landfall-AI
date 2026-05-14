@@ -18,7 +18,7 @@ import {
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import AppTopbar from '../components/AppTopbar';
-import { SectionTabs } from '../components/CommanderAnalysisSections';
+import { CoverageNotice, SectionTabs } from '../components/CommanderAnalysisSections';
 import { ManaPipRow } from '../components/ManaSymbols';
 import { API } from '../lib/api';
 import useRotatingStatus from '../hooks/useRotatingStatus';
@@ -536,6 +536,8 @@ export default function AnalysisResults() {
             </div>
           </div>
         </section>
+
+        <CoverageNotice data={analysis} />
 
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="analysis-tabs">

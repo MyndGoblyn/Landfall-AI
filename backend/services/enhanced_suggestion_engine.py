@@ -7,6 +7,7 @@ import re
 import time
 from collections import Counter, defaultdict
 from services.archetype_registry import ArchetypeRegistry
+from services.heuristic_signal_extractor import HeuristicSignalExtractor
 from services.mechanics_registry import MechanicsRegistry
 from services.scryfall_service import ScryfallService
 
@@ -20,6 +21,7 @@ class EnhancedSuggestionEngine:
         self.scryfall = scryfall_service
         self.mechanics_registry = MechanicsRegistry.load_default()
         self.archetype_registry = ArchetypeRegistry.load_default()
+        self.heuristic_extractor = HeuristicSignalExtractor()
         self._semantic_cache = {}
         self._semantic_cache_max_entries = 2500
         self._random_pool_cache = {}
@@ -516,6 +518,140 @@ class EnhancedSuggestionEngine:
             and (signal['requirements_met'] or signal['evidence_strength'] == 'core')
         ]
         return filtered[:limit]
+
+    def _strong_registry_signals_for_card(self, card: Dict) -> List[Dict]:
+        """Mechanic signals strong enough to treat as deterministic coverage."""
+        return [
+            signal for signal in self._registry_signals_for_card(card, include_texture=False)
+            if signal.get('evidence_strength') in {'core', 'support'}
+            and signal.get('requirements_met', True)
+            and signal.get('score', 0) >= 2
+        ]
+
+    def _archetype_matches_above_floor(self, archetypes: List[Dict]) -> List[Dict]:
+        confidence_rank = {'low': 1, 'medium': 2, 'high': 3, 'core': 4}
+        return [
+            archetype for archetype in archetypes or []
+            if confidence_rank.get(archetype.get('confidence', 'low'), 0)
+            >= confidence_rank.get(archetype.get('confidence_floor', 'medium'), 2)
+        ]
+
+    def _heuristic_signals_for_card(self, card: Optional[Dict]) -> List[Dict]:
+        if not card:
+            return []
+        return self.heuristic_extractor.extract(
+            oracle_text=self._combined_oracle_text(card),
+            type_line=self._combined_type_line(card),
+        )
+
+    def _heuristic_synergy_notes(self, heuristic_signals: List[Dict]) -> Dict[str, List[Dict]]:
+        notes = defaultdict(list)
+        supported_synergies = set(self.synergy_keywords)
+        supported_synergies.update({
+            'board_conversion', 'control_finisher', 'flash_control', 'hand_size_pressure',
+            'vanilla_creatures',
+        })
+        for signal in heuristic_signals or []:
+            for synergy in signal.get('mapped_synergies', []):
+                if synergy in supported_synergies:
+                    notes[synergy].append(signal)
+        return dict(notes)
+
+    def _supplement_synergies_from_heuristics(
+        self,
+        synergies: List[str],
+        heuristic_signals: List[Dict],
+    ) -> List[str]:
+        """Add only supported heuristic lanes, preserving existing priority/order."""
+        supplemented = list(synergies or [])
+        for synergy, _signals in self._heuristic_synergy_notes(heuristic_signals).items():
+            if synergy not in supplemented:
+                supplemented.append(synergy)
+        return self._prioritize_synergies(supplemented)
+
+    def _exploratory_signal_notes(
+        self,
+        synergies: List[str],
+        heuristic_signals: List[Dict],
+    ) -> Dict[str, List[Dict]]:
+        """Give every exploratory recommendation an honest evidence label."""
+        notes = self._heuristic_synergy_notes(heuristic_signals)
+        for synergy in synergies or []:
+            notes.setdefault(synergy, [{
+                'label': 'Broad Keyword Match',
+                'evidence': f'a broad {synergy.replace("_", " ")} keyword match without registry or archetype confirmation',
+                'reason_language': 'the commander only matched broad text terms for this lane',
+                'mapped_synergies': [synergy],
+                'evidence_strength': 'heuristic',
+            }])
+        return notes
+
+    def _commander_coverage_payload(
+        self,
+        commander_card: Optional[Dict],
+        synergies: Optional[List[str]],
+        archetypes: Optional[List[Dict]],
+    ) -> Dict:
+        if not commander_card:
+            return {
+                'coverage_level': 'partial',
+                'coverage_notes': 'Commander text was unavailable, so this analysis relies on decklist role and theme detection.',
+                'coverage_signals': [],
+                'heuristic_signals': [],
+            }
+
+        strong_mechanics = self._strong_registry_signals_for_card(commander_card)
+        strong_archetypes = self._archetype_matches_above_floor(archetypes or [])
+        heuristic_signals = self._heuristic_signals_for_card(commander_card)
+
+        if len(strong_mechanics) >= 2 and strong_archetypes:
+            level = 'deep'
+            notes = 'Deep deterministic coverage: multiple registered mechanics and a composite archetype matched the commander text.'
+        elif strong_mechanics or strong_archetypes:
+            level = 'partial'
+            notes = 'Partial deterministic coverage: some registered signals matched, but the deck plan may still need manual interpretation.'
+        else:
+            level = 'exploratory'
+            if heuristic_signals:
+                labels = ', '.join(signal['label'] for signal in heuristic_signals[:3])
+                notes = f'Exploratory coverage: no strong registry or archetype match cleared the bar, so recommendations use text-pattern signals such as {labels}.'
+            elif synergies:
+                notes = 'Exploratory coverage: broad keyword matches were detected, but no strong registry or archetype match cleared the bar.'
+            else:
+                notes = 'Exploratory coverage: no strong deterministic strategy signal cleared the bar for this commander.'
+
+        coverage_signals = [
+            {
+                'type': 'mechanic',
+                'label': signal.get('name'),
+                'strength': signal.get('evidence_strength'),
+            }
+            for signal in strong_mechanics[:4]
+        ]
+        coverage_signals.extend([
+            {
+                'type': 'archetype',
+                'label': archetype.get('name'),
+                'strength': archetype.get('confidence'),
+            }
+            for archetype in strong_archetypes[:3]
+        ])
+        if level != 'deep':
+            coverage_signals.extend([
+                {
+                    'type': 'heuristic',
+                    'label': signal.get('label'),
+                    'strength': signal.get('evidence_strength'),
+                }
+                for signal in heuristic_signals[:4]
+            ])
+
+        return {
+            'coverage_level': level,
+            'coverage_notes': notes,
+            'coverage_signals': coverage_signals,
+            'heuristic_signals': heuristic_signals,
+        }
 
     def _has_large_card_draw_text(self, oracle_text: str) -> bool:
         """Detect large draw bursts separately from normal cantrip/card-flow text."""
@@ -1069,6 +1205,17 @@ class EnhancedSuggestionEngine:
                 commander_synergies = self._detect_commander_synergies(commander_data)
                 commander_constraints = self._get_commander_constraints(commander_data)
                 commander_archetypes = self._detect_commander_archetypes(commander_data)
+        coverage = self._commander_coverage_payload(commander_data, commander_synergies, commander_archetypes)
+        if coverage['coverage_level'] == 'exploratory' and coverage.get('heuristic_signals'):
+            commander_synergies = self._supplement_synergies_from_heuristics(
+                commander_synergies,
+                coverage['heuristic_signals'],
+            )
+        heuristic_notes = (
+            self._exploratory_signal_notes(commander_synergies, coverage.get('heuristic_signals', []))
+            if coverage['coverage_level'] == 'exploratory'
+            else {}
+        )
         
         # Calculate deck statistics
         stats = self._calculate_stats(cards, commander, commander_synergies)
@@ -1090,6 +1237,7 @@ class EnhancedSuggestionEngine:
             categories,
             commander_constraints,
             search_budget=10 if deep else 5,
+            heuristic_signal_notes=heuristic_notes if coverage['coverage_level'] == 'exploratory' else None,
         )
         suggestions_cut = await self._generate_cuts(cards, gaps, stats, commander_synergies, detected_themes)
         
@@ -1122,6 +1270,10 @@ class EnhancedSuggestionEngine:
             'stats': stats,
             'commander_synergies': commander_synergies,
             'commander_archetypes': commander_archetypes,
+            'coverage_level': coverage['coverage_level'],
+            'coverage_notes': coverage['coverage_notes'],
+            'coverage_signals': coverage['coverage_signals'],
+            'heuristic_signals': coverage['heuristic_signals'],
             'detected_themes': detected_themes,
             'playstyle_tips': playstyle_tips,
             'combo_suggestions': combo_suggestions,
@@ -2454,10 +2606,12 @@ class EnhancedSuggestionEngine:
                                    commander_synergies: List[str], commander_data: Optional[Dict],
                                    categories: Optional[List[str]] = None,
                                    commander_constraints: Optional[Dict] = None,
-                                   search_budget: int = 5) -> List[Dict]:
+                                   search_budget: int = 5,
+                                   heuristic_signal_notes: Optional[Dict[str, List[Dict]]] = None) -> List[Dict]:
         """Generate enhanced card addition suggestions with commander synergy and categories"""
         current_card_names = {card['name'].lower() for card in current_cards}
         deck_context = self._deck_context_summary(current_cards)
+        heuristic_signal_notes = heuristic_signal_notes or {}
         
         # Build prioritized search queries based on categories or gaps
         queries = []
@@ -2623,6 +2777,11 @@ class EnhancedSuggestionEngine:
                             gaps,
                             deck_context,
                         )
+                        if requested_synergy in heuristic_signal_notes:
+                            quality = self._mark_quality_as_heuristic(
+                                quality,
+                                heuristic_signal_notes[requested_synergy][0],
+                            )
                         if quality['score'] < 76 or not quality.get('evidence_tags') or quality.get('confidence') == 'speculative':
                             continue
                         reason = self._generate_validated_recommendation_reason(
@@ -3035,6 +3194,7 @@ class EnhancedSuggestionEngine:
             'high': 0.9,
             'medium': 0.8,
             'low': 0.68,
+            'exploratory': 0.6,
             'speculative': 0.45,
         }.get(str(confidence).lower(), 0.75)
 
@@ -5183,6 +5343,7 @@ class EnhancedSuggestionEngine:
         mechanic_reason = quality.get('mechanic_reason')
         mechanic_strength = quality.get('mechanic_strength')
         mechanic_support_only = quality.get('mechanic_support_only')
+        heuristic_signal = quality.get('heuristic_signal')
 
         action = f"{card_name} contributes a validated {job} effect."
         if 'creature_token_support' in evidence_tags:
@@ -5389,7 +5550,26 @@ class EnhancedSuggestionEngine:
         elif 'uncorroborated_mechanic' in penalty_tags:
             caution = " This match needs more deck evidence before it should drive recommendations by itself."
 
-        return f"{action} {fit}{mechanic_clause}{caution}"
+        heuristic_clause = ""
+        if heuristic_signal:
+            heuristic_clause = (
+                f" It is marked Exploratory because the deterministic pass detected "
+                f"{heuristic_signal.get('evidence', 'a text-pattern signal')} in the commander text; "
+                "treat it as a starting point until deeper registry evidence exists."
+            )
+
+        return f"{action} {fit}{mechanic_clause}{heuristic_clause}{caution}"
+
+    def _mark_quality_as_heuristic(self, quality: Dict, heuristic_signal: Dict) -> Dict:
+        """Label otherwise validated recommendations that came from heuristic coverage."""
+        marked = copy.deepcopy(quality)
+        marked['confidence'] = 'exploratory'
+        marked['fit_tier'] = 'Exploratory'
+        marked['heuristic_signal'] = heuristic_signal
+        marked['evidence'] = heuristic_signal.get('evidence') or marked.get('evidence')
+        evidence_tags = list(dict.fromkeys([*marked.get('evidence_tags', []), 'heuristic_signal']))
+        marked['evidence_tags'] = evidence_tags
+        return marked
 
     def _build_strategy_sections(self, tips: List[str]) -> List[Dict]:
         """Group tips into small deterministic pages without changing legacy output."""
@@ -5927,7 +6107,8 @@ class EnhancedSuggestionEngine:
         synergy: str,
         commander_card: Dict,
         commander_name: str,
-        minimum_score: int
+        minimum_score: int,
+        heuristic_signal: Optional[Dict] = None,
     ) -> Optional[Dict]:
         """Return compact recommendation data when a candidate clears the quality floor."""
         quality = self._recommendation_quality_metadata(
@@ -5935,6 +6116,8 @@ class EnhancedSuggestionEngine:
             synergy,
             commander_card
         )
+        if heuristic_signal:
+            quality = self._mark_quality_as_heuristic(quality, heuristic_signal)
         if quality['score'] < minimum_score:
             return None
         if not quality.get('evidence_tags') or quality.get('confidence') == 'speculative':
@@ -5974,6 +6157,7 @@ class EnhancedSuggestionEngine:
             'Core Fit': 4,
             'Strong Support': 3,
             'Role Fit': 2,
+            'Exploratory': 1,
             'Speculative': 0,
         }.get(recommendation.get('fit_tier'), 1)
         confidence_rank = {
@@ -5981,6 +6165,7 @@ class EnhancedSuggestionEngine:
             'high': 3,
             'medium': 2,
             'low': 1,
+            'exploratory': 1,
             'speculative': 0,
         }.get(recommendation.get('confidence'), 1)
 
@@ -6070,12 +6255,14 @@ class EnhancedSuggestionEngine:
         exclude_names: Optional[Set[str]] = None,
         concurrency: int = 3,
         per_query_timeout: Optional[float] = None,
+        heuristic_signal_notes: Optional[Dict[str, List[Dict]]] = None,
     ) -> List[Dict]:
         """Search Scryfall in bounded parallel and keep only commander-specific cards."""
         extracted = self.scryfall.extract_card_data(commander_card)
         commander_name = extracted['name']
         excluded_names = {commander_name.lower()}
         excluded_names.update(name.lower() for name in (exclude_names or set()))
+        heuristic_signal_notes = heuristic_signal_notes or {}
 
         search_specs = []
         for synergy_index, synergy in enumerate(synergies[:search_budget]):
@@ -6144,7 +6331,8 @@ class EnhancedSuggestionEngine:
                     synergy,
                     commander_card,
                     commander_name,
-                    minimum_score
+                    minimum_score,
+                    heuristic_signal_notes.get(synergy, [None])[0]
                 )
                 if not recommendation:
                     continue
@@ -6204,23 +6392,48 @@ class EnhancedSuggestionEngine:
         color_identity = extracted['color_identity']
         commander_constraints = self._get_commander_constraints(commander_card)
         commander_archetypes = self._detect_commander_archetypes(commander_card)
+        coverage = self._commander_coverage_payload(commander_card, synergies, commander_archetypes)
+        if coverage['coverage_level'] == 'exploratory' and coverage.get('heuristic_signals'):
+            synergies = self._supplement_synergies_from_heuristics(synergies, coverage['heuristic_signals'])
+        heuristic_notes = (
+            self._exploratory_signal_notes(synergies, coverage.get('heuristic_signals', []))
+            if coverage['coverage_level'] == 'exploratory'
+            else {}
+        )
         tips = self._generate_commander_strategy_tips(commander_card, synergies, commander_constraints)
         if deep:
             tips.extend(self._generate_deep_commander_strategy_tips(commander_card, synergies, commander_constraints))
 
+        exploratory_search = coverage['coverage_level'] == 'exploratory' and bool(heuristic_notes)
         suggested_cards = await self._search_commander_recommendations(
             commander_card=commander_card,
             synergies=synergies,
             color_identity=color_identity,
             commander_constraints=commander_constraints,
-            max_cards=5,
+            max_cards=3 if exploratory_search else 5,
             search_budget=search_budget,
             per_synergy_limit=per_synergy_limit,
             query_limit=query_limit,
             minimum_score=minimum_score,
             concurrency=recommendation_concurrency,
             per_query_timeout=recommendation_timeout,
+            heuristic_signal_notes=heuristic_notes if exploratory_search else None,
         )
+        if exploratory_search and not suggested_cards and synergies:
+            suggested_cards = await self._search_commander_recommendations(
+                commander_card=commander_card,
+                synergies=synergies,
+                color_identity=color_identity,
+                commander_constraints=commander_constraints,
+                max_cards=3,
+                search_budget=min(search_budget + 2, 6),
+                per_synergy_limit=per_synergy_limit,
+                query_limit=max(query_limit, 24),
+                minimum_score=78,
+                concurrency=recommendation_concurrency,
+                per_query_timeout=recommendation_timeout,
+                heuristic_signal_notes=heuristic_notes,
+            )
         if deep and not suggested_cards and synergies:
             suggested_cards = await self._search_commander_recommendations(
                 commander_card=commander_card,
@@ -6234,6 +6447,7 @@ class EnhancedSuggestionEngine:
                 minimum_score=78,
                 concurrency=recommendation_concurrency,
                 per_query_timeout=recommendation_timeout,
+                heuristic_signal_notes=heuristic_notes if exploratory_search else None,
             )
         
         # Generate combos
@@ -6251,6 +6465,10 @@ class EnhancedSuggestionEngine:
             'synergies': synergies,
             'archetypes': commander_archetypes,
             'mechanics': self._top_registry_mechanics(commander_card, limit=6, include_texture=False),
+            'coverage_level': coverage['coverage_level'],
+            'coverage_notes': coverage['coverage_notes'],
+            'coverage_signals': coverage['coverage_signals'],
+            'heuristic_signals': coverage['heuristic_signals'],
             'strategy_tips': tips,
             'strategy_sections': self._build_strategy_sections(tips),
             'suggested_cards': suggested_cards,
@@ -6271,6 +6489,16 @@ class EnhancedSuggestionEngine:
         synergies = self._detect_commander_synergies(commander_card)
         color_identity = extracted['color_identity']
         commander_constraints = self._get_commander_constraints(commander_card)
+        commander_archetypes = self._detect_commander_archetypes(commander_card)
+        coverage = self._commander_coverage_payload(commander_card, synergies, commander_archetypes)
+        exploratory_search = coverage['coverage_level'] == 'exploratory'
+        if exploratory_search:
+            synergies = self._supplement_synergies_from_heuristics(synergies, coverage['heuristic_signals'])
+        heuristic_notes = (
+            self._exploratory_signal_notes(synergies, coverage.get('heuristic_signals', []))
+            if exploratory_search
+            else {}
+        )
         excluded = {name.lower() for name in (exclude_names or [])}
 
         more_cards = await self._search_commander_recommendations(
@@ -6285,6 +6513,7 @@ class EnhancedSuggestionEngine:
             minimum_score=72,
             exclude_names=excluded,
             concurrency=3,
+            heuristic_signal_notes=heuristic_notes if exploratory_search else None,
         )
 
         for card in more_cards:
@@ -6295,6 +6524,9 @@ class EnhancedSuggestionEngine:
             'commander_name': extracted['name'],
             'suggested_cards': more_cards,
             'recommended_sections': self._build_recommended_sections(more_cards),
+            'coverage_level': coverage['coverage_level'],
+            'coverage_notes': coverage['coverage_notes'],
+            'coverage_signals': coverage['coverage_signals'],
             'page': page,
             'has_more': len(more_cards) >= 8,
         }

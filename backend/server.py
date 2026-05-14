@@ -245,6 +245,11 @@ class AnalysisRun(BaseModel):
     suggestions_cut: List[Suggestion] = []
     stats: Dict[str, Any] = {}
     commander_synergies: List[str] = []
+    commander_archetypes: List[Dict[str, Any]] = []
+    coverage_level: str = "partial"
+    coverage_notes: Optional[str] = None
+    coverage_signals: List[Dict[str, Any]] = []
+    heuristic_signals: List[Dict[str, Any]] = []
     playstyle_tips: List[str] = []
     detected_themes: List[str] = []
     combo_suggestions: List[Dict[str, Any]] = []
@@ -943,6 +948,11 @@ async def run_deck_analysis(deck_id: str, user_id: str, categories: Optional[Lis
             suggestions_cut=result['suggestions_cut'],
             stats=result['stats'],
             commander_synergies=result.get('commander_synergies', []),
+            commander_archetypes=result.get('commander_archetypes', []),
+            coverage_level=result.get('coverage_level', 'partial'),
+            coverage_notes=result.get('coverage_notes'),
+            coverage_signals=result.get('coverage_signals', []),
+            heuristic_signals=result.get('heuristic_signals', []),
             playstyle_tips=result.get('playstyle_tips', []),
             detected_themes=result.get('detected_themes', []),
             combo_suggestions=result.get('combo_suggestions', [])

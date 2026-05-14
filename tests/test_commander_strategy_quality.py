@@ -11,10 +11,116 @@ if str(BACKEND_PATH) not in sys.path:
     sys.path.insert(0, str(BACKEND_PATH))
 
 from services.enhanced_suggestion_engine import EnhancedSuggestionEngine
+from services.heuristic_signal_extractor import HeuristicSignalExtractor
 
 
 def make_engine():
     return EnhancedSuggestionEngine(scryfall_service=None)
+
+
+def test_heuristic_extractor_maps_generic_text_patterns_without_name_branches():
+    extractor = HeuristicSignalExtractor()
+    signals = extractor.extract(
+        oracle_text=(
+            "Whenever this creature deals combat damage to a player, create a Treasure token. "
+            "You may cast that card from exile."
+        ),
+        type_line="Legendary Creature - Rogue",
+    )
+    signal_ids = {signal["id"] for signal in signals}
+    mapped = {synergy for signal in signals for synergy in signal["mapped_synergies"]}
+
+    assert "combat_damage_trigger" in signal_ids
+    assert "artifact_token_creation" in signal_ids
+    assert "exile_access" in signal_ids
+    assert {"combat_damage", "artifact_tokens", "exile"}.issubset(mapped)
+
+
+def test_exploratory_coverage_uses_heuristics_when_registry_is_unavailable():
+    engine = make_engine()
+    engine.mechanics_registry = None
+    engine.archetype_registry = None
+    commander_card = {
+        "name": "Pattern Test Commander",
+        "type_line": "Legendary Creature",
+        "oracle_text": "Whenever this creature attacks, create a 1/1 red Goblin creature token.",
+        "cmc": 3,
+        "color_identity": ["R"],
+    }
+
+    coverage = engine._commander_coverage_payload(commander_card, synergies=[], archetypes=[])
+    supplemented = engine._supplement_synergies_from_heuristics([], coverage["heuristic_signals"])
+
+    assert coverage["coverage_level"] == "exploratory"
+    assert any(signal["id"] == "attack_trigger" for signal in coverage["heuristic_signals"])
+    assert "attack_triggers" in supplemented
+    assert "tokens" in supplemented
+
+
+def test_heuristic_recommendation_reason_names_actual_detected_signal():
+    engine = make_engine()
+    card_data = {
+        "name": "Test Support",
+        "type_line": "Creature",
+        "oracle_text": "Whenever Test Support attacks, draw a card.",
+        "cmc": 2,
+    }
+    quality = engine._mark_quality_as_heuristic(
+        {
+            "job": "attack support",
+            "evidence": "attack support",
+            "evidence_tags": ["direct_synergy"],
+            "penalty_tags": [],
+            "mechanic": None,
+            "mechanic_reason": None,
+            "mechanic_strength": None,
+            "mechanic_support_only": False,
+        },
+        {
+            "label": "Attack Trigger",
+            "evidence": "an attack trigger in the commander text",
+        },
+    )
+
+    reason = engine._generate_validated_recommendation_reason(
+        card_data,
+        commander_name="your commander",
+        synergy="attack_triggers",
+        quality=quality,
+        commander_card={"oracle_text": "Whenever this creature attacks, create a token."},
+    )
+
+    assert "Exploratory" in reason
+    assert "attack trigger" in reason
+    assert "commander text" in reason
+
+
+def test_exploratory_keyword_only_matches_are_labeled_as_exploratory():
+    engine = make_engine()
+    notes = engine._exploratory_signal_notes(["enchantment"], [])
+    quality = engine._mark_quality_as_heuristic(
+        {
+            "job": "enchantment utility",
+            "confidence": "core",
+            "fit_tier": "Core Fit",
+            "score": 88,
+            "evidence": "enchantment support",
+            "evidence_tags": ["direct_synergy"],
+            "penalty_tags": [],
+        },
+        notes["enchantment"][0],
+    )
+
+    reason = engine._generate_validated_recommendation_reason(
+        {"name": "Test Enchantment", "type_line": "Enchantment", "oracle_text": "Draw a card.", "cmc": 2},
+        commander_name="your commander",
+        synergy="enchantment",
+        quality=quality,
+        commander_card={"oracle_text": "Destroy target Aura attached to a creature."},
+    )
+
+    assert quality["fit_tier"] == "Exploratory"
+    assert "broad enchantment keyword match" in reason
 
 
 class FakeScryfall:

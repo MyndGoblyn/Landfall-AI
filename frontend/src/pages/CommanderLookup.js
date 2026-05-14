@@ -3,7 +3,7 @@ import { Search, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import AppTopbar from '../components/AppTopbar';
-import { RecommendedCardsPager, StrategyPager } from '../components/CommanderAnalysisSections';
+import { CoverageNotice, RecommendedCardsPager, StrategyPager } from '../components/CommanderAnalysisSections';
 import { ManaPipRow } from '../components/ManaSymbols';
 import { useAuth } from '../context/AuthContext';
 import { API } from '../lib/api';
@@ -245,6 +245,8 @@ export default function CommanderLookup() {
                 </div>
               </div>
             </div>
+
+            <CoverageNotice data={commanderData} />
 
             <div className="glass-panel p-6">
               <h3 className="text-2xl font-semibold mb-4 text-amber-300">Strategy Analysis</h3>

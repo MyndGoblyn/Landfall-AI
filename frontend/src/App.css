@@ -442,6 +442,58 @@ textarea.input {
   border-radius: 8px;
 }
 
+.coverage-notice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 16px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(221, 184, 103, 0.26);
+  background: rgba(12, 14, 15, 0.72);
+}
+
+.coverage-partial {
+  border-color: rgba(14, 104, 171, 0.36);
+  background: rgba(14, 104, 171, 0.13);
+}
+
+.coverage-exploratory {
+  border-color: rgba(221, 184, 103, 0.34);
+  background: rgba(221, 184, 103, 0.11);
+}
+
+.coverage-notice-icon {
+  width: 22px;
+  height: 22px;
+  color: #f1dfb0;
+  margin-top: 2px;
+}
+
+.coverage-notice-title {
+  color: #fff7df;
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.coverage-notice-copy p {
+  color: #d8d0c2;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.coverage-signal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.analysis-shell .coverage-notice {
+  margin-bottom: 28px;
+}
+
 /* Analysis deck tech theme */
 .analysis-shell {
   background:
