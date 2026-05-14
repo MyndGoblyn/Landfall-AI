@@ -44,29 +44,33 @@ export default function Landing() {
         </div>
       </header>
 
-      <section className="pt-32 pb-20 px-6">
-        <div className="container mx-auto text-center max-w-5xl page-hero">
-          <BrandLogo className="landing-brand-logo mx-auto mb-8" />
-          <ManaPipRow colors={['W', 'U', 'B', 'R', 'G']} className="hero-mana-row" />
-          <p className="page-eyebrow mb-4">Commander deck tech and upgrade mapping</p>
-          <h2 data-testid="hero-title" className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight page-title">
-            Tune Your Commander Deck
-            <span className="block text-amber-300">Like a Deck Tech</span>
-          </h2>
-          <p data-testid="hero-subtitle" className="text-lg sm:text-xl page-copy mb-10 max-w-3xl mx-auto">
-            Import a list, inspect the command zone, map upgrade slots, and turn your Commander deck into a clearer game plan.
-          </p>
-          <div className="flex gap-4 justify-center flex-wrap">
-            <button data-testid="get-started-btn" onClick={() => navigate('/auth')} className="btn-primary text-lg px-8 py-4">
-              Get Started Free
-            </button>
-            <button
-              data-testid="learn-more-btn"
-              className="btn-secondary text-lg px-8 py-4"
-              onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
-            >
-              See Tools
-            </button>
+      <section className="landing-hero-section px-6">
+        <div className="container mx-auto text-center max-w-5xl page-hero landing-hero-panel">
+          <div className="landing-brand-masthead">
+            <BrandLogo className="landing-brand-logo mx-auto" />
+          </div>
+          <div className="landing-hero-content">
+            <ManaPipRow colors={['W', 'U', 'B', 'R', 'G']} className="hero-mana-row" />
+            <p className="page-eyebrow mb-4">Commander deck tech and upgrade mapping</p>
+            <h2 data-testid="hero-title" className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight page-title">
+              Tune Your Commander Deck
+              <span className="block text-amber-300">Like a Deck Tech</span>
+            </h2>
+            <p data-testid="hero-subtitle" className="text-lg sm:text-xl page-copy mb-10 max-w-3xl mx-auto">
+              Import a list, inspect the command zone, map upgrade slots, and turn your Commander deck into a clearer game plan.
+            </p>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <button data-testid="get-started-btn" onClick={() => navigate('/auth')} className="btn-primary text-lg px-8 py-4">
+                Get Started Free
+              </button>
+              <button
+                data-testid="learn-more-btn"
+                className="btn-secondary text-lg px-8 py-4"
+                onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
+              >
+                See Tools
+              </button>
+            </div>
           </div>
         </div>
       </section>

@@ -87,8 +87,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .landing-brand-logo {
-  width: min(100%, 480px);
-  max-height: 272px;
+  width: min(100%, 520px);
+  max-height: 294px;
 }
 
 .auth-brand-logo {
@@ -173,6 +173,38 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
   overflow: hidden;
   position: relative;
+}
+
+.landing-hero-section {
+  padding-top: 104px;
+  padding-bottom: 80px;
+}
+
+.landing-hero-panel {
+  padding: 0 28px 32px;
+}
+
+.landing-brand-masthead {
+  position: relative;
+  margin: 0 -28px 10px;
+  padding: 20px 28px 60px;
+  background:
+    linear-gradient(180deg, #020405 0%, #020405 54%, rgba(2, 4, 5, 0.88) 70%, rgba(2, 4, 5, 0.42) 86%, rgba(2, 4, 5, 0) 100%),
+    radial-gradient(circle at 50% 28%, rgba(212, 169, 79, 0.18), transparent 34%);
+}
+
+.landing-brand-masthead::after {
+  content: "";
+  position: absolute;
+  inset: auto 8% 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 169, 79, 0.5), transparent);
+  opacity: 0.76;
+}
+
+.landing-hero-content {
+  position: relative;
+  margin-top: -42px;
 }
 
 .page-hero::after {
@@ -1664,6 +1696,28 @@ textarea.input {
     align-items: flex-start;
     flex-direction: column;
     padding: 18px;
+  }
+
+  .landing-hero-panel {
+    padding: 0 18px 28px;
+  }
+
+  .landing-hero-section {
+    padding-top: 96px;
+    padding-bottom: 56px;
+  }
+
+  .landing-brand-masthead {
+    margin: 0 -18px 8px;
+    padding: 16px 18px 52px;
+  }
+
+  .landing-brand-logo {
+    width: min(100%, 390px);
+  }
+
+  .landing-hero-content {
+    margin-top: -38px;
   }
 
   .page-title,
