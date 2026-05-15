@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /verify-email
+Disallow: /verify-email-sent
+Disallow: /reset-password
+Disallow: /dashboard
+Disallow: /deck/
+Disallow: /analysis/
+Disallow: /commander-lookup
+Disallow: /random-commander
+Disallow: /how-it-works
+
+Sitemap: https://landfallai.live/sitemap.xml
