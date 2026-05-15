@@ -57,7 +57,7 @@ export default function Landing() {
               <span className="block text-amber-300">Like a Deck Tech</span>
             </h2>
             <p data-testid="hero-subtitle" className="text-lg sm:text-xl page-copy mb-10 max-w-3xl mx-auto">
-              Import a list, inspect the command zone, map upgrade slots, and turn your Commander deck into a clearer game plan.
+              LandFall AI is an MTG Commander deckbuilding assistant for importing decks, analyzing strategy gaps, finding synergistic card upgrades, and exploring commanders with deterministic recommendations.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <button data-testid="get-started-btn" onClick={() => navigate('/auth')} className="btn-primary text-lg px-8 py-4">
