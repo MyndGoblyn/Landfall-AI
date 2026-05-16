@@ -92,7 +92,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-20 px-6">
+      <section className="py-20 px-6" data-nosnippet>
         <div className="container mx-auto max-w-4xl">
           <div className="glass-panel p-12 text-center">
             <LibraryBig className="w-16 h-16 text-amber-300 mx-auto mb-6" />
