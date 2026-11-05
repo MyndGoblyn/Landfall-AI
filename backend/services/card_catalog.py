@@ -483,6 +483,14 @@ class LocalCardCatalog:
                 self._query_cache.popitem(last=False)
         return [_public_card(card) for card in matches[:limit]]
 
+    def load(self) -> Dict:
+        """Eagerly validate and load the current snapshot."""
+        self._ensure_loaded()
+        return self.get_status()
+
+    async def load_async(self) -> Dict:
+        return await asyncio.to_thread(self.load)
+
     async def search_async(self, query: str, limit: int) -> List[Dict]:
         return await asyncio.to_thread(self.search, query, limit)
 

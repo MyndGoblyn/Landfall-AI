@@ -28,6 +28,10 @@ must not be cached at the edge.
   health-check code, and stale deployment/test artifacts were removed.
 - Cloudflare gives fingerprinted `/static/*` files immutable browser caching;
   the application shell continues to revalidate.
+- Cloudflare R2 distributes a private, immutable, gzip-compressed Scryfall
+  catalog through a read-only Worker path. Render verifies size, SHA-256,
+  schema, version, source timestamp, and card count before atomically promoting
+  it. The local last-known-good snapshot and live Scryfall remain fallbacks.
 
 ## Verification evidence
 
@@ -42,15 +46,10 @@ must not be cached at the edge.
 
 ## Deliberately deferred
 
-1. **R2 catalog distribution.** R2 is a good home for a versioned Scryfall
-   catalog artifact, but it should feed Render during a controlled refresh—not
-   become a per-request dependency. Promotion requires an atomic downloader,
-   checksum/version validation, a last-known-good rollback, and memory testing
-   against Render's service limit.
-2. **CRA-to-Vite migration.** Create React App accounts for most remaining npm
+1. **CRA-to-Vite migration.** Create React App accounts for most remaining npm
    packages and audit warnings. Moving to Vite should be isolated as a build
    migration with route, Turnstile, source-smoke, and Cloudflare dry-run gates.
-3. **Timing telemetry.** Add stage timings for import, candidate retrieval,
+2. **Timing telemetry.** Add stage timings for import, candidate retrieval,
    deterministic scoring, persistence, and response serialization before
    changing more ranking-path code. Optimize observed bottlenecks rather than
    reducing quality checks.

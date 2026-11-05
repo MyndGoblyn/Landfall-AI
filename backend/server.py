@@ -24,6 +24,7 @@ from contextlib import asynccontextmanager
 
 from services.scryfall_service import ScryfallService
 from services.candidate_provider import build_candidate_provider
+from services.catalog_distribution import build_catalog_distribution_from_env
 from services.deck_parser import DeckParser
 from services.deck_input_assessment import (
     apply_recommendation_restraint,
@@ -138,8 +139,59 @@ async def prepare_database():
     )
 
 
+def _local_catalog_status(provider_status: Dict[str, Any]) -> Dict[str, Any]:
+    if provider_status.get("type") == "fallback":
+        primary = provider_status.get("primary")
+        return primary if isinstance(primary, dict) else {}
+    return provider_status
+
+
+async def prepare_candidate_catalog():
+    """Refresh the optional remote snapshot without making startup depend on it."""
+    if catalog_distribution is None:
+        return
+
+    try:
+        refresh_result = await asyncio.to_thread(catalog_distribution.refresh)
+    except Exception as exc:
+        logger.warning("Remote candidate catalog refresh failed; using fallback: %s", exc)
+        prepare = getattr(candidate_provider, "prepare", None)
+        if callable(prepare) and catalog_distribution.target_path.exists():
+            try:
+                await prepare()
+            except Exception as load_exc:
+                logger.warning("Last-known candidate catalog could not be loaded: %s", load_exc)
+        return
+
+    prepare = getattr(candidate_provider, "prepare", None)
+    if not callable(prepare):
+        return
+    try:
+        provider_status = await prepare()
+        local_status = _local_catalog_status(provider_status)
+        expected_count = refresh_result.manifest["card_count"]
+        if local_status.get("card_count") != expected_count:
+            raise RuntimeError(
+                "Loaded catalog card count "
+                f"{local_status.get('card_count')} did not match manifest {expected_count}"
+            )
+        catalog_distribution.commit()
+    except Exception as exc:
+        if refresh_result.changed:
+            await asyncio.to_thread(catalog_distribution.rollback, str(exc))
+            try:
+                await prepare()
+            except Exception as rollback_exc:
+                logger.warning(
+                    "Candidate catalog rollback could not load; using live Scryfall: %s",
+                    rollback_exc,
+                )
+        logger.warning("Candidate catalog validation failed; using fallback: %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    await prepare_candidate_catalog()
     await prepare_database()
     try:
         yield
@@ -155,7 +207,11 @@ api_router = APIRouter(prefix="/api")
 # Initialize services
 scryfall_service = ScryfallService(db=db)
 deck_parser = DeckParser(scryfall_service)
-candidate_provider = build_candidate_provider(scryfall_service)
+catalog_distribution = build_catalog_distribution_from_env(ENVIRONMENT)
+candidate_provider = build_candidate_provider(
+    scryfall_service,
+    catalog_path=(catalog_distribution.target_path if catalog_distribution else None),
+)
 suggestion_engine = EnhancedSuggestionEngine(
     scryfall_service,
     candidate_provider=candidate_provider,
@@ -212,6 +268,7 @@ class ScryfallCacheStatusResponse(BaseModel):
     counters: Dict[str, int]
     collection_counts: Dict[str, Optional[int]]
     candidate_provider: Dict[str, Any] = Field(default_factory=dict)
+    candidate_catalog_distribution: Dict[str, Any] = Field(default_factory=dict)
     recommendation_ranker: Dict[str, Any] = Field(default_factory=dict)
     deck_role_assessment: Dict[str, Any] = Field(default_factory=dict)
 
@@ -888,6 +945,9 @@ async def scryfall_cache_status(x_reset_key: Optional[str] = Header(default=None
         **status_payload,
         collection_counts=collection_counts,
         candidate_provider=getattr(candidate_provider, "get_status", lambda: {})(),
+        candidate_catalog_distribution=(
+            catalog_distribution.get_status() if catalog_distribution else {"enabled": False}
+        ),
         recommendation_ranker=suggestion_engine.get_ranker_status(),
         deck_role_assessment=suggestion_engine.get_deck_role_status(),
     )
@@ -1379,7 +1439,23 @@ async def random_commander(request: RandomCommanderRequest, current_user: Dict =
 
 @api_router.get("/")
 async def root():
-    return {"message": "LandFall AI API v1.0", "status": "ready"}
+    provider_status = getattr(candidate_provider, "get_status", lambda: {})()
+    local_status = _local_catalog_status(provider_status)
+    distribution_status = (
+        catalog_distribution.get_status() if catalog_distribution else {"enabled": False}
+    )
+    return {
+        "message": "LandFall AI API v1.0",
+        "status": "ready",
+        "candidate_catalog": {
+            "available": bool(local_status.get("available")),
+            "loaded": bool(local_status.get("loaded")),
+            "catalog_version": local_status.get("catalog_version"),
+            "source_updated_at": local_status.get("source_updated_at"),
+            "card_count": local_status.get("card_count"),
+            "distribution_state": distribution_status.get("state", "disabled"),
+        },
+    }
 
 logging.basicConfig(
     level=logging.INFO,

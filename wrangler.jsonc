@@ -2,7 +2,9 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "landfall-ai",
   "account_id": "67cb3cabfef7ae0b67f864d8c8a1cf65",
-  "compatibility_date": "2026-11-04",
+  "compatibility_date": "2026-11-05",
+  "main": "./cloudflare/worker.ts",
+  "upload_source_maps": true,
   "routes": [
     {
       "pattern": "landfallai.live",
@@ -15,6 +17,24 @@
   ],
   "assets": {
     "directory": "./frontend/build",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/catalog/*"]
+  },
+  "r2_buckets": [
+    {
+      "binding": "CATALOG_BUCKET",
+      "bucket_name": "landfall-ai-catalog"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
   }
 }

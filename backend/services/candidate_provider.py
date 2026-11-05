@@ -38,6 +38,9 @@ class ScryfallCandidateProvider:
     def cache_identity(self) -> tuple:
         return ("scryfall",)
 
+    async def prepare(self) -> Dict:
+        return self.get_status()
+
 
 class LocalCatalogCandidateProvider:
     """Search a versioned local Scryfall oracle-card snapshot."""
@@ -74,6 +77,9 @@ class LocalCatalogCandidateProvider:
 
     def cache_identity(self) -> tuple:
         return ("local_catalog", *self.catalog.cache_identity())
+
+    async def prepare(self) -> Dict:
+        return await self.catalog.load_async()
 
 
 class FallbackCandidateProvider:
@@ -133,6 +139,12 @@ class FallbackCandidateProvider:
         primary_identity = getattr(self.primary, "cache_identity", lambda: (type(self.primary).__name__,))()
         fallback_identity = getattr(self.fallback, "cache_identity", lambda: (type(self.fallback).__name__,))()
         return ("fallback", primary_identity, fallback_identity)
+
+    async def prepare(self) -> Dict:
+        prepare = getattr(self.primary, "prepare", None)
+        if callable(prepare):
+            await prepare()
+        return self.get_status()
 
 
 def build_candidate_provider(

@@ -10,6 +10,45 @@ Browser -> landfallai.live on Cloudflare
 
 This design keeps the validated V2 recommendation engine unchanged, requires no Cloudflare Container, and fits Cloudflare's free Workers Static Assets plan. MongoDB Atlas remains the production database.
 
+## Candidate catalog distribution
+
+The private `landfall-ai-catalog` R2 bucket stores immutable, compressed
+Scryfall releases. The Worker exposes only these read-only paths:
+
+```text
+/catalog/manifest.json
+/catalog/releases/<sha256>.json.gz
+```
+
+The manifest revalidates on every request; release objects are immutable for a
+year. The backend downloads only at startup, verifies the compressed and
+uncompressed sizes and SHA-256 hashes, validates the catalog envelope and card
+count, then atomically activates the snapshot. A failed refresh or validation
+uses the last-known-good file or live Scryfall search.
+
+Create a new release locally:
+
+```powershell
+.venv\Scripts\python.exe backend\scripts\sync_scryfall_catalog.py
+.venv\Scripts\python.exe backend\scripts\package_scryfall_catalog.py
+```
+
+Upload the immutable release and versioned rollback manifest first. Upload the
+current manifest last so readers can never observe a manifest before its
+artifact exists:
+
+```powershell
+$env:CLOUDFLARE_ACCOUNT_ID='67cb3cabfef7ae0b67f864d8c8a1cf65'
+npx wrangler r2 object put landfall-ai-catalog/catalog/releases/<sha256>.json.gz --file <release-path> --content-type application/gzip --cache-control "public, max-age=31536000, immutable" --remote
+npx wrangler r2 object put landfall-ai-catalog/catalog/manifests/<sha256>.json --file <versioned-manifest-path> --content-type application/json --cache-control "private, max-age=0" --remote
+npx wrangler r2 object put landfall-ai-catalog/catalog/manifest.json --file <manifest-path> --content-type application/json --cache-control "public, max-age=0, must-revalidate" --remote
+```
+
+Do not publish a newly synced catalog until the benchmark, calibration, fresh
+18-deck run, output-drift review, and memory gate pass. Versioned manifests are
+retained privately for rollback. Promoting one as `catalog/manifest.json` and
+restarting Render restores that catalog without deleting newer releases.
+
 ## Deployment target
 
 The Wrangler configuration is pinned to:
@@ -61,6 +100,9 @@ Verify:
 - Deck import and one full analysis complete.
 - Commander suggestions return expected results.
 - Logout succeeds.
+- `https://landfallai.live/catalog/manifest.json` returns the expected version.
+- `https://api.landfallai.live/api/` reports the same loaded catalog version and
+  card count.
 
 The Render backend must continue to allow these CORS origins with credentials:
 
