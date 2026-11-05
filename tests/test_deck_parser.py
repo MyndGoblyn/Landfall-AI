@@ -135,3 +135,21 @@ def test_moxfield_legacy_shape_remains_supported():
 
     assert result["commander"] == "Talrand, Sky Summoner"
     assert result["cards"][0]["qty"] == 30
+
+
+def test_moxfield_preserves_paired_commanders_and_combined_identity():
+    parser = DeckParser(StubScryfall())
+    first = moxfield_entry("Partner One")
+    first["card"]["color_identity"] = ["U"]
+    second = moxfield_entry("Partner Two")
+    second["card"]["color_identity"] = ["R"]
+    payload = {
+        "commanders": [first, second],
+        "mainboard": {"island": moxfield_entry("Island", quantity=30)},
+    }
+
+    result = asyncio.run(parser._parse_moxfield_payload(payload))
+
+    assert result["commander"] == "Partner One"
+    assert result["commanders"] == ["Partner One", "Partner Two"]
+    assert result["color_identity"] == ["U", "R"]

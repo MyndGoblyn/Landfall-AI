@@ -1,8 +1,16 @@
 const MANIFEST_PATH = "/catalog/manifest.json";
 const RELEASE_PATH = /^\/catalog\/releases\/[0-9a-f]{64}\.json\.gz$/;
+const SEMANTIC_MANIFEST_PATH = "/catalog/semantic/manifest.json";
+const SEMANTIC_RELEASE_PATH =
+  /^\/catalog\/semantic\/releases\/[0-9a-f]{64}\.json\.gz$/;
 
 function objectKey(pathname: string): string | null {
-  if (pathname === MANIFEST_PATH || RELEASE_PATH.test(pathname)) {
+  if (
+    pathname === MANIFEST_PATH ||
+    RELEASE_PATH.test(pathname) ||
+    pathname === SEMANTIC_MANIFEST_PATH ||
+    SEMANTIC_RELEASE_PATH.test(pathname)
+  ) {
     return pathname.slice(1);
   }
   return null;
@@ -17,7 +25,7 @@ function responseHeaders(object: R2Object, pathname: string): Headers {
   headers.set("X-Robots-Tag", "noindex, nofollow");
   headers.set(
     "Cache-Control",
-    pathname === MANIFEST_PATH
+    pathname === MANIFEST_PATH || pathname === SEMANTIC_MANIFEST_PATH
       ? "public, max-age=0, must-revalidate"
       : "public, max-age=31536000, immutable",
   );

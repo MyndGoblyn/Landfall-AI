@@ -15,8 +15,18 @@ def assess_deck_input(deck: Mapping) -> Dict:
     cards = [card for card in deck.get("cards", []) if isinstance(card, Mapping)]
     quantities = [_safe_quantity(card.get("qty", 1)) for card in cards]
     mainboard_cards = sum(quantities)
-    commander = str(deck.get("commander") or "").strip() or None
-    submitted_cards = mainboard_cards + (1 if commander else 0)
+    commanders = [
+        str(name).strip()
+        for name in deck.get("commanders") or []
+        if str(name).strip()
+    ]
+    commander = (
+        str(deck.get("commander") or "").strip()
+        or (commanders[0] if commanders else None)
+    )
+    if commander and commander not in commanders:
+        commanders.insert(0, commander)
+    submitted_cards = mainboard_cards + len(commanders)
     land_cards = sum(
         qty
         for card, qty in zip(cards, quantities)

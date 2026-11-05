@@ -318,6 +318,80 @@ def classify_card_functions(card: Mapping) -> CardFunctionProfile:
     if "instant" in type_line and interaction and practical_mana_value <= 2:
         functions.add("efficient_interaction")
 
+    protection_scope = any(
+        phrase in text
+        for phrase in (
+            "target creature you control",
+            "target permanent you control",
+            "creatures you control gain",
+            "permanents you control gain",
+            "phase out",
+        )
+    )
+    if protection_scope and any(
+        term in text
+        for term in (
+            "hexproof",
+            "indestructible",
+            "protection from",
+            "phase out",
+            "return target",
+        )
+    ):
+        functions.add("protection")
+
+    if any(
+        phrase in text
+        for phrase in (
+            "from your graveyard to your hand",
+            "from your graveyard to the battlefield",
+            "return target permanent card from your graveyard",
+            "return target creature card from your graveyard",
+            "you may cast permanent spells of each permanent type from your graveyard",
+            "you may play lands from your graveyard",
+        )
+    ):
+        functions.add("recovery")
+
+    if any(
+        phrase in text
+        for phrase in (
+            "create a creature token",
+            "create two creature tokens",
+            "create three creature tokens",
+            "create x creature tokens",
+            "create a treasure token",
+            "additional land",
+            "you may play an additional land",
+            "mill yourself",
+            "mill two cards",
+            "mill three cards",
+            "costs {1} less",
+            "cost {1} less",
+        )
+    ):
+        functions.add("enabler")
+
+    payoff_trigger = any(
+        phrase in text
+        for phrase in (
+            "whenever you cast",
+            "whenever a creature dies",
+            "whenever another creature dies",
+            "whenever you sacrifice",
+            "whenever one or more tokens",
+            "whenever an artifact",
+            "whenever an enchantment",
+            "for each counter",
+            "for each creature you control",
+            "tokens you control get",
+            "double the number of",
+            "twice that many",
+        )
+    )
+    if payoff_trigger:
+        functions.add("payoff")
+
     return CardFunctionProfile(
         mana_value=mana_value,
         practical_mana_value=practical_mana_value,

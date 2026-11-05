@@ -84,6 +84,7 @@ class DeckParser:
         lines = text.strip().split('\n')
         parsed_entries = []
         commander = None
+        commanders = []
         
         for line in lines:
             line = line.strip()
@@ -102,7 +103,9 @@ class DeckParser:
             # Check for commander marker
             if '*CMDR*' in card_name.upper() or 'COMMANDER' in card_name.upper():
                 card_name = re.sub(r'\*CMDR\*|COMMANDER', '', card_name, flags=re.IGNORECASE).strip()
-                commander = card_name
+                if card_name not in commanders:
+                    commanders.append(card_name)
+                commander = commander or card_name
             
             parsed_entries.append((card_name, qty))
 
@@ -118,25 +121,34 @@ class DeckParser:
             for card in cards:
                 if card.get('type_line') and 'Legendary Creature' in card['type_line']:
                     commander = card['name']
+                    commanders = [commander]
                     break
+
+        if commander and not commanders:
+            commanders = [commander]
         
         # Determine color identity
         color_identity = []
-        if commander:
-            commander_card = await self.scryfall.search_card(commander)
-            if commander_card:
-                color_identity = commander_card.get('color_identity', [])
+        if commanders:
+            commander_cards = await self.scryfall.get_card_bulk(commanders)
+            for commander_card in commander_cards:
+                if not commander_card:
+                    continue
+                for color in commander_card.get('color_identity', []) or []:
+                    if color not in color_identity:
+                        color_identity.append(color)
 
             # The commander is stored separately throughout the analysis system.
             # Remove one marked/inferred copy so every import path consistently
             # analyzes the Commander main deck (normally 99 cards).
-            commander_key = commander.casefold()
-            removed_commander = False
+            commander_keys = {name.casefold() for name in commanders}
+            removed_commanders = set()
             normalized_cards = []
             for card in cards:
-                if not removed_commander and card.get('name', '').casefold() == commander_key:
+                card_key = card.get('name', '').casefold()
+                if card_key in commander_keys and card_key not in removed_commanders:
                     qty = int(card.get('qty', 1) or 1)
-                    removed_commander = True
+                    removed_commanders.add(card_key)
                     if qty > 1:
                         normalized_cards.append({**card, 'qty': qty - 1})
                     continue
@@ -145,6 +157,7 @@ class DeckParser:
         
         return {
             "commander": commander,
+            "commanders": commanders,
             "cards": cards,
             "color_identity": color_identity
         }
@@ -159,7 +172,8 @@ class DeckParser:
         )
 
         commander = None
-        commander_row = None
+        commander_rows = []
+        commanders = []
         cards = []
         for card_data in data.get('cards', []):
             oracle = card_data.get('card', {}).get('oracleCard', {})
@@ -172,9 +186,10 @@ class DeckParser:
                 for category in (card_data.get('categories') or [])
             }
             if 'commander' in categories:
-                if commander is None:
-                    commander = card_name
-                    commander_row = card_data
+                if card_name not in commanders:
+                    commanders.append(card_name)
+                    commander_rows.append(card_data)
+                commander = commander or card_name
                 continue
             if categories.intersection(excluded_categories):
                 continue
@@ -191,9 +206,11 @@ class DeckParser:
                 cards.append(self._build_card_info(scryfall_card, qty))
 
         color_identity = []
-        if commander_row:
+        for commander_row in commander_rows:
             oracle = commander_row.get('card', {}).get('oracleCard', {})
-            color_identity = self._map_archidekt_colors(oracle.get('colorIdentity', []))
+            for color in self._map_archidekt_colors(oracle.get('colorIdentity', [])):
+                if color not in color_identity:
+                    color_identity.append(color)
         if commander and not color_identity:
             commander_card = await self.scryfall.search_card(commander)
             if commander_card:
@@ -201,6 +218,7 @@ class DeckParser:
 
         return {
             "commander": commander,
+            "commanders": commanders,
             "cards": cards,
             "color_identity": color_identity,
         }
@@ -212,8 +230,18 @@ class DeckParser:
 
         commander = None
         commander_card = None
-        if commander_entries:
-            commander_card = commander_entries[0].get('card') or commander_entries[0]
+        commander_cards = []
+        commanders = []
+        for entry in commander_entries:
+            candidate = entry.get('card') or entry
+            name = candidate.get('name')
+            if not name:
+                continue
+            commander_cards.append(candidate)
+            if name not in commanders:
+                commanders.append(name)
+        if commander_cards:
+            commander_card = commander_cards[0]
             commander = commander_card.get('name')
 
         cards = []
@@ -231,7 +259,11 @@ class DeckParser:
                 if scryfall_card:
                     cards.append(self._build_card_info(scryfall_card, qty))
 
-        color_identity = list((commander_card or {}).get('color_identity') or [])
+        color_identity = []
+        for candidate in commander_cards:
+            for color in candidate.get('color_identity') or []:
+                if color not in color_identity:
+                    color_identity.append(color)
         if commander and not color_identity:
             scryfall_card = await self.scryfall.search_card(commander)
             if scryfall_card:
@@ -239,6 +271,7 @@ class DeckParser:
 
         return {
             "commander": commander,
+            "commanders": commanders,
             "cards": cards,
             "color_identity": color_identity,
         }

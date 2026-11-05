@@ -71,6 +71,7 @@ cloudflare/worker-configuration.d.ts
 agenthub/agents/youtube/db
 backend/data/scryfall_oracle_cards.json
 backend/data/catalog_dist/
+backend/data/semantic_dist/
 
 # Archive files and large assets
 **/*.zip

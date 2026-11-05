@@ -50,6 +50,7 @@ class FrozenCatalogScryfall:
             "type_line": card.get("type_line", ""),
             "oracle_text": card.get("oracle_text", ""),
             "cmc": card.get("cmc", 0),
+            "mana_cost": card.get("mana_cost", ""),
             "colors": card.get("colors", []),
             "color_identity": card.get("color_identity", []),
             "set_code": card.get("set"),
@@ -57,6 +58,7 @@ class FrozenCatalogScryfall:
             "prices": card.get("prices", {}),
             "keywords": card.get("keywords", []),
             "legalities": card.get("legalities", {}),
+            "card_faces": card.get("card_faces", []),
         }
 
 
@@ -144,6 +146,9 @@ def _analysis_evidence(result: Mapping) -> Dict:
         "intent_summary": result.get("intent_summary") or {},
         "deck_invariants": result.get("deck_invariants") or {},
         "input_assessment": result.get("input_assessment") or {},
+        "strategy_profile": result.get("strategy_profile") or {},
+        "recommendation_planner": result.get("recommendation_planner") or {},
+        "performance": result.get("performance") or {},
     }
 
 
@@ -153,6 +158,7 @@ async def _analyze(
     ranker_mode: str,
     scryfall: FrozenCatalogScryfall,
     provider: LocalCatalogCandidateProvider,
+    planner_mode: str = "legacy",
 ) -> Dict:
     deck = {
         "commander": snapshot.get("commander"),
@@ -167,6 +173,7 @@ async def _analyze(
         scryfall,
         candidate_provider=provider,
         ranker_mode=ranker_mode,
+        planner_mode=planner_mode,
     )
     result = await engine.analyze_deck(deck, deep=False)
     result = apply_recommendation_restraint(result, assessment)
@@ -243,12 +250,24 @@ async def execute(
             "v2",
             scryfall,
             provider,
+            "legacy",
+        )
+        v3 = await _analyze(
+            snapshot,
+            intent_profile,
+            "v2",
+            scryfall,
+            provider,
+            "v3",
         )
         legacy_top = [
             item.get("card_name") for item in legacy.get("suggestions_add") or []
         ]
         v2_top = [
             item.get("card_name") for item in v2.get("suggestions_add") or []
+        ]
+        v3_top = [
+            item.get("card_name") for item in v3.get("suggestions_add") or []
         ]
         results.append({
             "case_id": case_id,
@@ -264,11 +283,15 @@ async def execute(
             "intent_profile": intent_profile,
             "legacy": legacy,
             "v2": v2,
+            "v3": v3,
             "ranking_comparison": {
                 "same_top_choice": legacy_top[:1] == v2_top[:1],
                 "same_top_five_order": legacy_top[:5] == v2_top[:5],
                 "legacy_top_five": legacy_top[:5],
                 "v2_top_five": v2_top[:5],
+                "v3_same_top_choice": v2_top[:1] == v3_top[:1],
+                "v3_same_top_five_order": v2_top[:5] == v3_top[:5],
+                "v3_top_five": v3_top[:5],
             },
         })
 
@@ -282,7 +305,7 @@ async def execute(
             "path": str(catalog_path.relative_to(REPO_PATH)),
             **catalog_status,
         },
-        "ranker_modes": ["legacy", "v2"],
+        "ranker_modes": ["legacy", "v2", "v3"],
         "analysis_depth": "fast",
         "case_count": len(results),
         "integrity_passed": all(case["integrity"]["passed"] for case in results),
@@ -293,6 +316,11 @@ async def execute(
             case["case_id"]
             for case in results
             if not case["ranking_comparison"]["same_top_choice"]
+        ],
+        "v3_changed_top_choice_case_ids": [
+            case["case_id"]
+            for case in results
+            if not case["ranking_comparison"]["v3_same_top_choice"]
         ],
         "cases": results,
     }

@@ -26,3 +26,5 @@ python -m pip install -r backend\requirements-dev.txt
 - [Quality checklist](QA_CHECKLIST.md)
 - [Candidate catalog](docs/CANDIDATE_CATALOG.md)
 - [Pipeline optimization record](docs/PIPELINE_OPTIMIZATION.md)
+- [Recommendation Planner V3](docs/RECOMMENDATION_PLANNER_V3.md)
+- [V3 real-deck validation](docs/REAL_DECK_VALIDATION_REPORT_2026-11-05_V3.md)

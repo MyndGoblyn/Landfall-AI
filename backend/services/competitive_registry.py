@@ -47,6 +47,9 @@ class CompetitiveCardRegistry:
     def candidate_names(self) -> Iterable[str]:
         return tuple(row["name"] for row in self._cards.values())
 
+    def count(self) -> int:
+        return len(self._cards)
+
     def evidence(
         self,
         card_name: str,

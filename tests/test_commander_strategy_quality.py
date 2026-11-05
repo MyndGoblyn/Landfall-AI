@@ -1100,6 +1100,83 @@ def test_generic_combo_lines_are_not_added_for_creature_themes():
     assert combos == []
 
 
+def test_unverified_hardcoded_zur_combo_claims_are_disabled():
+    engine = make_engine()
+    assert engine._generate_combo_suggestions(
+        "Zur the Enchanter",
+        ["enchantment", "voltron"],
+        [],
+    ) == []
+
+
+def test_additional_cost_and_mana_value_wording_are_not_ramp():
+    engine = make_engine()
+    eldritch_evolution = {
+        "name": "Eldritch Evolution",
+        "type_line": "Sorcery",
+        "oracle_text": (
+            "As an additional cost to cast this spell, sacrifice a creature. "
+            "Search your library for a creature card with mana value X or less."
+        ),
+    }
+
+    assert not engine._card_matches_role(eldritch_evolution, "ramp")
+
+
+def test_landcycling_to_hand_is_not_mana_acceleration():
+    engine = make_engine()
+    landcycler = {
+        "name": "Lórien Revealed",
+        "type_line": "Sorcery",
+        "oracle_text": (
+            "Draw three cards. Islandcycling {1} ({1}, Discard this card: "
+            "Search your library for an Island card, reveal it, put it into "
+            "your hand, then shuffle.)"
+        ),
+    }
+    true_ramp = {
+        "name": "Rampant Growth",
+        "type_line": "Sorcery",
+        "oracle_text": (
+            "Search your library for a basic land card, put that card onto the "
+            "battlefield tapped, then shuffle."
+        ),
+    }
+
+    assert not engine._card_matches_role(landcycler, "ramp")
+    assert engine._card_matches_role(true_ramp, "ramp")
+
+
+def test_self_only_mass_exile_is_not_a_board_sweeper():
+    engine = make_engine()
+    synthetic_destiny = {
+        "name": "Synthetic Destiny",
+        "type_line": "Instant",
+        "oracle_text": (
+            "Exile all creatures you control. At the beginning of the next end "
+            "step, reveal cards from the top of your library."
+        ),
+    }
+
+    assert not engine._card_matches_role(synthetic_destiny, "sweeper")
+
+
+def test_gift_token_created_by_opponent_is_not_our_token_support():
+    engine = make_engine()
+    into_the_flood_maw = {
+        "name": "Into the Flood Maw",
+        "type_line": "Instant",
+        "oracle_text": (
+            "Gift a tapped Fish. If you do, they create a tapped 1/1 blue Fish "
+            "creature token before its other effects. Return target creature."
+        ),
+    }
+
+    oracle_text = into_the_flood_maw["oracle_text"].lower()
+    assert engine._creates_tokens_for_other_player(oracle_text)
+    assert not engine._card_matches_synergy(into_the_flood_maw, "tokens")
+
+
 def test_board_conversion_profile_is_general_not_commander_specific():
     engine = make_engine()
     commander = {
@@ -1463,6 +1540,71 @@ def test_deck_analysis_role_additions_exclude_lands():
     ))
 
     assert [card["card_name"] for card in cards] == ["Ramp Spell"]
+
+
+def test_v3_cross_lane_choice_does_not_leak_into_next_candidate():
+    fake_scryfall = FakeScryfall()
+    fake_scryfall.results = [
+        {
+            "name": "First Counter",
+            "oracle_text": "Counter target spell. Draw a card.",
+            "type_line": "Instant",
+            "cmc": 2,
+            "color_identity": ["U"],
+        },
+        {
+            "name": "Second Counter",
+            "oracle_text": "Counter target spell.",
+            "type_line": "Instant",
+            "cmc": 2,
+            "color_identity": ["U"],
+        },
+    ]
+    engine = EnhancedSuggestionEngine(fake_scryfall, planner_mode="v3")
+    preferred_lanes = []
+
+    def evaluate(card, *_args, preferred_lane=None, **_kwargs):
+        preferred_lanes.append(preferred_lane)
+        chosen_role = "draw" if card["name"] == "First Counter" else "interaction"
+        return {
+            "quality": {
+                "confidence": "core",
+                "fit_tier": "Core Fit",
+                "score": 90,
+                "evidence": "validated test evidence",
+                "evidence_tags": ["direct_synergy"],
+                "penalty_tags": [],
+                "role_tag": chosen_role,
+                "role_gains": {chosen_role: 1.0},
+            },
+            "reason": "Validated test recommendation.",
+            "role": chosen_role,
+            "matched_plan_lanes": [chosen_role],
+            "evidence_confidence": 0.9,
+            "expected_deck_improvement": 0.7,
+        }
+
+    engine._evaluate_candidate_across_plan_lanes = evaluate
+    commander = {
+        "name": "Test Commander",
+        "oracle_text": "Whenever you cast an instant spell, scry 1.",
+        "type_line": "Legendary Creature",
+        "color_identity": ["U"],
+    }
+
+    asyncio.run(engine._generate_additions(
+        gaps={"roles": {"interaction": 2}, "lands": {}, "colors": {}, "synergy": []},
+        commander="Test Commander",
+        color_identity=["U"],
+        current_cards=[],
+        commander_synergies=[],
+        commander_data=commander,
+        categories=None,
+        commander_constraints={"commander_color_identity": ["U"]},
+        search_budget=1,
+    ))
+
+    assert preferred_lanes == ["interaction", "interaction"]
 
 
 def test_deck_analysis_cut_suggestions_flag_redundant_off_theme_roles():

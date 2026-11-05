@@ -133,3 +133,25 @@ def test_conditional_graveyard_mana_is_not_reliable_fixing():
     })
     assert token_engine.has("conditional_mana_fixing")
     assert not token_engine.has("mana_fixing")
+
+
+def test_shared_profile_exposes_strategy_jobs_for_balance_analysis():
+    enabler = classify_card_functions({
+        "type_line": "Sorcery",
+        "oracle_text": "Create two creature tokens.",
+        "cmc": 2,
+    })
+    payoff = classify_card_functions({
+        "type_line": "Enchantment",
+        "oracle_text": "Whenever a creature dies, each opponent loses 1 life.",
+        "cmc": 3,
+    })
+    protection = classify_card_functions({
+        "type_line": "Instant",
+        "oracle_text": "Target creature you control gains indestructible until end of turn.",
+        "cmc": 1,
+    })
+
+    assert enabler.has("enabler")
+    assert payoff.has("payoff")
+    assert protection.has("protection")

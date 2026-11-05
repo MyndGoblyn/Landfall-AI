@@ -44,6 +44,7 @@ class EvidenceRankerV2:
         "competitive_evidence": 26,
         "compact_win_component": 25,
         "declared_strategy_priority": 21,
+        "multi_plan_fit": 8,
     }
     FUNCTION_WEIGHTS = {
         "repeatable_engine": 10,
@@ -64,6 +65,7 @@ class EvidenceRankerV2:
         "effective_role_gain": 8,
         "reliable_role_source": 7,
         "multi_role_gain": 6,
+        "engine_balance_gain": 7,
         "competitive_efficiency_fit": 10,
         "free_interaction": 12,
         "efficient_interaction": 10,
@@ -118,6 +120,8 @@ class EvidenceRankerV2:
         "implicit_budget_unpriced": 28,
         "missing_competitive_evidence": 28,
         "high_power_tempo_mismatch": 22,
+        "low_curve_mismatch": 18,
+        "tutor_curve_mismatch": 24,
     }
 
     def assess(self, recommendation: Mapping) -> RankAssessment:

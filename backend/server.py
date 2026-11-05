@@ -25,6 +25,7 @@ from contextlib import asynccontextmanager
 from services.scryfall_service import ScryfallService
 from services.candidate_provider import build_candidate_provider
 from services.catalog_distribution import build_catalog_distribution_from_env
+from services.semantic_distribution import build_semantic_distribution_from_env
 from services.deck_parser import DeckParser
 from services.deck_input_assessment import (
     apply_recommendation_restraint,
@@ -189,9 +190,50 @@ async def prepare_candidate_catalog():
         logger.warning("Candidate catalog validation failed; using fallback: %s", exc)
 
 
+async def prepare_semantic_bundle():
+    """Refresh optional registry evidence without making startup depend on it."""
+    if semantic_distribution is None:
+        return
+    refresh_result = None
+    try:
+        refresh_result = await asyncio.to_thread(semantic_distribution.refresh)
+        status = suggestion_engine.reload_semantic_bundle(
+            semantic_distribution.target_path
+        )
+        expected = refresh_result["manifest"].get("resource_counts") or {}
+        actual = {
+            "mechanics_registry": status["mechanics"],
+            "archetype_registry": status["archetypes"],
+            "competitive_registry": status["competitive_cards"],
+        }
+        if expected and expected != actual:
+            raise RuntimeError(
+                f"Loaded semantic resource counts {actual} did not match {expected}"
+            )
+        semantic_distribution.commit()
+    except Exception as exc:
+        if refresh_result and refresh_result.get("changed"):
+            await asyncio.to_thread(semantic_distribution.rollback, str(exc))
+        if semantic_distribution.target_path.exists():
+            try:
+                suggestion_engine.reload_semantic_bundle(
+                    semantic_distribution.target_path
+                )
+            except Exception as fallback_exc:
+                logger.warning(
+                    "Last-known semantic bundle could not be loaded: %s",
+                    fallback_exc,
+                )
+        logger.warning(
+            "Remote semantic bundle refresh failed; using bundled evidence: %s",
+            exc,
+        )
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     await prepare_candidate_catalog()
+    await prepare_semantic_bundle()
     await prepare_database()
     try:
         yield
@@ -208,6 +250,7 @@ api_router = APIRouter(prefix="/api")
 scryfall_service = ScryfallService(db=db)
 deck_parser = DeckParser(scryfall_service)
 catalog_distribution = build_catalog_distribution_from_env(ENVIRONMENT)
+semantic_distribution = build_semantic_distribution_from_env(ENVIRONMENT)
 candidate_provider = build_candidate_provider(
     scryfall_service,
     catalog_path=(catalog_distribution.target_path if catalog_distribution else None),
@@ -215,6 +258,10 @@ candidate_provider = build_candidate_provider(
 suggestion_engine = EnhancedSuggestionEngine(
     scryfall_service,
     candidate_provider=candidate_provider,
+    planner_mode=os.environ.get(
+        'RECOMMENDATION_PLANNER_MODE',
+        'v3' if ENVIRONMENT == 'production' else 'shadow',
+    ),
 )
 
 # ==================== MODELS ====================
@@ -269,8 +316,11 @@ class ScryfallCacheStatusResponse(BaseModel):
     collection_counts: Dict[str, Optional[int]]
     candidate_provider: Dict[str, Any] = Field(default_factory=dict)
     candidate_catalog_distribution: Dict[str, Any] = Field(default_factory=dict)
+    semantic_bundle_distribution: Dict[str, Any] = Field(default_factory=dict)
+    semantic_bundle: Dict[str, Any] = Field(default_factory=dict)
     recommendation_ranker: Dict[str, Any] = Field(default_factory=dict)
     deck_role_assessment: Dict[str, Any] = Field(default_factory=dict)
+    recommendation_planner: Dict[str, Any] = Field(default_factory=dict)
 
 class PasswordForgotRequest(BaseModel):
     email: EmailStr
@@ -313,6 +363,7 @@ class Deck(BaseModel):
     user_id: str
     name: str
     commander: Optional[str] = None
+    commanders: List[str] = Field(default_factory=list)
     cards: List[DeckCard] = []
     format: str = "commander"
     color_identity: List[str] = []
@@ -324,6 +375,7 @@ class Deck(BaseModel):
 class DeckCreate(BaseModel):
     name: str
     commander: Optional[str] = None
+    commanders: List[str] = Field(default_factory=list)
 
 class DeckImport(BaseModel):
     source_type: str  # "url" or "text"
@@ -356,6 +408,20 @@ class Suggestion(BaseModel):
     invariant_warnings: List[str] = []
     invariant_score_delta: int = 0
     preservation_requirements: List[str] = []
+    matched_plan_lanes: List[str] = Field(default_factory=list)
+    evidence_confidence: Optional[float] = None
+    confidence_band: Optional[str] = None
+    confidence_model: Optional[str] = None
+    confidence_basis: List[str] = Field(default_factory=list)
+    confidence_scope: Optional[str] = None
+    expected_deck_improvement: Optional[float] = None
+    strategy_balance_gain: Optional[str] = None
+    strategy_balance_before: Optional[Dict[str, float]] = None
+    portfolio_version: Optional[str] = None
+    selection_position: Optional[int] = None
+    selection_reason: Optional[str] = None
+    rank_assessment: Optional[Dict[str, Any]] = None
+    data_freshness: Dict[str, Any] = Field(default_factory=dict)
     suggested_quantity: Optional[int] = None
     action_only: bool = False
     image_url: Optional[str] = None
@@ -384,6 +450,9 @@ class AnalysisRun(BaseModel):
     intent_profile: DeckIntentProfile = Field(default_factory=DeckIntentProfile)
     intent_summary: Dict[str, Any] = {}
     deck_invariants: Dict[str, Any] = {}
+    strategy_profile: Dict[str, Any] = Field(default_factory=dict)
+    recommendation_planner: Dict[str, Any] = Field(default_factory=dict)
+    performance: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # ==================== AUTH HELPERS ====================
@@ -948,8 +1017,13 @@ async def scryfall_cache_status(x_reset_key: Optional[str] = Header(default=None
         candidate_catalog_distribution=(
             catalog_distribution.get_status() if catalog_distribution else {"enabled": False}
         ),
+        semantic_bundle_distribution=(
+            semantic_distribution.get_status() if semantic_distribution else {"enabled": False}
+        ),
+        semantic_bundle=suggestion_engine.get_semantic_bundle_status(),
         recommendation_ranker=suggestion_engine.get_ranker_status(),
         deck_role_assessment=suggestion_engine.get_deck_role_status(),
+        recommendation_planner=suggestion_engine.get_planner_status(),
     )
 
 @api_router.get("/auth/me", response_model=User)
@@ -974,7 +1048,14 @@ async def create_deck(deck_data: DeckCreate, current_user: Dict = Depends(get_cu
     deck = Deck(
         user_id=current_user['id'],
         name=deck_data.name,
-        commander=deck_data.commander
+        commander=(
+            deck_data.commander
+            or (deck_data.commanders[0] if deck_data.commanders else None)
+        ),
+        commanders=(
+            deck_data.commanders
+            or ([deck_data.commander] if deck_data.commander else [])
+        ),
     )
     deck_dict = deck.model_dump()
     deck_dict['created_at'] = deck_dict['created_at'].isoformat()
@@ -1044,6 +1125,9 @@ async def get_deck_cards_with_images(deck_id: str, current_user: Dict = Depends(
     return {
         'deck_name': deck.get('name'),
         'commander': deck.get('commander'),
+        'commanders': deck.get('commanders') or (
+            [deck.get('commander')] if deck.get('commander') else []
+        ),
         'cards': cards_with_images,
         'total_cards': sum(c.get('qty', 1) for c in deck.get('cards', []))
     }
@@ -1062,6 +1146,9 @@ async def import_deck(deck_id: str, import_data: DeckImport, current_user: Dict 
         update_data = {
             "cards": parsed_deck['cards'],
             "commander": parsed_deck['commander'],
+            "commanders": parsed_deck.get('commanders') or (
+                [parsed_deck['commander']] if parsed_deck.get('commander') else []
+            ),
             "color_identity": parsed_deck['color_identity'],
             "imported_from": import_data.source_data if import_data.source_type == "url" else "text"
         }
@@ -1152,6 +1239,9 @@ async def run_deck_analysis(
             intent_profile=result.get('intent_profile', deck['intent_profile']),
             intent_summary=result.get('intent_summary', {}),
             deck_invariants=result.get('deck_invariants', {}),
+            strategy_profile=result.get('strategy_profile', {}),
+            recommendation_planner=result.get('recommendation_planner', {}),
+            performance=result.get('performance', {}),
         )
         
         analysis_dict = analysis.model_dump()
@@ -1444,6 +1534,9 @@ async def root():
     distribution_status = (
         catalog_distribution.get_status() if catalog_distribution else {"enabled": False}
     )
+    semantic_status = (
+        semantic_distribution.get_status() if semantic_distribution else {"enabled": False}
+    )
     return {
         "message": "LandFall AI API v1.0",
         "status": "ready",
@@ -1454,6 +1547,10 @@ async def root():
             "source_updated_at": local_status.get("source_updated_at"),
             "card_count": local_status.get("card_count"),
             "distribution_state": distribution_status.get("state", "disabled"),
+        },
+        "semantic_bundle": {
+            **suggestion_engine.get_semantic_bundle_status(),
+            "distribution_state": semantic_status.get("state", "disabled"),
         },
     }
 
