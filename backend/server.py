@@ -1531,6 +1531,7 @@ async def random_commander(request: RandomCommanderRequest, current_user: Dict =
 async def root():
     provider_status = getattr(candidate_provider, "get_status", lambda: {})()
     local_status = _local_catalog_status(provider_status)
+    planner_status = suggestion_engine.get_planner_status()
     distribution_status = (
         catalog_distribution.get_status() if catalog_distribution else {"enabled": False}
     )
@@ -1551,6 +1552,11 @@ async def root():
         "semantic_bundle": {
             **suggestion_engine.get_semantic_bundle_status(),
             "distribution_state": semantic_status.get("state", "disabled"),
+        },
+        "recommendation_planner": {
+            "mode": planner_status["mode"],
+            "query_planner_version": planner_status["query_planner_version"],
+            "portfolio_version": planner_status["portfolio_version"],
         },
     }
 
