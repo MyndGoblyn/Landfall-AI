@@ -1,0 +1,1734 @@
+{
+  "cards": [
+    {
+      "cmc": 0,
+      "collector_number": "283",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Shizo, Death's Storehouse",
+      "oracle_text": "{T}: Add {B}.\n{B}, {T}: Target legendary creature gains fear until end of turn. (It can't be blocked except by artifact creatures and/or black creatures.)",
+      "qty": 1,
+      "set_code": "chk",
+      "tags": [],
+      "type_line": "Legendary Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "77",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Pact of Negation",
+      "oracle_text": "Counter target spell.\nAt the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "28",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Force of Will",
+      "oracle_text": "You may pay 1 life and exile a blue card from your hand rather than pay this spell's mana cost.\nCounter target spell.",
+      "qty": 1,
+      "set_code": "all",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "107",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Lim-Dûl's Vault",
+      "oracle_text": "Look at the top five cards of your library. As many times as you choose, you may pay 1 life, put those cards on the bottom of your library in any order, then look at the top five cards of your library. Then shuffle and put the last cards you looked at this way on top in any order.",
+      "qty": 1,
+      "set_code": "all",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "87",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mystic Remora",
+      "oracle_text": "Cumulative upkeep {1} (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nWhenever an opponent casts a noncreature spell, you may draw a card unless that player pays {4}.",
+      "qty": 1,
+      "set_code": "ice",
+      "tags": [
+        "counters",
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "289",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mystical Tutor",
+      "oracle_text": "Search your library for an instant or sorcery card, reveal it, then shuffle and put that card on top.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "259",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Watery Grave",
+      "oracle_text": "({T}: Add {U} or {B}.)\nAs this land enters, you may pay 2 life. If you don't, it enters tapped.",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [],
+      "type_line": "Land — Island Swamp"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "83",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Morphic Pool",
+      "oracle_text": "This land enters tapped unless you have two or more opponents.\n{T}: Add {U} or {B}.",
+      "qty": 1,
+      "set_code": "bbd",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "79",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Imperial Seal",
+      "oracle_text": "Search your library for a card, then shuffle and put that card on top. You lose 2 life.",
+      "qty": 1,
+      "set_code": "2x2",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "43",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mistblade Shinobi",
+      "oracle_text": "Ninjutsu {U} ({U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, you may return target creature that player controls to its owner's hand.",
+      "qty": 1,
+      "set_code": "bok",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "24",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Sakashima's Student",
+      "oracle_text": "Ninjutsu {1}{U} ({1}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nYou may have this creature enter as a copy of any creature on the battlefield, except it's a Ninja in addition to its other creature types.",
+      "qty": 1,
+      "set_code": "pca",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "84",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Skullsnatcher",
+      "oracle_text": "Ninjutsu {B} ({B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, exile up to two target cards from that player's graveyard.",
+      "qty": 1,
+      "set_code": "bok",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Rat Ninja"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "240",
+      "color_identity": [],
+      "colors": [],
+      "name": "Chrome Mox",
+      "oracle_text": "Imprint — When this artifact enters, you may exile a nonartifact, nonland card from your hand.\n{T}: Add one mana of any of the exiled card's colors.",
+      "qty": 1,
+      "set_code": "2xm",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "161",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Vampiric Tutor",
+      "oracle_text": "Search your library for a card, then shuffle and put that card on top. You lose 2 life.",
+      "qty": 1,
+      "set_code": "6ed",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 8.0,
+      "collector_number": "36",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Dig Through Time",
+      "oracle_text": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nLook at the top seven cards of your library. Put two of them into your hand and the rest on the bottom of your library in any order.",
+      "qty": 1,
+      "set_code": "ktk",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "60",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Fourth Bridge Prowler",
+      "oracle_text": "When this creature enters, you may have target creature get -1/-1 until end of turn.",
+      "qty": 1,
+      "set_code": "aer",
+      "tags": [],
+      "type_line": "Creature — Human Rogue"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "239",
+      "color_identity": [],
+      "colors": [],
+      "name": "Marsh Flats",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Swamp card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mm3",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "5",
+      "color_identity": [],
+      "colors": [],
+      "name": "Misty Rainforest",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "slu",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "244",
+      "color_identity": [],
+      "colors": [],
+      "name": "Scalding Tarn",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mm3",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "260",
+      "color_identity": [],
+      "colors": [],
+      "name": "Verdant Catacombs",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Swamp or Forest card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "58",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Wingcrafter",
+      "oracle_text": "Soulbond (You may pair this creature with another unpaired creature when either enters. They remain paired for as long as you control both of them.)\nAs long as this creature is paired with another creature, both creatures have flying.",
+      "qty": 1,
+      "set_code": "mm3",
+      "tags": [],
+      "type_line": "Creature — Human Wizard"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "438",
+      "color_identity": [],
+      "colors": [],
+      "name": "Polluted Delta",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "138",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mox Diamond",
+      "oracle_text": "If this artifact would enter, you may discard a land card instead. If you do, put this artifact onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "sth",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "42",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mothdust Changeling",
+      "oracle_text": "Changeling (This card is every creature type.)\nTap an untapped creature you control: This creature gains flying until end of turn.",
+      "qty": 1,
+      "set_code": "mor",
+      "tags": [],
+      "type_line": "Creature — Shapeshifter"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "255",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Flusterstorm",
+      "oracle_text": "Counter target instant or sorcery spell unless its controller pays {1}.\nStorm (When you cast this spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "35",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Gitaxian Probe",
+      "oracle_text": "({U/P} can be paid with either {U} or 2 life.)\nLook at target player's hand.\nDraw a card.",
+      "qty": 1,
+      "set_code": "nph",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "174",
+      "color_identity": [],
+      "colors": [],
+      "name": "Memnite",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "som",
+      "tags": [],
+      "type_line": "Artifact Creature — Construct"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "131",
+      "color_identity": [],
+      "colors": [],
+      "name": "Signal Pest",
+      "oracle_text": "Battle cry (Whenever this creature attacks, each other attacking creature gets +1/+0 until end of turn.)\nThis creature can't be blocked except by creatures with flying or reach.",
+      "qty": 1,
+      "set_code": "mbs",
+      "tags": [],
+      "type_line": "Artifact Creature — Pest"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "162",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Snuff Out",
+      "oracle_text": "If you control a Swamp, you may pay 4 life rather than pay this spell's mana cost.\nDestroy target nonblack creature. It can't be regenerated.",
+      "qty": 1,
+      "set_code": "mmq",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 7.0,
+      "collector_number": "9",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Commandeer",
+      "oracle_text": "You may exile two blue cards from your hand rather than pay this spell's mana cost.\nGain control of target noncreature spell. You may choose new targets for it. (If that spell is an artifact, enchantment, or planeswalker, the permanent enters under your control.)",
+      "qty": 1,
+      "set_code": "otp",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "48",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Submerge",
+      "oracle_text": "If an opponent controls a Forest and you control an Island, you may cast this spell without paying its mana cost.\nPut target creature on top of its owner's library.",
+      "qty": 1,
+      "set_code": "nem",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "288",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "qty": 1,
+      "set_code": "lci",
+      "tags": [],
+      "type_line": "Basic Land — Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "264",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Swamp",
+      "oracle_text": "({T}: Add {B}.)",
+      "qty": 1,
+      "set_code": "one",
+      "tags": [],
+      "type_line": "Basic Land — Swamp"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "73p",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Thassa's Oracle",
+      "oracle_text": "When this creature enters, look at the top X cards of your library, where X is your devotion to blue. Put up to one of them on top of your library and the rest on the bottom of your library in a random order. If X is greater than or equal to the number of cards in your library, you win the game. (Each {U} in the mana costs of permanents you control counts toward your devotion to blue.)",
+      "qty": 1,
+      "set_code": "pthb",
+      "tags": [],
+      "type_line": "Creature — Merfolk Wizard"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "263",
+      "color_identity": [],
+      "colors": [],
+      "name": "Command Tower",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "who",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "466",
+      "color_identity": [],
+      "colors": [],
+      "name": "Gingerbrute",
+      "oracle_text": "Haste (This creature can attack and {T} as soon as it comes under your control.)\n{1}: This creature can't be blocked this turn except by creatures with haste.\n{2}, {T}, Sacrifice this creature: You gain 3 life.",
+      "qty": 1,
+      "set_code": "jmp",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Artifact Creature — Food Golem"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "110",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Mystic Sanctuary",
+      "oracle_text": "({T}: Add {U}.)\nThis land enters tapped unless you control three or more other Islands.\nWhen this land enters untapped, you may put target instant or sorcery card from your graveyard on top of your library.",
+      "qty": 1,
+      "set_code": "mb2",
+      "tags": [
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Land — Island"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "174",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Brainstorm",
+      "oracle_text": "Draw three cards, then put two cards from your hand on top of your library in any order.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "196",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dark Ritual",
+      "oracle_text": "Add {B}{B}{B}.",
+      "qty": 1,
+      "set_code": "40k",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "696",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Demonic Tutor",
+      "oracle_text": "Search your library for a card, put that card into your hand, then shuffle.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "82",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Gush",
+      "oracle_text": "You may return two Islands you control to their owner's hand rather than pay this spell's mana cost.\nDraw two cards.",
+      "qty": 1,
+      "set_code": "mmq",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "294",
+      "color_identity": [],
+      "colors": [],
+      "name": "Lotus Petal",
+      "oracle_text": "{T}, Sacrifice this artifact: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "tmp",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "15",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Misdirection",
+      "oracle_text": "You may exile a blue card from your hand rather than pay this spell's mana cost.\nChange the target of target spell with a single target.",
+      "qty": 1,
+      "set_code": "ddt",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "C18-95",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Ninja of the Deep Hours",
+      "oracle_text": "Ninjutsu {1}{U} ({1}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, you may draw a card.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "37",
+      "color_identity": [],
+      "colors": [],
+      "name": "Ornithopter",
+      "oracle_text": "Flying",
+      "qty": 1,
+      "set_code": "brr",
+      "tags": [],
+      "type_line": "Artifact Creature — Thopter"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "45",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Rhystic Study",
+      "oracle_text": "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.",
+      "qty": 1,
+      "set_code": "pcy",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "66",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Snap",
+      "oracle_text": "Return target creature to its owner's hand. Untap up to two lands.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "102",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Street Wraith",
+      "oracle_text": "Swampwalk (This creature can't be blocked as long as defending player controls a Swamp.)\nCycling—Pay 2 life. (Pay 2 life, Discard this card: Draw a card.)",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Creature — Wraith"
+    },
+    {
+      "cmc": 8.0,
+      "collector_number": "101",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Treasure Cruise",
+      "oracle_text": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nDraw three cards.",
+      "qty": 1,
+      "set_code": "c16",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "321",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Underground River",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add {U} or {B}. This land deals 1 damage to you.",
+      "qty": 1,
+      "set_code": "dsc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "290",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Underground Sea",
+      "oracle_text": "({T}: Add {U} or {B}.)",
+      "qty": 1,
+      "set_code": "3ed",
+      "tags": [],
+      "type_line": "Land — Island Swamp"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "230",
+      "color_identity": [],
+      "colors": [],
+      "name": "Bloodstained Mire",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Swamp or Mountain card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "ktk",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "220",
+      "color_identity": [],
+      "colors": [],
+      "name": "Flooded Strand",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "278",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Snow-Covered Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [],
+      "type_line": "Basic Snow Land — Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "280",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Snow-Covered Swamp",
+      "oracle_text": "({T}: Add {B}.)",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [],
+      "type_line": "Basic Snow Land — Swamp"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "152",
+      "color_identity": [],
+      "colors": [],
+      "name": "Phyrexian Walker",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "vis",
+      "tags": [],
+      "type_line": "Artifact Creature — Phyrexian Construct"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "82",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Changeling Outcast",
+      "oracle_text": "Changeling (This card is every creature type.)\nThis creature can't block and can't be blocked.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [],
+      "type_line": "Creature — Shapeshifter"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "346",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Force of Negation",
+      "oracle_text": "If it's not your turn, you may exile a blue card from your hand rather than pay this spell's mana cost.\nCounter target noncreature spell. If that spell is countered this way, exile it instead of putting it into its owner's graveyard.",
+      "qty": 1,
+      "set_code": "2x2",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "204",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Ingenious Infiltrator",
+      "oracle_text": "Ninjutsu {U}{B} ({U}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever a Ninja you control deals combat damage to a player, draw a card.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Vedalken Ninja"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "58",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mist-Syndicate Naga",
+      "oracle_text": "Ninjutsu {2}{U} ({2}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, create a token that's a copy of this creature.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "blink",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature — Snake Ninja"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "244",
+      "color_identity": [],
+      "colors": [],
+      "name": "Prismatic Vista",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "147",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Deadly Rollick",
+      "oracle_text": "If you control a commander, you may cast this spell without paying its mana cost.\nExile target creature.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "94",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Fierce Guardianship",
+      "oracle_text": "If you control a commander, you may cast this spell without paying its mana cost.\nCounter target noncreature spell.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "88",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Doomsday",
+      "oracle_text": "Search your library and graveyard for five cards and exile the rest. Put the chosen cards on top of your library in any order. You lose half your life, rounded up.",
+      "qty": 1,
+      "set_code": "a25",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 11.0,
+      "collector_number": "55",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Temporal Trespass",
+      "oracle_text": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nTake an extra turn after this one. Exile Temporal Trespass.",
+      "qty": 1,
+      "set_code": "frf",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "38",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mental Misstep",
+      "oracle_text": "({U/P} can be paid with either {U} or 2 life.)\nCounter target spell with mana value 1.",
+      "qty": 1,
+      "set_code": "nph",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "451",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Thousand-Faced Shadow",
+      "oracle_text": "Ninjutsu {2}{U}{U} ({2}{U}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nFlying\nWhen this creature enters from your hand, if it's attacking, create a token that's a copy of another target attacking creature. The token enters tapped and attacking.",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "353",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Silver-Fur Master",
+      "oracle_text": "Ninjutsu {U}{B} ({U}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nNinjutsu abilities you activate cost {1} less to activate.\nOther Ninja and Rogue creatures you control get +1/+1.",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Rat Ninja"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "49",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Covert Technician",
+      "oracle_text": "Ninjutsu {1}{U} ({1}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, you may put an artifact card with mana value less than or equal to that damage from your hand onto the battlefield.",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Artifact Creature — Human Ninja"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "334",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Moon-Circuit Hacker",
+      "oracle_text": "Ninjutsu {U} ({U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, you may draw a card. If you do, discard a card unless this creature entered this turn.",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Enchantment Creature — Human Ninja"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "271",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Otawara, Soaring City",
+      "oracle_text": "{T}: Add {U}.\nChannel — {3}{U}, Discard this card: Return target artifact, creature, enchantment, or planeswalker to its owner's hand. This ability costs {1} less to activate for each legendary creature you control.",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "73",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Prosperous Thief",
+      "oracle_text": "Ninjutsu {1}{U} ({1}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever one or more Ninja or Rogue creatures you control deal combat damage to a player, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "treasure",
+        "aristocrats",
+        "stax",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "51",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "An Offer You Can't Refuse",
+      "oracle_text": "Counter target noncreature spell. Its controller creates two Treasure tokens. (They're artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "snc",
+      "tags": [
+        "stax",
+        "treasure",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 15.0,
+      "collector_number": "94",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Shadow of Mortality",
+      "oracle_text": "If your life total is less than your starting life total, this spell costs {X} less to cast, where X is the difference.",
+      "qty": 1,
+      "set_code": "snc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Avatar"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "103",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Orcish Bowmasters",
+      "oracle_text": "Flash\nWhen this creature enters and whenever an opponent draws a card except the first one they draw in each of their draw steps, this creature deals 1 damage to any target. Then amass Orcs 1.",
+      "qty": 1,
+      "set_code": "ltr",
+      "tags": [],
+      "type_line": "Creature — Orc Archer"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "495",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Borne Upon a Wind",
+      "oracle_text": "You may cast spells this turn as though they had flash.\nDraw a card.",
+      "qty": 1,
+      "set_code": "ltr",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "56",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Ingenious Prodigy",
+      "oracle_text": "Skulk (This creature can't be blocked by creatures with greater power.)\nThis creature enters with X +1/+1 counters on it.\nAt the beginning of your upkeep, if this creature has one or more +1/+1 counters on it, you may remove a +1/+1 counter from it. If you do, draw a card.",
+      "qty": 1,
+      "set_code": "woe",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Human Wizard"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "49",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Nanogene Conversion",
+      "oracle_text": "Choose target creature you control. Each other creature becomes a copy of that creature until end of turn, except it isn't legendary.",
+      "qty": 1,
+      "set_code": "who",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "344",
+      "color_identity": [],
+      "colors": [],
+      "name": "Roaming Throne",
+      "oracle_text": "Ward {2}\nAs this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nIf a triggered ability of another creature you control of the chosen type triggers, it triggers an additional time.",
+      "qty": 1,
+      "set_code": "lci",
+      "tags": [],
+      "type_line": "Artifact Creature — Golem"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "270p",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Undercity Sewers",
+      "oracle_text": "({T}: Add {U} or {B}.)\nThis land enters tapped.\nWhen this land enters, surveil 1. (Look at the top card of your library. You may put it into your graveyard.)",
+      "qty": 1,
+      "set_code": "pmkm",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Land — Island Swamp"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "105",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Snarling Gorehound",
+      "oracle_text": "Menace\nWhenever another creature you control with power 2 or less enters, surveil 1. (Look at the top card of your library. You may put it into your graveyard.)",
+      "qty": 1,
+      "set_code": "mkm",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature — Dog"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "230p",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Satoru, the Infiltrator",
+      "oracle_text": "Menace\nWhenever Satoru and/or one or more other nontoken creatures you control enter, if none of them were cast or no mana was spent to cast them, draw a card.",
+      "qty": 1,
+      "set_code": "potj",
+      "tags": [
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Legendary Creature — Human Ninja Rogue"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "62",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Flare of Denial",
+      "oracle_text": "You may sacrifice a nontoken blue creature rather than pay this spell's mana cost.\nCounter target spell.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "95",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Flare of Malice",
+      "oracle_text": "You may sacrifice a nontoken black creature rather than pay this spell's mana cost.\nEach opponent sacrifices a creature or planeswalker with the greatest mana value among creatures and planeswalkers they control.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "244",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Fell the Profane // Fell Mire",
+      "oracle_text": "Destroy target creature or planeswalker. // As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {B}.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [],
+      "type_line": "Instant // Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "61",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mockingbird",
+      "oracle_text": "Flying\nYou may have this creature enter as a copy of any creature on the battlefield with mana value less than or equal to the amount of mana spent to cast this creature, except it's a Bird in addition to its other types and it has flying.",
+      "qty": 1,
+      "set_code": "blb",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Bird Bard"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "220",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Kaito, Bane of Nightmares",
+      "oracle_text": "Ninjutsu {1}{U}{B} ({1}{U}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nDuring your turn, as long as Kaito has one or more loyalty counters on him, he's a 3/4 Ninja creature and has hexproof.\n+1: You get an emblem with \"Ninjas you control get +1/+1.\"\n0: Surveil 2. Then draw a card for each opponent who lost life this turn.\n−2: Tap target creature. Put two stun counters on it.",
+      "qty": 1,
+      "set_code": "dsk",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Planeswalker — Kaito"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "121",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Demonic Consultation",
+      "oracle_text": "Choose a card name. Exile the top six cards of your library, then reveal cards from the top of your library until you reveal a card with the chosen name. Put that card into your hand and exile all other cards revealed this way.",
+      "qty": 1,
+      "set_code": "ice",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "274",
+      "color_identity": [],
+      "colors": [],
+      "name": "Gemstone Caverns",
+      "oracle_text": "If this card is in your opening hand and you're not the starting player, you may begin the game with Gemstone Caverns on the battlefield with a luck counter on it. If you do, exile a card from your hand.\n{T}: Add {C}. If Gemstone Caverns has a luck counter on it, instead add one mana of any color.",
+      "qty": 1,
+      "set_code": "tsp",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "35",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mox Amber",
+      "oracle_text": "{T}: Add one mana of any color among legendary creatures and planeswalkers you control.",
+      "qty": 1,
+      "set_code": "brr",
+      "tags": [],
+      "type_line": "Legendary Artifact"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "12",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Tetsuko Umezawa, Fugitive",
+      "oracle_text": "Creatures you control with power or toughness 1 or less can't be blocked.",
+      "qty": 1,
+      "set_code": "mul",
+      "tags": [],
+      "type_line": "Legendary Creature — Human Rogue"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "139",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Bloodchief Ascension",
+      "oracle_text": "At the beginning of each end step, if an opponent lost 2 or more life this turn, you may put a quest counter on this enchantment. (Damage causes loss of life.)\nWhenever a card is put into an opponent's graveyard from anywhere, if this enchantment has three or more quest counters on it, you may have that player lose 2 life. If you do, you gain 2 life.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "counters",
+        "reanimator"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "12",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mindbreak Trap",
+      "oracle_text": "If an opponent cast three or more spells this turn, you may pay {0} rather than pay this spell's mana cost.\nExile any number of target spells.",
+      "qty": 1,
+      "set_code": "otp",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Instant — Trap"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "33",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Tainted Pact",
+      "oracle_text": "Exile the top card of your library. You may put that card into your hand unless it has the same name as another card exiled this way. Repeat this process until you put a card into your hand or you exile two cards with the same name, whichever comes first.",
+      "qty": 1,
+      "set_code": "sta",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 7.0,
+      "collector_number": "76",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Sea Gate Restoration // Sea Gate, Reborn",
+      "oracle_text": "Draw cards equal to the number of cards in your hand plus one. You have no maximum hand size for the rest of the game. // As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {U}.",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [],
+      "type_line": "Sorcery // Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "90",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Agadeem's Awakening // Agadeem, the Undercrypt",
+      "oracle_text": "Return from your graveyard to the battlefield any number of target creature cards that each have a different mana value X or less. // As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {B}.",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery // Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "141",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Opposition Agent",
+      "oracle_text": "Flash\nYou control your opponents while they're searching their libraries.\nWhile an opponent is searching their library, they exile each card they find. You may play those cards for as long as they remain exiled, and you may spend mana as though it were mana of any color to cast them.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Human Rogue"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "1674",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dismember",
+      "oracle_text": "({B/P} can be paid with either {B} or 2 life.)\nTarget creature gets -5/-5 until end of turn.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "38",
+      "color_identity": [],
+      "colors": [],
+      "name": "Universal Automaton",
+      "oracle_text": "Changeling (This card is every creature type.)",
+      "qty": 1,
+      "set_code": "h1r",
+      "tags": [],
+      "type_line": "Artifact Creature — Shapeshifter"
+    }
+  ],
+  "case_id": "12",
+  "color_identity": [
+    "B",
+    "U"
+  ],
+  "commander": "Yuriko, the Tiger's Shadow",
+  "commander_card": {
+    "cmc": 3.0,
+    "collector_number": "364",
+    "color_identity": [
+      "B",
+      "U"
+    ],
+    "colors": [
+      "B",
+      "U"
+    ],
+    "edhrec_rank": 2445,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/f/e/fe9be3e0-076c-4703-9750-2a6b0a178bc9.jpg?1783915606",
+      "normal": "https://cards.scryfall.io/normal/front/f/e/fe9be3e0-076c-4703-9750-2a6b0a178bc9.jpg?1783915606",
+      "small": "https://cards.scryfall.io/small/front/f/e/fe9be3e0-076c-4703-9750-2a6b0a178bc9.jpg?1783915606"
+    },
+    "keywords": [
+      "Commander ninjutsu"
+    ],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{1}{U}{B}",
+    "name": "Yuriko, the Tiger's Shadow",
+    "oracle_id": "a7043fbd-1dfd-42cf-be4b-cc343d0949e5",
+    "oracle_text": "Commander ninjutsu {U}{B} ({U}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand or the command zone tapped and attacking.)\nWhenever a Ninja you control deals combat damage to a player, reveal the top card of your library and put that card into your hand. Each opponent loses life equal to that card's mana value.",
+    "power": "1",
+    "prices": {
+      "usd": "3.72",
+      "usd_foil": "4.59"
+    },
+    "scryfall_uri": "https://scryfall.com/card/cmm/364/yuriko-the-tigers-shadow?utm_source=api",
+    "set": "cmm",
+    "toughness": "3",
+    "type_line": "Legendary Creature — Human Ninja"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "cedh-yuriko",
+  "source_platform": "moxfield",
+  "source_url": "https://moxfield.com/decks/tr0JklmIcUSWM4ZqC5IaxA"
+}

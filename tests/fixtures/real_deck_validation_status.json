@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "validation_date": "2026-08-04",
+  "deck_count": 18,
+  "strict_passes": 18,
+  "partial": 0,
+  "failed": 0,
+  "required_strict_passes": 15,
+  "passed": true,
+  "report": "docs/REAL_DECK_VALIDATION_REPORT_2026-08-04_V2_PROMOTION.md",
+  "fixture_dir": "tests/fixtures/real_deck_validation/2026-08-04",
+  "reviewed_ranker": "v2"
+}

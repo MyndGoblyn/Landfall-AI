@@ -1,0 +1,1247 @@
+{
+  "cards": [
+    {
+      "cmc": 2.0,
+      "collector_number": "217",
+      "color_identity": [],
+      "colors": [],
+      "name": "Crashing Drawbridge",
+      "oracle_text": "Defender\n{T}: Creatures you control gain haste until end of turn.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [],
+      "type_line": "Artifact Creature — Wall"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "24",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Bombardment",
+      "oracle_text": "Sacrifice a creature: This enchantment deals 1 damage to any target.",
+      "qty": 1,
+      "set_code": "ddn",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "119",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Torch Courier",
+      "oracle_text": "Haste\nSacrifice this creature: Another target creature gains haste until end of turn.",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Goblin"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "149",
+      "color_identity": [],
+      "colors": [],
+      "name": "Grafdigger's Cage",
+      "oracle_text": "Creature cards in graveyards and libraries can't enter the battlefield.\nPlayers can't cast spells from graveyards or libraries.",
+      "qty": 1,
+      "set_code": "dka",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "155",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Reverberate",
+      "oracle_text": "Copy target instant or sorcery spell. You may choose new targets for the copy.",
+      "qty": 1,
+      "set_code": "m11",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "178",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Blood Moon",
+      "oracle_text": "Nonbasic lands are Mountains.",
+      "qty": 1,
+      "set_code": "8ed",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "218",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Red Elemental Blast",
+      "oracle_text": "Choose one —\n• Counter target blue spell.\n• Destroy target blue permanent.",
+      "qty": 1,
+      "set_code": "4ed",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "90",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Mob Justice",
+      "oracle_text": "Mob Justice deals damage to target player or planeswalker equal to the number of creatures you control.",
+      "qty": 1,
+      "set_code": "sth",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "191",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Brightstone Ritual",
+      "oracle_text": "Add {R} for each Goblin on the battlefield.",
+      "qty": 1,
+      "set_code": "ons",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "209",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Sledder",
+      "oracle_text": "Sacrifice a Goblin: Target creature gets +1/+1 until end of turn.",
+      "qty": 1,
+      "set_code": "ons",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Goblin"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "128",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Battle Hymn",
+      "oracle_text": "Add {R} for each creature you control.",
+      "qty": 1,
+      "set_code": "avr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "41",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Chieftain",
+      "oracle_text": "Haste (This creature can attack and {T} as soon as it comes under your control.)\nOther Goblin creatures you control get +1/+1 and have haste.",
+      "qty": 1,
+      "set_code": "ddt",
+      "tags": [],
+      "type_line": "Creature — Goblin"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "142",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Instigator",
+      "oracle_text": "When this creature enters, create a 1/1 red Goblin creature token.",
+      "qty": 1,
+      "set_code": "m19",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature — Goblin Rogue"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "130",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Warchief",
+      "oracle_text": "Goblin spells you cast cost {1} less to cast.\nGoblins you control have haste.",
+      "qty": 1,
+      "set_code": "dom",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Goblin Warrior"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "144",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Skirk Prospector",
+      "oracle_text": "Sacrifice a Goblin: Add {R}.",
+      "qty": 1,
+      "set_code": "dom",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Goblin"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "136",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Kiki-Jiki, Mirror Breaker",
+      "oracle_text": "Haste\n{T}: Create a token that's a copy of target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "ima",
+      "tags": [
+        "stax",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature — Goblin Shaman"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "148",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Infernal Plunge",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature.\nAdd {R}{R}{R}.",
+      "qty": 1,
+      "set_code": "isd",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "125",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Bushwhacker",
+      "oracle_text": "Kicker {R} (You may pay an additional {R} as you cast this spell.)\nWhen this creature enters, if it was kicked, creatures you control get +1/+0 and gain haste until end of turn.",
+      "qty": 1,
+      "set_code": "zen",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Goblin Warrior"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "186",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Recruiter",
+      "oracle_text": "When this creature enters, search your library for any number of Goblin cards, reveal them, then shuffle and put those cards on top in any order.",
+      "qty": 1,
+      "set_code": "6ed",
+      "tags": [],
+      "type_line": "Creature — Goblin"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "241",
+      "color_identity": [],
+      "colors": [],
+      "name": "Pyre of Heroes",
+      "oracle_text": "{2}, {T}, Sacrifice a creature: Search your library for a creature card that shares a creature type with the sacrificed creature and has mana value equal to 1 plus that creature's mana value. Put that card onto the battlefield, then shuffle. Activate only as a sorcery.",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "428",
+      "color_identity": [],
+      "colors": [],
+      "name": "Liquimetal Torque",
+      "oracle_text": "{T}: Add {C}.\n{T}: Target nonland permanent becomes an artifact in addition to its other types until end of turn.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "147",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Hobgoblin Bandit Lord",
+      "oracle_text": "Other Goblins you control get +1/+1.\n{R}, {T}: This creature deals damage equal to the number of Goblins that entered the battlefield under your control this turn to any target.",
+      "qty": 1,
+      "set_code": "afr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Goblin Rogue"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "145",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goro-Goro, Disciple of Ryusei",
+      "oracle_text": "{R}: Creatures you control gain haste until end of turn.\n{3}{R}{R}: Create a 5/5 red Dragon Spirit creature token with flying. Activate only if you control an attacking modified creature. (Equipment, Auras you control, and counters are modifications.)",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "token",
+        "equipment"
+      ],
+      "type_line": "Legendary Creature — Goblin Samurai"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "401",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Lightning Bolt",
+      "oracle_text": "Lightning Bolt deals 3 damage to any target.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "206",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Wild Magic Surge",
+      "oracle_text": "Destroy target permanent an opponent controls. Its controller reveals cards from the top of their library until they reveal a permanent card that shares a card type with that permanent. They put that card onto the battlefield and the rest on the bottom of their library in a random order.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "ODY-313",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [],
+      "name": "Barbarian Ring",
+      "oracle_text": "{T}: Add {R}. This land deals 1 damage to you.\nThreshold — {R}, {T}, Sacrifice this land: It deals 2 damage to any target. Activate only if there are seven or more cards in your graveyard.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "142",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Rundvelt Hordemaster",
+      "oracle_text": "Other Goblins you control get +1/+1.\nWhenever this creature or another Goblin you control dies, exile the top card of your library. If it's a Goblin creature card, you may cast that card until the end of your next turn.",
+      "qty": 1,
+      "set_code": "dmu",
+      "tags": [
+        "blink",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Goblin Warrior"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "118",
+      "color_identity": [],
+      "colors": [],
+      "name": "Springleaf Drum",
+      "oracle_text": "{T}, Tap an untapped creature you control: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "brr",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "542",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Grenade",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a Goblin.\nGoblin Grenade deals 5 damage to any target.",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "328",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Pashalik Mons",
+      "oracle_text": "Whenever Pashalik Mons or another Goblin you control dies, Pashalik Mons deals 1 damage to any target.\n{3}{R}, Sacrifice a Goblin: Create two 1/1 red Goblin creature tokens.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [
+        "stax",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature — Goblin Warrior"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "323",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Matron",
+      "oracle_text": "When this creature enters, you may search your library for a Goblin card, reveal that card, put it into your hand, then shuffle.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Creature — Goblin"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "19",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Reckless Handling",
+      "oracle_text": "Search your library for an artifact card, reveal it, put it into your hand, shuffle, then discard a card at random. If an artifact card was discarded this way, Reckless Handling deals 2 damage to each opponent.",
+      "qty": 1,
+      "set_code": "mat",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "234",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Impulsive Pilferer",
+      "oracle_text": "When this creature dies, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")\nEncore {3}{R} ({3}{R}, Exile this card from your graveyard: For each opponent, create a token copy that attacks that opponent this turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate only as a sorcery.)",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "blink",
+        "treasure",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature — Goblin Pirate"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "44",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Impact Tremors",
+      "oracle_text": "Whenever a creature you control enters, this enchantment deals 1 damage to each opponent.",
+      "qty": 1,
+      "set_code": "wot",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "243",
+      "color_identity": [],
+      "colors": [],
+      "name": "Lightning Greaves",
+      "oracle_text": "Equipped creature has haste and shroud. (It can't be the target of spells or abilities.)\nEquip {0}",
+      "qty": 1,
+      "set_code": "who",
+      "tags": [
+        "equipment"
+      ],
+      "type_line": "Artifact — Equipment"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "224",
+      "color_identity": [],
+      "colors": [],
+      "name": "Arcane Signet",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "pip",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "189",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Chaos Warp",
+      "oracle_text": "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield.",
+      "qty": 1,
+      "set_code": "pip",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "242",
+      "color_identity": [],
+      "colors": [],
+      "name": "Swiftfoot Boots",
+      "oracle_text": "Equipped creature has hexproof and haste. (It can't be the target of spells or abilities your opponents control. It can attack and {T} no matter when it came under your control.)\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+      "qty": 1,
+      "set_code": "pip",
+      "tags": [
+        "spellslinger",
+        "equipment"
+      ],
+      "type_line": "Artifact — Equipment"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "243",
+      "color_identity": [],
+      "colors": [],
+      "name": "Lavaspur Boots",
+      "oracle_text": "Equipped creature gets +1/+0 and has haste and ward {1}. (Whenever it becomes the target of a spell or ability an opponent controls, counter it unless that player pays {1}.)\nEquip {1}",
+      "qty": 1,
+      "set_code": "otj",
+      "tags": [
+        "equipment"
+      ],
+      "type_line": "Artifact — Equipment"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "142",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Return the Favor",
+      "oracle_text": "Spree (Choose one or more additional costs.)\n+ {1} — Copy target instant spell, sorcery spell, activated ability, or triggered ability. You may choose new targets for the copy.\n+ {1} — Change the target of target spell or ability with a single target.",
+      "qty": 1,
+      "set_code": "otj",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "213",
+      "color_identity": [],
+      "colors": [],
+      "name": "Winter Moon",
+      "oracle_text": "Players can't untap more than one nonbasic land during their untap steps.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "119",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Flare of Duplication",
+      "oracle_text": "You may sacrifice a nontoken red creature rather than pay this spell's mana cost.\nCopy target instant or sorcery spell. You may choose new targets for the copy.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "248",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [],
+      "name": "Sundering Eruption // Volcanic Fissure",
+      "oracle_text": "Destroy target land. Its controller may search their library for a basic land card, put it onto the battlefield tapped, then shuffle. Creatures without flying can't block this turn. // As this land enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {R}.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery // Land"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "136",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Siege Smash",
+      "oracle_text": "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nChoose one —\n• Destroy target artifact.\n• Target creature gets +3/+2 and gains trample until end of turn.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "407",
+      "color_identity": [],
+      "colors": [],
+      "name": "Volatile Fault",
+      "oracle_text": "{T}: Add {C}.\n{1}, {T}, Sacrifice this land: Destroy target nonbasic land an opponent controls. That player may search their library for a basic land card, put it onto the battlefield, then shuffle. You create a Treasure token.",
+      "qty": 1,
+      "set_code": "m3c",
+      "tags": [
+        "blink",
+        "treasure",
+        "aristocrats",
+        "stax",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Land — Cave"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "296",
+      "color_identity": [],
+      "colors": [],
+      "name": "Herald's Horn",
+      "oracle_text": "As this artifact enters, choose a creature type.\nCreature spells you cast of the chosen type cost {1} less to cast.\nAt the beginning of your upkeep, look at the top card of your library. If it's a creature card of the chosen type, you may reveal it and put it into your hand.",
+      "qty": 1,
+      "set_code": "m3c",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "280",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mind Stone",
+      "oracle_text": "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.",
+      "qty": 1,
+      "set_code": "blc",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "ONS-210",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Goblin Taskmaster",
+      "oracle_text": "{1}{R}: Target Goblin creature gets +1/+0 until end of turn.\nMorph {R} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its morph cost.)",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Goblin"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "AKH-123",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "By Force",
+      "oracle_text": "Destroy X target artifacts.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "M21-139",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Conspicuous Snoop",
+      "oracle_text": "Play with the top card of your library revealed.\nYou may cast Goblin spells from the top of your library.\nAs long as the top card of your library is a Goblin card, this creature has all activated abilities of that card.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Goblin Rogue"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "2X2-106",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Dark-Dweller Oracle",
+      "oracle_text": "{1}, Sacrifice a creature: Exile the top card of your library. You may play that card this turn. (You still pay its costs. You can play a land this way only if you have an available land play remaining.)",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "stax",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Creature — Goblin Shaman"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "DDT-39",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Gempalm Incinerator",
+      "oracle_text": "Cycling {1}{R} ({1}{R}, Discard this card: Draw a card.)\nWhen you cycle this card, you may have it deal X damage to target creature, where X is the number of Goblins on the battlefield.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Goblin"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "TMP-191",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Mogg Raider",
+      "oracle_text": "Sacrifice a Goblin: Target creature gets +1/+1 until end of turn.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Goblin"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "DDL-32",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Pyrokinesis",
+      "oracle_text": "You may exile a red card from your hand rather than pay this spell's mana cost.\nPyrokinesis deals 4 damage divided as you choose among any number of target creatures.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "CSP-100",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Thermopod",
+      "oracle_text": "{S}: This creature gains haste until end of turn. ({S} can be paid with one mana from a snow source.)\nSacrifice a creature: Add {R}.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Snow Creature — Slug"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "161",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Untimely Malfunction",
+      "oracle_text": "Choose one —\n• Destroy target artifact.\n• Change the target of target spell or ability with a single target.\n• One or two target creatures can't block this turn.",
+      "qty": 1,
+      "set_code": "dsk",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "94",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sol Ring",
+      "oracle_text": "{T}: Add {C}{C}.",
+      "qty": 1,
+      "set_code": "dsc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "253p",
+      "color_identity": [],
+      "colors": [],
+      "name": "Marvin, Murderous Mimic",
+      "oracle_text": "Marvin has all activated abilities of creatures you control that don't have the same name as this creature.",
+      "qty": 1,
+      "set_code": "pdsk",
+      "tags": [],
+      "type_line": "Legendary Artifact Creature — Toy"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "572",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Krenko, Tin Street Kingpin",
+      "oracle_text": "Whenever Krenko attacks, put a +1/+1 counter on it, then create a number of 1/1 red Goblin creature tokens equal to Krenko's power.",
+      "qty": 1,
+      "set_code": "j25",
+      "tags": [
+        "counters",
+        "token"
+      ],
+      "type_line": "Legendary Creature — Goblin"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "254",
+      "color_identity": [],
+      "colors": [],
+      "name": "Heraldic Banner",
+      "oracle_text": "As this artifact enters, choose a color.\nCreatures you control of the chosen color get +1/+0.\n{T}: Add one mana of the chosen color.",
+      "qty": 1,
+      "set_code": "fdn",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "400",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Mass Hysteria",
+      "oracle_text": "All creatures have haste.",
+      "qty": 1,
+      "set_code": "inr",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "134",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Howlsquad Heavy",
+      "oracle_text": "Start your engines!\nOther Goblins you control have haste.\nAt the beginning of combat on your turn, create a 1/1 red Goblin creature token. That token attacks this combat if able.\nMax speed — {T}: Add {R} for each Goblin you control.",
+      "qty": 1,
+      "set_code": "dft",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature — Goblin Mercenary"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "203",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Abrade",
+      "oracle_text": "Choose one —\n• Abrade deals 3 damage to target creature.\n• Destroy target artifact.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "216",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Grenzo, Havoc Raiser",
+      "oracle_text": "Whenever a creature you control deals combat damage to a player, choose one —\n• Goad target creature that player controls.\n• Exile the top card of that player's library. Until end of turn, you may cast that card and you may spend mana as though it were mana of any color to cast that spell.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Legendary Creature — Goblin Rogue"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "103",
+      "color_identity": [],
+      "colors": [],
+      "name": "Skullclamp",
+      "oracle_text": "Equipped creature gets +1/-1.\nWhenever equipped creature dies, draw two cards.\nEquip {1}",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [
+        "aristocrats",
+        "equipment"
+      ],
+      "type_line": "Artifact — Equipment"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "135",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "The Fire Crystal",
+      "oracle_text": "Red spells you cast cost {1} less to cast.\nCreatures you control have haste.\n{4}{R}{R}, {T}: Create a token that's a copy of target creature you control. Sacrifice it at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "fin",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "36",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [],
+      "name": "Mountain",
+      "oracle_text": "({T}: Add {R}.)",
+      "qty": 30,
+      "set_code": "ddl",
+      "tags": [],
+      "type_line": "Basic Land — Mountain"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "129",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Twinflame",
+      "oracle_text": "Strive — This spell costs {2}{R} more to cast for each target beyond the first.\nChoose any number of target creatures you control. For each of them, create a token that's a copy of that creature, except it has haste. Exile those tokens at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "2x2",
+      "tags": [
+        "blink",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "140",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Reckless Lackey",
+      "oracle_text": "First strike, haste\n{2}{R}, Sacrifice this creature: Draw a card and create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "otj",
+      "tags": [
+        "stax",
+        "treasure",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Goblin Pirate"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "495",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Powerbalance",
+      "oracle_text": "Whenever an opponent casts a spell, you may reveal the top card of your library. If you do, you may cast that card without paying its mana cost if the two spells have the same mana value.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Enchantment"
+    }
+  ],
+  "case_id": "07",
+  "color_identity": [
+    "R"
+  ],
+  "commander": "Krenko, Mob Boss",
+  "commander_card": {
+    "cmc": 4.0,
+    "collector_number": "204",
+    "color_identity": [
+      "R"
+    ],
+    "colors": [
+      "R"
+    ],
+    "edhrec_rank": 1102,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/8/2/824b2d73-2151-4e5e-9f05-8f63e2bdcaa9.jpg?1783909065",
+      "normal": "https://cards.scryfall.io/normal/front/8/2/824b2d73-2151-4e5e-9f05-8f63e2bdcaa9.jpg?1783909065",
+      "small": "https://cards.scryfall.io/small/front/8/2/824b2d73-2151-4e5e-9f05-8f63e2bdcaa9.jpg?1783909065"
+    },
+    "keywords": [],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{2}{R}{R}",
+    "name": "Krenko, Mob Boss",
+    "oracle_id": "68418069-f615-40ef-ae0d-764192acae00",
+    "oracle_text": "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.",
+    "power": "3",
+    "prices": {
+      "usd": "1.70",
+      "usd_foil": "2.79"
+    },
+    "scryfall_uri": "https://scryfall.com/card/fdn/204/krenko-mob-boss?utm_source=api",
+    "set": "fdn",
+    "toughness": "3",
+    "type_line": "Legendary Creature — Goblin Warrior"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "krenko",
+  "source_platform": "moxfield",
+  "source_url": "https://moxfield.com/decks/o9Oh4asciUWyqDp0Ya6WwA"
+}

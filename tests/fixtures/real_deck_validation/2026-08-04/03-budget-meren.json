@@ -1,0 +1,1503 @@
+{
+  "cards": [
+    {
+      "cmc": 1,
+      "collector_number": "76",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Bone Shards",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature or discard a card.\nDestroy target creature or planeswalker.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "161",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Cankerbloom",
+      "oracle_text": "{1}, Sacrifice this creature: Choose one —\n• Destroy target artifact.\n• Destroy target enchantment.\n• Proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)",
+      "qty": 1,
+      "set_code": "one",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature - Fungus Phyrexian"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "301",
+      "color_identity": [],
+      "colors": [],
+      "name": "Commander's Sphere",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.\nSacrifice this artifact: Draw a card.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "248",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Rampant Growth",
+      "oracle_text": "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "717",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Reclamation Sage",
+      "oracle_text": "When this creature enters, you may destroy target artifact or enchantment.",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [],
+      "type_line": "Creature - Elf Shaman"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "75",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Ayara, First of Locthwain",
+      "oracle_text": "Whenever Ayara or another black creature you control enters, each opponent loses 1 life and you gain 1 life.\n{T}, Sacrifice another black creature: Draw a card.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature - Elf Noble"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "73",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Bighorner Rancher",
+      "oracle_text": "Vigilance\n{T}: Add an amount of {G} equal to the greatest power among creatures you control.\nSacrifice this creature: You gain life equal to the greatest toughness among other creatures you control.",
+      "qty": 1,
+      "set_code": "pip",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature - Human Ranger"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "154",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Bloodbriar",
+      "oracle_text": "Whenever you sacrifice another permanent, put a +1/+1 counter on this creature.",
+      "qty": 1,
+      "set_code": "2xm",
+      "tags": [
+        "counters",
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature - Elemental Plant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "207",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Blood Divination",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature.\nDraw three cards.",
+      "qty": 1,
+      "set_code": "jmp",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "373",
+      "color_identity": [],
+      "colors": [],
+      "name": "Burnished Hart",
+      "oracle_text": "{3}, Sacrifice this creature: Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Creature Artifact - Elk"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "83",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Bone Splinters",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature.\nDestroy target creature.",
+      "qty": 1,
+      "set_code": "dmu",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "212",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Village Rites",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature.\nDraw two cards.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "127",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Terror Tide",
+      "oracle_text": "Fathomless descent — All creatures get -X/-X until end of turn, where X is the number of permanent cards in your graveyard.",
+      "qty": 1,
+      "set_code": "lci",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "948",
+      "color_identity": [],
+      "colors": [],
+      "name": "Everflowing Chalice",
+      "oracle_text": "Multikicker {2} (You may pay an additional {2} any number of times as you cast this spell.)\nThis artifact enters with a charge counter on it for each time it was kicked.\n{T}: Add {C} for each charge counter on this artifact.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "counters",
+        "spellslinger"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "281",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Swamp",
+      "oracle_text": "({T}: Add {B}.)",
+      "qty": 10,
+      "set_code": "mkm",
+      "tags": [],
+      "type_line": "Basic Land - Swamp"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "309",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mind Stone",
+      "oracle_text": "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "832",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Sakura-Tribe Elder",
+      "oracle_text": "Sacrifice this creature: Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Creature - Shaman Snake"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "313",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sol Ring",
+      "oracle_text": "{T}: Add {C}{C}.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "121",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G",
+        "B"
+      ],
+      "name": "Moldervine Reclamation",
+      "oracle_text": "Whenever a creature you control dies, you gain 1 life and draw a card.",
+      "qty": 1,
+      "set_code": "onc",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "270",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Talisman of Resilience",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add {B} or {G}. This artifact deals 1 damage to you.",
+      "qty": 1,
+      "set_code": "c21",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "131",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Golgari Signet",
+      "oracle_text": "{1}, {T}: Add {B}{G}.",
+      "qty": 1,
+      "set_code": "onc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 8,
+      "collector_number": "911",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Sandwurm Convergence",
+      "oracle_text": "Creatures with flying can't attack you or planeswalkers you control.\nAt the beginning of your end step, create a 5/5 green Wurm creature token.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "382",
+      "color_identity": [],
+      "colors": [],
+      "name": "Fellwar Stone",
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "235",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Cultivate",
+      "oracle_text": "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "299",
+      "color_identity": [],
+      "colors": [],
+      "name": "Arcane Signet",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "107",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Sign in Blood",
+      "oracle_text": "Target player draws two cards and loses 2 life.",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "145",
+      "color_identity": [],
+      "colors": [],
+      "name": "Liquimetal Torque",
+      "oracle_text": "{T}: Add {C}.\n{T}: Target nonland permanent becomes an artifact in addition to its other types until end of turn.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "198",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Feed the Swarm",
+      "oracle_text": "Destroy target creature or enchantment an opponent controls. You lose life equal to that permanent's mana value.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "349",
+      "color_identity": [],
+      "colors": [],
+      "name": "Rogue's Passage",
+      "oracle_text": "{T}: Add {C}.\n{4}, {T}: Target creature can't be blocked this turn.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "46",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Llanowar Elves",
+      "oracle_text": "{T}: Add {G}.",
+      "qty": 1,
+      "set_code": "gnt",
+      "tags": [],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "245",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Kodama's Reach",
+      "oracle_text": "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery - Arcane"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "138",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Bastion of Remembrance",
+      "oracle_text": "When this enchantment enters, create a 1/1 white Human Soldier creature token.\nWhenever a creature you control dies, each opponent loses 1 life and you gain 1 life.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "182",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Gaea's Gift",
+      "oracle_text": "Put a +1/+1 counter on target creature you control. It gains reach, trample, hexproof, and indestructible until end of turn. (It can't be the target of spells or abilities your opponents control. Damage and effects that say \"destroy\" don't destroy it.)",
+      "qty": 1,
+      "set_code": "bro",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "248",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Haunted Mire",
+      "oracle_text": "({T}: Add {B} or {G}.)\nThis land enters tapped.",
+      "qty": 1,
+      "set_code": "dmu",
+      "tags": [],
+      "type_line": "Land - Swamp Forest"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "278",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Grim Backwoods",
+      "oracle_text": "{T}: Add {C}.\n{2}{B}{G}, {T}, Sacrifice a creature: Draw a card.",
+      "qty": 1,
+      "set_code": "c20",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "235",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Golgari Guildgate",
+      "oracle_text": "This land enters tapped.\n{T}: Add {B} or {G}.",
+      "qty": 1,
+      "set_code": "clu",
+      "tags": [],
+      "type_line": "Land - Gate"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "236",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Golgari Rot Farm",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, return a land you control to its owner's hand.\n{T}: Add {B}{G}.",
+      "qty": 1,
+      "set_code": "clu",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "1015",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Necroblossom Snarl",
+      "oracle_text": "As this land enters, you may reveal a Swamp or Forest card from your hand. If you don't, this land enters tapped.\n{T}: Add {B} or {G}.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "1040",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Tainted Wood",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add {B} or {G}. Activate only if you control a Swamp.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "411",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Momentous Fall",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature.\nYou draw cards equal to the sacrificed creature's power, then you gain life equal to its toughness.",
+      "qty": 1,
+      "set_code": "jmp",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "325",
+      "color_identity": [],
+      "colors": [],
+      "name": "Command Tower",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "167",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G",
+        "B"
+      ],
+      "name": "Golgari Germination",
+      "oracle_text": "Whenever a nontoken creature you control dies, create a 1/1 green Saproling creature token.",
+      "qty": 1,
+      "set_code": "mm3",
+      "tags": [
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "221",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G",
+        "B"
+      ],
+      "name": "Rise of the Witch-king",
+      "oracle_text": "Each player sacrifices a creature of their choice. If you sacrificed a creature this way, you may return another permanent card from your graveyard to the battlefield.",
+      "qty": 1,
+      "set_code": "ltr",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "175",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G",
+        "B"
+      ],
+      "name": "Jarad's Orders",
+      "oracle_text": "Search your library for up to two creature cards and reveal them. Put one into your hand and the other into your graveyard. Then shuffle.",
+      "qty": 1,
+      "set_code": "rtr",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "1043",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Temple of Malady",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{T}: Add {B} or {G}.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "270",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Jungle Hollow",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, you gain 1 life.\n{T}: Add {B} or {G}.",
+      "qty": 1,
+      "set_code": "mom",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "288",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Evolutionary Leap",
+      "oracle_text": "{G}, Sacrifice a creature: Reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest on the bottom of your library in a random order.",
+      "qty": 1,
+      "set_code": "ncc",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "484",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Vampiric Rites",
+      "oracle_text": "{1}{B}, Sacrifice a creature: You gain 1 life and draw a card.",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "285",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [],
+      "name": "Forest",
+      "oracle_text": "({T}: Add {G}.)",
+      "qty": 7,
+      "set_code": "mkm",
+      "tags": [],
+      "type_line": "Basic Land - Forest"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "360",
+      "color_identity": [],
+      "colors": [],
+      "name": "Terramorphic Expanse",
+      "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "416",
+      "color_identity": [],
+      "colors": [],
+      "name": "Myriad Landscape",
+      "oracle_text": "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "397",
+      "color_identity": [],
+      "colors": [],
+      "name": "Evolving Wilds",
+      "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "83",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G",
+        "B"
+      ],
+      "name": "Casualties of War",
+      "oracle_text": "Choose one or more —\n• Destroy target artifact.\n• Destroy target creature.\n• Destroy target enchantment.\n• Destroy target land.\n• Destroy target planeswalker.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "775",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Zulaport Cutthroat",
+      "oracle_text": "Whenever this creature or another creature you control dies, each opponent loses 1 life and you gain 1 life.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature - Human Rogue Ally"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "182",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Blood Artist",
+      "oracle_text": "Whenever this creature or another creature dies, target player loses 1 life and you gain 1 life.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature - Vampire"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "316",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Wood Elves",
+      "oracle_text": "When this creature enters, search your library for a Forest card, put that card onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature - Elf Scout"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "99",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Smothering Abomination",
+      "oracle_text": "Devoid (This card has no color.)\nFlying\nAt the beginning of your upkeep, sacrifice a creature.\nWhenever you sacrifice a creature, draw a card.",
+      "qty": 1,
+      "set_code": "bfz",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature - Eldrazi"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "215",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G",
+        "B"
+      ],
+      "name": "Underrealm Lich",
+      "oracle_text": "If you would draw a card, instead look at the top three cards of your library, then put one into your hand and the rest into your graveyard.\nPay 4 life: This creature gains indestructible until end of turn. Tap it.",
+      "qty": 1,
+      "set_code": "clu",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature - Elf Shaman Zombie"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "555",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Orcish Medicine",
+      "oracle_text": "Target creature gains your choice of lifelink or indestructible until end of turn.\nAmass Orcs 1. (Put a +1/+1 counter on an Army you control. It's also an Orc. If you don't control an Army, create a 0/0 black Orc Army creature token first.)",
+      "qty": 1,
+      "set_code": "ltr",
+      "tags": [
+        "counters",
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "84",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Professor's Warning",
+      "oracle_text": "Choose one —\n• Put a +1/+1 counter on target creature.\n• Target creature gains indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy it.)",
+      "qty": 1,
+      "set_code": "stx",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "134",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Withstand Death",
+      "oracle_text": "Target creature gains indestructible until end of turn. (Damage and effects that say \"destroy\" don't destroy it. If its toughness is 0 or less, it still dies.)",
+      "qty": 1,
+      "set_code": "som",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "136",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Ravenous Chupacabra",
+      "oracle_text": "When this creature enters, destroy target creature an opponent controls.",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [],
+      "type_line": "Creature - Beast Horror"
+    },
+    {
+      "cmc": 7,
+      "collector_number": "94",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Necromantic Selection",
+      "oracle_text": "Destroy all creatures, then return a creature card put into a graveyard this way to the battlefield under your control. It's a black Zombie in addition to its other colors and types. Exile Necromantic Selection.",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "214",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Yahenni, Undying Partisan",
+      "oracle_text": "Haste\nWhenever a creature an opponent controls dies, put a +1/+1 counter on Yahenni.\nSacrifice another creature: Yahenni gains indestructible until end of turn.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "counters",
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature - Vampire Aetherborn"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "327",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [],
+      "name": "Moss Diamond",
+      "oracle_text": "This artifact enters tapped.\n{T}: Add {G}.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "168",
+      "color_identity": [],
+      "colors": [],
+      "name": "Thran Dynamo",
+      "oracle_text": "{T}: Add {C}{C}{C}.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "309",
+      "color_identity": [],
+      "colors": [],
+      "name": "Decanter of Endless Water",
+      "oracle_text": "You have no maximum hand size.\n{T}: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "107",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Crux of Fate",
+      "oracle_text": "Choose one —\n• Destroy all Dragon creatures.\n• Destroy all non-Dragon creatures.",
+      "qty": 1,
+      "set_code": "c17",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "305",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Charcoal Diamond",
+      "oracle_text": "This artifact enters tapped.\n{T}: Add {B}.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "213",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Viscera Seer",
+      "oracle_text": "Sacrifice a creature: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature - Wizard Vampire"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "187",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Harmonize",
+      "oracle_text": "Draw three cards.",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "215",
+      "color_identity": [],
+      "colors": [],
+      "name": "Gilded Lotus",
+      "oracle_text": "{T}: Add three mana of any one color.",
+      "qty": 1,
+      "set_code": "dom",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "180",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Spore Frog",
+      "oracle_text": "Sacrifice this creature: Prevent all combat damage that would be dealt this turn.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature - Frog"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "80",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Gray Merchant of Asphodel",
+      "oracle_text": "When this creature enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way. (Each {B} in the mana costs of permanents you control counts toward your devotion to black.)",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [],
+      "type_line": "Creature - Zombie"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "774",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Woe Strider",
+      "oracle_text": "When this creature enters, create a 0/1 white Goat creature token.\nSacrifice another creature: Scry 1.\nEscape—{3}{B}{B}, Exile four other cards from your graveyard. (You may cast this card from your graveyard for its escape cost.)\nThis creature escapes with two +1/+1 counters on it.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "counters",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature - Horror"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "146",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Shadowheart, Dark Justiciar",
+      "oracle_text": "{1}{B}, {T}, Sacrifice another creature: Draw X cards, where X is that creature's power.\nChoose a Background (You can have a Background as a second commander.)",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature - Human Cleric Elf"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "206",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G",
+        "B"
+      ],
+      "name": "Skull Prophet",
+      "oracle_text": "{T}: Add {B} or {G}.\n{T}: Mill two cards. (Put the top two cards of your library into your graveyard.)",
+      "qty": 1,
+      "set_code": "iko",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature - Human Druid"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "A25-187",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Regrowth",
+      "oracle_text": "Return target card from your graveyard to your hand.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "75",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Mausoleum Secrets",
+      "oracle_text": "Undergrowth — Search your library for a black card with mana value less than or equal to the number of creature cards in your graveyard, reveal it, put it into your hand, then shuffle.",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "130",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Massacre Wurm",
+      "oracle_text": "When this creature enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature - Wurm Phyrexian"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "179",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G",
+        "B"
+      ],
+      "name": "Jarad, Golgari Lich Lord",
+      "oracle_text": "Jarad gets +1/+1 for each creature card in your graveyard.\n{1}{B}{G}, Sacrifice another creature: Each opponent loses life equal to the sacrificed creature's power.\nSacrifice a Swamp and a Forest: Return this card from your graveyard to your hand.",
+      "qty": 1,
+      "set_code": "cma",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Legendary Creature - Elf Zombie"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "286",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Eternal Witness",
+      "oracle_text": "When this creature enters, you may return target card from your graveyard to your hand.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature - Human Shaman"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "244",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G",
+        "B"
+      ],
+      "name": "Lord of Extinction",
+      "oracle_text": "Lord of Extinction's power and toughness are each equal to the number of cards in all graveyards.",
+      "qty": 1,
+      "set_code": "2x2",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature - Elemental"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "195",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Victimize",
+      "oracle_text": "Choose two target creature cards in your graveyard. Sacrifice a creature. If you do, return the chosen cards to the battlefield tapped.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Sorcery"
+    }
+  ],
+  "case_id": "03",
+  "color_identity": [
+    "B",
+    "G"
+  ],
+  "commander": "Meren of Clan Nel Toth",
+  "commander_card": {
+    "cmc": 4.0,
+    "collector_number": "297",
+    "color_identity": [
+      "B",
+      "G"
+    ],
+    "colors": [
+      "B",
+      "G"
+    ],
+    "edhrec_rank": 1479,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/5/0/508b1442-bf2c-4ad6-9bcf-bd894e081ab6.jpg?1783907026",
+      "normal": "https://cards.scryfall.io/normal/front/5/0/508b1442-bf2c-4ad6-9bcf-bd894e081ab6.jpg?1783907026",
+      "small": "https://cards.scryfall.io/small/front/5/0/508b1442-bf2c-4ad6-9bcf-bd894e081ab6.jpg?1783907026"
+    },
+    "keywords": [],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{2}{B}{G}",
+    "name": "Meren of Clan Nel Toth",
+    "oracle_id": "0310dfdb-0498-488d-9f1a-279f8239e024",
+    "oracle_text": "Whenever another creature you control dies, you get an experience counter.\nAt the beginning of your end step, choose target creature card in your graveyard. If that card's mana value is less than or equal to the number of experience counters you have, return it to the battlefield. Otherwise, put it into your hand.",
+    "power": "3",
+    "prices": {
+      "usd": "1.20"
+    },
+    "scryfall_uri": "https://scryfall.com/card/tdc/297/meren-of-clan-nel-toth?utm_source=api",
+    "set": "tdc",
+    "toughness": "4",
+    "type_line": "Legendary Creature — Human Shaman"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "budget-meren",
+  "source_platform": "archidekt",
+  "source_url": "https://archidekt.com/decks/7225704/meren_of_clan_nel_toth_budget_edh"
+}

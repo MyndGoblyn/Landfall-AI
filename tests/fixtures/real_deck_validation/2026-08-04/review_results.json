@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "validation_date": "2026-08-04",
+  "reviewed_ranker": "v2",
+  "served_ranker_during_review": "legacy (V2 remains shadow-only)",
+  "analysis_depth": "fast",
+  "candidate_catalog_version": "oracle_cards:2026-07-29T21:02:49.097+00:00",
+  "candidate_catalog_card_count": 38416,
+  "raw_run_sha256": "5ee6b654feb31833a86b680659f693b05bead1eef463f5e302624099d18c3f7c",
+  "counts": {
+    "deck_count": 18,
+    "strict_passes": 6,
+    "partial": 2,
+    "failed": 10,
+    "required_strict_passes": 15
+  },
+  "passed": false,
+  "promotion_gates": {
+    "immutable_snapshot_integrity": true,
+    "all_import_and_input_expectations": true,
+    "all_negative_controls_take_expected_input_path": true,
+    "at_least_15_strict_passes": false,
+    "yuriko_budget_and_cedh_outputs_materially_differ": false,
+    "zedruu_outputs_preserve_distinct_power_and_play_experiences": false,
+    "no_top_five_addition_violates_declared_intent": false,
+    "no_cut_removes_declared_protection_or_measured_floor": true,
+    "all_swap_explanations_state_preserved_role_and_gain": true,
+    "severe_mana_rule_respects_explicit_low_land_preservation": true,
+    "synthetic_calibration_gates_pass": true,
+    "all_changed_top_choices_manually_reviewed": true
+  },
+  "changed_top_choice_reviews": [
+    {"case_id": "01", "legacy_top": "Sword of Fire and Ice", "v2_top": "Satoru, the Infiltrator", "decision": "approved", "reason": "V2 replaces a nearly deck-budget-sized card with an inexpensive on-type Ninja that supplies card flow."},
+    {"case_id": "02", "legacy_top": "Glissa Sunslayer", "v2_top": "Selvala, Heart of the Wilds", "decision": "approved", "reason": "Selvala is an on-type Elf and provides mana plus card flow; the case fails for unsafe cuts, not this ordering change."},
+    {"case_id": "04", "legacy_top": "Sheltered by Ghosts", "v2_top": "Darksteel Mutation", "decision": "approved", "reason": "Both are legal Aura-toolbox choices; V2's interaction-first ordering is defensible."},
+    {"case_id": "05", "legacy_top": "Kozilek's Command", "v2_top": "Three Steps Ahead", "decision": "approved", "reason": "V2 prefers an on-plan blue instant with card-flow and interaction modes over generic creature-token material."},
+    {"case_id": "06", "legacy_top": "Volatile Stormdrake", "v2_top": "Pyroblast", "decision": "defect", "reason": "Generic interaction displaces the declared political/donation plan, and the price is poorly calibrated for a budget casual list."},
+    {"case_id": "07", "legacy_top": "Goblin Trashmaster", "v2_top": "Hexing Squelcher", "decision": "defect", "reason": "The V2 choice consumes roughly one fifth of the stated total budget without stronger evidence than the cheaper on-type legacy option."},
+    {"case_id": "09", "legacy_top": "Nuka-Cola Vending Machine", "v2_top": "Vampiric Rites", "decision": "approved", "reason": "V2 replaces an over-budget generic payoff with an inexpensive, explicit sacrifice outlet."},
+    {"case_id": "10", "legacy_top": "Izzet Generatorium", "v2_top": "Arcane Denial", "decision": "approved", "reason": "Arcane Denial is efficient spell-chain interaction; the case still fails because the unrelated energy-counter card remains second."},
+    {"case_id": "11", "legacy_top": "Life from the Loam", "v2_top": "Unearth", "decision": "defect", "reason": "A one-shot nonpermanent recursion spell outranks a proven graveyard engine in an optimized permanent-recursion deck."},
+    {"case_id": "12", "legacy_top": "Combat Research", "v2_top": "Mask of Memory", "decision": "defect", "reason": "Neither ordering reflects the requested cEDH interaction and compact-combo priorities; V2 does not improve competitive calibration."},
+    {"case_id": "13", "legacy_top": "Diamond Pick-Axe", "v2_top": "Idol of Oblivion", "decision": "defect", "reason": "V2 substitutes generic token draw for generic combat utility instead of surfacing tournament-speed interaction or compact combo support."},
+    {"case_id": "15", "legacy_top": "Nuka-Cola Vending Machine", "v2_top": "Ozolith, the Shattered Spire", "decision": "defect", "reason": "The replacement is cheaper but still promotes an unrelated +1/+1-counter plan; the result also illegally recommends the commander itself."}
+  ],
+  "case_results": [
+    {
+      "case_id": "01",
+      "result": "pass",
+      "review": "V2's top five are inexpensive Ninja, combat-damage, and card-flow upgrades. The only cut is an unprotected flex spell, and the typal, evasive-enabler, reveal-value, and tutor-target invariants remain intact.",
+      "v2_top_five": ["Satoru, the Infiltrator", "Mask of Memory", "Skullclamp", "Combat Research", "Dokuchi Silencer"],
+      "v2_cuts": ["Wash Out"]
+    },
+    {
+      "case_id": "02",
+      "result": "fail",
+      "review": "The additions preserve Elf density, but the cut list removes Overwhelming Stampede, a declared go-wide closing payoff, and treats it as off-plan. That is an unsafe semantic cut even though the measured Elf floor survives.",
+      "v2_top_five": ["Selvala, Heart of the Wilds", "Mask of Memory", "Deadly Dispute", "Eldritch Immunity", "Ayara, First of Locthwain"],
+      "v2_cuts": ["Wood Elves", "Harvest Season", "Skemfar Shadowsage", "Ulvenwald Oddity // Ulvenwald Behemoth", "Awakening", "Overwhelming Stampede"]
+    },
+    {
+      "case_id": "03",
+      "result": "pass",
+      "review": "The recommendations are affordable and cover experience counters, reusable permanent interaction, sacrifice fodder, recursion, and removal. Declared outlets and toolbox creatures never enter the cut pool.",
+      "v2_top_five": ["Staff of Compleation", "Haywire Mite", "Idol of Oblivion", "Unearth", "Bitter Triumph"],
+      "v2_cuts": ["Gilded Lotus", "Harmonize", "Thran Dynamo"]
+    },
+    {
+      "case_id": "04",
+      "result": "pass",
+      "review": "Three of the top five are tutorable Auras, the remaining choices address mana development, and the single cut does not reduce the Aura ladder. One Equipment ramp card does not amount to converting the deck away from Aura Voltron.",
+      "v2_top_five": ["Darksteel Mutation", "Sword of the Animist", "Sheltered by Ghosts", "Knight of the White Orchid", "Spirit Mantle"],
+      "v2_cuts": ["Windborn Muse"]
+    },
+    {
+      "case_id": "05",
+      "result": "fail",
+      "review": "Spell density is preserved, but narrow colorless-mana cards are overstated as general interaction and Bident of Thassa, an important Drake combat-draw payoff, is labeled redundant and cut.",
+      "v2_top_five": ["Three Steps Ahead", "Warping Wail", "Eldritch Immunity", "Null Elemental Blast", "Splash Portal"],
+      "v2_cuts": ["Bident of Thassa"]
+    },
+    {
+      "case_id": "06",
+      "result": "partial",
+      "review": "Declared donation packages are protected and Volatile Stormdrake appears, but generic role fixes occupy four of five slots and Pyroblast leads a budget political list. The political plan is not sufficiently dominant.",
+      "v2_top_five": ["Pyroblast", "Counterspell", "Boros Charm", "Volatile Stormdrake", "The Battle of Bywater"],
+      "v2_cuts": ["Felidar Sovereign", "Windborn Muse", "Body of Knowledge"]
+    },
+    {
+      "case_id": "07",
+      "result": "fail",
+      "review": "The typal and combo packages are protected, but the engine recommends cutting Pyrokinesis based on printed mana value despite its alternate cost. That removes high-power free interaction and violates the deck's speed target.",
+      "v2_top_five": ["Hexing Squelcher", "Idol of Oblivion", "Eldritch Immunity", "Goblin Engineer", "Strike It Rich"],
+      "v2_cuts": ["Pyrokinesis"]
+    },
+    {
+      "case_id": "08",
+      "result": "fail",
+      "review": "Blink cards are present and card-type spread is measured, but the swap removes Chromatic Lantern from a demanding budget four-color mana base. Skullclamp and Mana Drain are generic value choices rather than the best blink/fixing improvements.",
+      "v2_top_five": ["Splash Portal", "Skullclamp", "Flawless Maneuver", "Blur", "Mana Drain"],
+      "v2_cuts": ["Chromatic Lantern"]
+    },
+    {
+      "case_id": "09",
+      "result": "fail",
+      "review": "V2 materially improves the top choice, but the top-five prices exceed the deck's approximately $25 identity, Waste Not lacks a supporting discard package, and Sword of the Animist is justified by a false attack-trigger emphasis.",
+      "v2_top_five": ["Vampiric Rites", "Unearth", "Waste Not", "Warren Soultrader", "Sword of the Animist"],
+      "v2_cuts": ["Aetherspouts"]
+    },
+    {
+      "case_id": "10",
+      "result": "fail",
+      "review": "Cheap spells and protection improve, but Izzet Generatorium's energy counters are falsely treated as Vadrik's counter plan, and Urabrask is cut without recognizing its spell-chain engine value.",
+      "v2_top_five": ["Arcane Denial", "Izzet Generatorium", "Ponder", "Eldritch Immunity", "Opt"],
+      "v2_cuts": ["Urabrask // The Great Work"]
+    },
+    {
+      "case_id": "11",
+      "result": "fail",
+      "review": "Life from the Loam and Cankerbloom fit, but one-shot Unearth and Commander's Plate outrank stronger permanent-engine options. Culling Ritual and Trinket Mage are unsafe cuts in an optimized list with fast mana and one-mana artifact targets.",
+      "v2_top_five": ["Unearth", "Counterspell", "Commander's Plate", "Life from the Loam", "Cankerbloom"],
+      "v2_cuts": ["Culling Ritual", "Trinket Mage", "Machine God's Effigy"]
+    },
+    {
+      "case_id": "12",
+      "result": "fail",
+      "review": "The top five are casual combat-draw, typal, and generic protection cards rather than cEDH-speed interaction, early enablers, top-deck control, or compact wins. Three of five overlap the budget Yuriko list, so the paired-intent gate fails.",
+      "v2_top_five": ["Mask of Memory", "Dokuchi Silencer", "Feed the Swarm", "Combat Research", "Commander's Plate"],
+      "v2_cuts": ["Nanogene Conversion"]
+    },
+    {
+      "case_id": "13",
+      "result": "fail",
+      "review": "The recommendations are casual token and combat utility. To Arms! is mislabeled as extra combat, and no top-five choice addresses tournament-speed interaction, protection, or compact Najeela lines.",
+      "v2_top_five": ["Idol of Oblivion", "Kutzil, Malamet Exemplar", "Diamond Pick-Axe", "To Arms!", "Elvish Reclaimer"],
+      "v2_cuts": ["Gogo, Mysterious Mime"]
+    },
+    {
+      "case_id": "14",
+      "result": "partial",
+      "review": "The engine correctly abstains from cuts and returns only donation cards, sharply differing from political Zedruu. Gilded Drake nevertheless violates the declared low-power jank experience, so this is not a strict pass.",
+      "v2_top_five": ["Volatile Stormdrake", "Gilded Drake"],
+      "v2_cuts": []
+    },
+    {
+      "case_id": "15",
+      "result": "fail",
+      "review": "The severe-land warning is correct and explicit low-land preservation suppresses automatic repair and cuts. However, the engine recommends Grist itself into a deck already commanded by Grist, which is an illegal duplicate, and promotes an unrelated +1/+1-counter card.",
+      "v2_top_five": ["Ozolith, the Shattered Spire", "Idol of Oblivion", "Unearth", "Grist, the Hunger Tide", "Vampiric Rites"],
+      "v2_cuts": []
+    },
+    {
+      "case_id": "16",
+      "result": "pass",
+      "review": "Extreme repetition is detected, analysis remains stable, and all automatic additions, cuts, and swaps are paused.",
+      "v2_top_five": [],
+      "v2_cuts": []
+    },
+    {
+      "case_id": "17",
+      "result": "pass",
+      "review": "The 98-card state and missing commander are preserved. Analysis is blocked with both exact reasons and no recommendations are generated.",
+      "v2_top_five": [],
+      "v2_cuts": []
+    },
+    {
+      "case_id": "18",
+      "result": "pass",
+      "review": "The 23-card main deck, 24 submitted cards, and zero lands are preserved. Severe incompleteness blocks analysis without fabricating a complete deck.",
+      "v2_top_five": [],
+      "v2_cuts": []
+    }
+  ]
+}

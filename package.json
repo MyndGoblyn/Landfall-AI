@@ -1,0 +1,16 @@
+{
+  "name": "landfall-ai-cloudflare",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:frontend": "node cloudflare/build-frontend.mjs",
+    "cf:dry-run": "npm run build:frontend && wrangler deploy --dry-run",
+    "cf:dev": "npm run build:frontend && wrangler dev",
+    "cf:deploy": "npm run build:frontend && wrangler deploy",
+    "cf:whoami": "wrangler whoami"
+  },
+  "devDependencies": {
+    "wrangler": "4.157.0"
+  }
+}

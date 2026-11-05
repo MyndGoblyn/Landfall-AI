@@ -2,13 +2,39 @@ from typing import Dict, List, Optional, Set
 import asyncio
 import copy
 import logging
+import math
 import os
 import re
 import time
 from collections import Counter, defaultdict
 from services.archetype_registry import ArchetypeRegistry
+from services.candidate_provider import CandidateProvider, ScryfallCandidateProvider
+from services.card_function_profile import (
+    classify_card_functions,
+    counter_resources_compatible,
+    has_extra_combat,
+    strategic_cut_block_reason,
+)
+from services.competitive_registry import CompetitiveCardRegistry
+from services.deck_intent import (
+    apply_intent_to_cuts,
+    apply_intent_to_suggestion,
+    build_budget_context,
+    intent_summary,
+    is_cut_protected,
+    normalize_intent_profile,
+)
+from services.deck_invariants import (
+    addition_satisfies_cut_invariants,
+    apply_invariants_to_cuts,
+    apply_invariants_to_suggestion,
+    build_deck_invariants,
+)
+from services.deck_dependencies import is_dependency_cut_forbidden
+from services.deck_role_assessment import DeckRoleAssessor
 from services.heuristic_signal_extractor import HeuristicSignalExtractor
 from services.mechanics_registry import MechanicsRegistry
+from services.recommendation_ranker import EvidenceRankerV2
 from services.scryfall_service import ScryfallService
 
 logger = logging.getLogger(__name__)
@@ -17,11 +43,42 @@ class EnhancedSuggestionEngine:
     """Enhanced deterministic Commander deck suggestion engine with commander synergy"""
     COLOR_ORDER = ("W", "U", "B", "R", "G")
     
-    def __init__(self, scryfall_service: ScryfallService):
+    def __init__(
+        self,
+        scryfall_service: ScryfallService,
+        candidate_provider: Optional[CandidateProvider] = None,
+        ranker_mode: Optional[str] = None,
+    ):
         self.scryfall = scryfall_service
+        self.candidate_provider = (
+            candidate_provider or ScryfallCandidateProvider(scryfall_service)
+        )
         self.mechanics_registry = MechanicsRegistry.load_default()
         self.archetype_registry = ArchetypeRegistry.load_default()
         self.heuristic_extractor = HeuristicSignalExtractor()
+        configured_ranker_mode = (
+            ranker_mode or os.environ.get("RECOMMENDATION_RANKER_MODE", "v2")
+        ).lower()
+        if configured_ranker_mode not in {"legacy", "shadow", "v2"}:
+            logger.warning(
+                "Unknown recommendation ranker mode %s; using shadow",
+                configured_ranker_mode,
+            )
+            configured_ranker_mode = "shadow"
+        self.ranker_mode = configured_ranker_mode
+        self.evidence_ranker = EvidenceRankerV2()
+        self.competitive_registry = CompetitiveCardRegistry.load_default()
+        self._ranker_stats = {
+            "comparisons": 0,
+            "identical_order": 0,
+            "same_top_choice": 0,
+            "changed_top_choice": 0,
+        }
+        self._ranker_recent_changes = []
+        self._ranker_by_kind = {
+            "commander": self._empty_ranker_comparison_counters(),
+            "deck": self._empty_ranker_comparison_counters(),
+        }
         self._semantic_cache = {}
         self._semantic_cache_max_entries = 2500
         self._random_pool_cache = {}
@@ -43,6 +100,25 @@ class EnhancedSuggestionEngine:
             'interaction': (5, 8),
             'protection': (3, 5)
         }
+        configured_role_mode = os.environ.get(
+            "DECK_ROLE_ASSESSMENT_MODE",
+            "effective",
+        ).lower()
+        if configured_role_mode not in {"raw", "shadow", "effective"}:
+            logger.warning(
+                "Unknown deck role assessment mode %s; using effective",
+                configured_role_mode,
+            )
+            configured_role_mode = "effective"
+        self.deck_role_assessment_mode = configured_role_mode
+        self.deck_role_assessor = DeckRoleAssessor(self.role_targets)
+        self._deck_role_stats = {
+            "assessments": 0,
+            "gap_comparisons": 0,
+            "changed_gap_sets": 0,
+            "hidden_quality_gaps": 0,
+        }
+        self._deck_role_recent_changes = []
         
         # Commander synergy keywords
         self.synergy_keywords = {
@@ -93,6 +169,7 @@ class EnhancedSuggestionEngine:
             'temporary_drawback': 12,
             'colorless_big_mana': 13,
             'typal': 14,
+            'topdeck_value': 14,
             'extra_combat': 15,
             'attack_triggers': 16,
             'combat_damage': 17,
@@ -112,6 +189,131 @@ class EnhancedSuggestionEngine:
             'creature': 31,
             'exile': 32,
             'board_conversion': 33,
+        }
+
+    async def _search_candidate_cards(self, query: str, limit: int) -> List[Dict]:
+        """Retrieve candidates, allowing a local catalog to safely widen the pool."""
+        recommended_limit = getattr(self.candidate_provider, "recommended_limit", None)
+        effective_limit = limit
+        if callable(recommended_limit):
+            try:
+                effective_limit = max(limit, int(recommended_limit(limit)))
+            except (TypeError, ValueError):
+                logger.warning("Candidate provider returned an invalid retrieval limit")
+        return await self.candidate_provider.search_cards(query, effective_limit)
+
+    def get_ranker_status(self) -> Dict:
+        comparisons = self._ranker_stats["comparisons"]
+        return {
+            "mode": self.ranker_mode,
+            "version": self.evidence_ranker.VERSION,
+            "counters": dict(self._ranker_stats),
+            "rates": {
+                "identical_order": round(
+                    self._ranker_stats["identical_order"] / comparisons,
+                    4,
+                ) if comparisons else 0.0,
+                "same_top_choice": round(
+                    self._ranker_stats["same_top_choice"] / comparisons,
+                    4,
+                ) if comparisons else 0.0,
+                "changed_top_choice": round(
+                    self._ranker_stats["changed_top_choice"] / comparisons,
+                    4,
+                ) if comparisons else 0.0,
+            },
+            "by_kind": copy.deepcopy(self._ranker_by_kind),
+            "recent_changes": copy.deepcopy(self._ranker_recent_changes),
+        }
+
+    def get_deck_role_status(self) -> Dict:
+        comparisons = self._deck_role_stats["gap_comparisons"]
+        return {
+            "mode": self.deck_role_assessment_mode,
+            "version": self.deck_role_assessor.VERSION,
+            "counters": dict(self._deck_role_stats),
+            "rates": {
+                "changed_gap_sets": round(
+                    self._deck_role_stats["changed_gap_sets"] / comparisons,
+                    4,
+                ) if comparisons else 0.0,
+            },
+            "recent_gap_changes": copy.deepcopy(
+                self._deck_role_recent_changes
+            ),
+        }
+
+    @staticmethod
+    def _empty_ranker_comparison_counters() -> Dict:
+        return {
+            "comparisons": 0,
+            "identical_order": 0,
+            "same_top_choice": 0,
+            "changed_top_choice": 0,
+            "overlap_items": 0,
+            "compared_items": 0,
+            "rates": {
+                "identical_order": 0.0,
+                "same_top_choice": 0.0,
+                "candidate_overlap": 0.0,
+            },
+        }
+
+    def _record_ranker_comparison(
+        self,
+        kind: str,
+        legacy: List[Dict],
+        v2: List[Dict],
+    ):
+        if self.ranker_mode == "legacy":
+            return
+        name_field = "card_name" if kind == "deck" else "name"
+        legacy_names = [card.get(name_field, "") for card in legacy]
+        v2_names = [card.get(name_field, "") for card in v2]
+        self._ranker_stats["comparisons"] += 1
+        kind_counters = self._ranker_by_kind.setdefault(
+            kind,
+            self._empty_ranker_comparison_counters(),
+        )
+        kind_counters["comparisons"] += 1
+        overlap_depth = max(len(legacy_names), len(v2_names))
+        kind_counters["overlap_items"] += len(
+            set(legacy_names) & set(v2_names)
+        )
+        kind_counters["compared_items"] += overlap_depth
+        if legacy_names == v2_names:
+            self._ranker_stats["identical_order"] += 1
+            kind_counters["identical_order"] += 1
+        if legacy_names[:1] == v2_names[:1]:
+            self._ranker_stats["same_top_choice"] += 1
+            kind_counters["same_top_choice"] += 1
+        else:
+            self._ranker_stats["changed_top_choice"] += 1
+            kind_counters["changed_top_choice"] += 1
+            self._ranker_recent_changes.append(
+                {
+                    "kind": kind,
+                    "legacy": legacy_names,
+                    "v2": v2_names,
+                }
+            )
+            self._ranker_recent_changes = self._ranker_recent_changes[-10:]
+
+        compared = kind_counters["comparisons"]
+        compared_items = kind_counters["compared_items"]
+        kind_counters["rates"] = {
+            "identical_order": round(
+                kind_counters["identical_order"] / compared,
+                4,
+            ) if compared else 0.0,
+            "same_top_choice": round(
+                kind_counters["same_top_choice"] / compared,
+                4,
+            ) if compared else 0.0,
+            "candidate_overlap": round(
+                kind_counters["overlap_items"] / compared_items,
+                4,
+            ) if compared_items else 0.0,
         }
 
     def _combined_type_line(self, card: Dict) -> str:
@@ -205,8 +407,22 @@ class EnhancedSuggestionEngine:
             bool(intent.get('has_strategy_terms')),
         )
 
+    def _candidate_provider_cache_identity(self) -> tuple:
+        resolver = getattr(self.candidate_provider, 'cache_identity', None)
+        if not callable(resolver):
+            return (type(self.candidate_provider).__name__,)
+        try:
+            identity = resolver()
+            return identity if isinstance(identity, tuple) else (repr(identity),)
+        except Exception:
+            return (type(self.candidate_provider).__name__,)
+
     def _random_pool_cache_key(self, query: str, intent: Dict) -> tuple:
-        return (query, self._random_intent_key(intent))
+        return (
+            self._candidate_provider_cache_identity(),
+            query,
+            self._random_intent_key(intent),
+        )
 
     def _commander_analysis_cache_key(
         self,
@@ -220,6 +436,9 @@ class EnhancedSuggestionEngine:
     ) -> tuple:
         timeout_bucket = round(recommendation_timeout, 1) if recommendation_timeout else None
         return (
+            self._candidate_provider_cache_identity(),
+            self.ranker_mode,
+            self.evidence_ranker.VERSION,
             self._card_cache_key(commander_card),
             bool(deep),
             search_budget,
@@ -322,6 +541,40 @@ class EnhancedSuggestionEngine:
                 return True
         return False
 
+    def _has_target_spell_payoff_text(self, oracle_text: str) -> bool:
+        """Detect commanders that reward spells for targeting, not only target count."""
+        return any(phrase in oracle_text for phrase in [
+            'instant or sorcery spell that targets',
+            'spell you cast that targets',
+            'spell that targets a creature you control',
+            'whenever you cast a spell that targets',
+            'whenever you cast an instant or sorcery spell that targets',
+            'whenever you target a creature you control',
+        ])
+
+    def _is_incidental_graveyard_replacement_text(self, oracle_text: str) -> bool:
+        """Ignore graveyard words that only describe where a spell would resolve."""
+        replacement_phrases = [
+            'instead of putting it into your graveyard as it resolves',
+            'instead of putting that card into your graveyard as it resolves',
+        ]
+        if not any(phrase in oracle_text for phrase in replacement_phrases):
+            return False
+        substantive_terms = [
+            'from your graveyard',
+            'return target',
+            'return a card',
+            'mill',
+            'dies',
+            'discard',
+            'escape',
+            'flashback',
+            'unearth',
+            'delirium',
+            'descend',
+        ]
+        return not any(term in oracle_text for term in substantive_terms)
+
     def _has_spell_stack_payoff_text(self, oracle_text: str) -> bool:
         """Detect cards that reward, copy, discount, or multiply spell casting."""
         return any(term in oracle_text for term in [
@@ -387,6 +640,60 @@ class EnhancedSuggestionEngine:
             'gain control of target permanent you control',
         ])
 
+    def _is_donation_payload_card(self, card: Dict) -> bool:
+        """Protect permanents whose liabilities are the point of a donation deck."""
+        oracle_text = self._combined_oracle_text(card)
+        type_line = self._combined_type_line(card)
+        if not any(
+            permanent_type in type_line
+            for permanent_type in ['artifact', 'creature', 'enchantment', 'planeswalker']
+        ):
+            return False
+        if self._has_donation_text(oracle_text) or self._has_bad_gift_creature_text(oracle_text):
+            return True
+        return any(phrase in oracle_text for phrase in [
+            'gains control of it',
+            'gains control of this artifact',
+            'skip your next two turns',
+            'damage that would be dealt to you is doubled',
+            'deals double that damage to you instead',
+            "creatures you control can't deal combat damage",
+            'creatures you control cannot deal combat damage',
+            'prevent all combat damage that would be dealt to and dealt by creatures you control',
+            "you can't cast more than one spell",
+            'you cannot cast more than one spell',
+            "you can't play lands",
+            'you cannot play lands',
+            'deals damage to each creature and each player',
+            'your maximum hand size is reduced',
+            'your maximum hand size is zero',
+            'discard your hand',
+            'whenever you draw a card, each opponent loses',
+            'no more than one creature can attack',
+            'no more than one creature can block',
+            'nonland permanents don\'t untap',
+            'players can\'t search libraries',
+            'players cannot search libraries',
+        ])
+
+    def _is_topdeck_value_card(self, card: Dict) -> bool:
+        """Recognize expensive cards that remain castable via alternate costs."""
+        try:
+            mana_value = float(card.get('cmc', 0) or 0)
+        except (TypeError, ValueError):
+            mana_value = 0
+        if mana_value < 5:
+            return False
+        oracle_text = self._combined_oracle_text(card)
+        return any(phrase in oracle_text for phrase in [
+            'rather than pay',
+            'without paying its mana cost',
+            'without paying their mana costs',
+            'you may cast it for',
+            'you may pay {0}',
+            'delve',
+        ])
+
     def _has_temporary_drawback_text(self, oracle_text: str) -> bool:
         return (
             'end the turn' in oracle_text or
@@ -427,6 +734,16 @@ class EnhancedSuggestionEngine:
             return True
         if 'at the beginning of your upkeep' in oracle_text and any(
             term in oracle_text for term in ['sacrifice', 'discard', 'pay', 'lose life', 'deals damage']
+        ):
+            return True
+        if (
+            'at the beginning of your upkeep' in oracle_text and
+            re.search(r'deals? \d+ damage', oracle_text)
+        ):
+            return True
+        if (
+            'when this enchantment leaves the battlefield' in oracle_text and
+            'you lose' in oracle_text
         ):
             return True
         return False
@@ -1187,12 +1504,21 @@ class EnhancedSuggestionEngine:
             'remove a +1/+1 counter',
             'whenever one or more counters',
         ])
+
+    @staticmethod
+    def _has_card_type_diversity_text(oracle_text: str) -> bool:
+        return any(phrase in oracle_text for phrase in [
+            'for each card type',
+            'card of each card type',
+            'cards of each card type',
+        ])
     
     async def analyze_deck(self, deck: Dict, categories: Optional[List[str]] = None, deep: bool = False) -> Dict:
         """Main analysis entry point with commander synergy and category filtering"""
-        cards = deck.get('cards', [])
+        cards = await self._hydrate_semantic_cards(deck.get('cards', []))
         commander = deck.get('commander')
         color_identity = deck.get('color_identity', [])
+        intent_profile = normalize_intent_profile(deck.get('intent_profile'))
         
         # Get commander card data for synergy analysis
         commander_data = None
@@ -1216,6 +1542,12 @@ class EnhancedSuggestionEngine:
             if coverage['coverage_level'] == 'exploratory'
             else {}
         )
+        deck_invariants = build_deck_invariants(
+            cards,
+            intent_profile,
+            commander_constraints,
+            commander_synergies,
+        )
         
         # Calculate deck statistics
         stats = self._calculate_stats(cards, commander, commander_synergies)
@@ -1238,8 +1570,35 @@ class EnhancedSuggestionEngine:
             commander_constraints,
             search_budget=10 if deep else 5,
             heuristic_signal_notes=heuristic_notes if coverage['coverage_level'] == 'exploratory' else None,
+            intent_profile=intent_profile,
+            deck_invariants=deck_invariants,
+            budget_context=build_budget_context(cards, intent_profile),
+            commander_zone_names=self._commander_zone_names(deck, commander_data),
         )
-        suggestions_cut = await self._generate_cuts(cards, gaps, stats, commander_synergies, detected_themes)
+        suggestions_cut = await self._generate_cuts(
+            cards,
+            gaps,
+            stats,
+            commander_synergies,
+            detected_themes,
+            intent_profile,
+            deck_invariants,
+            color_identity=color_identity,
+        )
+        mana_repair = self._build_mana_base_repair_suggestion(
+            stats,
+            color_identity,
+            intent_profile,
+        )
+        if mana_repair:
+            suggestions_add = [mana_repair] + suggestions_add[:9]
+        swap_pairs = self._pair_additions_with_safe_cuts(
+            suggestions_add,
+            suggestions_cut,
+            cards,
+            stats,
+            deck_invariants,
+        )
         
         # Generate playstyle tips
         playstyle_tips = self._generate_playstyle_tips(
@@ -1263,10 +1622,13 @@ class EnhancedSuggestionEngine:
         
         # Generate combo suggestions
         combo_suggestions = self._generate_combo_suggestions(commander, commander_synergies, cards)
+        if 'no_infinite_combos' in set(intent_profile['intentional_constraints']):
+            combo_suggestions = []
         
         return {
             'suggestions_add': suggestions_add[:15 if deep else 10],
             'suggestions_cut': suggestions_cut[:12 if deep else 10],
+            'swap_pairs': swap_pairs[:12 if deep else 10],
             'stats': stats,
             'commander_synergies': commander_synergies,
             'commander_archetypes': commander_archetypes,
@@ -1277,8 +1639,33 @@ class EnhancedSuggestionEngine:
             'detected_themes': detected_themes,
             'playstyle_tips': playstyle_tips,
             'combo_suggestions': combo_suggestions,
+            'intent_profile': intent_profile,
+            'intent_summary': intent_summary(intent_profile),
+            'deck_invariants': deck_invariants,
             'analysis_depth': 'deep' if deep else 'fast',
         }
+
+    async def _hydrate_semantic_cards(self, cards: List[Dict]) -> List[Dict]:
+        """Recover missing modal/transform faces before semantic safety checks."""
+        hydrated = []
+        for card in cards:
+            row = dict(card)
+            needs_faces = (
+                not str(row.get('oracle_text') or '').strip()
+                and '//' in str(row.get('name') or '')
+            )
+            if needs_faces and self.scryfall is not None:
+                fetched = await self.scryfall.search_card(row.get('name', ''))
+                if fetched:
+                    row.update({
+                        key: value
+                        for key, value in fetched.items()
+                        if value not in (None, '', [])
+                    })
+                    row['qty'] = card.get('qty', 1)
+                    row['tags'] = card.get('tags', row.get('tags', []))
+            hydrated.append(row)
+        return hydrated
     
     def _detect_commander_synergies(self, commander_card: Dict) -> List[str]:
         """Detect what synergies the commander cares about"""
@@ -1377,12 +1764,19 @@ class EnhancedSuggestionEngine:
         blink_phrases = [
             'exile it, then return',
             'exile another target',
-            'return it to the battlefield',
-            'return those cards to the battlefield',
             'exile any number of target nonland permanents you control',
             'flicker',
         ]
-        if any(phrase in oracle_text for phrase in blink_phrases):
+        if (
+            any(phrase in oracle_text for phrase in blink_phrases) or
+            (
+                'exile' in oracle_text and
+                any(phrase in oracle_text for phrase in [
+                    'return it to the battlefield',
+                    'return those cards to the battlefield',
+                ])
+            )
+        ):
             add_once('blink')
         elif (
             ("wasn't cast" in oracle_text or "was not cast" in oracle_text)
@@ -1419,6 +1813,12 @@ class EnhancedSuggestionEngine:
             add_once('blink')
         if self._detect_typal_creature_types(oracle_text, type_line):
             add_once('typal')
+        if (
+            'reveal the top card' in oracle_text and
+            'mana value' in oracle_text and
+            ('loses life equal' in oracle_text or 'lose life equal' in oracle_text)
+        ):
+            add_once('topdeck_value')
         if self._has_combat_damage_trigger_text(oracle_text):
             add_once('combat_damage')
         if self._has_attack_trigger_text(oracle_text):
@@ -1433,6 +1833,8 @@ class EnhancedSuggestionEngine:
         ):
             add_once('colorless_big_mana')
         if self._has_target_cost_modifier_text(oracle_text):
+            add_once('target_spells')
+        if self._has_target_spell_payoff_text(oracle_text):
             add_once('target_spells')
         if self._has_donation_text(oracle_text):
             add_once('donation')
@@ -1465,6 +1867,22 @@ class EnhancedSuggestionEngine:
 
         for synergy_type in self._archetype_synergies(self._detect_commander_archetypes(commander_card)):
             add_once(synergy_type)
+
+        if self._has_card_type_diversity_text(oracle_text):
+            synergies = [
+                synergy
+                for synergy in synergies
+                if synergy not in {
+                    'artifact',
+                    'creature',
+                    'enchantment',
+                    'instant_sorcery',
+                }
+            ]
+            add_once('card_type_diversity')
+
+        if self._is_incidental_graveyard_replacement_text(oracle_text):
+            synergies = [synergy for synergy in synergies if synergy != 'graveyard']
         
         return self._semantic_cache_set(cache_key, self._prioritize_synergies(synergies))
     
@@ -1493,7 +1911,35 @@ class EnhancedSuggestionEngine:
             constraints['attack_trigger'] = True
         if self._has_target_cost_modifier_text(oracle_text):
             constraints['target_cost_modifier'] = True
-        if 'aura card with mana value' in oracle_text:
+        if self._has_target_spell_payoff_text(oracle_text):
+            constraints['target_spell_payoff'] = True
+        if any(phrase in oracle_text for phrase in [
+            'targets a creature you control',
+            'target a creature you control',
+        ]):
+            constraints['target_scope'] = 'own_creature'
+        if (
+            'permanent card of each permanent type from your graveyard' in oracle_text or
+            'permanent cards from your graveyard' in oracle_text or
+            'permanent spell of each permanent type from your graveyard' in oracle_text or
+            'permanent spells from your graveyard' in oracle_text
+        ):
+            constraints['graveyard_permanent_engine'] = True
+        if self._has_card_type_diversity_text(oracle_text):
+            constraints['card_type_diversity'] = True
+            mentioned_card_types = [
+                card_type
+                for card_type in [
+                    'artifact', 'battle', 'creature', 'enchantment',
+                    'instant', 'kindred', 'land', 'planeswalker', 'sorcery',
+                ]
+                if re.search(rf'\b{card_type}\b', oracle_text)
+            ]
+            constraints['card_types_mentioned'] = mentioned_card_types or [
+                'artifact', 'battle', 'creature', 'enchantment',
+                'instant', 'kindred', 'land', 'planeswalker', 'sorcery',
+            ]
+        if 'aura card' in oracle_text and 'search your library' in oracle_text:
             constraints['aura_tutor_chain'] = True
         if self._has_donation_text(oracle_text):
             constraints['donation_plan'] = True
@@ -1609,7 +2055,30 @@ class EnhancedSuggestionEngine:
         }
     
     def _is_legal_for_deck(self, card: Dict, commander_color_identity: List[str]) -> bool:
-        """Check if a card is legal for the deck based on color identity"""
+        """Check Commander legality, main-deck eligibility, and color identity."""
+        commander_legality = (card.get('legalities') or {}).get('commander')
+        if commander_legality and commander_legality not in {'legal', 'restricted'}:
+            return False
+
+        # Scryfall exposes supplementary-deck objects that may technically be
+        # Commander-legal but cannot occupy a main-deck slot.
+        type_line = self._combined_type_line(card)
+        supplementary_types = {
+            'attraction',
+            'contraption',
+            'dungeon',
+            'emblem',
+            'phenomenon',
+            'plane',
+            'scheme',
+            'stickers',
+            'token',
+            'vanguard',
+        }
+        card_types = set(re.findall(r'[a-z]+', type_line.casefold()))
+        if card_types.intersection(supplementary_types):
+            return False
+
         card_color_identity = card.get('color_identity', [])
         
         # A card is legal if all its colors are in the commander's color identity
@@ -1618,6 +2087,38 @@ class EnhancedSuggestionEngine:
                 return False
         
         return True
+
+    def _commander_zone_names(
+        self,
+        deck: Dict,
+        commander_data: Optional[Dict],
+    ) -> Set[str]:
+        """Collect every known command-zone name before candidate generation."""
+        names = set()
+        values = [deck.get('commander')]
+        values.extend(deck.get('commanders') or [])
+        values.extend(deck.get('commander_zone_cards') or [])
+        for value in values:
+            if isinstance(value, dict):
+                value = value.get('name')
+            if not value:
+                continue
+            normalized = str(value).strip()
+            names.add(normalized)
+            names.update(
+                part.strip()
+                for part in re.split(r'\s+(?:&|\+|and)\s+', normalized)
+                if part.strip()
+            )
+        if commander_data:
+            if commander_data.get('name'):
+                names.add(str(commander_data['name']).strip())
+            names.update(
+                str(face.get('name')).strip()
+                for face in commander_data.get('card_faces') or []
+                if face.get('name')
+            )
+        return names
     
     def _calculate_stats(self, cards: List[Dict], commander: Optional[str], 
                         commander_synergies: List[str]) -> Dict:
@@ -1701,6 +2202,16 @@ class EnhancedSuggestionEngine:
         # Average CMC
         if cmc_count > 0:
             stats['avg_cmc'] = round(total_cmc / cmc_count, 2)
+
+        role_assessment = self.deck_role_assessor.assess(cards, self._detect_roles)
+        stats['role_quality'] = role_assessment['roles']
+        stats['role_assessment_version'] = role_assessment['version']
+        stats['hidden_role_quality_gaps'] = role_assessment['hidden_quality_gaps']
+        stats['total_effective_role_gap'] = role_assessment['total_effective_gap']
+        self._deck_role_stats['assessments'] += 1
+        self._deck_role_stats['hidden_quality_gaps'] += len(
+            role_assessment['hidden_quality_gaps']
+        )
         
         return stats
     
@@ -1822,8 +2333,11 @@ class EnhancedSuggestionEngine:
             roles.append('draw')
         
         # Ramp
+        land_term = any(term in oracle_text for term in [
+            'land', 'plains', 'island', 'swamp', 'mountain', 'forest', 'wastes',
+        ])
         if any(word in oracle_text for word in ['search your library for', 'add', 'treasure']) and \
-           ('land' in oracle_text or 'mana' in oracle_text):
+           (land_term or 'mana' in oracle_text):
             roles.append('ramp')
         
         # Removal
@@ -1846,10 +2360,42 @@ class EnhancedSuggestionEngine:
             roles.append('interaction')
         
         # Protection
-        if any(word in oracle_text for word in ['protection', 'hexproof', 'indestructible', 'ward']):
+        if self._has_protection_role_text(oracle_text, type_line):
             roles.append('protection')
         
         return roles
+
+    @staticmethod
+    def _has_protection_role_text(oracle_text: str, type_line: str = '') -> bool:
+        """Require an effect that protects another relevant object or the board."""
+        source = str(oracle_text or '').casefold()
+        grant_terms = ('hexproof', 'indestructible', 'protection from', 'ward')
+        protected_subjects = (
+            'target creature',
+            'target permanent',
+            'creatures you control',
+            'permanents you control',
+            'artifacts you control',
+            'enchantments you control',
+            'equipped creature',
+            'enchanted creature',
+            'your commander',
+        )
+        if any(subject in source for subject in protected_subjects) and any(
+            term in source for term in grant_terms
+        ):
+            return True
+        if any(phrase in source for phrase in (
+            'phase out',
+            'counter target spell or ability that targets',
+            'regenerate target',
+        )):
+            return True
+        if 'equipment' in str(type_line or '').casefold() and any(
+            term in source for term in grant_terms
+        ):
+            return True
+        return False
     
     def _identify_gaps(self, stats: Dict, color_identity: List[str], 
                       commander_synergies: List[str]) -> Dict:
@@ -1862,11 +2408,43 @@ class EnhancedSuggestionEngine:
             'synergy': []
         }
         
-        # Role gaps
+        # Role gaps. Effective mode discounts incidental, conditional, and
+        # inefficient sources; raw mode remains an immediate rollback path.
+        raw_gap_roles = set()
+        effective_gap_roles = set()
         for role, (min_target, max_target) in self.role_targets.items():
             current = stats['role_counts'].get(role, 0)
             if current < min_target:
+                raw_gap_roles.add(role)
+
+            quality = stats.get('role_quality', {}).get(role, {})
+            effective_additions = quality.get('recommended_additions')
+            if effective_additions is not None and effective_additions > 0:
+                effective_gap_roles.add(role)
+
+            use_effective = (
+                self.deck_role_assessment_mode == 'effective'
+                and effective_additions is not None
+            )
+            if use_effective:
+                if effective_additions > 0:
+                    gaps['roles'][role] = effective_additions
+            elif current < min_target:
                 gaps['roles'][role] = min_target - current
+
+        self._deck_role_stats['gap_comparisons'] += 1
+        if effective_gap_roles != raw_gap_roles:
+            self._deck_role_stats['changed_gap_sets'] += 1
+            self._deck_role_recent_changes.append({
+                'raw_gaps': sorted(raw_gap_roles),
+                'effective_gaps': sorted(effective_gap_roles),
+                'added_by_quality': sorted(effective_gap_roles - raw_gap_roles),
+                'removed_by_quality': sorted(raw_gap_roles - effective_gap_roles),
+            })
+            self._deck_role_recent_changes = self._deck_role_recent_changes[-10:]
+        gaps['role_assessment_mode'] = self.deck_role_assessment_mode
+        gaps['raw_role_gaps'] = sorted(raw_gap_roles)
+        gaps['effective_role_gaps'] = sorted(effective_gap_roles)
         
         # Land count
         if stats['total_lands'] < 36:
@@ -2103,7 +2681,7 @@ class EnhancedSuggestionEngine:
         oracle_text = self._combined_oracle_text(commander_card or {})
         type_line = self._combined_type_line(commander_card or {})
         themes = list(dict.fromkeys([*(synergies or []), *detected_themes]))
-        role_counts = stats.get('role_counts', {})
+        role_counts = self._effective_role_counts(stats)
         mana_value = (commander_card or {}).get('cmc', 0) or 0
         counter_plan = self._counter_plan_for_text(oracle_text) if oracle_text else None
         archetype_signals = self._extract_archetype_signals(
@@ -2222,6 +2800,18 @@ class EnhancedSuggestionEngine:
             'total_cards': stats.get('total_cards', 0),
         }
         return profile
+
+    @staticmethod
+    def _effective_role_counts(stats: Dict) -> Dict:
+        """Prefer quality-adjusted role coverage while retaining raw fallback."""
+        quality = stats.get('role_quality', {})
+        raw = stats.get('role_counts', {})
+        if not quality:
+            return raw
+        return {
+            role: float(row.get('effective_count', raw.get(role, 0)))
+            for role, row in quality.items()
+        }
 
     def _strategy_profile_sentence(self, profile: Dict, commander_name: str) -> str:
         """Describe the commander's plan without relying on commander-specific branches."""
@@ -2352,12 +2942,12 @@ class EnhancedSuggestionEngine:
         if deck_context:
             if land_count and land_count < 36:
                 notes.append(f"Failure Point - The deck currently has {land_count} lands, so missed land drops can make the whole engine look worse than it is.")
-            if role_counts.get('draw', 0) < 8:
-                notes.append(f"Failure Point - Card flow is light at {role_counts.get('draw', 0)} draw sources; this kind of plan needs ways to reload after the first engine piece is answered.")
+            if role_counts.get('draw', 0) < self.role_targets['draw'][0]:
+                notes.append(f"Failure Point - Reliable card flow is light at {role_counts.get('draw', 0):g} effective draw sources; this kind of plan needs ways to reload after the first engine piece is answered.")
             if role_counts.get('protection', 0) < 3 and ('commander_exposure' in flags or 'combat_exposure' in flags):
-                notes.append(f"Failure Point - Protection is light at {role_counts.get('protection', 0)} pieces, which is risky for a commander-facing or combat-facing plan.")
+                notes.append(f"Failure Point - Protection is light at {role_counts.get('protection', 0):g} effective sources, which is risky for a commander-facing or combat-facing plan.")
             if role_counts.get('interaction', 0) < 5:
-                notes.append(f"Failure Point - Interaction is light at {role_counts.get('interaction', 0)} pieces, so faster decks or hate pieces may disrupt the plan before it stabilizes.")
+                notes.append(f"Failure Point - Interaction is light at {role_counts.get('interaction', 0):g} effective sources, so faster decks or hate pieces may disrupt the plan before it stabilizes.")
         else:
             if 'graveyard_exposure' in flags:
                 notes.append("Failure Point - Graveyard hate can shut off the best lines, so include cards that still function from hand or board.")
@@ -2412,7 +3002,6 @@ class EnhancedSuggestionEngine:
         tips = []
         commander_name = commander or "your commander"
         commander_text = commander_card.get('oracle_text', '').lower() if commander_card else ''
-        commander_type = commander_card.get('type_line', '').lower() if commander_card else ''
         profile = self._build_strategy_profile(
             commander_card,
             commander_synergies,
@@ -2435,22 +3024,26 @@ class EnhancedSuggestionEngine:
             tips.append(f"You're running {land_count} lands. Consider cutting {land_count - 38} for more action spells.")
         
         # Draw engine tips
-        draw_count = stats.get('role_counts', {}).get('draw', 0)
-        if draw_count < 8:
+        effective_roles = self._effective_role_counts(stats)
+        draw_count = effective_roles.get('draw', 0)
+        draw_target = self.role_targets['draw'][0]
+        if draw_count < draw_target:
+            draw_needed = math.ceil(draw_target - draw_count)
             draw_examples = self._role_examples('draw', color_identity, commander_synergies)
             if draw_examples:
-                tips.append(f"Your deck needs {8 - draw_count} more draw sources. Prioritize engines that match {commander_name}'s plan, such as {draw_examples}.")
+                tips.append(f"Your deck needs about {draw_needed} more reliable draw sources. Prioritize engines that match {commander_name}'s plan, such as {draw_examples}.")
             else:
-                tips.append(f"Your deck needs {8 - draw_count} more draw sources. Prefer repeatable engines tied to your main theme over one-shot cantrips.")
+                tips.append(f"Your deck needs about {draw_needed} more reliable draw sources. Prefer repeatable engines tied to your main theme over one-shot cantrips.")
         
         # Ramp tips
-        ramp_count = stats.get('role_counts', {}).get('ramp', 0)
+        ramp_count = effective_roles.get('ramp', 0)
         if ramp_count < 10:
+            ramp_needed = math.ceil(10 - ramp_count)
             ramp_examples = self._role_examples('ramp', color_identity, commander_synergies)
             if ramp_examples:
-                tips.append(f"Add {10 - ramp_count} more ramp pieces. Start with efficient fixing that fits the color identity, such as {ramp_examples}.")
+                tips.append(f"Add about {ramp_needed} more reliable ramp pieces. Start with efficient fixing that fits the color identity, such as {ramp_examples}.")
             else:
-                tips.append(f"Add {10 - ramp_count} more ramp pieces. Prioritize two-mana acceleration so the commander and support engines come online earlier.")
+                tips.append(f"Add about {ramp_needed} more reliable ramp pieces. Prioritize two-mana acceleration so the commander and support engines come online earlier.")
         
         # Theme-specific tips
         if 'counters' in detected_themes or 'counters' in commander_synergies:
@@ -2484,10 +3077,10 @@ class EnhancedSuggestionEngine:
             tips.append(f"Voltron Strategy: Protect {commander_name} before stacking damage. {voltron_examples or 'Cheap protection, evasion, and haste effects'} are better early additions than expensive power-only Equipment.")
         
         if 'graveyard' in detected_themes:
-            tips.append(f"Graveyard Strategy: Your recursion package can help rebuild after wipes, but it also means graveyard hate is a real pressure point. Keep a few ways to recover key creatures or shuffle important cards back.")
+            tips.append("Graveyard Strategy: Your recursion package can help rebuild after wipes, but it also means graveyard hate is a real pressure point. Keep a few ways to recover key creatures or shuffle important cards back.")
         
         # Interaction tips
-        interaction_count = stats.get('role_counts', {}).get('interaction', 0)
+        interaction_count = effective_roles.get('interaction', 0)
         if interaction_count < 5:
             interaction_examples = self._role_examples('interaction', color_identity, commander_synergies)
             if interaction_examples:
@@ -2510,7 +3103,7 @@ class EnhancedSuggestionEngine:
         """Add visibly deeper deterministic notes for opt-in deck analysis."""
         tips = []
         commander_name = commander or "your commander"
-        role_counts = stats.get('role_counts', {})
+        role_counts = self._effective_role_counts(stats)
         total_cards = max(stats.get('total_cards', 0), 1)
         themes = list(dict.fromkeys([*commander_synergies, *detected_themes]))
         nonland_cards = [
@@ -2581,8 +3174,6 @@ class EnhancedSuggestionEngine:
         """Suggest specific combos based on commander and deck contents"""
         combos = []
         
-        card_names = {card['name'].lower() for card in cards}
-        
         # Enchantment combos
         if 'enchantment' in commander_synergies:
             if commander and 'zur' in commander.lower():
@@ -2607,11 +3198,41 @@ class EnhancedSuggestionEngine:
                                    categories: Optional[List[str]] = None,
                                    commander_constraints: Optional[Dict] = None,
                                    search_budget: int = 5,
-                                   heuristic_signal_notes: Optional[Dict[str, List[Dict]]] = None) -> List[Dict]:
+                                   heuristic_signal_notes: Optional[Dict[str, List[Dict]]] = None,
+                                   excluded_card_names: Optional[Set[str]] = None,
+                                   intent_profile: Optional[Dict] = None,
+                                   deck_invariants: Optional[Dict] = None,
+                                   budget_context: Optional[Dict] = None,
+                                   commander_zone_names: Optional[Set[str]] = None,
+                                   search_concurrency: int = 3) -> List[Dict]:
         """Generate enhanced card addition suggestions with commander synergy and categories"""
         current_card_names = {card['name'].lower() for card in current_cards}
+        current_card_names.update(
+            name.lower() for name in (excluded_card_names or set())
+        )
+        current_card_names.update(
+            name.casefold() for name in (commander_zone_names or set())
+        )
+        if commander:
+            current_card_names.add(str(commander).strip().casefold())
+        if commander_data:
+            if commander_data.get('name'):
+                current_card_names.add(
+                    str(commander_data.get('name')).strip().casefold()
+                )
+            current_card_names.update(
+                str(face.get('name')).strip().casefold()
+                for face in commander_data.get('card_faces') or []
+                if face.get('name')
+            )
         deck_context = self._deck_context_summary(current_cards)
         heuristic_signal_notes = heuristic_signal_notes or {}
+        commander_constraints = commander_constraints or {}
+        normalized_intent = normalize_intent_profile(intent_profile)
+        budget_context = budget_context or build_budget_context(
+            current_cards,
+            normalized_intent,
+        )
         
         # Build prioritized search queries based on categories or gaps
         queries = []
@@ -2627,13 +3248,36 @@ class EnhancedSuggestionEngine:
                 'recursion': ('recursion', f"(o:return o:graveyard OR o:reanimate) {color_filter} f:commander"),
                 'tutor': ('tutor', f"(o:search o:library OR o:tutor) {color_filter} f:commander"),
                 'protection': ('protection', f"(o:protection OR o:hexproof OR o:indestructible) {color_filter} f:commander"),
-                'sweeper': ('sweeper', f"(o:destroy o:all OR o:exile o:all) {color_filter} f:commander")
+                'sweeper': ('sweeper', f"(o:destroy o:all OR o:exile o:all) {color_filter} f:commander"),
+                'interaction': ('interaction', f"o:counter {color_filter} f:commander"),
             }
             for cat in categories:
                 if cat.lower() in category_map:
                     role, query = category_map[cat.lower()]
                     queries.append((role, query))
         else:
+            if normalized_intent.get('optimization_mode') == 'competitive':
+                queries.append((
+                    'competitive:registry',
+                    self.competitive_registry.exact_name_query(
+                        self._color_identity_filter(color_identity)
+                    ),
+                ))
+            if (
+                'mana_fixing' in set(
+                    normalized_intent.get('strategy_priorities') or []
+                )
+                and len(color_identity) >= 3
+            ):
+                queries.append((
+                    'mana_fixing',
+                    (
+                        '(o:"add one mana of any color" '
+                        'OR o:"lands you control have" '
+                        'OR o:"mana of any color in your commander\'s color identity") '
+                        f'{self._color_identity_filter(color_identity)} f:commander'
+                    ),
+                ))
             # Priority 1: Commander synergy cards with constraints
             if commander_data and commander_synergies:
                 for synergy in commander_synergies:
@@ -2679,13 +3323,31 @@ class EnhancedSuggestionEngine:
                 ))
             
         # Execute searches, then locally rank against the actual deck context.
-        candidates_by_name = {}
-        for query_index, (role, query) in enumerate(queries[:search_budget]):
+        legacy_candidates_by_name = {}
+        v2_candidates_by_name = {}
+        selected_queries = queries[:search_budget]
+        semaphore = asyncio.Semaphore(max(1, search_concurrency))
+
+        async def run_search(role: str, query: str) -> List[Dict]:
+            async with semaphore:
+                try:
+                    return await self._search_candidate_cards(query, limit=20)
+                except Exception as exc:
+                    logger.error("Error searching additions for %s: %s", role, exc)
+                    return []
+
+        search_results = await asyncio.gather(*(
+            run_search(role, query)
+            for role, query in selected_queries
+        ))
+
+        for query_index, (role, query) in enumerate(selected_queries):
             try:
-                results = await self.scryfall.search_cards_by_criteria(query, limit=20)
+                results = search_results[query_index]
                 requested_synergy = role.split(':', 1)[1] if role.startswith('synergy:') else None
+                competitive_query = role.startswith('competitive:')
                 display_role = requested_synergy or role
-                max_cards_for_query = 5 if requested_synergy else 2
+                max_cards_for_query = 8 if competitive_query else 5 if requested_synergy else 2
                 query_candidates = []
                 for source_rank, card in enumerate(results):
                     card_name = card.get('name', '').lower()
@@ -2714,20 +3376,44 @@ class EnhancedSuggestionEngine:
                                 card_to_validate = self._get_correct_face_for_validation(card, 'creature')
                     
                     extracted = self.scryfall.extract_card_data(card_to_validate)
+                    extracted['mana_cost'] = card_to_validate.get('mana_cost', '')
                     extracted_name = extracted['name'].lower()
                     if extracted_name in current_card_names:
                         continue
                     if self._is_land_card(extracted):
                         continue
-                    if requested_synergy:
+                    if (
+                        color_identity
+                        and '{C}' in str(extracted.get('mana_cost') or '')
+                        and deck_context.get('explicit_colorless_sources', 0) < 8
+                    ):
+                        continue
+                    competitive_row = None
+                    if competitive_query:
+                        competitive_row = self.competitive_registry.evidence(
+                            extracted['name'],
+                            current_card_names,
+                            set(normalized_intent.get('strategy_priorities') or []),
+                        )
+                        if not competitive_row:
+                            continue
+                    elif requested_synergy:
                         if not self._card_matches_synergy(extracted, requested_synergy):
                             continue
                         if commander_data and not self._card_matches_commander_context(extracted, requested_synergy, commander_data):
                             continue
                         if self._is_generic_mana_card(extracted):
                             continue
-                    elif not self._card_matches_role(extracted, display_role):
-                        continue
+                    else:
+                        if not self._card_matches_role(extracted, display_role):
+                            continue
+                        if not self._passes_deck_plan_role_floor(
+                            extracted,
+                            display_role,
+                            commander_synergies,
+                            commander_constraints,
+                        ):
+                            continue
                     
                     # Calculate effective CMC (handles X costs)
                     effective_cmc = self._calculate_effective_cmc(card_to_validate)
@@ -2762,7 +3448,17 @@ class EnhancedSuggestionEngine:
                     image_data = self._get_card_images(card)
                     
                     # Generate specific, contextual reasoning with constraints
-                    if requested_synergy and commander_data:
+                    if competitive_query and competitive_row:
+                        quality = self._competitive_recommendation_quality(
+                            extracted,
+                            competitive_row,
+                        )
+                        reason = self._competitive_recommendation_reason(
+                            extracted['name'],
+                            competitive_row,
+                            normalized_intent,
+                        )
+                    elif requested_synergy and commander_data:
                         quality = self._recommendation_quality_metadata(
                             extracted,
                             requested_synergy,
@@ -2775,6 +3471,12 @@ class EnhancedSuggestionEngine:
                             requested_synergy,
                             commander_synergies,
                             gaps,
+                            deck_context,
+                        )
+                        quality = self._apply_marginal_role_utility(
+                            quality,
+                            extracted,
+                            display_role,
                             deck_context,
                         )
                         if requested_synergy in heuristic_signal_notes:
@@ -2791,6 +3493,11 @@ class EnhancedSuggestionEngine:
                             quality,
                             commander_data
                         )
+                        reason = self._append_marginal_role_reason(
+                            reason,
+                            quality,
+                            display_role,
+                        )
                     else:
                         quality = self._role_recommendation_quality_metadata(extracted, display_role, gaps)
                         quality = self._adjust_quality_for_deck_context(
@@ -2802,14 +3509,25 @@ class EnhancedSuggestionEngine:
                             gaps,
                             deck_context,
                         )
+                        quality = self._apply_marginal_role_utility(
+                            quality,
+                            extracted,
+                            display_role,
+                            deck_context,
+                        )
                         if quality['score'] < 76 or quality.get('fit_tier') == 'Speculative':
                             continue
                         reason = self._generate_validated_role_reason(extracted, display_role, quality)
+                        reason = self._append_marginal_role_reason(
+                            reason,
+                            quality,
+                            display_role,
+                        )
                     
                     suggestion = {
                         'card_name': extracted['name'],
                         'reason': reason,
-                        'role_tag': display_role,
+                        'role_tag': quality.get('role_tag', display_role),
                         'cmc': effective_cmc,  # Use effective CMC that accounts for X costs
                         'price': price,
                         'synergy_tags': self._detect_card_synergies(
@@ -2822,37 +3540,285 @@ class EnhancedSuggestionEngine:
                         'evidence': quality['evidence'],
                         'evidence_tags': quality['evidence_tags'],
                         'penalty_tags': quality['penalty_tags'],
+                        'marginal_utility': quality.get('marginal_utility'),
+                        'effective_role_gain': quality.get('effective_role_gain'),
+                        'role_gains': quality.get('role_gains', {}),
+                        'coverage_before': quality.get('coverage_before'),
+                        'coverage_after': quality.get('coverage_after'),
+                        'coverage_target': quality.get('coverage_target'),
                         'image_url': image_data['front'],
                         'image_url_back': image_data['back'],
                         '_query_index': query_index,
                         '_source_rank': source_rank,
                     }
+                    if (
+                        not competitive_row
+                        and normalized_intent.get('optimization_mode') == 'competitive'
+                    ):
+                        competitive_row = self.competitive_registry.evidence(
+                            extracted['name'],
+                            current_card_names,
+                            set(normalized_intent.get('strategy_priorities') or []),
+                        )
+                    if competitive_row:
+                        suggestion = self._attach_competitive_evidence(
+                            suggestion,
+                            competitive_row,
+                        )
+                    suggestion = apply_intent_to_suggestion(
+                        suggestion,
+                        extracted,
+                        normalized_intent,
+                        budget_context=budget_context,
+                        power_outlier=self.competitive_registry.is_power_outlier(
+                            extracted['name']
+                        ),
+                    )
+                    if suggestion is None:
+                        continue
+                    suggestion = apply_invariants_to_suggestion(
+                        suggestion,
+                        extracted,
+                        deck_invariants or {},
+                    )
+                    if suggestion is None:
+                        continue
                     query_candidates.append(suggestion)
 
-                for suggestion in sorted(query_candidates, key=self._deck_suggestion_sort_key)[:max_cards_for_query]:
+                legacy_shortlist = sorted(
+                    query_candidates,
+                    key=self._deck_suggestion_sort_key,
+                )[:max_cards_for_query]
+                v2_shortlist = sorted(
+                    query_candidates,
+                    key=lambda item: self.evidence_ranker.sort_key(
+                        item,
+                        name_field='card_name',
+                    ),
+                )[:max_cards_for_query]
+
+                for suggestion in legacy_shortlist:
                     name_key = suggestion['card_name'].lower()
-                    existing = candidates_by_name.get(name_key)
-                    if existing is None or self._deck_suggestion_sort_key(suggestion) < self._deck_suggestion_sort_key(existing):
-                        candidates_by_name[name_key] = suggestion
+                    existing = legacy_candidates_by_name.get(name_key)
+                    if (
+                        existing is None or
+                        self._deck_suggestion_sort_key(suggestion) <
+                        self._deck_suggestion_sort_key(existing)
+                    ):
+                        legacy_candidates_by_name[name_key] = suggestion
+
+                for suggestion in v2_shortlist:
+                    name_key = suggestion['card_name'].lower()
+                    existing = v2_candidates_by_name.get(name_key)
+                    if (
+                        existing is None or
+                        self.evidence_ranker.sort_key(
+                            suggestion,
+                            name_field='card_name',
+                        ) < self.evidence_ranker.sort_key(
+                            existing,
+                            name_field='card_name',
+                        )
+                    ):
+                        v2_candidates_by_name[name_key] = suggestion
             except Exception as e:
                 logger.error(f"Error generating additions for {role}: {str(e)}")
 
-        suggestions = self._select_ranked_deck_suggestions(list(candidates_by_name.values()), 10)
+        legacy_suggestions = self._select_ranked_deck_suggestions_legacy(
+            list(legacy_candidates_by_name.values()),
+            10,
+        )
+        v2_suggestions = [dict(item) for item in self.evidence_ranker.select(
+            list(v2_candidates_by_name.values()),
+            10,
+            kind='deck',
+        )]
+        self._annotate_v2_selection(v2_suggestions)
+        self._record_ranker_comparison('deck', legacy_suggestions, v2_suggestions)
+        suggestions = v2_suggestions if self.ranker_mode == 'v2' else legacy_suggestions
         for suggestion in suggestions:
             suggestion.pop('_query_index', None)
             suggestion.pop('_source_rank', None)
         return suggestions
+
+    def _competitive_recommendation_quality(
+        self,
+        card_data: Dict,
+        registry_row: Dict,
+    ) -> Dict:
+        labels = set(registry_row.get('labels') or [])
+        label_evidence = {
+            'efficient_interaction': ('interaction', 'efficient interaction', 91),
+            'free_interaction': ('interaction', 'alternate-cost interaction', 95),
+            'proactive_interaction': ('interaction', 'proactive stack protection', 92),
+            'fast_mana': ('ramp', 'competitive acceleration', 92),
+            'compact_tutor': ('tutor', 'compact package access', 93),
+            'compact_win_component': ('compact_win', 'compatible compact-win component', 96),
+            'competitive_card_advantage': ('draw', 'competitive card advantage', 92),
+            'competitive_enabler': ('enabler', 'competitive package enabler', 92),
+            'graveyard_engine': ('graveyard', 'competitive graveyard engine', 92),
+        }
+        selected = max(
+            (label_evidence[label] for label in labels if label in label_evidence),
+            key=lambda row: row[2],
+            default=('competitive', 'curated competitive function', 88),
+        )
+        role_tag, evidence, score = selected
+        evidence_tags = {'competitive_evidence', 'competitive_efficiency_fit'}
+        evidence_tags.update(labels)
+        function_map = {
+            'efficient_interaction': 'interaction',
+            'free_interaction': 'interaction',
+            'proactive_interaction': 'protection',
+            'fast_mana': 'mana_development',
+            'compact_tutor': 'card_access',
+            'compact_win_component': 'payoff',
+            'competitive_card_advantage': 'card_flow',
+            'competitive_enabler': 'enabler',
+            'graveyard_engine': 'repeatable_engine',
+        }
+        evidence_tags.update(
+            function_map[label]
+            for label in labels
+            if label in function_map
+        )
+        return {
+            'job': evidence,
+            'role_tag': role_tag,
+            'fit_tier': 'Competitive Evidence',
+            'score': score,
+            'evidence': evidence,
+            'evidence_tags': sorted(evidence_tags),
+            'penalty_tags': [],
+            'confidence': 0.94,
+        }
+
+    def _competitive_recommendation_reason(
+        self,
+        card_name: str,
+        registry_row: Dict,
+        intent_profile: Dict,
+    ) -> str:
+        labels = ', '.join(
+            str(label).replace('_', ' ')
+            for label in registry_row.get('labels') or []
+        )
+        priorities = ', '.join(
+            priority.replace('_', ' ')
+            for priority in intent_profile.get('strategy_priorities') or []
+            if priority in {
+                'compact_wins', 'stack_interaction', 'combat_combo',
+                'spell_chain', 'competitive',
+            }
+        ) or 'the declared competitive plan'
+        return (
+            f"{card_name} has curated competitive-function evidence as {labels}. "
+            f"That gives it a defined job in {priorities}; low mana value alone "
+            "was not used as competitive evidence."
+        )
+
+    def _attach_competitive_evidence(
+        self,
+        suggestion: Dict,
+        registry_row: Dict,
+    ) -> Dict:
+        result = dict(suggestion)
+        labels = set(registry_row.get('labels') or [])
+        tags = set(result.get('evidence_tags') or [])
+        tags.add('competitive_evidence')
+        tags.update(labels)
+        result['evidence_tags'] = sorted(tags)
+        result['competitive_labels'] = list(registry_row.get('labels') or [])
+        role_precedence = (
+            ('compact_win_component', 'compact_win'),
+            ('compact_tutor', 'tutor'),
+            ('free_interaction', 'interaction'),
+            ('efficient_interaction', 'interaction'),
+            ('proactive_interaction', 'protection'),
+            ('fast_mana', 'ramp'),
+            ('competitive_card_advantage', 'draw'),
+            ('graveyard_engine', 'graveyard'),
+            ('competitive_enabler', 'enabler'),
+        )
+        for label, role_tag in role_precedence:
+            if label in labels:
+                result['role_tag'] = role_tag
+                break
+        result['competitive_registry_version'] = self.competitive_registry.version
+        result['score'] = min(100, int(result.get('score') or 0) + 6)
+        return result
+
+    def _annotate_v2_selection(self, suggestions: List[Dict]) -> None:
+        """Bind displayed selection claims to the evidence ranker assessment."""
+        for position, suggestion in enumerate(suggestions, start=1):
+            assessment = self.evidence_ranker.assess(suggestion)
+            suggestion['rank_assessment'] = assessment.as_dict()
+            suggestion['selection_position'] = position
+            positive = [
+                (name, value)
+                for name, value in assessment.components.items()
+                if value > 0
+            ]
+            strongest = max(positive, key=lambda row: row[1], default=None)
+            if strongest:
+                component = strongest[0].replace('_', ' ')
+                note = (
+                    f"V2 selection: ranked #{position}; its strongest measured "
+                    f"component was {component} ({strongest[1]:g})."
+                )
+                suggestion['reason'] = f"{suggestion.get('reason', '').strip()} {note}".strip()
+                suggestion['selection_reason'] = note
     
-    async def _generate_cuts(self, cards: List[Dict], gaps: Dict, stats: Dict, 
-                       commander_synergies: List[str], detected_themes: Optional[List[str]] = None) -> List[Dict]:
+    async def _generate_cuts(self, cards: List[Dict], gaps: Dict, stats: Dict,
+                       commander_synergies: List[str], detected_themes: Optional[List[str]] = None,
+                       intent_profile: Optional[Dict] = None,
+                       deck_invariants: Optional[Dict] = None,
+                       color_identity: Optional[List[str]] = None) -> List[Dict]:
         """Generate intelligent cut suggestions with images"""
         suggestions = []
         suggested_names = set()
         protected_themes = set(commander_synergies) | set(detected_themes or [])
+        role_quality = stats.get('role_quality') or self.deck_role_assessor.assess(
+            cards,
+            self._detect_roles,
+        )['roles']
+        normalized_intent = normalize_intent_profile(intent_profile)
+        strategy_priorities = set(
+            normalized_intent.get('strategy_priorities') or []
+        )
+        protected_roles = set(normalized_intent.get('protected_roles') or [])
+        protected_function_map = {
+            'closer': 'closer',
+            'engine': 'engine',
+            'mana_fixing': 'mana_fixing',
+            'interaction': 'interaction',
+            'tutor': 'tutor',
+        }
         
         # Expand cards for analysis (don't cut basics with qty > 1)
         expanded_cards = []
         for card in cards:
+            if is_cut_protected(card.get('name', ''), intent_profile):
+                continue
+            if is_dependency_cut_forbidden(
+                card.get('name', ''),
+                (deck_invariants or {}).get('dependencies'),
+            ):
+                continue
+            function_profile = classify_card_functions(card)
+            protected_functions = {
+                protected_function_map[role]
+                for role in protected_roles
+                if role in protected_function_map
+            }
+            if function_profile.functions & protected_functions:
+                continue
+            if strategic_cut_block_reason(
+                card,
+                color_count=len(color_identity or []),
+                strategy_priorities=strategy_priorities,
+            ):
+                continue
             if 'Basic Land' in card.get('type_line', ''):
                 expanded_cards.append(card)  # Keep as single entry
             else:
@@ -2862,7 +3828,8 @@ class EnhancedSuggestionEngine:
         high_cmc_cards = [c for c in expanded_cards 
                          if c.get('cmc', 0) >= 6 
                          and 'Land' not in c.get('type_line', '')
-                         and not self._card_supports_themes(c, protected_themes)]
+                         and not self._card_supports_themes(c, protected_themes)
+                         and self._cut_preserves_role_coverage(c, role_quality)]
         
         high_cmc_cards.sort(key=lambda x: x.get('cmc', 0), reverse=True)
         
@@ -2881,6 +3848,7 @@ class EnhancedSuggestionEngine:
                 'cmc': card.get('cmc', 0),
                 'price': 0,
                 'synergy_tags': card.get('tags', []),
+                **self._cut_evidence_payload(card),
                 'confidence': 0.75,
                 'image_url': image_data['front'],
                 'image_url_back': image_data['back']
@@ -2908,6 +3876,7 @@ class EnhancedSuggestionEngine:
                     'cmc': 0,
                     'price': 0,
                     'synergy_tags': [],
+                    **self._cut_evidence_payload(card),
                     'confidence': 0.8,
                     'image_url': image_data['front'],
                     'image_url_back': image_data['back']
@@ -2917,7 +3886,10 @@ class EnhancedSuggestionEngine:
         # Priority 3: Redundant role cards that do not support the protected themes
         saturated_roles = {
             role for role, target in self.role_targets.items()
-            if stats.get('role_counts', {}).get(role, 0) > target[1]
+            if role_quality.get(role, {}).get(
+                'effective_count',
+                stats.get('role_counts', {}).get(role, 0),
+            ) > target[1]
         }
         if saturated_roles:
             redundant_role_cards = []
@@ -2932,7 +3904,11 @@ class EnhancedSuggestionEngine:
                     card.get('type_line', '').lower(),
                     card.get('name', ''),
                 ))
-                if roles & saturated_roles and card.get('cmc', 0) >= 3:
+                if (
+                    roles & saturated_roles
+                    and card.get('cmc', 0) >= 3
+                    and self._cut_preserves_role_coverage(card, role_quality)
+                ):
                     redundant_role_cards.append(card)
 
             redundant_role_cards.sort(key=lambda x: (x.get('cmc', 0), x.get('name', '')), reverse=True)
@@ -2949,6 +3925,7 @@ class EnhancedSuggestionEngine:
                     'cmc': card.get('cmc', 0),
                     'price': 0,
                     'synergy_tags': card.get('tags', []),
+                    **self._cut_evidence_payload(card),
                     'confidence': 0.68,
                     'image_url': image_data['front'],
                     'image_url_back': image_data['back']
@@ -2960,6 +3937,7 @@ class EnhancedSuggestionEngine:
             c for c in expanded_cards
             if not self._card_supports_themes(c, protected_themes)
             and not self._fills_needed_role(c, stats)
+            and self._cut_preserves_role_coverage(c, role_quality)
             and 'Land' not in c.get('type_line', '')
             and 'Basic' not in c.get('type_line', '')
             and c.get('cmc', 0) > 3
@@ -2979,13 +3957,32 @@ class EnhancedSuggestionEngine:
                 'cmc': card.get('cmc', 0),
                 'price': 0,
                 'synergy_tags': card.get('tags', []),
+                **self._cut_evidence_payload(card),
                 'confidence': 0.6,
                 'image_url': image_data['front'],
                 'image_url_back': image_data['back']
             })
             suggested_names.add(card_key)
         
-        return suggestions[:10]
+        invariant_cuts = apply_invariants_to_cuts(
+            suggestions[:10],
+            cards,
+            deck_invariants or {},
+        )
+        return apply_intent_to_cuts(invariant_cuts, intent_profile)
+
+    def _cut_evidence_payload(self, card: Dict) -> Dict:
+        profile = classify_card_functions(card)
+        return {
+            'printed_mana_value': profile.mana_value,
+            'practical_mana_value': profile.practical_mana_value,
+            'alternate_cast': profile.alternate_cast,
+            'strategic_functions': sorted(profile.functions),
+            'cut_evidence': (
+                "No protected strategic function or declared dependency was "
+                "identified by the deterministic safety checks."
+            ),
+        }
 
     def _card_supports_themes(self, card: Dict, themes: set) -> bool:
         """Check whether a card supports commander synergies or detected deck themes."""
@@ -2995,6 +3992,10 @@ class EnhancedSuggestionEngine:
         synergies = set(self._detect_card_synergies(oracle_text, type_line))
 
         if tags & themes or synergies & themes:
+            return True
+        if 'donation' in themes and self._is_donation_payload_card(card):
+            return True
+        if 'topdeck_value' in themes and self._is_topdeck_value_card(card):
             return True
         if 'counters' in themes and (
             '+1/+1 counter' in oracle_text or
@@ -3020,9 +4021,269 @@ class EnhancedSuggestionEngine:
 
         for role in roles:
             target = self.role_targets.get(role)
-            if target and stats.get('role_counts', {}).get(role, 0) <= target[0]:
+            if not target:
+                continue
+            quality_row = stats.get('role_quality', {}).get(role)
+            if quality_row:
+                current = float(quality_row.get('effective_count', 0))
+                contribution = self.deck_role_assessor.card_role_contribution(card, role)
+                if current - contribution < target[0]:
+                    return True
+            elif stats.get('role_counts', {}).get(role, 0) <= target[0]:
                 return True
         return False
+
+    def _cut_preserves_role_coverage(self, card: Dict, role_quality: Dict) -> bool:
+        """Reject a cut that would push a currently covered role below its floor."""
+        roles = self._detect_roles(
+            card.get('oracle_text', '').lower(),
+            card.get('type_line', '').lower(),
+            card.get('name', ''),
+        )
+        for role in roles:
+            if role not in self.role_targets:
+                continue
+            row = role_quality.get(role, {})
+            current = float(row.get('effective_count', 0))
+            target_min = self.role_targets[role][0]
+            contribution = self.deck_role_assessor.card_role_contribution(card, role)
+            if current >= target_min and current - contribution < target_min:
+                return False
+            if current < target_min and contribution > 0:
+                return False
+        return True
+
+    def _pair_additions_with_safe_cuts(
+        self,
+        additions: List[Dict],
+        cuts: List[Dict],
+        current_cards: List[Dict],
+        stats: Dict,
+        deck_invariants: Optional[Dict] = None,
+    ) -> List[Dict]:
+        """Build explicit swaps while protecting net role coverage."""
+        cards_by_name = {
+            card.get('name', '').lower(): card
+            for card in current_cards
+            if card.get('name')
+        }
+        role_quality = stats.get('role_quality', {})
+        unused_cut_indexes = set(range(len(cuts)))
+        pairs = []
+
+        for addition in additions:
+            if addition.get('action_only'):
+                pairs.append({
+                    'add': addition,
+                    'cut': None,
+                    'reason': (
+                        f"{addition.get('card_name')} is a quantified multi-slot repair, "
+                        "so it is not paired with a single cut."
+                    ),
+                    'net_role_gain': 0.0,
+                    'confidence': float(addition.get('confidence', 0.9)),
+                })
+                continue
+            add_gains = {
+                role: float(value)
+                for role, value in (addition.get('role_gains') or {}).items()
+                if role in self.role_targets
+            }
+            best = None
+            for index in sorted(unused_cut_indexes):
+                cut = cuts[index]
+                if not addition_satisfies_cut_invariants(addition, cut):
+                    continue
+                cut_card = cards_by_name.get(cut.get('card_name', '').lower(), {})
+                cut_roles = self._detect_roles(
+                    cut_card.get('oracle_text', '').lower(),
+                    cut_card.get('type_line', '').lower(),
+                    cut_card.get('name', ''),
+                )
+                losses = {
+                    role: self.deck_role_assessor.card_role_contribution(
+                        cut_card,
+                        role,
+                    )
+                    for role in cut_roles
+                    if role in self.role_targets
+                }
+
+                safe = True
+                for role, loss in losses.items():
+                    before = float(role_quality.get(role, {}).get('effective_count', 0))
+                    after = before - loss + add_gains.get(role, 0)
+                    target_min = self.role_targets[role][0]
+                    if before >= target_min and after < target_min:
+                        safe = False
+                        break
+                    if before < target_min and after < before:
+                        safe = False
+                        break
+                if not safe:
+                    continue
+
+                net_role_gain = sum(add_gains.values()) - sum(losses.values())
+                cmc_delta = float(cut.get('cmc', 0) or 0) - float(
+                    addition.get('cmc', 0) or 0
+                )
+                cut_kind_bonus = {
+                    'role_redundancy': 20,
+                    'synergy_optimization': 16,
+                    'curve_optimization': 12,
+                    'mana_base_optimization': 4,
+                }.get(cut.get('role_tag'), 8)
+                score = cut_kind_bonus + net_role_gain * 18 + max(-8, min(12, cmc_delta * 2))
+                primary_role = addition.get('role_tag')
+                if primary_role in losses:
+                    if add_gains.get(primary_role, 0) > losses[primary_role] + 0.1:
+                        score += 8
+                    else:
+                        score -= 18
+                elif losses:
+                    score -= 3
+                else:
+                    score += 8
+
+                candidate = (score, -index, index, losses, net_role_gain, cmc_delta)
+                if best is None or candidate[:2] > best[:2]:
+                    best = candidate
+
+            if best is None:
+                pairs.append({
+                    'add': addition,
+                    'cut': None,
+                    'reason': (
+                        f"{addition.get('card_name')} is a standalone upgrade; no listed "
+                        "cut was safe to pair without reducing a needed role."
+                    ),
+                    'net_role_gain': round(sum(add_gains.values()), 2),
+                    'confidence': 0.72,
+                })
+                continue
+
+            _, _, cut_index, losses, net_role_gain, cmc_delta = best
+            unused_cut_indexes.remove(cut_index)
+            cut = cuts[cut_index]
+            gain_text = ', '.join(
+                f"{gain:.1f} {role}"
+                for role, gain in sorted(add_gains.items())
+                if gain > 0
+            ) or 'commander-plan value'
+            loss_total = sum(losses.values())
+            curve_text = (
+                f" and lowers the slot by {cmc_delta:g} mana value"
+                if cmc_delta > 0 else ''
+            )
+            reason = (
+                f"This swap adds {gain_text}{curve_text}. The proposed cut removes "
+                f"about {loss_total:.1f} effective role coverage, leaving protected "
+                "role floors intact."
+            )
+            pairs.append({
+                'add': addition,
+                'cut': cut,
+                'reason': reason,
+                'net_role_gain': round(net_role_gain, 2),
+                'confidence': round(min(
+                    float(addition.get('confidence', 0.75)),
+                    float(cut.get('confidence', 0.65)),
+                ), 2),
+            })
+
+        for index in sorted(unused_cut_indexes):
+            cut = cuts[index]
+            pairs.append({
+                'add': None,
+                'cut': cut,
+                'reason': (
+                    f"{cut.get('card_name')} remains an independent flex-slot cut; "
+                    "it was not needed to justify one of the ranked additions."
+                ),
+                'net_role_gain': 0.0,
+                'confidence': float(cut.get('confidence', 0.6)),
+            })
+
+        return pairs
+
+    def _build_mana_base_repair_suggestion(
+        self,
+        stats: Dict,
+        color_identity: List[str],
+        intent_profile: Dict,
+    ) -> Optional[Dict]:
+        """Put severe land shortages ahead of ordinary synergy upgrades."""
+        land_count = int(stats.get('total_lands', 0))
+        if land_count > 20:
+            return None
+        constraints = set(intent_profile.get('intentional_constraints', []))
+        if (
+            intent_profile.get('confirmed')
+            and intent_profile.get('optimization_mode') == 'preserve'
+            and 'low_land_count' in constraints
+        ):
+            return None
+
+        functional_floor = 30
+        quantity = max(functional_floor - land_count, 1)
+        color_names = {
+            'W': 'Plains',
+            'U': 'Islands',
+            'B': 'Swamps',
+            'R': 'Mountains',
+            'G': 'Forests',
+        }
+        basics = [
+            color_names[color]
+            for color in self.COLOR_ORDER
+            if color in color_identity
+        ]
+        if len(basics) == 1:
+            package = basics[0]
+        elif basics:
+            package = 'basic and color-fixing lands'
+        else:
+            package = 'Wastes and colorless utility lands'
+        warning = (
+            "This repair is intentionally conservative; the final land target "
+            "still depends on curve, fast mana, and the owner's stated risk tolerance."
+        )
+        if not intent_profile.get('confirmed'):
+            warning += " Confirm whether the low-land construction is intentional."
+        return {
+            'card_name': f"Mana-base repair: add {quantity} lands",
+            'reason': (
+                f"Only {land_count} lands were detected. Add at least {quantity} "
+                f"{package} to reach a 30-land functional floor before ranking "
+                f"ordinary synergy upgrades. {warning}"
+            ),
+            'role_tag': 'mana_base_optimization',
+            'cmc': 0,
+            'price': None,
+            'synergy_tags': [],
+            'confidence': 0.96,
+            'fit_tier': 'Critical Repair',
+            'score': 99,
+            'evidence': (
+                f"quantity-aware deck count: {land_count} lands, "
+                f"{quantity} below the 30-land functional floor"
+            ),
+            'evidence_tags': ['mana_development', 'role_gap_overlap'],
+            'penalty_tags': [],
+            'role_gains': {},
+            'intent_alignment': [],
+            'intent_warnings': [warning],
+            'intent_score_delta': 0,
+            'invariant_traits': [],
+            'invariant_alignment': [],
+            'invariant_warnings': [],
+            'invariant_score_delta': 0,
+            'preservation_requirements': [],
+            'suggested_quantity': quantity,
+            'action_only': True,
+            'image_url': None,
+            'image_url_back': None,
+        }
 
     def _card_matches_role(self, card_data: Dict, role: str) -> bool:
         """Validate that a search result is a meaningful fit for a role query."""
@@ -3035,15 +4296,32 @@ class EnhancedSuggestionEngine:
                 return False
             if name in {'solemn simulacrum', 'commanders sphere', "commander's sphere", 'mind stone'}:
                 return False
-            return self._has_card_draw_text(oracle_text)
+            return self._has_self_card_draw_text(oracle_text)
         if role == 'ramp':
+            if self._creates_tokens_for_other_player(oracle_text):
+                return False
+            land_term = any(term in oracle_text for term in [
+                'land', 'plains', 'island', 'swamp', 'mountain', 'forest', 'wastes',
+            ])
             return (
-                'search your library for' in oracle_text and 'land' in oracle_text
+                'search your library for' in oracle_text and land_term
             ) or (
                 'add' in oracle_text and ('mana' in oracle_text or '{' in oracle_text)
             ) or 'treasure token' in oracle_text
         if role == 'removal':
-            if self._is_graveyard_hate(oracle_text):
+            if (
+                self._is_graveyard_hate(oracle_text) or
+                'card from a graveyard' in oracle_text or
+                'card in a graveyard' in oracle_text or
+                (
+                    'exile target' in oracle_text and
+                    any(phrase in oracle_text for phrase in [
+                        'return it to the battlefield',
+                        'return that card to the battlefield',
+                        'return that creature to the battlefield',
+                    ])
+                )
+            ):
                 return False
             return any(phrase in oracle_text for phrase in [
                 'destroy target',
@@ -3054,9 +4332,23 @@ class EnhancedSuggestionEngine:
                 'exile target nonland',
             ])
         if role == 'sweeper':
-            return any(phrase in oracle_text for phrase in ['destroy all', 'exile all', '-x/-x'])
+            if self._is_graveyard_hate(oracle_text):
+                return False
+            return any(phrase in oracle_text for phrase in [
+                'destroy all creatures',
+                'destroy all nonland permanents',
+                'destroy all artifacts',
+                'destroy all enchantments',
+                'exile all creatures',
+                'exile all nonland permanents',
+                'exile all artifacts',
+                'exile all enchantments',
+                'all creatures get -x/-x',
+            ])
         if role == 'protection':
-            return any(phrase in oracle_text for phrase in ['hexproof', 'indestructible', 'protection from', 'ward'])
+            return self._has_protection_role_text(oracle_text, type_line)
+        if role == 'mana_fixing':
+            return classify_card_functions(card_data).has('mana_fixing')
         if role == 'interaction':
             return any(phrase in oracle_text for phrase in [
                 'counter target spell',
@@ -3065,6 +4357,35 @@ class EnhancedSuggestionEngine:
                 'counter target ability',
                 'prevent all damage',
             ])
+        return True
+
+    def _passes_deck_plan_role_floor(
+        self,
+        card_data: Dict,
+        role: str,
+        commander_synergies: List[str],
+        commander_constraints: Dict,
+    ) -> bool:
+        """Keep generic role fixes connected to a commander's actual engine."""
+        oracle_text = card_data.get('oracle_text', '').lower()
+        type_line = card_data.get('type_line', '').lower()
+
+        if commander_constraints.get('aura_tutor_chain') and role == 'draw':
+            return (
+                'aura' in oracle_text or
+                'whenever you cast an enchantment' in oracle_text or
+                'whenever an enchantment enters' in oracle_text or
+                'aura' in type_line
+            )
+
+        if 'instant_sorcery' in commander_synergies:
+            return (
+                'instant' in type_line or
+                'sorcery' in type_line or
+                self._has_spell_stack_payoff_text(oracle_text) or
+                self._is_generic_mana_card(card_data)
+            )
+
         return True
 
     def _role_recommendation_quality_metadata(self, card_data: Dict, role: str, gaps: Dict) -> Dict:
@@ -3108,6 +4429,11 @@ class EnhancedSuggestionEngine:
             score += 10
             evidence = 'interacts on the stack or prevents damage'
             evidence_tags.append('interaction')
+        elif role == 'mana_fixing' and self._card_matches_role(card_data, 'mana_fixing'):
+            score += 18
+            evidence = 'improves access to every declared color'
+            evidence_tags.append('mana_development')
+            evidence_tags.append('requested_category')
         elif role == 'counter' and 'counter target' in oracle_text:
             score += 18
             evidence = 'counters opposing spells or abilities'
@@ -3126,7 +4452,7 @@ class EnhancedSuggestionEngine:
 
         if self._is_generic_mana_card(card_data):
             penalty_tags.append('generic_staple')
-            if role != 'ramp':
+            if role not in {'ramp', 'mana_fixing'}:
                 score -= 14
         if cmc >= 6 and role not in {'sweeper'}:
             penalty_tags.append('high_mana_value')
@@ -3134,7 +4460,7 @@ class EnhancedSuggestionEngine:
         if 'until end of turn' in oracle_text and role not in {'protection', 'removal'}:
             penalty_tags.append('one_shot_effect')
             score -= 5
-        if 'land' in type_line and role not in {'ramp'}:
+        if 'land' in type_line and role not in {'ramp', 'mana_fixing'}:
             penalty_tags.append('wrong_card_type')
             score -= 18
 
@@ -3174,6 +4500,8 @@ class EnhancedSuggestionEngine:
             action = f"{card_name} gives the deck more interaction."
         elif role == 'protection':
             action = f"{card_name} protects key permanents."
+        elif role == 'mana_fixing':
+            action = f"{card_name} improves multicolor mana access."
 
         reason = f"{action} It is recommended as a role fix because the analysis found a deck-health need: {quality.get('evidence', role)}."
         penalties = set(quality.get('penalty_tags', []))
@@ -3204,25 +4532,37 @@ class EnhancedSuggestionEngine:
         synergy_counts = Counter()
         nonland_count = 0
         high_mv_count = 0
+        explicit_colorless_sources = 0
 
         for card in current_cards:
+            qty = max(1, int(card.get('qty', 1) or 1))
             oracle_text = card.get('oracle_text', '').lower()
             type_line = card.get('type_line', '').lower()
             if 'land' not in type_line:
-                nonland_count += 1
+                nonland_count += qty
                 if card.get('cmc', 0) >= 5:
-                    high_mv_count += 1
+                    high_mv_count += qty
             for role in self._detect_roles(oracle_text, type_line, card.get('name', '')):
-                role_counts[role] += 1
+                role_counts[role] += qty
             for synergy in self._detect_card_synergies(oracle_text, type_line):
-                synergy_counts[synergy] += 1
+                synergy_counts[synergy] += qty
+            if 'add {c}' in oracle_text or card.get('name', '').casefold() == 'wastes':
+                explicit_colorless_sources += qty
+
+        role_assessment = self.deck_role_assessor.assess(
+            current_cards,
+            self._detect_roles,
+        )
 
         return {
             'role_counts': role_counts,
+            'role_quality': role_assessment['roles'],
+            'role_assessment_version': role_assessment['version'],
             'synergy_counts': synergy_counts,
             'nonland_count': nonland_count,
             'high_mv_count': high_mv_count,
             'high_mv_share': high_mv_count / nonland_count if nonland_count else 0,
+            'explicit_colorless_sources': explicit_colorless_sources,
         }
 
     def _card_gap_roles(self, card_data: Dict, gaps: Dict) -> List[str]:
@@ -3230,6 +4570,89 @@ class EnhancedSuggestionEngine:
             role for role in gaps.get('roles', {})
             if self._card_matches_role(card_data, role)
         ]
+
+    def _apply_marginal_role_utility(
+        self,
+        quality: Dict,
+        card_data: Dict,
+        role: str,
+        deck_context: Dict,
+    ) -> Dict:
+        """Attach and modestly reward list-specific effective coverage gains."""
+        adjusted = {
+            **quality,
+            'evidence_tags': list(quality.get('evidence_tags', [])),
+            'penalty_tags': list(quality.get('penalty_tags', [])),
+        }
+        assessment = {'roles': deck_context.get('role_quality', {})}
+        detected_roles = self._detect_roles(
+            card_data.get('oracle_text', '').lower(),
+            card_data.get('type_line', '').lower(),
+            card_data.get('name', ''),
+        )
+        marginal = self.deck_role_assessor.marginal_utility(
+            card_data,
+            assessment,
+            detected_roles,
+            role,
+        )
+        adjusted['marginal_utility'] = marginal['score']
+        adjusted['effective_role_gain'] = marginal['primary_gain']
+        adjusted['role_gains'] = marginal['role_gains']
+        adjusted['coverage_before'] = marginal['coverage_before']
+        adjusted['coverage_after'] = marginal['coverage_after']
+        adjusted['coverage_target'] = marginal['target_min']
+
+        if marginal['covered_gap'] > 0:
+            if 'effective_role_gain' not in adjusted['evidence_tags']:
+                adjusted['evidence_tags'].append('effective_role_gain')
+            adjusted['score'] = adjusted.get('score', 0) + min(
+                7,
+                round(marginal['covered_gap'] * 6),
+            )
+        if len(marginal['gap_roles']) > 1:
+            adjusted['evidence_tags'].append('multi_role_gain')
+            adjusted['score'] += 3
+
+        primary_gain = marginal['primary_gain']
+        if role in self.role_targets and primary_gain < 0.6:
+            if 'low_role_reliability' not in adjusted['penalty_tags']:
+                adjusted['penalty_tags'].append('low_role_reliability')
+            adjusted['score'] -= 14
+        elif role in self.role_targets and primary_gain >= 0.8:
+            adjusted['evidence_tags'].append('reliable_role_source')
+
+        adjusted['evidence_tags'] = list(dict.fromkeys(adjusted['evidence_tags']))
+        adjusted['penalty_tags'] = list(dict.fromkeys(adjusted['penalty_tags']))
+        adjusted['score'] = max(0, min(adjusted.get('score', 0), 95))
+        score = adjusted['score']
+        if score >= 86 and 'direct_synergy' in adjusted['evidence_tags']:
+            adjusted['fit_tier'] = 'Core Fit'
+        elif score >= 84:
+            adjusted['fit_tier'] = 'Strong Role Fix'
+        elif score >= 76:
+            adjusted['fit_tier'] = 'Role Fit'
+        else:
+            adjusted['fit_tier'] = 'Speculative'
+        adjusted['confidence'] = max(
+            self._quality_confidence_value(adjusted),
+            min(0.95, score / 100),
+        )
+        return adjusted
+
+    @staticmethod
+    def _append_marginal_role_reason(reason: str, quality: Dict, role: str) -> str:
+        gain = float(quality.get('effective_role_gain', 0) or 0)
+        target = int(quality.get('coverage_target', 0) or 0)
+        if gain <= 0 or target <= 0:
+            return reason
+        before = float(quality.get('coverage_before', 0) or 0)
+        after = float(quality.get('coverage_after', before) or before)
+        return (
+            f"{reason} For this list, it contributes about {gain:.1f} effective "
+            f"{role} source, moving reliable coverage from {before:.1f} to "
+            f"{after:.1f} toward the {target}-source floor."
+        )
 
     def _adjust_quality_for_deck_context(
         self,
@@ -3332,6 +4755,9 @@ class EnhancedSuggestionEngine:
             'archetype_need_match': 14,
             'mana_development': 8,
             'needed_role': 8,
+            'effective_role_gain': 10,
+            'reliable_role_source': 8,
+            'multi_role_gain': 6,
         }.items():
             if tag in evidence_tags:
                 bonus += value
@@ -3353,7 +4779,11 @@ class EnhancedSuggestionEngine:
             suggestion.get('card_name', ''),
         )
 
-    def _select_ranked_deck_suggestions(self, candidates: List[Dict], max_cards: int) -> List[Dict]:
+    def _select_ranked_deck_suggestions_legacy(
+        self,
+        candidates: List[Dict],
+        max_cards: int,
+    ) -> List[Dict]:
         remaining = sorted(candidates, key=self._deck_suggestion_sort_key)
         selected = []
         while remaining and len(selected) < max_cards:
@@ -3400,171 +4830,6 @@ class EnhancedSuggestionEngine:
             "This is a good flex slot to upgrade before trimming cards that directly feed the commander or the deck's main engines."
         )
     
-    def _generate_card_reasoning(self, card_data: Dict, role: str, commander: Optional[str],
-                                 commander_synergies: List[str], gaps: Dict, 
-                                 commander_constraints: Optional[Dict] = None) -> str:
-        """Generate highly detailed, specific reasoning for why a card fits the deck"""
-        card_name = card_data['name']
-        oracle_text = card_data['oracle_text']
-        oracle_lower = oracle_text.lower()
-        type_line = card_data['type_line']
-        cmc = card_data['cmc']
-        
-        # Build ultra-specific contextual reasoning with actual card analysis
-        reasons = []
-        
-        # Commander-specific synergy analysis
-        if role == 'synergy':
-            if 'enchantment' in commander_synergies and 'enchantment' in type_line.lower():
-                # Check if commander can actually tutor this (e.g., Zur's CMC 3 limit)
-                can_tutor = True
-                tutor_note = ""
-                if commander_constraints and 'max_enchantment_cmc' in commander_constraints:
-                    max_cmc = commander_constraints['max_enchantment_cmc']
-                    if cmc <= max_cmc:
-                        tutor_note = f"{commander} can DIRECTLY TUTOR this (CMC {cmc} ≤ {max_cmc} limit). "
-                    else:
-                        can_tutor = False
-                        tutor_note = f"Note: At CMC {cmc}, this is above {commander}'s tutor limit ({max_cmc}), but still strong enchantment synergy. "
-                
-                if 'draw' in oracle_lower and 'enchantment' in oracle_lower:
-                    # Find the specific draw trigger
-                    if 'whenever you cast' in oracle_lower or 'whenever an enchantment enters' in oracle_lower:
-                        reasons.append(f"{tutor_note}This enchantment provides REPEATABLE card draw every time you cast an enchantment, which synergizes perfectly with {commander}'s enchantment-focused strategy. Creates a self-sustaining card advantage engine")
-                    else:
-                        reasons.append(f"{tutor_note}Enchantment-based card draw that triggers off your deck's primary theme. Ensures you never run out of gas in your enchantment strategy")
-                elif 'search' in oracle_lower or 'tutor' in oracle_lower:
-                    reasons.append(f"{tutor_note}Tutors enchantments from your library, creating redundancy for finding your key pieces like Necropotence, Rhystic Study, or combo enablers. Consistency is key in Commander")
-                elif 'aura' in oracle_lower or 'attach' in oracle_lower:
-                    reasons.append(f"{tutor_note}Aura that directly enhances {commander}, making them a more lethal threat. In a voltron-style build, this stacks with other auras to create an overwhelming board presence")
-                else:
-                    if can_tutor:
-                        reasons.append(f"{tutor_note}Core enchantment that fits your strategy perfectly. Acts as both a threat and value engine in your enchantress theme")
-                    else:
-                        reasons.append(f"{tutor_note}Strong enchantment for your deck's theme, providing significant value even if it must be cast from hand")
-            elif 'artifact' in commander_synergies:
-                reasons.append(f"Artifact that synergizes with {commander}'s ability to manipulate or benefit from artifacts. Provides utility while feeding into your commander's core strategy, creating multiplicative value")
-        
-        # Ultra-detailed role analysis
-        if role == 'draw':
-            # Analyze the specific draw mechanism
-            if 'skullclamp' in card_name.lower():
-                reasons.append(f"{card_name} is excellent with expendable creatures and tokens: it turns small bodies into two fresh cards, which keeps a creature-heavy engine from running out of material.")
-            elif 'phyrexian arena' in card_name.lower():
-                reasons.append("A steady black draw engine that adds an extra card each turn with a manageable life cost. It is best when the deck wants reliable long-game fuel over explosive one-shot draw.")
-            elif 'rhystic study' in card_name.lower():
-                reasons.append("THE most powerful draw engine in Commander. Opponents either pay 1 mana for EVERY spell (slowing them down significantly) or you draw cards. In a 4-player game, this draws 5-10 cards per turn cycle")
-            elif 'mystic remora' in card_name.lower():
-                reasons.append("Extremely efficient early-game draw engine. For just 1 mana, this draws you 3-5 cards in the first few turns when opponents are ramping and playing rocks. Drop this turn 1-2 for maximum value")
-            elif 'whenever' in oracle_lower and 'draw' in oracle_lower:
-                if 'dies' in oracle_lower or 'is put into a graveyard' in oracle_lower:
-                    reasons.append(f"{card_name} rewards creatures dying, which pairs well with token and aristocrat patterns while turning trades or sacrifice outlets into cards.")
-                elif 'power 4 or greater' in oracle_lower:
-                    reasons.append(f"{card_name} is a creature-based draw payoff for larger threats, and its extra combat text can help a board of counters close games once creatures grow.")
-                elif 'creature' in oracle_lower:
-                    reasons.append(f"{card_name} turns creature deployment into card flow, helping a creature-heavy deck keep pressure on the table without emptying its hand.")
-                else:
-                    reasons.append(f"{card_name} provides repeatable card draw tied to board development, which is stronger here than a one-shot draw spell.")
-            elif 'at the beginning' in oracle_lower and 'upkeep' in oracle_lower:
-                reasons.append(f"{card_name} is a passive draw engine that keeps cards coming without requiring more mana after it resolves.")
-            else:
-                reasons.append(f"{card_name} adds card advantage in a deck that is still short about {gaps.get('roles', {}).get('draw', 0)} draw sources.")
-        
-        elif role == 'ramp':
-            if 'sol ring' in card_name.lower():
-                reasons.append("THE most powerful mana rock in Commander. Turn 1 Sol Ring is basically an auto-win - you're 2 turns ahead of everyone else. This card is banned in Legacy for a reason. Always include it")
-            elif 'arcane signet' in card_name.lower():
-                reasons.append(f"Perfect 2-mana rock that produces ANY color in your commander's identity. No color restrictions, no ETB tapped drawback. This is as efficient as mana acceleration gets in Commander")
-            elif 'treasure' in oracle_lower:
-                reasons.append(f"Creates Treasure tokens for FLEXIBLE mana. Unlike rocks, treasures can be sacrificed when needed for a burst of mana, enabling huge turns. They also dodge artifact removal and work around Null Rod effects")
-            elif 'search' in oracle_lower and 'land' in oracle_lower:
-                if 'basic' in oracle_lower:
-                    reasons.append(f"Land ramp that puts basics directly onto the battlefield, PERMANENTLY accelerating your mana. Unlike artifacts, lands don't die to Vandalblast or Austere Command. This also thins your deck, improving draw quality")
-                else:
-                    reasons.append(f"Fetches ANY land from your library - including utility lands like Reliquary Tower, Ancient Tomb, or dual lands. Provides both ramp AND color fixing in one package")
-            elif 'mana' in oracle_lower and ('add' in oracle_lower or 'produce' in oracle_lower):
-                reasons.append(f"Efficient mana rock at {cmc} CMC. Gets you ahead on mana to deploy threats faster. Your deck needs {gaps.get('roles', {}).get('ramp', 0)} more ramp sources to consistently cast your high-impact spells")
-        
-        elif role == 'removal':
-            if 'swords to plowshares' in card_name.lower():
-                reasons.append("THE most efficient removal spell in Magic. For just 1 white mana, permanently exile ANY creature at instant speed. The life gain is negligible in Commander. This answers everything from mana dorks to Blightsteel Colossus")
-            elif 'path to exile' in card_name.lower():
-                reasons.append("Instant-speed exile removal for 1 mana - incredibly efficient. Yes, they get a land, but in late game that's irrelevant. Answers indestructible threats, recursive creatures, and commanders permanently")
-            elif 'beast within' in card_name.lower():
-                reasons.append("Most FLEXIBLE removal in Commander. Destroys literally ANY permanent - creatures, enchantments, artifacts, even lands. The 3/3 beast token is a small price for answering any threat at instant speed")
-            elif 'exile' in oracle_lower:
-                reasons.append(f"EXILE-based removal that permanently deals with threats. This is crucial in Commander where graveyard recursion (Reanimate, Living Death, Muldrotha) is common. Destroy effects just delay problems; exile solves them")
-            elif 'destroy' in oracle_lower and ('artifact' in oracle_lower or 'enchantment' in oracle_lower):
-                reasons.append(f"Flexible removal hitting multiple permanent types. Can answer problem artifacts (Rhystic Study, Necropotence) AND enchantments (Smothering Tithe). Versatility is key in Commander's varied meta")
-            else:
-                reasons.append(f"Spot removal to answer problematic permanents. Your deck currently lacks sufficient removal ({gaps.get('roles', {}).get('removal', 0)} pieces short), leaving you vulnerable to opposing threats")
-
-        elif role == 'sweeper':
-            if '-x/-x' in oracle_lower or 'toxic deluge' in card_name.lower():
-                reasons.append(f"{card_name} is a flexible board reset that can clear creature-heavy tables while letting you choose how much life to spend. It helps recover when the board grows faster than your counters or tokens can control.")
-            elif 'destroy all' in oracle_lower or 'exile all' in oracle_lower:
-                reasons.append(f"{card_name} gives the deck a reset button for boards that go wider or taller than your engine. A few sweepers keep you from relying only on spot removal.")
-            else:
-                reasons.append(f"{card_name} fills the sweeper slot, giving the deck a way to reset multiple threats at once when incremental interaction is not enough.")
-        
-        elif role == 'counter':
-            if 'counterspell' in card_name.lower():
-                reasons.append("The original and still one of the best. 2 mana to counter ANY spell - no restrictions, no conditions. Instant speed protection against game-ending threats. Stop combos, board wipes, or opposing win conditions")
-            elif 'arcane denial' in card_name.lower():
-                reasons.append("Ultra-efficient 2-mana counter that hits ANY spell. Yes they draw cards, but in a multiplayer game you're trading 1-for-1 while the other 2 players get nothing. The political implications are valuable")
-            elif 'swan song' in card_name.lower():
-                reasons.append("1-mana counterspell for noncreature spells. Counters most game-winning plays (combos, board wipes, big enchantments) for minimal investment. The 2/2 bird is irrelevant compared to stopping a Cyclonic Rift")
-            elif 'negate' in card_name.lower():
-                reasons.append("2-mana counter for noncreature spells. In Commander, the scariest threats are often instants/sorceries/enchantments (board wipes, combos, Rhystic Study). This stops all of them efficiently")
-            else:
-                reasons.append(f"Stack interaction to protect your board state and disrupt opposing strategies. Commander games are often won by the player who can STOP the winning play, not just make their own")
-        
-        elif role == 'protection':
-            if 'lightning greaves' in card_name.lower():
-                reasons.append(f"THE best protection equipment. Gives {commander} haste AND hexproof for 0 equip cost. Drop this, immediately equip, and your commander is untouchable. Free to re-equip each turn to protect any creature")
-            elif 'swiftfoot boots' in card_name.lower():
-                reasons.append(f"Protection equipment giving {commander} hexproof and haste. Unlike Lightning Greaves, this costs 1 to equip but doesn't cause targeting issues with your own auras/equipment. More reliable for voltron strategies")
-            elif 'heroic intervention' in card_name.lower():
-                reasons.append("Instant-speed protection for your ENTIRE board. For 2 mana, make everything hexproof and indestructible. Blank board wipes, protect against targeted removal, save combo pieces. One of green's best cards")
-            elif 'teferi\'s protection' in card_name.lower():
-                reasons.append("The ULTIMATE protection spell. Phase out your entire board, make yourself immune to damage/loss effects. Completely blank board wipes, combo kills, or anything targeting you. Arguably white's best instant")
-            elif 'hexproof' in oracle_lower or 'shroud' in oracle_lower:
-                reasons.append(f"Grants hexproof/shroud to {commander}, making them untargetable by opponents' removal. In a format where commanders get removed 3-4 times per game, this protection is invaluable for maintaining board presence")
-            elif 'indestructible' in oracle_lower:
-                reasons.append(f"Makes permanents indestructible, surviving board wipes like Wrath of God, Blasphemous Act, and Vandalblast. This ensures your key pieces survive mass removal, maintaining your advantage")
-        
-        elif role == 'recursion':
-            if 'reanimate' in card_name.lower():
-                reasons.append("THE most efficient reanimation spell. For just 1 black mana, return ANY creature from ANY graveyard. This can steal opponents' threats OR recur your own. Turn 2 Reanimate on a discarded Eldrazi is game-winning")
-            elif 'living death' in card_name.lower():
-                reasons.append("Board wipe + mass reanimation in one spell. Wipes opponents' boards while bringing back ALL your creatures. In graveyard-focused decks, this is an instant win - they get nothing, you get everything")
-            elif 'return' in oracle_lower and 'hand' in oracle_lower:
-                reasons.append(f"Returns cards from graveyard to hand, enabling reuse of key pieces. Unlike reanimation, this lets you re-cast cards (triggering ETB effects again). Provides card advantage and recovery from removal")
-            else:
-                reasons.append(f"Graveyard recursion to recover threats and value pieces. In Commander where everyone has removal, the ability to bring back your best cards is crucial for grinding out victories")
-        
-        elif role == 'tutor':
-            if 'demonic tutor' in card_name.lower():
-                reasons.append("THE gold standard for tutors. 2 mana to search for literally ANY card and put it in hand. Want your combo piece? Your answer? Your win condition? This finds it. Banned in Legacy for good reason")
-            elif 'vampiric tutor' in card_name.lower():
-                reasons.append("1-mana instant-speed tutor to topdeck. Cast this end-of-turn before your draw step to effectively draw ANY card. The life loss is negligible. This consistency is why it's a $100+ card")
-            elif 'enlightened tutor' in card_name.lower():
-                reasons.append("Efficiently finds ANY enchantment or artifact for just 1 white mana. In enchantment-heavy strategies, this finds your win conditions, answers, or value engines. Instant speed lets you respond to threats")
-            elif 'search' in oracle_lower and 'hand' in oracle_lower:
-                reasons.append(f"Searches your library for specific cards, dramatically increasing consistency. Commander is about assembling your strategy reliably - tutors ensure you find your key pieces when needed")
-        
-        # CMC efficiency note
-        if cmc <= 2:
-            reasons.append(f"At {cmc} mana, it is easy to deploy while still developing the rest of your turn.")
-        elif cmc >= 6:
-            reasons.append(f"At {cmc} mana, it needs to be a deliberate top-end inclusion rather than a card you expect to cast early.")
-        
-        # Combine all detailed reasons
-        if reasons:
-            return ' '.join(reasons)
-        else:
-            return f"{card_name} provides {role} support for your strategy. Consider it for filling gaps in your deck's game plan."
-
     def _has_lifegain_reward_text(self, oracle_text: str) -> bool:
         """Detect commanders/cards that actively reward gaining life."""
         return bool(
@@ -3584,6 +4849,20 @@ class EnhancedSuggestionEngine:
             re.search(r'\bdraws? (?:a card|one card|two cards|three cards|four cards|five cards|six cards|seven cards|eight cards|nine cards|ten cards|\d+ cards|cards?)\b', oracle_text) or
             'investigate' in oracle_text
         )
+
+    def _has_self_card_draw_text(self, oracle_text: str) -> bool:
+        """Reject effects that only mention opponents or other players drawing."""
+        if not self._has_card_draw_text(oracle_text):
+            return False
+        if 'you draw' in oracle_text or 'each player draws' in oracle_text:
+            return True
+        without_other_draws = re.sub(
+            r'[^.\n]*(?:opponent|that player|target player)'
+            r'[^.\n]*\bdraws?\b[^.\n]*[.\n]?',
+            '',
+            oracle_text,
+        )
+        return self._has_card_draw_text(without_other_draws)
 
     def _has_artifact_token_text(self, oracle_text: str) -> bool:
         """Detect noncreature token economies such as Treasure, Clue, Food, and Blood."""
@@ -3694,6 +4973,7 @@ class EnhancedSuggestionEngine:
         hate_patterns = [
             'exile all cards from',
             "an opponent's graveyard",
+            "opponents' graveyards",
             "exile target player's graveyard",
             "exile target opponent's graveyard",
             'exile all graveyards',
@@ -3753,38 +5033,31 @@ class EnhancedSuggestionEngine:
         if self._is_graveyard_hate(oracle_text):
             return False
         if any(phrase in oracle_text for phrase in [
-            'from your graveyard',
-            'from a graveyard',
-            'from the graveyard',
-            'from its owner\'s graveyard',
-            'from their graveyard',
             'cast spells from your graveyard',
             'cast cards from your graveyard',
             'play lands from your graveyard',
+            'play cards from your graveyard',
+            'you may cast it from your graveyard',
+            'you may cast that card from your graveyard',
+            'you may play that card from your graveyard',
             'reanimate',
             'escape',
             'flashback',
             'unearth',
         ]):
             return True
-        return re.search(r'return .* from (?:your|a|the|that|target player\'s) graveyard', oracle_text) is not None
+        return re.search(
+            r'(?:return|put|cast|play) .* from (?:your|a|the|that|target player\'s|its owner\'s|their) graveyard',
+            oracle_text,
+        ) is not None
 
     def _is_graveyard_value_card(self, oracle_text: str, type_line: str) -> bool:
         """Confirm graveyard cards advance recursion, death, self-mill, or reusable resources."""
         if self._is_graveyard_hate(oracle_text):
             return False
+        if self._has_graveyard_recursion_text(oracle_text):
+            return True
         value_patterns = [
-            'from your graveyard',
-            'from a graveyard',
-            'return target',
-            'return up to',
-            'return a card',
-            'return that card',
-            'cast target',
-            'cast cards',
-            'cast spells from your graveyard',
-            'play lands from your graveyard',
-            'you may play lands',
             'put into your graveyard',
             'put into a graveyard',
             'mill',
@@ -4113,7 +5386,7 @@ class EnhancedSuggestionEngine:
         if synergy == 'attack_triggers':
             return self._has_attack_trigger_text(oracle_text) or any(term in oracle_text for term in ['attacking creatures', 'whenever you attack'])
         if synergy == 'extra_combat':
-            return any(term in oracle_text for term in ['additional combat phase', 'extra combat phase', 'untap all creatures'])
+            return has_extra_combat(oracle_text)
         if synergy == 'colorless_big_mana':
             if self._is_dead_colorless_mana_card(card_data):
                 return False
@@ -4184,6 +5457,35 @@ class EnhancedSuggestionEngine:
         commander_text = self._combined_oracle_text(commander_card)
         oracle_text = card_data.get('oracle_text', '').lower()
         type_line = card_data.get('type_line', '').lower()
+        commander_constraints = self._get_commander_constraints(commander_card)
+
+        typal_types = [
+            term
+            for term in self._detect_typal_creature_types(
+                commander_text,
+                self._combined_type_line(commander_card),
+            )
+            if term != 'chosen type'
+        ]
+        if typal_types and synergy in {
+            'creature',
+            'combat_damage',
+            'attack_triggers',
+            'extra_combat',
+        } and 'creature' in type_line:
+            matches_commander_type = any(
+                self._contains_creature_type_reference('', type_line, term)
+                for term in typal_types
+            )
+            generic_team_support = any(term in oracle_text for term in [
+                'creatures you control',
+                'each creature you control',
+                'whenever you attack',
+                'attacking creatures',
+                'untap all creatures',
+            ])
+            if not matches_commander_type and not generic_team_support:
+                return False
 
         if synergy == 'graveyard':
             if self._is_graveyard_hate(oracle_text) or not self._is_graveyard_value_card(oracle_text, type_line):
@@ -4210,8 +5512,21 @@ class EnhancedSuggestionEngine:
                 return 'aura' in type_line or any(term in oracle_text for term in ['aura', 'enchant ', 'enchanted'])
 
         if synergy == 'creature':
+            if commander_constraints.get('aura_tutor_chain'):
+                return (
+                    'aura' in oracle_text and
+                    any(term in oracle_text for term in [
+                        'draw', 'cost', 'hexproof', 'indestructible',
+                        'ward', 'attach', 'search your library',
+                    ])
+                )
             if self._has_vanilla_creature_plan_text(commander_text):
                 return self._card_matches_synergy(card_data, 'vanilla_creatures')
+            if 'creature card' in commander_text and 'graveyard' in commander_text:
+                return (
+                    'creature' in type_line or
+                    self._is_graveyard_value_card(oracle_text, type_line)
+                )
             if self._has_creature_spell_text(commander_text):
                 return 'creature' in type_line or self._has_creature_spell_text(oracle_text)
             if any(term in commander_text for term in ['enters the battlefield', 'creature enters']):
@@ -4231,11 +5546,21 @@ class EnhancedSuggestionEngine:
                     '+1/+1 counter',
                     'draw a card',
                 ]) or self._is_creature_token_support(oracle_text, type_line)
+            return False
 
         if synergy == 'tokens':
             if self._creates_tokens_for_other_player(oracle_text):
                 return False
             if 'creature token' in commander_text or 'populate' in commander_text:
+                if (
+                    self._has_spell_stack_payoff_text(commander_text) and
+                    ('instant' in commander_text or 'sorcery' in commander_text)
+                ):
+                    return (
+                        'instant' in type_line or
+                        'sorcery' in type_line or
+                        self._has_spell_stack_payoff_text(oracle_text)
+                    )
                 return self._is_creature_token_support(oracle_text, type_line)
             if self._has_artifact_token_text(oracle_text) and not self._is_creature_token_support(oracle_text, type_line):
                 return False
@@ -4282,11 +5607,7 @@ class EnhancedSuggestionEngine:
                     '-1/-1 counter' in oracle_text
                 )
             if counter_plan == 'named_counters':
-                named_terms = self._named_counter_terms(commander_text)
-                return (
-                    'proliferate' in oracle_text or
-                    any(f'{term} counter' in oracle_text for term in named_terms)
-                )
+                return counter_resources_compatible(commander_card, card_data)
             if counter_plan == 'self_counters':
                 external_counter_payoff = (
                     self._is_counter_payoff(oracle_text) and
@@ -4334,6 +5655,8 @@ class EnhancedSuggestionEngine:
             ])
 
         if synergy == 'voltron':
+            if commander_constraints.get('aura_tutor_chain'):
+                return 'aura' in type_line or 'enchant creature' in oracle_text
             return self._is_voltron_support(oracle_text, type_line)
 
         if synergy == 'board_conversion':
@@ -4350,6 +5673,18 @@ class EnhancedSuggestionEngine:
                     return False
                 return True
             return False
+
+        if synergy == 'instant_sorcery':
+            commander_constraints = self._get_commander_constraints(commander_card)
+            if (
+                commander_constraints.get('target_scope') == 'own_creature' and
+                ('instant' in type_line or 'sorcery' in type_line)
+            ):
+                return self._card_matches_commander_context(
+                    card_data,
+                    'target_spells',
+                    commander_card,
+                )
 
         if synergy == 'typal':
             typal_types = self._detect_typal_creature_types(commander_text)
@@ -4368,10 +5703,7 @@ class EnhancedSuggestionEngine:
             ])
 
         if synergy == 'extra_combat':
-            return any(term in oracle_text for term in [
-                'additional combat phase', 'extra combat phase', 'untap all creatures',
-                'whenever this creature attacks', 'attacking creatures', 'vigilance'
-            ])
+            return has_extra_combat(oracle_text)
 
         if synergy == 'colorless_big_mana':
             if self._is_dead_colorless_mana_card(card_data):
@@ -4386,6 +5718,36 @@ class EnhancedSuggestionEngine:
             )
 
         if synergy == 'target_spells':
+            commander_constraints = self._get_commander_constraints(commander_card)
+            if commander_constraints.get('target_scope') == 'own_creature':
+                targets_creature = 'target creature' in oracle_text
+                useful_own_target_effect = any(term in oracle_text for term in [
+                    'draw a card',
+                    'gets +',
+                    'gains ',
+                    'gain ',
+                    'untap target creature',
+                    'indestructible',
+                    'protection from',
+                    'hexproof',
+                    'double strike',
+                    'first strike',
+                    'put a +1/+1 counter',
+                    'put two +1/+1 counters',
+                    'return target creature you control',
+                ])
+                harmful_only = any(term in oracle_text for term in [
+                    'destroy target creature',
+                    'exile target creature',
+                    'target creature an opponent controls',
+                    'target creature gets -',
+                ])
+                return (
+                    ('instant' in type_line or 'sorcery' in type_line) and
+                    targets_creature and
+                    useful_own_target_effect and
+                    not harmful_only
+                )
             return self._has_target_cost_modifier_text(oracle_text) or (
                 'target' in oracle_text and ('instant' in type_line or 'sorcery' in type_line)
             )
@@ -4721,6 +6083,53 @@ class EnhancedSuggestionEngine:
                 score = 84
                 add_evidence('enabler')
                 add_evidence('protection')
+        elif synergy == 'graveyard':
+            self_mill = (
+                'mill' in oracle_text or
+                'put the top' in oracle_text and 'into your graveyard' in oracle_text or
+                'put into your graveyard' in oracle_text
+            )
+            permanent_card = not any(
+                card_type in type_line
+                for card_type in ['instant', 'sorcery']
+            )
+            if self_mill:
+                job = 'self-mill enabler'
+                evidence = 'stocks the graveyard with cards to reuse'
+                score = 86
+                add_evidence('direct_synergy')
+                add_evidence('enabler')
+            elif self._has_graveyard_recursion_text(oracle_text):
+                job = 'graveyard recursion'
+                evidence = 'returns or replays cards from the graveyard'
+                add_evidence('recursion')
+                if (
+                    not commander_constraints.get('graveyard_permanent_engine') or
+                    permanent_card or
+                    'land card' in oracle_text
+                ):
+                    score = 84
+                    add_evidence('direct_synergy')
+                else:
+                    score = 76
+                    add_evidence('enabler')
+            elif permanent_card and 'sacrifice' in oracle_text:
+                job = 'reusable graveyard permanent'
+                evidence = 'can trade itself for value and be reused'
+                score = 84
+                add_evidence('direct_synergy')
+                add_evidence('repeatable_engine')
+            elif any(term in oracle_text for term in [
+                'whenever another creature dies',
+                'whenever a creature dies',
+                'when this creature dies',
+                'delirium',
+                'descend',
+            ]):
+                job = 'graveyard payoff'
+                evidence = 'rewards deaths or a stocked graveyard'
+                score = 80
+                add_evidence('payoff')
         elif synergy == 'creature':
             if self._has_creature_spell_text(commander_text) and 'creature' in type_line:
                 job = 'creature spell trigger'
@@ -4817,7 +6226,14 @@ class EnhancedSuggestionEngine:
                 add_evidence('creature_token_support')
         elif synergy == 'counters':
             counter_plan = self._counter_plan_for_text(commander_text)
-            if 'proliferate' in oracle_text and counter_plan in ['proliferate', 'named_counters']:
+            resources_match = counter_resources_compatible(
+                commander_card,
+                card_data,
+            )
+            if not resources_match:
+                add_penalty('wrong_counter_context')
+                score = 40
+            elif 'proliferate' in oracle_text and counter_plan in ['proliferate', 'named_counters']:
                 job = 'named-counter scaling'
                 evidence = 'adds counters after the commander establishes them'
                 score = 86
@@ -5041,24 +6457,45 @@ class EnhancedSuggestionEngine:
                         add_evidence('card_flow')
         elif synergy == 'typal':
             typal_types = self._detect_typal_creature_types(commander_text)
-            matching_type = next(
+            oracle_matching_type = next(
                 (
                     term for term in typal_types
-                    if term != 'chosen type' and self._contains_creature_type_reference(oracle_text, type_line, term)
+                    if term != 'chosen type' and
+                    self._contains_creature_type_reference(oracle_text, '', term)
                 ),
                 None
             )
-            if matching_type:
-                job = f'{matching_type} typal support'
-                evidence = f'adds {matching_type} density or payoff text'
+            card_matching_type = next(
+                (
+                    term for term in typal_types
+                    if term != 'chosen type' and
+                    self._contains_creature_type_reference('', type_line, term)
+                ),
+                None
+            )
+            if oracle_matching_type:
+                job = f'{oracle_matching_type} typal support'
+                evidence = f'explicitly rewards or creates {oracle_matching_type} cards'
                 score = 84
                 add_evidence('direct_synergy')
                 add_evidence('typal_density')
-            elif 'creature' in type_line:
-                job = 'typal body'
-                evidence = 'adds creature-type density'
-                score = 74
+            elif card_matching_type:
+                job = f'{card_matching_type} role player'
+                evidence = f'adds {card_matching_type} density with a secondary job'
+                score = 72
                 add_evidence('enabler')
+                add_evidence('typal_density')
+                card_roles = self._detect_roles(
+                    oracle_text,
+                    type_line,
+                    card_data.get('name', ''),
+                )
+                if card_roles:
+                    score = 80
+                    add_evidence('role_value')
+                if self._has_card_draw_text(oracle_text):
+                    score = max(score, 82)
+                    add_evidence('card_flow')
         elif synergy == 'combat_damage':
             if self._has_combat_damage_trigger_text(oracle_text):
                 job = 'combat-damage payoff'
@@ -5082,17 +6519,12 @@ class EnhancedSuggestionEngine:
                 score = 78
                 add_evidence('enabler')
         elif synergy == 'extra_combat':
-            if 'additional combat phase' in oracle_text or 'extra combat phase' in oracle_text:
+            if has_extra_combat(oracle_text):
                 job = 'extra combat payoff'
                 evidence = 'adds another combat step'
                 score = 88
                 add_evidence('direct_synergy')
                 add_evidence('payoff')
-            elif 'untap all creatures' in oracle_text or 'vigilance' in oracle_text:
-                job = 'extra-combat support'
-                evidence = 'keeps attackers useful across combats'
-                score = 80
-                add_evidence('enabler')
         elif synergy == 'colorless_big_mana':
             if card_data.get('cmc', 0) >= 7:
                 job = 'big colorless payoff'
@@ -5114,7 +6546,27 @@ class EnhancedSuggestionEngine:
                 score = 80
                 add_evidence('enabler')
         elif synergy == 'target_spells':
-            if self._has_target_cost_modifier_text(oracle_text):
+            if commander_constraints.get('target_scope') == 'own_creature':
+                if 'target creature' in oracle_text and self._has_card_draw_text(oracle_text):
+                    job = 'repeatable targeting cantrip'
+                    evidence = 'targets your creature and replaces itself'
+                    score = 90
+                    add_evidence('direct_synergy')
+                    add_evidence('card_flow')
+                    add_evidence('low_setup_cost')
+                elif 'target creature' in oracle_text:
+                    job = 'repeatable creature-target spell'
+                    evidence = 'targets your creature with protection or combat value'
+                    score = 86
+                    add_evidence('direct_synergy')
+                    add_evidence('enabler')
+                    if any(term in oracle_text for term in [
+                        'indestructible',
+                        'protection from',
+                        'hexproof',
+                    ]):
+                        add_evidence('protection')
+            elif self._has_target_cost_modifier_text(oracle_text):
                 job = 'target-scaling payoff'
                 evidence = 'scales with target counts'
                 score = 86
@@ -5344,6 +6796,15 @@ class EnhancedSuggestionEngine:
         mechanic_strength = quality.get('mechanic_strength')
         mechanic_support_only = quality.get('mechanic_support_only')
         heuristic_signal = quality.get('heuristic_signal')
+        counter_plan = self._counter_plan_for_text(commander_text) if synergy == 'counters' else None
+        named_counter_terms = (
+            self._named_counter_terms(commander_text)
+            if counter_plan == 'named_counters'
+            else []
+        )
+        named_counter_label = " and ".join(
+            f"{term} counters" for term in named_counter_terms
+        )
 
         action = f"{card_name} contributes a validated {job} effect."
         if 'creature_token_support' in evidence_tags:
@@ -5353,7 +6814,10 @@ class EnhancedSuggestionEngine:
         elif 'sacrifice_outlet' in evidence_tags:
             action = f"{card_name} gives the deck a real sacrifice outlet."
         elif 'counter_scaling' in evidence_tags:
-            action = f"{card_name} adds proliferate or counter-scaling text."
+            if named_counter_label and 'proliferate' in oracle_text:
+                action = f"{card_name} can proliferate {named_counter_label}."
+            else:
+                action = f"{card_name} adds proliferate or counter-scaling text."
         elif 'counter_placement' in evidence_tags:
             action = f"{card_name} increases the counters your engine creates."
         elif 'archetype_need_match' in evidence_tags:
@@ -5450,7 +6914,10 @@ class EnhancedSuggestionEngine:
             else:
                 fit = f"That matters for {commander_name} because the card makes the graveyard function as a resource zone rather than a discard pile."
         elif synergy == 'counters':
-            fit = f"That matters for {commander_name} because the card interacts with the same counter plan instead of merely mentioning counters."
+            if named_counter_label and 'counter_scaling' in evidence_tags:
+                fit = f"That matters for {commander_name} because it scales {named_counter_label} after the commander places them, rather than substituting an unrelated +1/+1 counter package."
+            else:
+                fit = f"That matters for {commander_name} because the card interacts with the same counter plan instead of merely mentioning counters."
         elif synergy == 'sacrifice':
             fit = f"That matters for {commander_name} because sacrifice decks need outlets, fodder, or payoffs that turn deaths into resources."
         elif synergy == 'blink':
@@ -5503,7 +6970,10 @@ class EnhancedSuggestionEngine:
         elif synergy == 'colorless_big_mana':
             fit = f"That matters for {commander_name} because colorless decks need artifact and land-based tools to replace the colored ramp, draw, and interaction they cannot run."
         elif synergy == 'target_spells':
-            fit = f"That matters for {commander_name} because target-based commanders need spells whose targets change cost, scale output, or unlock interaction lines."
+            if commander_constraints.get('target_scope') == 'own_creature':
+                fit = f"That matters for {commander_name} because targeting your own creature lets the commander recover the spell for another turn; cantrips and protection convert that loop into repeatable cards or resilience."
+            else:
+                fit = f"That matters for {commander_name} because target-based commanders need spells whose targets change cost, scale output, or unlock interaction lines."
         elif synergy == 'donation':
             fit = f"That matters for {commander_name} because ownership and control are the point; the card should be useful to give away or reward that exchange."
         elif synergy == 'temporary_drawback':
@@ -5529,6 +6999,11 @@ class EnhancedSuggestionEngine:
         mechanic_clause = ""
         if (
             mechanic_name and mechanic_reason and
+            not (
+                synergy == 'counters' and
+                counter_plan == 'named_counters' and
+                'counter_scaling' in evidence_tags
+            ) and
             mechanic_name.lower().replace(' ', '_') not in {synergy, job.lower().replace(' ', '_')}
         ):
             if mechanic_support_only or mechanic_strength == 'texture':
@@ -5746,6 +7221,12 @@ class EnhancedSuggestionEngine:
             )
 
         if synergy == 'target_spells':
+            if commander_constraints.get('target_scope') == 'own_creature':
+                return (
+                    f'((t:instant OR t:sorcery) cmc<=3 '
+                    f'(o:"target creature" OR o:"any target")) '
+                    f'{color_filter} f:commander'
+                )
             return f'((t:instant OR t:sorcery) (o:"any number of target" OR o:"for each target" OR o:"up to two target" OR o:"up to three target" OR o:"up to four target" OR o:"up to five target" OR o:"divided as you choose" OR o:"X target")) {color_filter} f:commander'
 
         if synergy == 'control_finisher':
@@ -5766,7 +7247,7 @@ class EnhancedSuggestionEngine:
             'blink': '(o:exile o:return OR o:"enters the battlefield")',
             'combat_damage': '(o:"combat damage to a player" OR o:"combat damage to one or more players" OR o:"deals combat damage")',
             'attack_triggers': '(o:"whenever" o:attacks OR o:"whenever you attack" OR o:"attacking creatures")',
-            'extra_combat': '(o:"additional combat phase" OR o:"extra combat phase" OR o:"untap all creatures")',
+            'extra_combat': '(o:"additional combat phase" OR o:"extra combat phase")',
             'creature': '(o:"creature spell" OR o:"creature enters" OR o:"creatures you control" OR o:"whenever another creature" OR o:"whenever a creature" OR o:"creature token")',
             'donation': '(o:"gains control of target permanent" OR o:"exchange control" OR o:"you own" OR o:"opponents control")',
             'exile': '(o:"exile the top" OR o:"play that card" OR o:"cast that card" OR o:"from exile" OR o:"until end of your next turn")',
@@ -5847,7 +7328,7 @@ class EnhancedSuggestionEngine:
             elif 'equipment' in oracle_text or 'attach' in oracle_text or 'equipped' in oracle_text:
                 tips.append(f"{commander_name} cares about Equipment as part of the main engine. Prioritize cheap equip costs, haste, protection, and combat triggers before expensive power-only Equipment.")
             else:
-                tips.append(f"Keep the artifact package purposeful: ramp early, then convert artifact count into cards, sacrifice value, or a clear finisher instead of filling slots with generic rocks.")
+                tips.append("Keep the artifact package purposeful: ramp early, then convert artifact count into cards, sacrifice value, or a clear finisher instead of filling slots with generic rocks.")
 
         if 'board_conversion' in synergies:
             tips.append(f"{commander_name} turns quantity into combat pressure. Build the board first with cheap bodies, token makers, and creatures that leave multiple attackers behind, then let the commander convert that material into damage.")
@@ -5868,7 +7349,7 @@ class EnhancedSuggestionEngine:
             elif 'creatures you control' in oracle_text or 'creatures get' in oracle_text:
                 tips.append(f"{commander_name} rewards having a real board. Mix cheap creatures, token production, and protection so the deck can rebuild after wipes instead of relying on one oversized threat.")
             else:
-                tips.append(f"Keep the creature package synergistic: bodies should draw cards, ramp, recur, remove threats, or multiply the commander's main trigger rather than only filling the curve.")
+                tips.append("Keep the creature package synergistic: bodies should draw cards, ramp, recur, remove threats, or multiply the commander's main trigger rather than only filling the curve.")
 
         if 'graveyard' in synergies:
             if commander_constraints.get('zone_counter_plan'):
@@ -5876,18 +7357,18 @@ class EnhancedSuggestionEngine:
             elif self._has_creature_card_text(oracle_text) and 'graveyard' in oracle_text:
                 tips.append(f"{commander_name} wants creatures that are useful both on board and in the graveyard. Self-mill, discard outlets, and recursion are strongest when the creatures have ETB, death, or cast value.")
             elif 'artifact card' in oracle_text and 'graveyard' in oracle_text:
-                tips.append(f"Stock the graveyard with artifacts deliberately. Self-mill and sacrifice outlets become card advantage when the artifact package includes reusable value pieces.")
+                tips.append("Stock the graveyard with artifacts deliberately. Self-mill and sacrifice outlets become card advantage when the artifact package includes reusable value pieces.")
             else:
-                tips.append(f"Treat the graveyard as a second hand, but include a few ways to recover from graveyard hate so the deck is not forced to win through one zone.")
+                tips.append("Treat the graveyard as a second hand, but include a few ways to recover from graveyard hate so the deck is not forced to win through one zone.")
 
         if 'tokens' in synergies:
             if 'creature token' in oracle_text or 'populate' in oracle_text:
                 tips.append(f"{commander_name} benefits most from token makers that create bodies with relevant types, evasion, or scaling payoffs. Token doublers are best after the deck already has enough repeatable token production.")
             else:
-                tips.append(f"Use token makers that leave behind resources the deck can spend, sacrifice, copy, or pump. Avoid token cards that make bodies without supporting the commander's payoff.")
+                tips.append("Use token makers that leave behind resources the deck can spend, sacrifice, copy, or pump. Avoid token cards that make bodies without supporting the commander's payoff.")
 
         if 'artifact_tokens' in synergies:
-            tips.append(f"Treasure, Clue, Food, and Blood tokens should do more than sit around. Add payoffs for sacrificing artifacts or counting artifacts so temporary tokens become lasting advantage.")
+            tips.append("Treasure, Clue, Food, and Blood tokens should do more than sit around. Add payoffs for sacrificing artifacts or counting artifacts so temporary tokens become lasting advantage.")
 
         if 'counters' in synergies:
             counter_plan = commander_constraints.get('counter_plan') or self._counter_plan_for_text(oracle_text)
@@ -5908,22 +7389,22 @@ class EnhancedSuggestionEngine:
             tips.append(f"Separate lifegain enablers from lifegain payoffs. {commander_name} needs repeatable life gain to turn cards like draw engines, counters, or drain effects into dependable pressure.")
 
         if 'sacrifice' in synergies:
-            tips.append(f"Balance three pieces: fodder, free or cheap sacrifice outlets, and payoffs. The deck improves most when sacrificed permanents replace themselves or trigger recursion.")
+            tips.append("Balance three pieces: fodder, free or cheap sacrifice outlets, and payoffs. The deck improves most when sacrificed permanents replace themselves or trigger recursion.")
 
         if 'landfall' in synergies:
-            tips.append(f"Extra land drops and fetch lands are the fuel. Landfall payoffs should either draw cards, make mana, or create a closing board state so each land matters beyond the first trigger.")
+            tips.append("Extra land drops and fetch lands are the fuel. Landfall payoffs should either draw cards, make mana, or create a closing board state so each land matters beyond the first trigger.")
 
         if 'blink' in synergies:
             if 'another target' in oracle_text or 'another creature' in oracle_text:
                 tips.append(f"{commander_name} needs profitable blink targets. Load the deck with ETB creatures and permanents, then use the commander to reuse removal, ramp, and card draw while protecting key pieces from targeted removal.")
             else:
-                tips.append(f"Blink effects are strongest when they reuse ETB value or reset threatened permanents. Avoid blink cards without enough targets that immediately replace mana or cards.")
+                tips.append("Blink effects are strongest when they reuse ETB value or reset threatened permanents. Avoid blink cards without enough targets that immediately replace mana or cards.")
 
         if 'exile' in synergies:
             if 'play a card from exile' in oracle_text or 'from exile' in oracle_text:
                 tips.append(f"{commander_name} wants a steady flow of cards to play from exile. Impulse draw and cast-from-exile effects are better than one-shot exile removal because they keep the commander trigger chain active.")
             else:
-                tips.append(f"Exile should be treated as card access or a payoff zone here, not just removal. Prioritize cards that let you play or cast the exiled cards.")
+                tips.append("Exile should be treated as card access or a payoff zone here, not just removal. Prioritize cards that let you play or cast the exiled cards.")
 
         if 'voltron' in synergies and not any('Equipment' in tip or 'Auras' in tip for tip in tips):
             tips.append(f"Protect {commander_name} before increasing damage. Haste, evasion, and hexproof effects make commander-damage plans more reliable than simply adding larger buffs.")
@@ -5937,10 +7418,10 @@ class EnhancedSuggestionEngine:
             tips.append(f"{commander_name} needs damage to connect with players. Prioritize cheap evasive bodies, combat protection, or tempo pieces before expensive finishers.")
 
         if 'attack_triggers' in synergies:
-            tips.append(f"Attack triggers care about declaring attackers, not necessarily dealing combat damage. Favor cards that create attacking bodies, add attack payoffs, or make repeated combats safer.")
+            tips.append("Attack triggers care about declaring attackers, not necessarily dealing combat damage. Favor cards that create attacking bodies, add attack payoffs, or make repeated combats safer.")
 
         if 'extra_combat' in synergies:
-            tips.append(f"Extra combat effects scale with vigilance, untap support, and attack triggers. A card is better here when it improves multiple combat steps instead of only one swing.")
+            tips.append("Extra combat effects scale with vigilance, untap support, and attack triggers. A card is better here when it improves multiple combat steps instead of only one swing.")
 
         if 'colorless_big_mana' in synergies:
             tips.append("Colorless decks cannot lean on colored ramp, removal, or card draw. Use artifacts, utility lands, and high-impact colorless payoffs that justify the slower setup.")
@@ -5967,7 +7448,7 @@ class EnhancedSuggestionEngine:
             tips.append(f"{commander_name} wants graveyard creatures that are bad gifts. Normal reanimation targets can help opponents, so prioritize creatures with drawbacks, forced attacks, or temporary value.")
 
         if 'goad' in synergies:
-            tips.append(f"Goad plans need reliable combat damage and political pressure. Evasion and repeatable attack incentives are higher quality than generic large creatures.")
+            tips.append("Goad plans need reliable combat damage and political pressure. Evasion and repeatable attack incentives are higher quality than generic large creatures.")
 
         if not tips:
             tips.append(f"Start by identifying the repeated action in {commander_name}'s text, then add cards that perform or reward that action at low mana values.")
@@ -6225,8 +7706,12 @@ class EnhancedSuggestionEngine:
             recommendation.get('_source_rank', 999) * 0.01
         )
 
-    def _select_ranked_recommendations(self, candidates: List[Dict], max_cards: int) -> List[Dict]:
-        """Pick final recommendations using local score, then job diversity."""
+    def _select_ranked_recommendations_legacy(
+        self,
+        candidates: List[Dict],
+        max_cards: int,
+    ) -> List[Dict]:
+        """Preserve the original score-dominant ordering as a rollback path."""
         remaining = sorted(candidates, key=self._recommendation_sort_key)
         selected = []
 
@@ -6240,6 +7725,13 @@ class EnhancedSuggestionEngine:
             selected.append(remaining.pop(0))
 
         return selected
+
+    def _select_ranked_recommendations(self, candidates: List[Dict], max_cards: int) -> List[Dict]:
+        """Compare rankers and use the configured deterministic selection path."""
+        legacy = self._select_ranked_recommendations_legacy(candidates, max_cards)
+        v2 = self.evidence_ranker.select(candidates, max_cards, kind='commander')
+        self._record_ranker_comparison('commander', legacy, v2)
+        return v2 if self.ranker_mode == 'v2' else legacy
 
     async def _search_commander_recommendations(
         self,
@@ -6278,7 +7770,10 @@ class EnhancedSuggestionEngine:
         async def run_search(synergy_index: int, synergy: str, query: str):
             async with semaphore:
                 try:
-                    search_task = self.scryfall.search_cards_by_criteria(query, limit=query_limit)
+                    search_task = self._search_candidate_cards(
+                        query,
+                        limit=query_limit,
+                    )
                     if per_query_timeout:
                         results = await asyncio.wait_for(search_task, timeout=per_query_timeout)
                     else:
@@ -6295,7 +7790,8 @@ class EnhancedSuggestionEngine:
             *(run_search(synergy_index, synergy, query) for synergy_index, synergy, query in search_specs)
         )
 
-        candidates_by_name = {}
+        legacy_candidates_by_name = {}
+        v2_candidates_by_name = {}
         order = 0
         for synergy_index, synergy, results in search_results:
             synergy_candidates = []
@@ -6340,17 +7836,63 @@ class EnhancedSuggestionEngine:
                 recommendation['_order'] = order
                 recommendation['_source_rank'] = source_rank
                 recommendation['_synergy_index'] = synergy_index
-                recommendation['_rank_score'] = self._recommendation_base_rank(recommendation)
+                recommendation['_rank_score'] = (
+                    self.evidence_ranker.score(recommendation)
+                    if self.ranker_mode == 'v2'
+                    else self._recommendation_base_rank(recommendation)
+                )
                 synergy_candidates.append(recommendation)
                 order += 1
 
-            for recommendation in sorted(synergy_candidates, key=self._recommendation_sort_key)[:per_synergy_limit]:
-                name_key = recommendation['name'].lower()
-                existing = candidates_by_name.get(name_key)
-                if existing is None or self._recommendation_sort_key(recommendation) < self._recommendation_sort_key(existing):
-                    candidates_by_name[name_key] = recommendation
+            legacy_shortlist = sorted(
+                synergy_candidates,
+                key=self._recommendation_sort_key,
+            )[:per_synergy_limit]
+            v2_shortlist = sorted(
+                synergy_candidates,
+                key=lambda item: self.evidence_ranker.sort_key(
+                    item,
+                    name_field='name',
+                ),
+            )[:per_synergy_limit]
 
-        candidates = self._select_ranked_recommendations(list(candidates_by_name.values()), max_cards)
+            for recommendation in legacy_shortlist:
+                name_key = recommendation['name'].lower()
+                existing = legacy_candidates_by_name.get(name_key)
+                if (
+                    existing is None or
+                    self._recommendation_sort_key(recommendation) <
+                    self._recommendation_sort_key(existing)
+                ):
+                    legacy_candidates_by_name[name_key] = recommendation
+
+            for recommendation in v2_shortlist:
+                name_key = recommendation['name'].lower()
+                existing = v2_candidates_by_name.get(name_key)
+                if (
+                    existing is None or
+                    self.evidence_ranker.sort_key(
+                        recommendation,
+                        name_field='name',
+                    ) < self.evidence_ranker.sort_key(
+                        existing,
+                        name_field='name',
+                    )
+                ):
+                    v2_candidates_by_name[name_key] = recommendation
+
+        legacy_candidates = self._select_ranked_recommendations_legacy(
+            list(legacy_candidates_by_name.values()),
+            max_cards,
+        )
+        v2_candidates = [dict(item) for item in self.evidence_ranker.select(
+            list(v2_candidates_by_name.values()),
+            max_cards,
+            kind='commander',
+        )]
+        self._annotate_v2_selection(v2_candidates)
+        self._record_ranker_comparison('commander', legacy_candidates, v2_candidates)
+        candidates = v2_candidates if self.ranker_mode == 'v2' else legacy_candidates
         for card in candidates:
             card.pop('_order', None)
             card.pop('_source_rank', None)
@@ -6949,7 +8491,7 @@ class EnhancedSuggestionEngine:
         try:
             selected_identity = self._selected_random_commander_identity(colors)
             active_query = query
-            results = await self.scryfall.search_cards_by_criteria(query, limit=100)
+            results = await self._search_candidate_cards(query, limit=100)
             results = [
                 card for card in results
                 if self._is_commander_eligible(card, creature_only=True)
@@ -6962,7 +8504,10 @@ class EnhancedSuggestionEngine:
                 )
                 if fallback_query != query:
                     active_query = fallback_query
-                    results = await self.scryfall.search_cards_by_criteria(fallback_query, limit=100)
+                    results = await self._search_candidate_cards(
+                        fallback_query,
+                        limit=100,
+                    )
                     results = [
                         card for card in results
                         if self._is_commander_eligible(card, creature_only=True)
@@ -7019,108 +8564,41 @@ class EnhancedSuggestionEngine:
         stats = self._calculate_stats(cards, commander, commander_synergies)
         gaps = self._identify_gaps(stats, color_identity, commander_synergies)
         
-        # Get current card names (including dismissed cards)
-        current_card_names = {card['name'].lower() for card in cards}
         dismissed_card_names = {card.lower() for card in dismissed_cards}
-        all_excluded_names = current_card_names | dismissed_card_names
-        
-        # Determine which role to search for
-        search_roles = []
-        if role_tag:
-            search_roles = [role_tag]
-        else:
-            # Try roles in priority order
-            if 'draw' in gaps['roles']:
-                search_roles.append('draw')
-            if 'ramp' in gaps['roles']:
-                search_roles.append('ramp')
-            if 'removal' in gaps['roles']:
-                search_roles.append('removal')
-            if commander_synergies:
-                search_roles.append('synergy')
-        
-        # Search for a replacement
-        for role in search_roles:
-            query = self._build_query_for_role(role, color_identity, commander_synergies, commander_constraints)
-            if not query:
-                continue
-            
-            try:
-                results = await self.scryfall.search_cards_by_criteria(query, limit=50)
-                for card in results:
-                    card_name = card.get('name', '').lower()
-                    if card_name in all_excluded_names:
-                        continue
-                    
-                    # Validate color identity
-                    commander_colors = commander_constraints.get('commander_color_identity', color_identity)
-                    if not self._is_legal_for_deck(card, commander_colors):
-                        continue
-                    
-                    # Handle double-faced cards
-                    card_to_validate = card
-                    if card.get('card_faces') and len(card.get('card_faces', [])) > 1:
-                        if commander_constraints.get('max_enchantment_cmc'):
-                            card_to_validate = self._get_correct_face_for_validation(card, 'enchantment')
-                        elif commander_constraints.get('max_tutor_cmc'):
-                            if 'enchantment' in role:
-                                card_to_validate = self._get_correct_face_for_validation(card, 'enchantment')
-                            elif 'artifact' in role:
-                                card_to_validate = self._get_correct_face_for_validation(card, 'artifact')
-                            elif 'creature' in role:
-                                card_to_validate = self._get_correct_face_for_validation(card, 'creature')
-                    
-                    extracted = self.scryfall.extract_card_data(card_to_validate)
-                    effective_cmc = self._calculate_effective_cmc(card_to_validate)
-                    
-                    # Apply commander constraints
-                    if commander_constraints:
-                        if 'max_enchantment_cmc' in commander_constraints:
-                            if 'enchantment' in extracted['type_line'].lower():
-                                if effective_cmc > commander_constraints['max_enchantment_cmc']:
-                                    continue
-                        
-                        if 'max_tutor_cmc' in commander_constraints:
-                            if effective_cmc > commander_constraints['max_tutor_cmc']:
-                                continue
-                        
-                        if commander_constraints.get('legendary_only'):
-                            if 'legendary' not in extracted['type_line'].lower():
-                                continue
-                        
-                        if 'max_power' in commander_constraints:
-                            card_power = card_to_validate.get('power')
-                            if card_power and card_power.isdigit():
-                                if int(card_power) > commander_constraints['max_power']:
-                                    continue
-                    
-                    # Found a valid replacement!
-                    price = self._extract_price(extracted['prices'])
-                    image_data = self._get_card_images(card)
-                    reason = self._generate_card_reasoning(
-                        extracted, role, commander, commander_synergies, gaps, commander_constraints
-                    )
-                    
-                    return {
-                        'card_name': extracted['name'],
-                        'reason': reason,
-                        'role_tag': role,
-                        'cmc': effective_cmc,
-                        'price': price,
-                        'synergy_tags': self._detect_card_synergies(
-                            extracted['oracle_text'].lower(),
-                            extracted['type_line'].lower()
-                        ),
-                        'confidence': 0.9 if role == 'synergy' else 0.8,
-                        'image_url': image_data['front'],
-                        'image_url_back': image_data['back']
-                    }
-            except Exception as e:
-                logger.error(f"Error finding replacement for {role}: {str(e)}")
-                continue
-        
-        # No replacement found
-        return None
+        category_roles = {
+            'draw', 'ramp', 'removal', 'counter', 'recursion', 'tutor',
+            'protection', 'sweeper', 'interaction',
+        }
+        categories = [role_tag] if role_tag in category_roles else None
+
+        # Replacements use the same full-pool validation, evidence scoring, and
+        # diversity-aware ranking as the main analysis.  This deliberately
+        # avoids returning the first legal search result.
+        ranked = await self._generate_additions(
+            gaps=gaps,
+            commander=commander,
+            color_identity=color_identity,
+            current_cards=cards,
+            commander_synergies=commander_synergies,
+            commander_data=commander_data,
+            categories=categories,
+            commander_constraints=commander_constraints,
+            search_budget=8,
+            excluded_card_names=dismissed_card_names,
+            intent_profile=normalize_intent_profile(deck.get('intent_profile')),
+            deck_invariants=build_deck_invariants(
+                cards,
+                normalize_intent_profile(deck.get('intent_profile')),
+                commander_constraints,
+                commander_synergies,
+            ),
+        )
+        if role_tag and role_tag not in category_roles and role_tag != 'synergy':
+            ranked = [
+                suggestion for suggestion in ranked
+                if suggestion.get('role_tag') == role_tag
+            ]
+        return ranked[0] if ranked else None
     
     def _build_query_for_role(
         self, 
@@ -7159,9 +8637,97 @@ class EnhancedSuggestionEngine:
         lines.append(f"# Commander Deck Analysis: {deck.get('name', 'Unnamed Deck')}")
         lines.append("")
         lines.append(f"**Commander:** {deck.get('commander', 'N/A')}")
-        lines.append(f"**Format:** Commander (EDH)")
+        lines.append("**Format:** Commander (EDH)")
         lines.append(f"**Color Identity:** {', '.join(deck.get('color_identity', []))}")
         lines.append("")
+
+        intent = analysis.get('intent_summary', {})
+        if intent:
+            lines.append("## Recommendation Intent")
+            lines.append("")
+            lines.append(
+                f"- Status: {'Confirmed' if intent.get('confirmed') else 'Unconfirmed; conservative posture'}"
+            )
+            lines.append(
+                f"- Optimization Mode: {intent.get('optimization_mode', 'preserve')}"
+            )
+            lines.append(f"- Power Target: {intent.get('power_target', 'unknown')}")
+            lines.append(f"- Budget Mode: {intent.get('budget_mode', 'unknown')}")
+            if intent.get('primary_strategy'):
+                lines.append(f"- Declared Strategy: {intent['primary_strategy']}")
+            if intent.get('desired_experience'):
+                lines.append(f"- Desired Experience: {intent['desired_experience']}")
+            for note in intent.get('enforcement_notes', []):
+                lines.append(f"- Enforcement Note: {note}")
+            lines.append("")
+
+        invariants = analysis.get('deck_invariants', {})
+        if invariants.get('active'):
+            lines.append("### Preserved Deck-Plan Floors")
+            lines.append("")
+            typal = invariants.get('typal')
+            if typal:
+                lines.append(
+                    f"- Typal: preserve {typal['on_type_cards']} "
+                    f"{typal['creature_type']} cards across swaps"
+                )
+            spell_density = invariants.get('spell_density')
+            if spell_density:
+                lines.append(
+                    f"- Spells: preserve {spell_density['instant_sorcery_cards']} "
+                    "instants and sorceries across swaps"
+                )
+            aura_ladder = invariants.get('aura_ladder')
+            if aura_ladder:
+                lines.append(
+                    f"- Aura Ladder: {aura_ladder['aura_cards']} Auras; "
+                    f"covered mana values {', '.join(aura_ladder['covered_mana_values']) or 'none'}"
+                )
+                if aura_ladder.get('missing_core_mana_values'):
+                    lines.append(
+                        "- Missing Aura Rungs: "
+                        + ", ".join(aura_ladder['missing_core_mana_values'])
+                    )
+            card_types = invariants.get('card_type_spread')
+            if card_types:
+                counts = ", ".join(
+                    f"{card_type} {count}"
+                    for card_type, count in card_types['type_counts'].items()
+                )
+                lines.append(f"- Card-Type Spread: {counts}")
+            sacrifice = invariants.get('sacrifice_engine')
+            if sacrifice:
+                counts = sacrifice['component_counts']
+                lines.append(
+                    f"- Sacrifice Engine: {counts['outlet']} outlets, "
+                    f"{counts['payoff']} payoffs, {counts['fodder']} fodder sources"
+                )
+            for package in invariants.get('protected_packages') or []:
+                package_line = (
+                    f"- Protected Package {package['name']}: "
+                    f"{len(package['present_cards'])}/{len(package['declared_cards'])} present"
+                )
+                if package.get('missing_cards'):
+                    package_line += "; missing " + ", ".join(package['missing_cards'])
+                lines.append(package_line)
+            dependencies = invariants.get('dependencies') or {}
+            for package in dependencies.get('tutor_packages') or []:
+                package_line = (
+                    f"- Tutor Targets ({', '.join(package['source_cards'])}): "
+                    f"{package['target_count']} {package['label']} target(s); "
+                    f"status {package['status']}"
+                )
+                if package['status'] != 'healthy' and package.get('target_cards'):
+                    package_line += "; targets " + ", ".join(package['target_cards'])
+                lines.append(package_line)
+            for link in dependencies.get('named_links') or []:
+                lines.append(
+                    f"- Exact Named Link: {link['source_card']} -> "
+                    f"{link['target_card']} ({link['status']})"
+                )
+            if dependencies.get('active'):
+                lines.append(f"- Dependency Scope: {dependencies['limitations']}")
+            lines.append("")
         
         stats = analysis.get('stats', {})
         lines.append("## Deck Statistics")
@@ -7183,8 +8749,19 @@ class EnhancedSuggestionEngine:
         lines.append("### Role Distribution")
         lines.append("")
         role_counts = stats.get('role_counts', {})
-        for role, count in role_counts.items():
-            lines.append(f"- {role.capitalize()}: {count} cards")
+        role_quality = stats.get('role_quality', {})
+        roles = role_quality.keys() if role_quality else role_counts.keys()
+        for role in roles:
+            count = role_counts.get(role, 0)
+            if role in role_quality:
+                effective = role_quality[role].get('effective_count', count)
+                status = role_quality[role].get('status', 'tracked').replace('_', ' ')
+                lines.append(
+                    f"- {role.capitalize()}: {effective:g} effective sources "
+                    f"({count} raw cards, {status})"
+                )
+            else:
+                lines.append(f"- {role.capitalize()}: {count} cards")
         lines.append("")
         
         # Suggestions

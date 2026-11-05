@@ -20,9 +20,17 @@ from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
 import requests
+from contextlib import asynccontextmanager
 
 from services.scryfall_service import ScryfallService
+from services.candidate_provider import build_candidate_provider
 from services.deck_parser import DeckParser
+from services.deck_input_assessment import (
+    apply_recommendation_restraint,
+    assess_deck_input,
+    blocking_message,
+)
+from services.deck_intent import DeckIntentProfile, normalize_intent_profile
 from services.enhanced_suggestion_engine import EnhancedSuggestionEngine
 from services.in_memory_db import InMemoryClient, InMemoryDB
 
@@ -104,14 +112,54 @@ if ENVIRONMENT == 'production' and REQUIRE_EMAIL_VERIFICATION:
 
 security = HTTPBearer(auto_error=False)
 
+
+async def prepare_database():
+    if hasattr(db.users, 'create_index'):
+        try:
+            await db.users.create_index('email', unique=True)
+            await db.auth_tokens.create_index('token_hash', unique=True)
+            await db.auth_tokens.create_index('expires_at')
+            await db.rate_limits.create_index('key', unique=True)
+            await db.scryfall_cards.create_index('name_lower', unique=True)
+            await db.scryfall_cards.create_index('lookup_keys')
+            await db.scryfall_cards.create_index('oracle_id', sparse=True)
+            await db.scryfall_cards.create_index('fetched_at', expireAfterSeconds=2592000)
+            await db.scryfall_searches.create_index('query_key', unique=True)
+            await db.scryfall_searches.create_index('fetched_at', expireAfterSeconds=604800)
+        except Exception as exc:
+            logger.warning("Could not ensure database indexes: %s", exc)
+    logger.warning(
+        "Scryfall persistent cache enabled=%s",
+        scryfall_service.get_cache_status()["persistent_cache_enabled"],
+    )
+    logger.warning(
+        "Candidate provider status=%s",
+        getattr(candidate_provider, "get_status", lambda: {})(),
+    )
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    await prepare_database()
+    try:
+        yield
+    finally:
+        await scryfall_service.close()
+        client.close()
+
+
 # Create the main app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 api_router = APIRouter(prefix="/api")
 
 # Initialize services
 scryfall_service = ScryfallService(db=db)
 deck_parser = DeckParser(scryfall_service)
-suggestion_engine = EnhancedSuggestionEngine(scryfall_service)
+candidate_provider = build_candidate_provider(scryfall_service)
+suggestion_engine = EnhancedSuggestionEngine(
+    scryfall_service,
+    candidate_provider=candidate_provider,
+)
 
 # ==================== MODELS ====================
 
@@ -163,6 +211,9 @@ class ScryfallCacheStatusResponse(BaseModel):
     l1_valid_entries: int
     counters: Dict[str, int]
     collection_counts: Dict[str, Optional[int]]
+    candidate_provider: Dict[str, Any] = Field(default_factory=dict)
+    recommendation_ranker: Dict[str, Any] = Field(default_factory=dict)
+    deck_role_assessment: Dict[str, Any] = Field(default_factory=dict)
 
 class PasswordForgotRequest(BaseModel):
     email: EmailStr
@@ -209,6 +260,8 @@ class Deck(BaseModel):
     format: str = "commander"
     color_identity: List[str] = []
     imported_from: Optional[str] = None
+    input_assessment: Dict[str, Any] = {}
+    intent_profile: DeckIntentProfile = Field(default_factory=DeckIntentProfile)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class DeckCreate(BaseModel):
@@ -232,6 +285,22 @@ class Suggestion(BaseModel):
     evidence: Optional[str] = None
     evidence_tags: List[str] = []
     penalty_tags: List[str] = []
+    marginal_utility: Optional[float] = None
+    effective_role_gain: Optional[float] = None
+    role_gains: Dict[str, float] = {}
+    coverage_before: Optional[float] = None
+    coverage_after: Optional[float] = None
+    coverage_target: Optional[int] = None
+    intent_alignment: List[str] = []
+    intent_warnings: List[str] = []
+    intent_score_delta: int = 0
+    invariant_traits: List[str] = []
+    invariant_alignment: List[str] = []
+    invariant_warnings: List[str] = []
+    invariant_score_delta: int = 0
+    preservation_requirements: List[str] = []
+    suggested_quantity: Optional[int] = None
+    action_only: bool = False
     image_url: Optional[str] = None
     image_url_back: Optional[str] = None  # For double-faced cards
 
@@ -243,6 +312,7 @@ class AnalysisRun(BaseModel):
     analysis_depth: str = "fast"
     suggestions_add: List[Suggestion] = []
     suggestions_cut: List[Suggestion] = []
+    swap_pairs: List[Dict[str, Any]] = []
     stats: Dict[str, Any] = {}
     commander_synergies: List[str] = []
     commander_archetypes: List[Dict[str, Any]] = []
@@ -253,6 +323,10 @@ class AnalysisRun(BaseModel):
     playstyle_tips: List[str] = []
     detected_themes: List[str] = []
     combo_suggestions: List[Dict[str, Any]] = []
+    input_assessment: Dict[str, Any] = {}
+    intent_profile: DeckIntentProfile = Field(default_factory=DeckIntentProfile)
+    intent_summary: Dict[str, Any] = {}
+    deck_invariants: Dict[str, Any] = {}
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # ==================== AUTH HELPERS ====================
@@ -781,7 +855,7 @@ async def test_email(
     except HTTPException as exc:
         detail = exc.detail
         if isinstance(detail, str):
-            detail = f"{detail} Check Render backend logs for the provider error."
+            detail = f"{detail} Check backend logs for the provider error."
         raise HTTPException(status_code=exc.status_code, detail=detail)
 
     return TestEmailResponse(
@@ -813,6 +887,9 @@ async def scryfall_cache_status(x_reset_key: Optional[str] = Header(default=None
     return ScryfallCacheStatusResponse(
         **status_payload,
         collection_counts=collection_counts,
+        candidate_provider=getattr(candidate_provider, "get_status", lambda: {})(),
+        recommendation_ranker=suggestion_engine.get_ranker_status(),
+        deck_role_assessment=suggestion_engine.get_deck_role_status(),
     )
 
 @api_router.get("/auth/me", response_model=User)
@@ -850,6 +927,33 @@ async def get_deck(deck_id: str, current_user: Dict = Depends(get_current_user))
     deck = await db.decks.find_one({"id": deck_id, "user_id": current_user['id']}, {"_id": 0})
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
+    if isinstance(deck.get('created_at'), str):
+        deck['created_at'] = datetime.fromisoformat(deck['created_at'])
+    return deck
+
+
+@api_router.put("/decks/{deck_id}/intent", response_model=Deck)
+async def update_deck_intent(
+    deck_id: str,
+    intent_profile: DeckIntentProfile,
+    current_user: Dict = Depends(get_current_user),
+):
+    """Persist user-owned intent that recommendation inference must respect."""
+    existing = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    )
+    if not existing:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    normalized = normalize_intent_profile(intent_profile)
+    await db.decks.update_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"$set": {"intent_profile": normalized}},
+    )
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    )
     if isinstance(deck.get('created_at'), str):
         deck['created_at'] = datetime.fromisoformat(deck['created_at'])
     return deck
@@ -901,6 +1005,8 @@ async def import_deck(deck_id: str, import_data: DeckImport, current_user: Dict 
             "color_identity": parsed_deck['color_identity'],
             "imported_from": import_data.source_data if import_data.source_type == "url" else "text"
         }
+        input_assessment = assess_deck_input(update_data)
+        update_data["input_assessment"] = input_assessment
         
         await db.decks.update_one(
             {"id": deck_id},
@@ -911,7 +1017,8 @@ async def import_deck(deck_id: str, import_data: DeckImport, current_user: Dict 
         return {
             "message": "Deck imported successfully",
             "cards_count": total_cards,
-            "unique_cards_count": len(parsed_deck['cards'])
+            "unique_cards_count": len(parsed_deck['cards']),
+            "input_assessment": input_assessment,
         }
     except Exception as e:
         logging.error(f"Import error: {str(e)}")
@@ -928,17 +1035,41 @@ async def delete_deck(deck_id: str, current_user: Dict = Depends(get_current_use
 
 class AnalysisRequest(BaseModel):
     categories: Optional[List[str]] = None  # ['ramp', 'draw', 'removal', 'counter', 'recursion', 'tutor']
+    intent_profile: Optional[DeckIntentProfile] = None
 
-async def run_deck_analysis(deck_id: str, user_id: str, categories: Optional[List[str]] = None, deep: bool = False) -> AnalysisRun:
+async def run_deck_analysis(
+    deck_id: str,
+    user_id: str,
+    categories: Optional[List[str]] = None,
+    deep: bool = False,
+    intent_profile: Optional[DeckIntentProfile] = None,
+) -> AnalysisRun:
     deck = await db.decks.find_one({"id": deck_id, "user_id": user_id}, {"_id": 0})
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
+
+    if intent_profile is not None:
+        normalized_intent = normalize_intent_profile(intent_profile)
+        await db.decks.update_one(
+            {"id": deck_id, "user_id": user_id},
+            {"$set": {"intent_profile": normalized_intent}},
+        )
+        deck['intent_profile'] = normalized_intent
+    else:
+        deck['intent_profile'] = normalize_intent_profile(
+            deck.get('intent_profile')
+        )
     
-    if not deck.get('cards') or len(deck['cards']) < 50:
-        raise HTTPException(status_code=400, detail="Deck must have at least 50 cards to analyze")
+    input_assessment = assess_deck_input(deck)
+    if not input_assessment['analysis_allowed']:
+        raise HTTPException(
+            status_code=400,
+            detail=blocking_message(input_assessment),
+        )
     
     try:
         result = await suggestion_engine.analyze_deck(deck, categories=categories, deep=deep)
+        result = apply_recommendation_restraint(result, input_assessment)
         
         analysis = AnalysisRun(
             deck_id=deck_id,
@@ -946,6 +1077,7 @@ async def run_deck_analysis(deck_id: str, user_id: str, categories: Optional[Lis
             analysis_depth='deep' if deep else 'fast',
             suggestions_add=result['suggestions_add'],
             suggestions_cut=result['suggestions_cut'],
+            swap_pairs=result.get('swap_pairs', []),
             stats=result['stats'],
             commander_synergies=result.get('commander_synergies', []),
             commander_archetypes=result.get('commander_archetypes', []),
@@ -955,7 +1087,11 @@ async def run_deck_analysis(deck_id: str, user_id: str, categories: Optional[Lis
             heuristic_signals=result.get('heuristic_signals', []),
             playstyle_tips=result.get('playstyle_tips', []),
             detected_themes=result.get('detected_themes', []),
-            combo_suggestions=result.get('combo_suggestions', [])
+            combo_suggestions=result.get('combo_suggestions', []),
+            input_assessment=result.get('input_assessment', {}),
+            intent_profile=result.get('intent_profile', deck['intent_profile']),
+            intent_summary=result.get('intent_summary', {}),
+            deck_invariants=result.get('deck_invariants', {}),
         )
         
         analysis_dict = analysis.model_dump()
@@ -977,7 +1113,14 @@ async def analyze_deck(
     current_user: Dict = Depends(get_current_user)
 ):
     categories = analysis_request.categories if analysis_request else None
-    return await run_deck_analysis(deck_id, current_user['id'], categories=categories, deep=False)
+    intent_profile = analysis_request.intent_profile if analysis_request else None
+    return await run_deck_analysis(
+        deck_id,
+        current_user['id'],
+        categories=categories,
+        deep=False,
+        intent_profile=intent_profile,
+    )
 
 @api_router.post("/decks/{deck_id}/analyze/deep", response_model=AnalysisRun)
 async def deep_analyze_deck(
@@ -987,7 +1130,14 @@ async def deep_analyze_deck(
 ):
     """Run an opt-in deeper analysis with a larger Scryfall search budget."""
     categories = analysis_request.categories if analysis_request else None
-    return await run_deck_analysis(deck_id, current_user['id'], categories=categories, deep=True)
+    intent_profile = analysis_request.intent_profile if analysis_request else None
+    return await run_deck_analysis(
+        deck_id,
+        current_user['id'],
+        categories=categories,
+        deep=True,
+        intent_profile=intent_profile,
+    )
 
 @api_router.get("/analysis/{analysis_id}", response_model=AnalysisRun)
 async def get_analysis(analysis_id: str, current_user: Dict = Depends(get_current_user)):
@@ -1046,8 +1196,20 @@ async def replace_suggestion(
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
     
-    if not deck.get('cards') or len(deck['cards']) < 50:
-        raise HTTPException(status_code=400, detail="Deck must have at least 50 cards")
+    input_assessment = assess_deck_input(deck)
+    if not input_assessment['analysis_allowed']:
+        raise HTTPException(
+            status_code=400,
+            detail=blocking_message(input_assessment),
+        )
+    if not input_assessment['recommendations_allowed']:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Automated replacements are paused until this deck's unusual "
+                "construction constraint is confirmed."
+            ),
+        )
     
     try:
         # Get one replacement suggestion
@@ -1255,28 +1417,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-async def prepare_database():
-    if hasattr(db.users, 'create_index'):
-        try:
-            await db.users.create_index('email', unique=True)
-            await db.auth_tokens.create_index('token_hash', unique=True)
-            await db.auth_tokens.create_index('expires_at')
-            await db.rate_limits.create_index('key', unique=True)
-            await db.scryfall_cards.create_index('name_lower', unique=True)
-            await db.scryfall_cards.create_index('lookup_keys')
-            await db.scryfall_cards.create_index('oracle_id', sparse=True)
-            await db.scryfall_cards.create_index('fetched_at', expireAfterSeconds=2592000)
-            await db.scryfall_searches.create_index('query_key', unique=True)
-            await db.scryfall_searches.create_index('fetched_at', expireAfterSeconds=604800)
-        except Exception as exc:
-            logger.warning("Could not ensure database indexes: %s", exc)
-    logger.warning(
-        "Scryfall persistent cache enabled=%s",
-        scryfall_service.get_cache_status()["persistent_cache_enabled"],
-    )
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()

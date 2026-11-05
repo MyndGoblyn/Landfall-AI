@@ -1,0 +1,1263 @@
+{
+  "cards": [
+    {
+      "cmc": 0,
+      "collector_number": "265",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "qty": 16,
+      "set_code": "m21",
+      "tags": [],
+      "type_line": "Basic Land — Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "267",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Swamp",
+      "oracle_text": "({T}: Add {B}.)",
+      "qty": 13,
+      "set_code": "m21",
+      "tags": [],
+      "type_line": "Basic Land — Swamp"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "224",
+      "color_identity": [],
+      "colors": [],
+      "name": "Arcane Signet",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "pip",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "297",
+      "color_identity": [],
+      "colors": [],
+      "name": "Command Tower",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "281",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Counterspell",
+      "oracle_text": "Counter target spell.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "153",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dark Ritual",
+      "oracle_text": "Add {B}{B}{B}.",
+      "qty": 1,
+      "set_code": "5ed",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "25",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dismember",
+      "oracle_text": "({B/P} can be paid with either {B} or 2 life.)\nTarget creature gets -5/-5 until end of turn.",
+      "qty": 1,
+      "set_code": "md1",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "76",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Dispel",
+      "oracle_text": "Counter target instant spell.",
+      "qty": 1,
+      "set_code": "bfz",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "28",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Brainstorm",
+      "oracle_text": "Draw three cards, then put two cards from your hand on top of your library in any order.",
+      "qty": 1,
+      "set_code": "fca",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "86",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mana Leak",
+      "oracle_text": "Counter target spell unless its controller pays {3}.",
+      "qty": 1,
+      "set_code": "9ed",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "15",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Misdirection",
+      "oracle_text": "You may exile a blue card from your hand rather than pay this spell's mana cost.\nChange the target of target spell with a single target.",
+      "qty": 1,
+      "set_code": "ddt",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "99",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Ninja of the Deep Hours",
+      "oracle_text": "Ninjutsu {1}{U} ({1}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, you may draw a card.",
+      "qty": 1,
+      "set_code": "c15",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "233",
+      "color_identity": [],
+      "colors": [],
+      "name": "Ornithopter",
+      "oracle_text": "Flying",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Artifact Creature — Thopter"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "71",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Slither Blade",
+      "oracle_text": "This creature can't be blocked.",
+      "qty": 1,
+      "set_code": "akh",
+      "tags": [],
+      "type_line": "Creature — Snake Rogue"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "57",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sol Ring",
+      "oracle_text": "{T}: Add {C}{C}.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "141",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Street Wraith",
+      "oracle_text": "Swampwalk (This creature can't be blocked as long as defending player controls a Swamp.)\nCycling—Pay 2 life. (Pay 2 life, Discard this card: Draw a card.)",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [],
+      "type_line": "Creature — Wraith"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "J22-803",
+      "color_identity": [],
+      "colors": [],
+      "name": "Universal Automaton",
+      "oracle_text": "Changeling (This card is every creature type.)",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Artifact Creature — Shapeshifter"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "DDN-70",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Whiplash Trap",
+      "oracle_text": "If an opponent had two or more creatures enter the battlefield under their control this turn, you may pay {U} rather than pay this spell's mana cost.\nReturn two target creatures to their owners' hands.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant — Trap"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "133",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Windcaller Aven",
+      "oracle_text": "Flying\nCycling {U} ({U}, Discard this card: Draw a card.)\nWhen you cycle this card, target creature gains flying until end of turn.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Creature — Bird Wizard"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "57",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Miscast",
+      "oracle_text": "Counter target instant or sorcery spell unless its controller pays {3}.",
+      "qty": 1,
+      "set_code": "m21",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "81",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Spell Pierce",
+      "oracle_text": "Counter target noncreature spell unless its controller pays {2}.",
+      "qty": 1,
+      "set_code": "xln",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "269",
+      "color_identity": [],
+      "colors": [],
+      "name": "Fellwar Stone",
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "qty": 1,
+      "set_code": "blc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "164",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Spectral Sailor",
+      "oracle_text": "Flash (You may cast this spell any time you could cast an instant.)\nFlying\n{3}{U}: Draw a card.",
+      "qty": 1,
+      "set_code": "fdn",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Spirit Pirate"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "226",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Dimir Signet",
+      "oracle_text": "{1}, {T}: Add {U}{B}.",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "296",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Sunken Hollow",
+      "oracle_text": "({T}: Add {U} or {B}.)\nThis land enters tapped unless you control two or more basic lands.",
+      "qty": 1,
+      "set_code": "pip",
+      "tags": [],
+      "type_line": "Land — Island Swamp"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "67",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Wash Out",
+      "oracle_text": "Return all permanents of the color of your choice to their owners' hands.",
+      "qty": 1,
+      "set_code": "2x2",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "126",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Contagion",
+      "oracle_text": "You may pay 1 life and exile a black card from your hand rather than pay this spell's mana cost.\nDistribute two -2/-1 counters among one or two target creatures.",
+      "qty": 1,
+      "set_code": "mb2",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "PCA-20",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mistblade Shinobi",
+      "oracle_text": "Ninjutsu {U} ({U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, you may return target creature that player controls to its owner's hand.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "BOK-84",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Skullsnatcher",
+      "oracle_text": "Ninjutsu {B} ({B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, exile up to two target cards from that player's graveyard.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Rat Ninja"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "379",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Choked Estuary",
+      "oracle_text": "As this land enters, you may reveal an Island or Swamp card from your hand. If you don't, this land enters tapped.\n{T}: Add {U} or {B}.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 7.0,
+      "collector_number": "149",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Consign // Oblivion",
+      "oracle_text": "Return target nonland permanent to its owner's hand. // Aftermath (Cast this spell only from your graveyard. Then exile it.)\nTarget opponent discards two cards.",
+      "qty": 1,
+      "set_code": "hou",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Instant // Sorcery"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "74",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Razaketh's Rite",
+      "oracle_text": "Search your library for a card, put that card into your hand, then shuffle.\nCycling {B} ({B}, Discard this card: Draw a card.)",
+      "qty": 1,
+      "set_code": "hou",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "83",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Wingcrafter",
+      "oracle_text": "Soulbond (You may pair this creature with another unpaired creature when either enters. They remain paired for as long as you control both of them.)\nAs long as this creature is paired with another creature, both creatures have flying.",
+      "qty": 1,
+      "set_code": "avr",
+      "tags": [],
+      "type_line": "Creature — Human Wizard"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "MOR-42",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mothdust Changeling",
+      "oracle_text": "Changeling (This card is every creature type.)\nTap an untapped creature you control: This creature gains flying until end of turn.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Creature — Shapeshifter"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "174",
+      "color_identity": [],
+      "colors": [],
+      "name": "Memnite",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "som",
+      "tags": [],
+      "type_line": "Artifact Creature — Construct"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "MBS-131",
+      "color_identity": [],
+      "colors": [],
+      "name": "Signal Pest",
+      "oracle_text": "Battle cry (Whenever this creature attacks, each other attacking creature gets +1/+0 until end of turn.)\nThis creature can't be blocked except by creatures with flying or reach.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Artifact Creature — Pest"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "152",
+      "color_identity": [],
+      "colors": [],
+      "name": "Phyrexian Walker",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "vis",
+      "tags": [],
+      "type_line": "Artifact Creature — Phyrexian Construct"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "79",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Azra Smokeshaper",
+      "oracle_text": "Ninjutsu {1}{B} ({1}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhen this creature enters, target creature you control gains indestructible until end of turn.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Azra Ninja"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "82",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Changeling Outcast",
+      "oracle_text": "Changeling (This card is every creature type.)\nThis creature can't block and can't be blocked.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [],
+      "type_line": "Creature — Shapeshifter"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "MH1-51",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Faerie Seer",
+      "oracle_text": "Flying\nWhen this creature enters, scry 2. (Look at the top two cards of your library, then put any number of them on the bottom and the rest on top in any order.)",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Creature — Faerie Wizard"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "204",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Ingenious Infiltrator",
+      "oracle_text": "Ninjutsu {U}{B} ({U}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever a Ninja you control deals combat damage to a player, draw a card.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Vedalken Ninja"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "58",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mist-Syndicate Naga",
+      "oracle_text": "Ninjutsu {2}{U} ({2}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, create a token that's a copy of this creature.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "blink",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature — Snake Ninja"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "69",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Smoke Shroud",
+      "oracle_text": "Enchant creature\nEnchanted creature gets +1/+1 and has flying.\nWhen a Ninja you control enters, you may return this card from your graveyard to the battlefield attached to that creature.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Enchantment — Aura"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "118",
+      "color_identity": [],
+      "colors": [],
+      "name": "Springleaf Drum",
+      "oracle_text": "{T}, Tap an untapped creature you control: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "brr",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "295",
+      "color_identity": [],
+      "colors": [],
+      "name": "Cursed Totem",
+      "oracle_text": "Activated abilities of creatures can't be activated.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "68",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Stern Dismissal",
+      "oracle_text": "Return target creature or enchantment an opponent controls to its owner's hand.",
+      "qty": 1,
+      "set_code": "thb",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "185",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Boon of the Wish-Giver",
+      "oracle_text": "Draw four cards.\nCycling {1} ({1}, Discard this card: Draw a card.)",
+      "qty": 1,
+      "set_code": "ltc",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 8.0,
+      "collector_number": "263",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Dig Through Time",
+      "oracle_text": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nLook at the top seven cards of your library. Put two of them into your hand and the rest on the bottom of your library in any order.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "87",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Snapback",
+      "oracle_text": "You may exile a blue card from your hand rather than pay this spell's mana cost.\nReturn target creature to its owner's hand.",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "69",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Tetsuko Umezawa, Fugitive",
+      "oracle_text": "Creatures you control with power or toughness 1 or less can't be blocked.",
+      "qty": 1,
+      "set_code": "dom",
+      "tags": [],
+      "type_line": "Legendary Creature — Human Rogue"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "180",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Feed the Swarm",
+      "oracle_text": "Destroy target creature or enchantment an opponent controls. You lose life equal to that permanent's mana value.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "243",
+      "color_identity": [],
+      "colors": [],
+      "name": "Cliffhaven Kitesail",
+      "oracle_text": "When this Equipment enters, attach it to target creature you control.\nEquipped creature has flying.\nEquip {2} ({2}: Attach to target creature you control. Equip only as a sorcery.)",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [
+        "spellslinger",
+        "equipment"
+      ],
+      "type_line": "Artifact — Equipment"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "82",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Crippling Fear",
+      "oracle_text": "Choose a creature type. Creatures that aren't of the chosen type get -3/-3 until end of turn.",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "81",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Murderous Cut",
+      "oracle_text": "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nDestroy target creature.",
+      "qty": 1,
+      "set_code": "ktk",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "130",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Curtains' Call",
+      "oracle_text": "Undaunted (This spell costs {1} less to cast for each opponent.)\nDestroy two target creatures.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "426",
+      "color_identity": [],
+      "colors": [],
+      "name": "Brainstone",
+      "oracle_text": "{2}, {T}, Sacrifice this artifact: Draw three cards, then put two cards from your hand on top of your library in any order.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "392",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Step Through",
+      "oracle_text": "Return two target creatures to their owners' hands.\nWizardcycling {2} ({2}, Discard this card: Search your library for a Wizard card, reveal it, put it into your hand, then shuffle.)",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "83",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "You Come to a River",
+      "oracle_text": "Choose one —\n• Fight the Current — Return target nonland permanent to its owner's hand.\n• Find a Crossing — Target creature gets +1/+0 until end of turn and can't be blocked this turn.",
+      "qty": 1,
+      "set_code": "afr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "74",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Silver Raven",
+      "oracle_text": "Flying\nWhen this creature enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+      "qty": 1,
+      "set_code": "afr",
+      "tags": [],
+      "type_line": "Artifact Creature — Bird"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "84",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Infernal Grasp",
+      "oracle_text": "Destroy target creature. You lose 2 life.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "310",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Fading Hope",
+      "oracle_text": "Return target creature to its owner's hand. If its mana value was 3 or less, scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+      "qty": 1,
+      "set_code": "j25",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "86",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Thousand-Faced Shadow",
+      "oracle_text": "Ninjutsu {2}{U}{U} ({2}{U}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nFlying\nWhen this creature enters from your hand, if it's attacking, create a token that's a copy of another target attacking creature. The token enters tapped and attacking.",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "236",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Silver-Fur Master",
+      "oracle_text": "Ninjutsu {U}{B} ({U}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nNinjutsu abilities you activate cost {1} less to activate.\nOther Ninja and Rogue creatures you control get +1/+1.",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Rat Ninja"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "344",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Nezumi Prowler",
+      "oracle_text": "Ninjutsu {1}{B} ({1}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhen this creature enters, target creature you control gains deathtouch and lifelink until end of turn.",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Artifact Creature — Rat Ninja"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "NEO-67",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Moon-Circuit Hacker",
+      "oracle_text": "Ninjutsu {U} ({U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever this creature deals combat damage to a player, you may draw a card. If you do, discard a card unless this creature entered this turn.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Enchantment Creature — Human Ninja"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "341",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Inkrise Infiltrator",
+      "oracle_text": "Flying\n{3}{B}: This creature gets +2/+2 until end of turn.",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "73",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Prosperous Thief",
+      "oracle_text": "Ninjutsu {1}{U} ({1}{U}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever one or more Ninja or Rogue creatures you control deal combat damage to a player, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "treasure",
+        "aristocrats",
+        "stax",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature — Human Ninja"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "143",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Nashi, Moon Sage's Scion",
+      "oracle_text": "Ninjutsu {3}{B} ({3}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand tapped and attacking.)\nWhenever Nashi deals combat damage to a player, exile the top card of each player's library. Until end of turn, you may play one of those cards. If you cast a spell this way, pay life equal to its mana value rather than paying its mana cost.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Legendary Creature — Rat Ninja"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "61",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "March of Swirling Mist",
+      "oracle_text": "As an additional cost to cast this spell, you may exile any number of blue cards from your hand. This spell costs {2} less to cast for each card exiled this way.\nUp to X target creatures phase out. (While they're phased out, they're treated as though they don't exist. Each one phases in before its controller untaps during their next untap step.)",
+      "qty": 1,
+      "set_code": "neo",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "160",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "An Offer You Can't Refuse",
+      "oracle_text": "Counter target noncreature spell. Its controller creates two Treasure tokens. (They're artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "fdn",
+      "tags": [
+        "stax",
+        "treasure",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 15.0,
+      "collector_number": "94",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Shadow of Mortality",
+      "oracle_text": "If your life total is less than your starting life total, this spell costs {X} less to cast, where X is the difference.",
+      "qty": 1,
+      "set_code": "snc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Avatar"
+    },
+    {
+      "cmc": 7.0,
+      "collector_number": "99",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Sword Coast Serpent // Capsizing Wave",
+      "oracle_text": "This creature can't be blocked as long as you've cast a noncreature spell this turn. // Return target creature to its owner's hand. (Then exile this card. You may cast the creature later from exile.)",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Serpent Dragon // Instant — Adventure"
+    }
+  ],
+  "case_id": "01",
+  "color_identity": [
+    "B",
+    "U"
+  ],
+  "commander": "Yuriko, the Tiger's Shadow",
+  "commander_card": {
+    "cmc": 3.0,
+    "collector_number": "364",
+    "color_identity": [
+      "B",
+      "U"
+    ],
+    "colors": [
+      "B",
+      "U"
+    ],
+    "edhrec_rank": 2445,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/f/e/fe9be3e0-076c-4703-9750-2a6b0a178bc9.jpg?1783915606",
+      "normal": "https://cards.scryfall.io/normal/front/f/e/fe9be3e0-076c-4703-9750-2a6b0a178bc9.jpg?1783915606",
+      "small": "https://cards.scryfall.io/small/front/f/e/fe9be3e0-076c-4703-9750-2a6b0a178bc9.jpg?1783915606"
+    },
+    "keywords": [
+      "Commander ninjutsu"
+    ],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{1}{U}{B}",
+    "name": "Yuriko, the Tiger's Shadow",
+    "oracle_id": "a7043fbd-1dfd-42cf-be4b-cc343d0949e5",
+    "oracle_text": "Commander ninjutsu {U}{B} ({U}{B}, Return an unblocked attacker you control to hand: Put this card onto the battlefield from your hand or the command zone tapped and attacking.)\nWhenever a Ninja you control deals combat damage to a player, reveal the top card of your library and put that card into your hand. Each opponent loses life equal to that card's mana value.",
+    "power": "1",
+    "prices": {
+      "usd": "3.72",
+      "usd_foil": "4.59"
+    },
+    "scryfall_uri": "https://scryfall.com/card/cmm/364/yuriko-the-tigers-shadow?utm_source=api",
+    "set": "cmm",
+    "toughness": "3",
+    "type_line": "Legendary Creature — Human Ninja"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "budget-yuriko",
+  "source_platform": "moxfield",
+  "source_url": "https://moxfield.com/decks/GpLW-6jxdUGIavsSTPLSow"
+}

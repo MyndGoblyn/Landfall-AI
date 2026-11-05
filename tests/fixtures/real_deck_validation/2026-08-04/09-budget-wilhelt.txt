@@ -1,0 +1,81 @@
+# LandfallAI real-deck validation snapshot 09
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://moxfield.com/decks/UXK30FVy5kupYBvxiEfcHA
+
+# Commander
+1 Wilhelt, the Rotcleaver *CMDR*
+
+# Mainboard
+1 Syr Konrad, the Grim
+1 Noosegraf Mob
+1 Tragic Slip
+1 Graf Harvest
+1 Eternal of Harsh Truths
+1 Dregscape Zombie
+1 Gnawing Zombie
+1 Dispel
+1 Encrust
+1 Echoing Truth
+1 Dreadmalkin
+1 Gleaming Overseer
+1 Vizier of the Scorpion
+1 Festering Mummy
+1 Faerie Trickery
+1 Embalmed Brawler
+1 Grim Physician
+1 Eternal Taskmaster
+1 Drowned
+1 Festering Goblin
+1 Forsaken Drifters
+1 Diregraf Captain
+1 Graveyard Marshal
+1 Into the Roil
+1 Negate
+1 Ghastly Gloomhunter
+1 Distant Melody
+1 Command Tower
+1 Fleshbag Marauder
+1 Sky Diamond
+1 Fact or Fiction
+1 Victimize
+1 Terramorphic Expanse
+1 Village Rites
+1 Annul
+1 Draugr Thought-Thief
+1 Path of Ancestry
+1 Piracy Charm
+1 Aetherspouts
+1 Evolving Wilds
+1 Brainstorm
+1 Choked Estuary
+1 Sunken Hollow
+1 Bladestitched Skaab
+1 Ghoulish Procession
+1 Corpse Cobble
+1 Jack-o'-Lantern
+1 Eaten Alive
+1 Vivisection
+1 Gorex, the Tombshell
+1 Zombie Apocalypse
+1 Dark Salvation
+1 Dreadhorde Invasion
+1 Eternal Skylord
+1 Liliana's Devotee
+1 Syphon Flesh
+1 Undead Augur
+1 Fell Stinger
+1 Archghoul of Thraben
+1 Graf Reaver
+1 Dread Summons
+1 Charcoal Diamond
+1 Ghost Lantern // Bind Spirit
+1 Mortuary Mire
+1 Butcher of Malakir
+1 Corpse Augur
+1 Forgotten Creation
+1 Mindcrank
+1 Tainted Isle
+1 Deep Analysis
+1 Go for the Throat
+14 Island
+14 Swamp

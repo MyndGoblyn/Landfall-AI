@@ -1,0 +1,88 @@
+# LandfallAI real-deck validation snapshot 06
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://archidekt.com/decks/5824399/zedruu_the_greathearted_budget_group_hug_deck
+
+# Commander
+1 Zedruu the Greathearted *CMDR*
+
+# Mainboard
+1 Personal Incarnation
+1 Temple of the False God
+1 Pyromancer's Swath
+1 Exotic Orchard
+1 Felidar Sovereign
+1 Burnished Hart
+1 Boros Signet
+1 Chaos Warp
+8 Plains
+1 Arcane Signet
+1 Azorius Chancery
+1 Bazaar Trader
+1 Boros Garrison
+1 Akroan Horse
+1 Azorius Signet
+1 Rust Elemental
+1 Steel Golem
+1 The Apprentice's Folly
+1 Transcendence
+1 Statecraft
+1 The Ninth Doctor
+1 Wall of Denial
+1 Teyo, Geometric Tactician
+1 Strionic Resonator
+1 Witness Protection
+1 Wild Research
+1 Goldnight Castigator
+1 Command Tower
+1 Fog Bank
+1 Evolving Wilds
+1 Khârn the Betrayer
+1 Cinder Giant
+1 Grid Monitor
+1 Goblin Cadets
+1 Delusions of Mediocrity
+1 Form of the Dragon
+1 Illusions of Grandeur
+1 Folio of Fancies
+1 Keeper of the Accord
+1 Hithlain Rope
+1 Darksteel Mutation
+1 Moderation
+1 Myriad Landscape
+1 Mystic Monastery
+1 Loxodon Peacekeeper
+1 Nine Lives
+1 Psychosis Crawler
+1 Pramikon, Sky Rampart
+1 Silent Arbiter
+1 Dictate of Kruphix
+1 Path to Exile
+1 Izzet Boilerworks
+1 Generous Gift
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Temple of Triumph
+1 Terramorphic Expanse
+1 Humble Defector
+1 Vedalken Plotter
+1 Windborn Muse
+1 Sol Ring
+1 Izzet Signet
+1 Pendant of Prosperity
+1 Swords to Plowshares
+7 Mountain
+1 Aggressive Mining
+7 Island
+1 Time Wipe
+1 Planar Disruption
+1 Coveted Jewel
+1 Bucknard's Everfull Purse
+1 Negate
+1 Grafted Skullcap
+1 Pyxis of Pandemonium
+1 Jace Beleren
+1 Elsha of the Infinite
+1 Kwain, Itinerant Meddler
+1 Chaos Wand
+1 Walking Archive
+1 Body of Knowledge

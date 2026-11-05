@@ -89,7 +89,7 @@ export default function Dashboard() {
     setShowAnalyzeModal(true);
   };
 
-  const analyzeDeck = async (categories, deep = false) => {
+  const analyzeDeck = async (categories, deep = false, intentProfile = null) => {
     if (!selectedDeck) return;
 
     try {
@@ -97,7 +97,10 @@ export default function Dashboard() {
       toast.loading(deep ? 'Running deep deterministic analysis...' : 'Analyzing deck with deterministic engine...');
       const response = await axios.post(
         `${API}/decks/${selectedDeck.id}/analyze${deep ? '/deep' : ''}`,
-        categories ? { categories } : {},
+        {
+          ...(categories ? { categories } : {}),
+          ...(intentProfile ? { intent_profile: intentProfile } : {}),
+        },
         { headers: getAuthHeaders() }
       );
       toast.dismiss();

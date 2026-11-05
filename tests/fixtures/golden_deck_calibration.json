@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "balanced_reliable_coverage",
+      "description": "A balanced 99-card profile with efficient, dependable sources in every tracked role.",
+      "total_cards": 99,
+      "cards": [
+        {"name": "Basic lands", "qty": 36, "oracle_text": "{T}: Add {G}.", "type_line": "Basic Land - Forest", "cmc": 0},
+        {"name": "Repeatable draw engines", "qty": 10, "oracle_text": "At the beginning of your upkeep, draw a card.", "type_line": "Enchantment", "cmc": 2},
+        {"name": "Efficient land ramp", "qty": 10, "oracle_text": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "type_line": "Sorcery", "cmc": 2},
+        {"name": "Flexible removal", "qty": 7, "oracle_text": "Exile target nonland permanent.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board sweepers", "qty": 3, "oracle_text": "Destroy all creatures.", "type_line": "Sorcery", "cmc": 4},
+        {"name": "Stack interaction", "qty": 5, "oracle_text": "Counter target spell.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board protection", "qty": 3, "oracle_text": "Creatures you control gain indestructible until end of turn.", "type_line": "Instant", "cmc": 2},
+        {"name": "Theme cards", "qty": 25, "oracle_text": "Vigilance.", "type_line": "Creature", "cmc": 3}
+      ],
+      "expected_gap_additions": {},
+      "expected_hidden_quality_gaps": [],
+      "expected_statuses": {
+        "draw": "healthy",
+        "ramp": "healthy",
+        "removal": "healthy",
+        "sweeper": "healthy",
+        "interaction": "healthy",
+        "protection": "healthy"
+      }
+    },
+    {
+      "id": "cantrips_hide_draw_gap",
+      "description": "Ten one-card cantrips should not masquerade as ten dependable draw sources.",
+      "total_cards": 99,
+      "cards": [
+        {"name": "Basic lands", "qty": 36, "oracle_text": "{T}: Add {U}.", "type_line": "Basic Land - Island", "cmc": 0},
+        {"name": "One-shot cantrips", "qty": 10, "oracle_text": "Draw a card.", "type_line": "Instant", "cmc": 1},
+        {"name": "Efficient land ramp", "qty": 10, "oracle_text": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "type_line": "Sorcery", "cmc": 2},
+        {"name": "Flexible removal", "qty": 7, "oracle_text": "Exile target nonland permanent.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board sweepers", "qty": 3, "oracle_text": "Destroy all creatures.", "type_line": "Sorcery", "cmc": 4},
+        {"name": "Stack interaction", "qty": 5, "oracle_text": "Counter target spell.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board protection", "qty": 3, "oracle_text": "Creatures you control gain indestructible until end of turn.", "type_line": "Instant", "cmc": 2},
+        {"name": "Theme cards", "qty": 25, "oracle_text": "Vigilance.", "type_line": "Creature", "cmc": 3}
+      ],
+      "expected_gap_additions": {"draw": 3},
+      "expected_hidden_quality_gaps": ["draw"],
+      "expected_statuses": {"draw": "quality_gap"}
+    },
+    {
+      "id": "land_access_hides_ramp_gap",
+      "description": "Putting lands in hand improves access but does not provide full acceleration.",
+      "total_cards": 99,
+      "cards": [
+        {"name": "Basic lands", "qty": 36, "oracle_text": "{T}: Add {G}.", "type_line": "Basic Land - Forest", "cmc": 0},
+        {"name": "Repeatable draw engines", "qty": 10, "oracle_text": "At the beginning of your upkeep, draw a card.", "type_line": "Enchantment", "cmc": 2},
+        {"name": "Land access spells", "qty": 10, "oracle_text": "Search your library for a basic land card, reveal it, put it into your hand, then shuffle.", "type_line": "Sorcery", "cmc": 2},
+        {"name": "Flexible removal", "qty": 7, "oracle_text": "Exile target nonland permanent.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board sweepers", "qty": 3, "oracle_text": "Destroy all creatures.", "type_line": "Sorcery", "cmc": 4},
+        {"name": "Stack interaction", "qty": 5, "oracle_text": "Counter target spell.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board protection", "qty": 3, "oracle_text": "Creatures you control gain indestructible until end of turn.", "type_line": "Instant", "cmc": 2},
+        {"name": "Theme cards", "qty": 25, "oracle_text": "Vigilance.", "type_line": "Creature", "cmc": 3}
+      ],
+      "expected_gap_additions": {"ramp": 5},
+      "expected_hidden_quality_gaps": ["ramp"],
+      "expected_statuses": {"ramp": "quality_gap"}
+    },
+    {
+      "id": "self_ward_hides_protection_gap",
+      "description": "Creatures with Ward protect themselves but do not constitute a deck protection package.",
+      "total_cards": 99,
+      "cards": [
+        {"name": "Basic lands", "qty": 36, "oracle_text": "{T}: Add {W}.", "type_line": "Basic Land - Plains", "cmc": 0},
+        {"name": "Repeatable draw engines", "qty": 10, "oracle_text": "At the beginning of your upkeep, draw a card.", "type_line": "Enchantment", "cmc": 2},
+        {"name": "Efficient land ramp", "qty": 10, "oracle_text": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "type_line": "Sorcery", "cmc": 2},
+        {"name": "Flexible removal", "qty": 7, "oracle_text": "Exile target nonland permanent.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board sweepers", "qty": 3, "oracle_text": "Destroy all creatures.", "type_line": "Sorcery", "cmc": 4},
+        {"name": "Stack interaction", "qty": 5, "oracle_text": "Counter target spell.", "type_line": "Instant", "cmc": 2},
+        {"name": "Naturally warded bodies", "qty": 3, "oracle_text": "Ward {2}.", "type_line": "Creature", "cmc": 2},
+        {"name": "Theme cards", "qty": 25, "oracle_text": "Vigilance.", "type_line": "Creature", "cmc": 3}
+      ],
+      "expected_gap_additions": {"protection": 3},
+      "expected_hidden_quality_gaps": [],
+      "expected_statuses": {"protection": "gap"}
+    },
+    {
+      "id": "narrow_answers_hide_removal_gap",
+      "description": "Seven narrow combat-only answers do not equal seven broadly usable removal spells.",
+      "total_cards": 99,
+      "cards": [
+        {"name": "Basic lands", "qty": 36, "oracle_text": "{T}: Add {W}.", "type_line": "Basic Land - Plains", "cmc": 0},
+        {"name": "Repeatable draw engines", "qty": 10, "oracle_text": "At the beginning of your upkeep, draw a card.", "type_line": "Enchantment", "cmc": 2},
+        {"name": "Efficient land ramp", "qty": 10, "oracle_text": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "type_line": "Sorcery", "cmc": 2},
+        {"name": "Combat-only answers", "qty": 7, "oracle_text": "Exile target attacking creature.", "type_line": "Instant", "cmc": 1},
+        {"name": "Board sweepers", "qty": 3, "oracle_text": "Destroy all creatures.", "type_line": "Sorcery", "cmc": 4},
+        {"name": "Stack interaction", "qty": 5, "oracle_text": "Counter target spell.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board protection", "qty": 3, "oracle_text": "Creatures you control gain indestructible until end of turn.", "type_line": "Instant", "cmc": 2},
+        {"name": "Theme cards", "qty": 25, "oracle_text": "Vigilance.", "type_line": "Creature", "cmc": 3}
+      ],
+      "expected_gap_additions": {"removal": 2},
+      "expected_hidden_quality_gaps": ["removal"],
+      "expected_statuses": {"removal": "quality_gap"}
+    },
+    {
+      "id": "top_heavy_utility_suite",
+      "description": "Raw role counts should expose broad quality gaps when every utility card is expensive.",
+      "total_cards": 99,
+      "cards": [
+        {"name": "Basic lands", "qty": 36, "oracle_text": "{T}: Add {B}.", "type_line": "Basic Land - Swamp", "cmc": 0},
+        {"name": "Top-heavy draw engines", "qty": 10, "oracle_text": "At the beginning of your upkeep, draw a card.", "type_line": "Enchantment", "cmc": 7},
+        {"name": "Top-heavy land ramp", "qty": 10, "oracle_text": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "type_line": "Sorcery", "cmc": 4},
+        {"name": "Top-heavy removal", "qty": 7, "oracle_text": "Exile target nonland permanent.", "type_line": "Sorcery", "cmc": 5},
+        {"name": "Top-heavy sweepers", "qty": 3, "oracle_text": "Destroy all creatures.", "type_line": "Sorcery", "cmc": 7},
+        {"name": "Top-heavy interaction", "qty": 5, "oracle_text": "Counter target spell.", "type_line": "Instant", "cmc": 5},
+        {"name": "Top-heavy protection", "qty": 3, "oracle_text": "Creatures you control gain indestructible until end of turn.", "type_line": "Instant", "cmc": 5},
+        {"name": "Theme cards", "qty": 25, "oracle_text": "Vigilance.", "type_line": "Creature", "cmc": 3}
+      ],
+      "expected_gap_additions": {
+        "draw": 4,
+        "ramp": 3,
+        "removal": 3,
+        "sweeper": 1,
+        "interaction": 2,
+        "protection": 1
+      },
+      "expected_hidden_quality_gaps": ["draw", "interaction", "protection", "ramp", "removal", "sweeper"],
+      "expected_statuses": {
+        "draw": "quality_gap",
+        "ramp": "quality_gap",
+        "removal": "quality_gap",
+        "sweeper": "quality_gap",
+        "interaction": "quality_gap",
+        "protection": "quality_gap"
+      }
+    },
+    {
+      "id": "efficient_multi_role_slots",
+      "description": "Efficient multi-role cards should contribute to every job they reliably perform.",
+      "total_cards": 99,
+      "cards": [
+        {"name": "Basic lands", "qty": 36, "oracle_text": "{T}: Add {W}.", "type_line": "Basic Land - Plains", "cmc": 0},
+        {"name": "Protective card flow", "qty": 3, "oracle_text": "Creatures you control gain indestructible until end of turn. Draw two cards.", "type_line": "Instant", "cmc": 2},
+        {"name": "Repeatable draw engines", "qty": 7, "oracle_text": "At the beginning of your upkeep, draw a card.", "type_line": "Enchantment", "cmc": 2},
+        {"name": "Efficient land ramp", "qty": 10, "oracle_text": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "type_line": "Sorcery", "cmc": 2},
+        {"name": "Flexible removal", "qty": 7, "oracle_text": "Exile target nonland permanent.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board sweepers", "qty": 3, "oracle_text": "Destroy all creatures.", "type_line": "Sorcery", "cmc": 4},
+        {"name": "Stack interaction", "qty": 5, "oracle_text": "Counter target spell.", "type_line": "Instant", "cmc": 2},
+        {"name": "Theme cards", "qty": 28, "oracle_text": "Vigilance.", "type_line": "Creature", "cmc": 3}
+      ],
+      "expected_gap_additions": {},
+      "expected_hidden_quality_gaps": [],
+      "expected_statuses": {"draw": "healthy", "protection": "healthy"}
+    },
+    {
+      "id": "combat_draw_is_conditional_coverage",
+      "description": "Combat-damage draw is valuable but less dependable than unconditional card flow.",
+      "total_cards": 99,
+      "cards": [
+        {"name": "Basic lands", "qty": 36, "oracle_text": "{T}: Add {U}.", "type_line": "Basic Land - Island", "cmc": 0},
+        {"name": "Combat draw creatures", "qty": 10, "oracle_text": "Whenever this creature deals combat damage to a player, draw a card.", "type_line": "Creature", "cmc": 2},
+        {"name": "Efficient land ramp", "qty": 10, "oracle_text": "Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.", "type_line": "Sorcery", "cmc": 2},
+        {"name": "Flexible removal", "qty": 7, "oracle_text": "Exile target nonland permanent.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board sweepers", "qty": 3, "oracle_text": "Destroy all creatures.", "type_line": "Sorcery", "cmc": 4},
+        {"name": "Stack interaction", "qty": 5, "oracle_text": "Counter target spell.", "type_line": "Instant", "cmc": 2},
+        {"name": "Board protection", "qty": 3, "oracle_text": "Creatures you control gain indestructible until end of turn.", "type_line": "Instant", "cmc": 2},
+        {"name": "Theme cards", "qty": 25, "oracle_text": "Vigilance.", "type_line": "Creature", "cmc": 3}
+      ],
+      "expected_gap_additions": {"draw": 3},
+      "expected_hidden_quality_gaps": ["draw"],
+      "expected_statuses": {"draw": "quality_gap"}
+    }
+  ]
+}

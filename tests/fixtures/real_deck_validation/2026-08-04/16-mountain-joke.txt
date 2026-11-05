@@ -1,0 +1,11 @@
+# LandfallAI real-deck validation snapshot 16
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://archidekt.com/decks/24600156/97_mountain_deck_fuk_u
+
+# Commander
+1 Plargg, Dean of Chaos // Augusta, Dean of Order *CMDR*
+
+# Mainboard
+1 Chandra's Ignition
+1 Countryside Crusher
+97 Mountain

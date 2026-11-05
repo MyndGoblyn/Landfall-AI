@@ -1,0 +1,116 @@
+{
+  "cards": [
+    {
+      "cmc": 5,
+      "collector_number": "209",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Chandra's Ignition",
+      "oracle_text": "Target creature you control deals damage equal to its power to each other creature and each opponent.",
+      "qty": 1,
+      "set_code": "m3c",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "108",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Countryside Crusher",
+      "oracle_text": "At the beginning of your upkeep, reveal the top card of your library. If it's a land card, put it into your graveyard and repeat this process.\nWhenever a land card is put into your graveyard from anywhere, put a +1/+1 counter on this creature.",
+      "qty": 1,
+      "set_code": "mma",
+      "tags": [
+        "counters",
+        "reanimator"
+      ],
+      "type_line": "Creature - Warrior Giant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "293",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [],
+      "name": "Mountain",
+      "oracle_text": "({T}: Add {R}.)",
+      "qty": 97,
+      "set_code": "msh",
+      "tags": [],
+      "type_line": "Basic Land - Mountain"
+    }
+  ],
+  "case_id": "16",
+  "color_identity": [
+    "W",
+    "R"
+  ],
+  "commander": "Plargg, Dean of Chaos // Augusta, Dean of Order",
+  "commander_card": {
+    "card_faces": [
+      {
+        "colors": [
+          "R"
+        ],
+        "image_uris": {
+          "large": "https://cards.scryfall.io/large/front/5/b/5bd9b5cf-f018-48af-a081-995ce8ecc539.jpg?1783927333",
+          "normal": "https://cards.scryfall.io/normal/front/5/b/5bd9b5cf-f018-48af-a081-995ce8ecc539.jpg?1783927333",
+          "small": "https://cards.scryfall.io/small/front/5/b/5bd9b5cf-f018-48af-a081-995ce8ecc539.jpg?1783927333"
+        },
+        "mana_cost": "{1}{R}",
+        "name": "Plargg, Dean of Chaos",
+        "oracle_text": "{T}, Discard a card: Draw a card.\n{4}{R}, {T}: Reveal cards from the top of your library until you reveal a nonlegendary, nonland card with mana value 3 or less. You may cast that card without paying its mana cost. Put all revealed cards not cast this way on the bottom of your library in a random order.",
+        "type_line": "Legendary Creature — Orc Shaman"
+      },
+      {
+        "colors": [
+          "W"
+        ],
+        "image_uris": {
+          "large": "https://cards.scryfall.io/large/back/5/b/5bd9b5cf-f018-48af-a081-995ce8ecc539.jpg?1783927333",
+          "normal": "https://cards.scryfall.io/normal/back/5/b/5bd9b5cf-f018-48af-a081-995ce8ecc539.jpg?1783927333",
+          "small": "https://cards.scryfall.io/small/back/5/b/5bd9b5cf-f018-48af-a081-995ce8ecc539.jpg?1783927333"
+        },
+        "mana_cost": "{2}{W}",
+        "name": "Augusta, Dean of Order",
+        "oracle_text": "Other tapped creatures you control get +1/+0.\nOther untapped creatures you control get +0/+1.\nWhenever you attack, untap each creature you control, then tap any number of creatures you control.",
+        "type_line": "Legendary Creature — Human Cleric"
+      }
+    ],
+    "cmc": 2.0,
+    "collector_number": "155",
+    "color_identity": [
+      "R",
+      "W"
+    ],
+    "edhrec_rank": 11693,
+    "keywords": [],
+    "legalities": {
+      "commander": "legal"
+    },
+    "name": "Plargg, Dean of Chaos // Augusta, Dean of Order",
+    "oracle_id": "a0e85762-e433-4a23-bbee-69daeebb5898",
+    "prices": {
+      "usd": "0.34",
+      "usd_foil": "0.34"
+    },
+    "scryfall_uri": "https://scryfall.com/card/stx/155/plargg-dean-of-chaos-augusta-dean-of-order?utm_source=api",
+    "set": "stx",
+    "type_line": "Legendary Creature — Orc Shaman // Legendary Creature — Human Cleric"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "mountain-joke",
+  "source_platform": "archidekt",
+  "source_url": "https://archidekt.com/decks/24600156/97_mountain_deck_fuk_u"
+}

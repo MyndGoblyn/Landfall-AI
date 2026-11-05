@@ -1,0 +1,92 @@
+# LandfallAI real-deck validation snapshot 03
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://archidekt.com/decks/7225704/meren_of_clan_nel_toth_budget_edh
+
+# Commander
+1 Meren of Clan Nel Toth *CMDR*
+
+# Mainboard
+1 Bone Shards
+1 Cankerbloom
+1 Commander's Sphere
+1 Rampant Growth
+1 Reclamation Sage
+1 Ayara, First of Locthwain
+1 Bighorner Rancher
+1 Bloodbriar
+1 Blood Divination
+1 Burnished Hart
+1 Bone Splinters
+1 Village Rites
+1 Terror Tide
+1 Everflowing Chalice
+10 Swamp
+1 Mind Stone
+1 Sakura-Tribe Elder
+1 Sol Ring
+1 Moldervine Reclamation
+1 Talisman of Resilience
+1 Golgari Signet
+1 Sandwurm Convergence
+1 Fellwar Stone
+1 Cultivate
+1 Arcane Signet
+1 Sign in Blood
+1 Liquimetal Torque
+1 Feed the Swarm
+1 Rogue's Passage
+1 Llanowar Elves
+1 Kodama's Reach
+1 Bastion of Remembrance
+1 Gaea's Gift
+1 Haunted Mire
+1 Grim Backwoods
+1 Golgari Guildgate
+1 Golgari Rot Farm
+1 Necroblossom Snarl
+1 Tainted Wood
+1 Momentous Fall
+1 Command Tower
+1 Golgari Germination
+1 Rise of the Witch-king
+1 Jarad's Orders
+1 Temple of Malady
+1 Jungle Hollow
+1 Evolutionary Leap
+1 Vampiric Rites
+7 Forest
+1 Terramorphic Expanse
+1 Myriad Landscape
+1 Evolving Wilds
+1 Casualties of War
+1 Zulaport Cutthroat
+1 Blood Artist
+1 Wood Elves
+1 Smothering Abomination
+1 Underrealm Lich
+1 Orcish Medicine
+1 Professor's Warning
+1 Withstand Death
+1 Ravenous Chupacabra
+1 Necromantic Selection
+1 Yahenni, Undying Partisan
+1 Moss Diamond
+1 Thran Dynamo
+1 Decanter of Endless Water
+1 Crux of Fate
+1 Charcoal Diamond
+1 Viscera Seer
+1 Harmonize
+1 Gilded Lotus
+1 Spore Frog
+1 Gray Merchant of Asphodel
+1 Woe Strider
+1 Shadowheart, Dark Justiciar
+1 Skull Prophet
+1 Regrowth
+1 Mausoleum Secrets
+1 Massacre Wurm
+1 Jarad, Golgari Lich Lord
+1 Eternal Witness
+1 Lord of Extinction
+1 Victimize

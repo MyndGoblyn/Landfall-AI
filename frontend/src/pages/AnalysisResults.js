@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
   BarChart3,
+  AlertTriangle,
   Download,
   ExternalLink,
   MinusCircle,
@@ -87,6 +88,143 @@ function RoleBadge({ role, tone = 'add' }) {
   );
 }
 
+function InputAssessmentNotice({ assessment }) {
+  const issues = assessment?.issues || [];
+  if (issues.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="coverage-notice input-assessment-notice" role="status">
+      <AlertTriangle className="coverage-notice-icon" />
+      <div className="coverage-notice-copy">
+        <div className="coverage-notice-title">Deck input needs review</div>
+        <p>
+          {assessment.mainboard_cards} main-deck cards, {assessment.land_cards} lands,
+          {' '}{assessment.unique_cards} unique card names detected.
+        </p>
+        <ul className="input-assessment-list">
+          {issues.map((issue) => (
+            <li key={issue.code}>{issue.message}</li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function IntentNotice({ summary, invariants }) {
+  if (!summary) {
+    return null;
+  }
+  const constraints = summary.intentional_constraints || [];
+  return (
+    <section className="coverage-notice intent-summary-notice" role="status">
+      <Shield className="coverage-notice-icon" />
+      <div className="coverage-notice-copy">
+        <div className="coverage-notice-title">
+          Recommendation intent: {summary.confirmed ? 'confirmed' : 'conservative default'}
+        </div>
+        <p>
+          {titleCase(summary.optimization_mode)} mode · Power {summary.power_target}
+          {' · '}{titleCase(summary.budget_mode)} budget
+          {' · '}{summary.protected_card_count || 0} protected cards
+        </p>
+        {summary.primary_strategy && <p>Declared strategy: {summary.primary_strategy}</p>}
+        {summary.desired_experience && <p>Desired experience: {summary.desired_experience}</p>}
+        {summary.strategy_priorities?.length > 0 && (
+          <p>Enforced priorities: {summary.strategy_priorities.map(titleCase).join(' · ')}</p>
+        )}
+        {summary.experience_tags?.length > 0 && (
+          <p>Experience tags: {summary.experience_tags.map(titleCase).join(' · ')}</p>
+        )}
+        <p>
+          Power outliers: {titleCase(summary.power_outlier_policy || 'auto')}
+          {' · '}Generic staples: {titleCase(summary.generic_staple_tolerance || 'auto')}
+        </p>
+        {constraints.length > 0 && (
+          <div className="theme-cloud mt-2">
+            {constraints.map((constraint) => (
+              <span key={constraint} className="theme-pill">{titleCase(constraint)}</span>
+            ))}
+          </div>
+        )}
+        {invariants?.typal && (
+          <p>
+            Typal floor: preserve {invariants.typal.on_type_cards}
+            {' '}{invariants.typal.creature_type} cards across swaps.
+          </p>
+        )}
+        {invariants?.spell_density && (
+          <p>
+            Spell floor: preserve {invariants.spell_density.instant_sorcery_cards}
+            {' '}instants and sorceries across swaps.
+          </p>
+        )}
+        {invariants?.aura_ladder && (
+          <p>
+            Aura ladder: {invariants.aura_ladder.aura_cards} Auras across mana values
+            {' '}{(invariants.aura_ladder.covered_mana_values || []).join(', ') || 'none'}.
+            {(invariants.aura_ladder.missing_core_mana_values || []).length > 0
+              ? ` Missing core rungs: ${invariants.aura_ladder.missing_core_mana_values.join(', ')}.`
+              : ' Core mana-value rungs are covered.'}
+          </p>
+        )}
+        {invariants?.card_type_spread && (
+          <p>
+            {invariants.card_type_spread.permanent_only ? 'Permanent' : 'Card'}-type spread:
+            {' '}{Object.entries(invariants.card_type_spread.type_counts || {})
+              .map(([type, count]) => `${titleCase(type)} ${count}`)
+              .join(' · ')}
+          </p>
+        )}
+        {invariants?.sacrifice_engine && (
+          <p>
+            Sacrifice engine: {invariants.sacrifice_engine.component_counts.outlet} outlets
+            {' · '}{invariants.sacrifice_engine.component_counts.payoff} payoffs
+            {' · '}{invariants.sacrifice_engine.component_counts.fodder} fodder sources.
+          </p>
+        )}
+        {(invariants?.protected_packages || []).map((packageInfo) => (
+          <p key={packageInfo.key}>
+            Protected package “{packageInfo.name}”:
+            {' '}{packageInfo.present_cards.length}/{packageInfo.declared_cards.length} present.
+            {packageInfo.missing_cards.length > 0
+              ? ` Missing: ${packageInfo.missing_cards.join(', ')}.`
+              : ' Complete.'}
+          </p>
+        ))}
+        {(invariants?.dependencies?.tutor_packages || []).map((packageInfo) => (
+          <p key={`tutor-${packageInfo.key}`}>
+            Tutor targets for {packageInfo.source_cards.join(', ')}:
+            {' '}{packageInfo.target_count} {packageInfo.label}
+            {packageInfo.target_count === 1 ? '' : 's'} found
+            {' '}({titleCase(packageInfo.status)}).
+            {packageInfo.status !== 'healthy' && packageInfo.target_count > 0
+              ? ` Targets: ${packageInfo.target_cards.join(', ')}.`
+              : ''}
+          </p>
+        ))}
+        {(invariants?.dependencies?.named_links || []).map((link) => (
+          <p key={`link-${link.key}`}>
+            Exact named link: {link.source_card} → {link.target_card}
+            {' '}({titleCase(link.status)}).
+          </p>
+        ))}
+        {invariants?.dependencies?.active && (
+          <p>{invariants.dependencies.limitations}</p>
+        )}
+        {(summary.enforcement_notes || []).map((note) => (
+          <p key={note}>{note}</p>
+        ))}
+        {!summary.confirmed && (
+          <p>Cut confidence is reduced until the deck owner confirms budget, power, and preservation goals.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function CardImages({ suggestion, compact = false }) {
   const hasBack = Boolean(suggestion.image_url_back);
   const wrapperClass = [
@@ -145,6 +283,9 @@ function RecommendationCard({ suggestion, type = 'add', index }) {
           {suggestion.fit_tier && <span>{suggestion.fit_tier}</span>}
           <RoleBadge role={suggestion.role_tag} tone={isAdd ? 'add' : 'cut'} />
           <span>MV {suggestion.cmc}</span>
+          {suggestion.suggested_quantity && (
+            <span>{suggestion.suggested_quantity} slots</span>
+          )}
           {suggestion.score && <span>Score {suggestion.score}</span>}
           {suggestion.price && <span>${suggestion.price.toFixed(2)}</span>}
           {suggestion.confidence && (
@@ -165,10 +306,34 @@ function RecommendationCard({ suggestion, type = 'add', index }) {
           )}
         </div>
         <div className="recommendation-copy">
-          <h4>{isAdd ? 'Why it fits' : 'Why it is flexible'}</h4>
+          <h4>
+            {suggestion.action_only
+              ? 'Why this repair comes first'
+              : (isAdd ? 'Why it fits' : 'Why it is flexible')}
+          </h4>
           <p>{suggestion.reason}</p>
           {suggestion.evidence && (
             <p className="recommendation-evidence">Evidence: {suggestion.evidence}</p>
+          )}
+          {suggestion.intent_alignment?.length > 0 && (
+            <p className="recommendation-intent-ok">
+              Intent: {suggestion.intent_alignment.join(' · ')}
+            </p>
+          )}
+          {suggestion.intent_warnings?.length > 0 && (
+            <p className="recommendation-intent-warning">
+              Intent warning: {suggestion.intent_warnings.join(' · ')}
+            </p>
+          )}
+          {suggestion.invariant_alignment?.length > 0 && (
+            <p className="recommendation-intent-ok">
+              Deck plan: {suggestion.invariant_alignment.join(' · ')}
+            </p>
+          )}
+          {suggestion.invariant_warnings?.length > 0 && (
+            <p className="recommendation-intent-warning">
+              Deck-plan warning: {suggestion.invariant_warnings.join(' · ')}
+            </p>
           )}
         </div>
       </div>
@@ -176,7 +341,7 @@ function RecommendationCard({ suggestion, type = 'add', index }) {
   );
 }
 
-function SwapCard({ add, cut, index }) {
+function SwapCard({ add, cut, index, rationale }) {
   return (
     <article className="swap-card">
       <div className="swap-column">
@@ -212,16 +377,24 @@ function SwapCard({ add, cut, index }) {
           <p className="muted-copy">Keep this upgrade as a standalone option.</p>
         )}
       </div>
+      {rationale && <p className="swap-rationale">{rationale}</p>}
     </article>
   );
 }
 
-function HealthMeter({ role, count }) {
+function HealthMeter({ role, count, quality }) {
   const target = roleTargets[role];
-  const max = target ? target[1] : Math.max(count, 1);
+  const effectiveCount = quality?.effective_count ?? count;
+  const max = target ? target[1] : Math.max(effectiveCount, 1);
   const low = target ? target[0] : 0;
-  const percentage = Math.min((count / max) * 100, 100);
-  const status = target ? (count < low ? 'Needs attention' : count > max ? 'High density' : 'Healthy') : 'Tracked';
+  const percentage = Math.min((effectiveCount / max) * 100, 100);
+  const qualityStatus = {
+    gap: 'Needs attention',
+    quality_gap: 'Quality gap',
+    saturated: 'High density',
+    healthy: 'Healthy',
+  }[quality?.status];
+  const status = qualityStatus || (target ? (count < low ? 'Needs attention' : count > max ? 'High density' : 'Healthy') : 'Tracked');
 
   return (
     <div className="health-row">
@@ -235,7 +408,9 @@ function HealthMeter({ role, count }) {
         <div className="health-bar">
           <span style={{ width: `${percentage}%` }}></span>
         </div>
-        <div className="health-count">{count} - {status}</div>
+        <div className="health-count">
+          {quality ? `${effectiveCount} effective (${count} raw) - ${status}` : `${count} - ${status}`}
+        </div>
       </div>
     </div>
   );
@@ -445,7 +620,18 @@ export default function AnalysisResults() {
   const deckThemes = Array.from(new Set([...commanderSynergies, ...themes]));
   const colorIdentity = deck?.color_identity || [];
   const roleCounts = stats.role_counts || {};
-  const swapCount = Math.max(adds.length, cuts.length);
+  const roleQuality = stats.role_quality || {};
+  const rolesToDisplay = Object.keys(roleQuality).length > 0
+    ? Object.keys(roleQuality)
+    : Object.keys(roleCounts);
+  const swapPairs = analysis?.swap_pairs?.length > 0
+    ? analysis.swap_pairs
+    : Array.from({ length: Math.max(adds.length, cuts.length) }).map((_, index) => ({
+        add: adds[index],
+        cut: cuts[index],
+        reason: null,
+      }));
+  const swapCount = swapPairs.length;
   const maxCmcCount = Math.max(...Object.values(stats.cmc_distribution || {}), 1);
   const displayCommanderName = deck?.commander || commanderCard?.name || getCandidateCommanderName(deck);
   const commanderImageUrl = commanderCard?.image_uris?.normal
@@ -537,6 +723,11 @@ export default function AnalysisResults() {
           </div>
         </section>
 
+        <InputAssessmentNotice assessment={analysis?.input_assessment} />
+        <IntentNotice
+          summary={analysis?.intent_summary}
+          invariants={analysis?.deck_invariants}
+        />
         <CoverageNotice data={analysis} />
 
         <Tabs defaultValue="overview" className="w-full">
@@ -602,12 +793,13 @@ export default function AnalysisResults() {
               <span>{swapCount} slots</span>
             </div>
             <div className="swap-grid">
-              {Array.from({ length: swapCount }).map((_, index) => (
+              {swapPairs.map((pair, index) => (
                 <SwapCard
                   key={`swap-${index}`}
-                  add={adds[index]}
-                  cut={cuts[index]}
+                  add={pair.add}
+                  cut={pair.cut}
                   index={index}
+                  rationale={pair.reason}
                 />
               ))}
             </div>
@@ -702,8 +894,13 @@ export default function AnalysisResults() {
                   </div>
                 </div>
                 <div className="health-list">
-                  {Object.entries(roleCounts).map(([role, count]) => (
-                    <HealthMeter key={role} role={role} count={count} />
+                  {rolesToDisplay.map((role) => (
+                    <HealthMeter
+                      key={role}
+                      role={role}
+                      count={roleCounts[role] || 0}
+                      quality={roleQuality[role]}
+                    />
                   ))}
                 </div>
               </section>

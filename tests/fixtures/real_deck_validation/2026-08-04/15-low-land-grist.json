@@ -1,0 +1,1521 @@
+{
+  "cards": [
+    {
+      "cmc": 7.0,
+      "collector_number": "AER-58",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Fen Hauler",
+      "oracle_text": "Improvise (Your artifacts can help cast this spell. Each artifact you tap after you're done activating mana abilities pays for {1}.)\nThis creature can't be blocked by artifact creatures.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "GRN-135",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Kraul Foragers",
+      "oracle_text": "Undergrowth — When this creature enters, you gain 1 life for each creature card in your graveyard.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect Scout"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "M15-112",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Rotfeaster Maggot",
+      "oracle_text": "When this creature enters, exile target creature card from a graveyard. You gain life equal to that card's toughness.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "92",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Carrion Grub",
+      "oracle_text": "This creature gets +X/+0, where X is the greatest power among creature cards in your graveyard.\nWhen this creature enters, mill four cards. (Put the top four cards of your library into your graveyard.)",
+      "qty": 1,
+      "set_code": "m21",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "132",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Nantuko Calmer",
+      "oracle_text": "{G}, {T}, Sacrifice this creature: Destroy target enchantment.\nThreshold — This creature gets +1/+1 as long as there are seven or more cards in your graveyard.",
+      "qty": 1,
+      "set_code": "tor",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect Druid"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "130",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Rust Scarab",
+      "oracle_text": "Whenever this creature becomes blocked, you may destroy target artifact or enchantment defending player controls.",
+      "qty": 1,
+      "set_code": "gtc",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "86",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Spire Mangler",
+      "oracle_text": "Flash\nFlying\nWhen this creature enters, target creature you control with flying gets +2/+0 until end of turn.",
+      "qty": 1,
+      "set_code": "rna",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "270",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Kraul Raider",
+      "oracle_text": "Menace (This creature can't be blocked except by two or more creatures.)",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [],
+      "type_line": "Creature — Insect Warrior"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "73",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Kraul Swarm",
+      "oracle_text": "Flying\n{2}{B}, Discard a creature card: Return this card from your graveyard to your hand.",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect Warrior"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "136",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Kraul Harpooner",
+      "oracle_text": "Reach\nUndergrowth — When this creature enters, choose up to one target creature you don't control with flying. This creature gets +X/+0 until end of turn, where X is the number of creature cards in your graveyard, then you may have this creature fight that creature.",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect Warrior"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "86",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Spinal Centipede",
+      "oracle_text": "When this creature dies, put a +1/+1 counter on target creature you control.",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [
+        "counters",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "127",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Quarry Beetle",
+      "oracle_text": "When this creature enters, you may return target land card from your graveyard to the battlefield.",
+      "qty": 1,
+      "set_code": "hou",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "156",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Nantuko Shaman",
+      "oracle_text": "When this creature enters, if you control no tapped lands, draw a card.\nSuspend 1—{2}{G}{G} (Rather than cast this card from your hand, you may pay {2}{G}{G} and exile it with a time counter on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost. It has haste.)",
+      "qty": 1,
+      "set_code": "mma",
+      "tags": [
+        "counters",
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Insect Shaman"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "198",
+      "color_identity": [],
+      "colors": [],
+      "name": "Rust Tick",
+      "oracle_text": "You may choose not to untap this creature during your untap step.\n{1}, {T}: Tap target artifact. It doesn't untap during its controller's untap step for as long as this creature remains tapped.",
+      "qty": 1,
+      "set_code": "som",
+      "tags": [],
+      "type_line": "Artifact Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "51",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Scavenging Scarab",
+      "oracle_text": "This creature can't block.",
+      "qty": 1,
+      "set_code": "dst",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "135",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Giant Cockroach",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "8ed",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "268",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Nantuko Disciple",
+      "oracle_text": "{G}, {T}: Target creature gets +2/+2 until end of turn.",
+      "qty": 1,
+      "set_code": "8ed",
+      "tags": [],
+      "type_line": "Creature — Insect Druid"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "244",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Pincher Beetles",
+      "oracle_text": "Shroud (This creature can't be the target of spells or abilities.)",
+      "qty": 1,
+      "set_code": "tmp",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "165",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Kraul Stinger",
+      "oracle_text": "Deathtouch",
+      "qty": 1,
+      "set_code": "war",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect Assassin"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "161",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Colossapede",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "akh",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "197",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "B",
+        "G"
+      ],
+      "name": "Decimator Beetle",
+      "oracle_text": "When this creature enters, put a -1/-1 counter on target creature you control.\nWhenever this creature attacks, remove a -1/-1 counter from target creature you control and put a -1/-1 counter on up to one target creature defending player controls.",
+      "qty": 1,
+      "set_code": "akh",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "89",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dune Beetle",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "akh",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "122",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Ambush Krotiq",
+      "oracle_text": "Trample\nWhen this creature enters, return another creature you control to its owner's hand.",
+      "qty": 1,
+      "set_code": "frf",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "74",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Perilous Shadow",
+      "oracle_text": "{1}{B}: This creature gets +2/+2 until end of turn.",
+      "qty": 1,
+      "set_code": "rtr",
+      "tags": [],
+      "type_line": "Creature — Insect Shade"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "84",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Zanikev Locust",
+      "oracle_text": "Flying\nScavenge {2}{B}{B} ({2}{B}{B}, Exile this card from your graveyard: Put a number of +1/+1 counters equal to this card's power on target creature. Scavenge only as a sorcery.)",
+      "qty": 1,
+      "set_code": "rtr",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "149",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Pestilent Souleater",
+      "oracle_text": "{B/P}: This creature gains infect until end of turn. ({B/P} can be paid with either {B} or 2 life. A creature with infect deals damage to creatures in the form of -1/-1 counters and to players in the form of poison counters.)",
+      "qty": 1,
+      "set_code": "nph",
+      "tags": [],
+      "type_line": "Artifact Creature — Phyrexian Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "66",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Blister Beetle",
+      "oracle_text": "When this creature enters, target creature gets -1/-1 until end of turn.",
+      "qty": 1,
+      "set_code": "ala",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "413",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Nessian Hornbeetle",
+      "oracle_text": "At the beginning of combat on your turn, if you control another creature with power 4 or greater, put a +1/+1 counter on this creature.",
+      "qty": 1,
+      "set_code": "jmp",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "1",
+      "color_identity": [],
+      "colors": [],
+      "name": "Adaptive Shimmerer",
+      "oracle_text": "Flash\nThis creature enters with three +1/+1 counters on it.",
+      "qty": 1,
+      "set_code": "iko",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "85",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Durable Coilbug",
+      "oracle_text": "{4}{B}: Return this card from your graveyard to your hand.",
+      "qty": 1,
+      "set_code": "iko",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "96",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Mortipede",
+      "oracle_text": "{2}{G}: All creatures able to block this creature this turn do so.",
+      "qty": 1,
+      "set_code": "rav",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "58",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Jagwasp Swarm",
+      "oracle_text": "Flying",
+      "qty": 1,
+      "set_code": "wwk",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "109",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Nantuko Husk",
+      "oracle_text": "Sacrifice a creature: This creature gets +2/+2 until end of turn.",
+      "qty": 1,
+      "set_code": "ori",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Insect"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "202",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Segmented Krotiq",
+      "oracle_text": "Megamorph {6}{G} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its megamorph cost and put a +1/+1 counter on it.)",
+      "qty": 1,
+      "set_code": "dtk",
+      "tags": [
+        "counters",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "135",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Loam Larva",
+      "oracle_text": "When this creature enters, you may search your library for a basic land card, reveal it, then shuffle and put that card on top.",
+      "qty": 1,
+      "set_code": "ogw",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "228",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Prakhata Pillar-Bug",
+      "oracle_text": "{B}: This creature gains lifelink until end of turn. (Damage dealt by this creature also causes you to gain that much life.)",
+      "qty": 1,
+      "set_code": "kld",
+      "tags": [],
+      "type_line": "Artifact Creature — Insect"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "122",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Skittering Heartstopper",
+      "oracle_text": "{B}: This creature gains deathtouch until end of turn.",
+      "qty": 1,
+      "set_code": "xln",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "161",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Bond Beetle",
+      "oracle_text": "When this creature enters, put a +1/+1 counter on target creature.",
+      "qty": 1,
+      "set_code": "m13",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "91",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Brain Weevil",
+      "oracle_text": "Intimidate (This creature can't be blocked except by artifact creatures and/or creatures that share a color with it.)\nSacrifice this creature: Target player discards two cards. Activate only as a sorcery.",
+      "qty": 1,
+      "set_code": "isd",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "97",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Heartstabber Mosquito",
+      "oracle_text": "Kicker {2}{B} (You may pay an additional {2}{B} as you cast this spell.)\nFlying\nWhen this creature enters, if it was kicked, destroy target creature.",
+      "qty": 1,
+      "set_code": "zen",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "279",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Twigwalker",
+      "oracle_text": "{1}{G}, Sacrifice this creature: Two target creatures each get +2/+2 until end of turn.",
+      "qty": 1,
+      "set_code": "ody",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "190",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Kazandu Nectarpot",
+      "oracle_text": "Landfall — Whenever a land you control enters, you gain 1 life.",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [
+        "landfall"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "108",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Deadly Grub",
+      "oracle_text": "Vanishing 3 (This creature enters with three time counters on it. At the beginning of your upkeep, remove a time counter from it. When the last is removed, sacrifice it.)\nWhen this creature dies, if it had no time counters on it, create a 6/1 green Insect creature token with shroud. (It can't be the target of spells or abilities.)",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [
+        "stax",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "239",
+      "color_identity": [],
+      "colors": [],
+      "name": "Halo Scarab",
+      "oracle_text": "{2}, Exile this card from your graveyard: Create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "snc",
+      "tags": [
+        "blink",
+        "treasure",
+        "aristocrats",
+        "stax",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Artifact Creature — Insect"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "81",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Battlefly Swarm",
+      "oracle_text": "Flying\n{B}: This creature gains deathtouch until end of turn.",
+      "qty": 1,
+      "set_code": "dmu",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature — Phyrexian Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "87",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Carrion Locust",
+      "oracle_text": "Flying\nWhen this creature enters, exile target card from an opponent's graveyard. If it was a creature card, that player loses 1 life.",
+      "qty": 1,
+      "set_code": "bro",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect Horror"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "39",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Giant Ladybug",
+      "oracle_text": "Reach\nWhen this creature enters, you may search your library for a basic land card, reveal it, then shuffle and put that card on top.",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "401",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Devouring Swarm",
+      "oracle_text": "Flying\nSacrifice a creature: This creature gets +1/+1 until end of turn.",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "679",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Ironshell Beetle",
+      "oracle_text": "When this creature enters, put a +1/+1 counter on target creature.",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "684",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Kraul Warrior",
+      "oracle_text": "{5}{G}: This creature gets +3/+3 until end of turn.",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [],
+      "type_line": "Creature — Insect Warrior"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "223",
+      "color_identity": [],
+      "colors": [],
+      "name": "Atraxa's Skitterfang",
+      "oracle_text": "This creature enters with three oil counters on it.\nAt the beginning of combat on your turn, you may remove an oil counter from this creature. When you do, target creature you control gains your choice of flying, vigilance, deathtouch, or lifelink until end of turn.",
+      "qty": 1,
+      "set_code": "one",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Artifact Creature — Phyrexian Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "103",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Pestilent Syphoner",
+      "oracle_text": "Flying\nToxic 1 (Players dealt combat damage by this creature also get a poison counter.)",
+      "qty": 1,
+      "set_code": "one",
+      "tags": [],
+      "type_line": "Creature — Phyrexian Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "100",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Necrosquito",
+      "oracle_text": "Flying\nThis creature enters with two oil counters on it.\nThis creature gets +1/+1 for each oil counter on it.\nWhenever another creature or artifact you control is put into a graveyard from the battlefield, put an oil counter on this creature.",
+      "qty": 1,
+      "set_code": "one",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Phyrexian Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "173",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Lattice-Blade Mantis",
+      "oracle_text": "This creature enters with two oil counters on it.\nWhenever this creature attacks, you may remove an oil counter from it. If you do, untap it and it gets +1/+1 until end of turn.",
+      "qty": 1,
+      "set_code": "one",
+      "tags": [],
+      "type_line": "Creature — Phyrexian Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "VIS-108",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Giant Caterpillar",
+      "oracle_text": "{G}, Sacrifice this creature: Create a 1/1 green Insect creature token with flying named Butterfly at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "stax",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "124",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Stinging Cave Crawler",
+      "oracle_text": "Deathtouch\nDescend 4 — Whenever this creature attacks, if there are four or more permanent cards in your graveyard, you draw a card and you lose 1 life.",
+      "qty": 1,
+      "set_code": "lci",
+      "tags": [
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect Horror"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "114",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Primordial Gnawer",
+      "oracle_text": "When this creature dies, discover 3. (Exile cards from the top of your library until you exile a nonland card with mana value 3 or less. Cast it without paying its mana cost or put it into your hand. Put the rest on the bottom in a random order.)",
+      "qty": 1,
+      "set_code": "lci",
+      "tags": [
+        "blink",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect Horror"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "136",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Drudge Beetle",
+      "oracle_text": "Scavenge {5}{G} ({5}{G}, Exile this card from your graveyard: Put a number of +1/+1 counters equal to this card's power on target creature. Scavenge only as a sorcery.)",
+      "qty": 1,
+      "set_code": "rvr",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "213",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "B",
+        "G"
+      ],
+      "name": "Kraul Whipcracker",
+      "oracle_text": "Reach\nWhen this creature enters, destroy target token an opponent controls.",
+      "qty": 1,
+      "set_code": "mkm",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature — Insect Assassin"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "102",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Rot Farm Mortipede",
+      "oracle_text": "Whenever one or more creature cards leave your graveyard, this creature gets +1/+0 and gains menace and lifelink until end of turn.",
+      "qty": 1,
+      "set_code": "mkm",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "167",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Broodhatch Nantuko",
+      "oracle_text": "Whenever this creature is dealt damage, you may create that many 1/1 green Insect creature tokens.\nMorph {2}{G} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its morph cost.)",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Creature — Insect Druid"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "177",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Nantuko Vigilante",
+      "oracle_text": "Morph {1}{G} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its morph cost.)\nWhen this creature is turned face up, destroy target artifact or enchantment.",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Insect Druid Mutant"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "77",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Ambush Gigapede",
+      "oracle_text": "Flash\nWhen this creature enters, target creature an opponent controls gets -2/-2 until end of turn.",
+      "qty": 1,
+      "set_code": "otj",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "198",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Nantuko Cultivator",
+      "oracle_text": "When this creature enters, you may discard any number of land cards. Put that many +1/+1 counters on this creature and draw that many cards.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Insect Druid"
+    },
+    {
+      "cmc": 7.0,
+      "collector_number": "166",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Altanak, the Thrice-Called",
+      "oracle_text": "Trample\nWhenever Altanak becomes the target of a spell or ability an opponent controls, draw a card.\n{1}{G}, Discard this card: Return target land card from your graveyard to the battlefield tapped.",
+      "qty": 1,
+      "set_code": "dsk",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Creature — Insect Beast"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "199",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Spineseeker Centipede",
+      "oracle_text": "When this creature enters, search your library for a basic land card, reveal it, put it into your hand, then shuffle.\nDelirium — This creature gets +1/+2 and has vigilance as long as there are four or more card types among cards in your graveyard.",
+      "qty": 1,
+      "set_code": "dsk",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "167",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Anthropede",
+      "oracle_text": "Reach\nWhen this creature enters, you may discard a card or pay {2}. When you do, destroy target Room.",
+      "qty": 1,
+      "set_code": "dsk",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "178",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Flesh Burrower",
+      "oracle_text": "Deathtouch\nWhenever this creature attacks, another target creature you control gains deathtouch until end of turn.",
+      "qty": 1,
+      "set_code": "dsk",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "428",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dross Hopper",
+      "oracle_text": "Sacrifice a creature: This creature gains flying until end of turn.",
+      "qty": 1,
+      "set_code": "j25",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Phyrexian Insect Horror"
+    },
+    {
+      "cmc": 8.0,
+      "collector_number": "6",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [],
+      "name": "It of the Horrid Swarm",
+      "oracle_text": "Emerge {6}{G} (You may cast this spell by sacrificing a creature and paying the emerge cost reduced by that creature's mana value.)\nWhen you cast this spell, create two 1/1 green Insect creature tokens.",
+      "qty": 1,
+      "set_code": "inr",
+      "tags": [
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Creature — Eldrazi Insect"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "208",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Moldgraf Millipede",
+      "oracle_text": "When this creature enters, mill three cards, then put a +1/+1 counter on this creature for each creature card in your graveyard. (To mill three cards, put the top three cards of your library into your graveyard.)",
+      "qty": 1,
+      "set_code": "inr",
+      "tags": [
+        "counters",
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect Horror"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "79",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Chitin Gravestalker",
+      "oracle_text": "This spell costs {1} less to cast for each artifact and/or creature card in your graveyard.\nCycling {2} ({2}, Discard this card: Draw a card.)",
+      "qty": 1,
+      "set_code": "dft",
+      "tags": [
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Insect Warrior"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "148",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Krotiq Nestguard",
+      "oracle_text": "Defender\n{2}{G}: This creature can attack this turn as though it didn't have defender.",
+      "qty": 1,
+      "set_code": "tdm",
+      "tags": [],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "77",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Delta Bloodflies",
+      "oracle_text": "Flying\nWhenever this creature attacks, if you control a creature with a counter on it, each opponent loses 1 life.",
+      "qty": 1,
+      "set_code": "tdm",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Insect"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "227",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "B",
+        "G"
+      ],
+      "name": "Seedship Broodtender",
+      "oracle_text": "When this creature enters, mill three cards. (Put the top three cards of your library into your graveyard.)\n{3}{B}{G}, Sacrifice this creature: Return target creature or Spacecraft card from your graveyard to the battlefield. Activate only as a sorcery.",
+      "qty": 1,
+      "set_code": "eoe",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator"
+      ],
+      "type_line": "Creature — Insect Citizen"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "90",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Blade of the Swarm",
+      "oracle_text": "When this creature enters, choose one —\n• Put two +1/+1 counters on this creature.\n• Put target exiled card with warp on the bottom of its owner's library.",
+      "qty": 1,
+      "set_code": "eoe",
+      "tags": [
+        "counters",
+        "blink"
+      ],
+      "type_line": "Creature — Insect Assassin"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "180",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Eumidian Terrabotanist",
+      "oracle_text": "Landfall — Whenever a land you control enters, you gain 1 life.",
+      "qty": 1,
+      "set_code": "eoe",
+      "tags": [
+        "landfall"
+      ],
+      "type_line": "Creature — Insect Druid"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "211",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Thawbringer",
+      "oracle_text": "When this creature enters or dies, surveil 1. (Look at the top card of your library. You may put it into your graveyard.)",
+      "qty": 1,
+      "set_code": "eoe",
+      "tags": [
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect Scout"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "92",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Comet Crawler",
+      "oracle_text": "Lifelink\nWhenever this creature attacks, you may sacrifice another creature or artifact. If you do, this creature gets +2/+0 until end of turn.",
+      "qty": 1,
+      "set_code": "eoe",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect Horror"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "119",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Swarm Culler",
+      "oracle_text": "Flying\nWhenever this creature becomes tapped, you may sacrifice another creature or artifact. If you do, draw a card.",
+      "qty": 1,
+      "set_code": "eoe",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Insect Warrior"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "207",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Skystinger",
+      "oracle_text": "Reach\nWhenever this creature blocks a creature with flying, this creature gets +5/+0 until end of turn.",
+      "qty": 1,
+      "set_code": "eoe",
+      "tags": [],
+      "type_line": "Creature — Insect Warrior"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "93",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [],
+      "name": "Forest",
+      "oracle_text": "({T}: Add {G}.)",
+      "qty": 9,
+      "set_code": "j25",
+      "tags": [],
+      "type_line": "Basic Land — Forest"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "87",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Swamp",
+      "oracle_text": "({T}: Add {B}.)",
+      "qty": 9,
+      "set_code": "j25",
+      "tags": [],
+      "type_line": "Basic Land — Swamp"
+    }
+  ],
+  "case_id": "15",
+  "color_identity": [
+    "B",
+    "G"
+  ],
+  "commander": "Grist, the Hunger Tide",
+  "commander_card": {
+    "cmc": 3.0,
+    "collector_number": "220",
+    "color_identity": [
+      "B",
+      "G"
+    ],
+    "colors": [
+      "B",
+      "G"
+    ],
+    "edhrec_rank": 1920,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/1/9/1925dc45-4dee-4772-aa16-3b4ca54be6c7.jpg?1783909593",
+      "normal": "https://cards.scryfall.io/normal/front/1/9/1925dc45-4dee-4772-aa16-3b4ca54be6c7.jpg?1783909593",
+      "small": "https://cards.scryfall.io/small/front/1/9/1925dc45-4dee-4772-aa16-3b4ca54be6c7.jpg?1783909593"
+    },
+    "keywords": [
+      "Mill"
+    ],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{1}{B}{G}",
+    "name": "Grist, the Hunger Tide",
+    "oracle_id": "0efb0d7e-dea0-4817-a243-15066e9ef333",
+    "oracle_text": "As long as Grist isn't on the battlefield, it's a 1/1 Insect creature in addition to its other types.\n+1: Create a 1/1 black and green Insect creature token, then mill a card. If an Insect card was milled this way, put a loyalty counter on Grist and repeat this process.\n−2: You may sacrifice a creature. When you do, destroy target creature or planeswalker.\n−5: Each opponent loses life equal to the number of creature cards in your graveyard.",
+    "prices": {
+      "usd": "0.41"
+    },
+    "scryfall_uri": "https://scryfall.com/card/dsc/220/grist-the-hunger-tide?utm_source=api",
+    "set": "dsc",
+    "type_line": "Legendary Planeswalker — Grist"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "low-land-grist",
+  "source_platform": "moxfield",
+  "source_url": "https://moxfield.com/decks/KACfZpvjC0SxiosNzIdIcQ"
+}

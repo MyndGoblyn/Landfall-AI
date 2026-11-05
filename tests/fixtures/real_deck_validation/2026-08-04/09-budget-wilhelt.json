@@ -1,0 +1,1363 @@
+{
+  "cards": [
+    {
+      "cmc": 5.0,
+      "collector_number": "107",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Syr Konrad, the Grim",
+      "oracle_text": "Whenever another creature dies, or a creature card is put into a graveyard from anywhere other than the battlefield, or a creature card leaves your graveyard, Syr Konrad deals 1 damage to each opponent.\n{1}{B}: Each player mills a card. (They each put the top card of their library into their graveyard.)",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [
+        "blink",
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature — Human Knight"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "151",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Noosegraf Mob",
+      "oracle_text": "This creature enters with five +1/+1 counters on it.\nWhenever a player casts a spell, remove a +1/+1 counter from this creature. If you do, create a 2/2 black Zombie creature token.",
+      "qty": 1,
+      "set_code": "bbd",
+      "tags": [
+        "counters",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Creature — Zombie"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "109",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Tragic Slip",
+      "oracle_text": "Target creature gets -1/-1 until end of turn.\nMorbid — That creature gets -13/-13 until end of turn instead if a creature died this turn.",
+      "qty": 1,
+      "set_code": "ema",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "90",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Graf Harvest",
+      "oracle_text": "Zombies you control have menace. (They can't be blocked except by two or more creatures.)\n{3}{B}, Exile a creature card from your graveyard: Create a 2/2 black Zombie creature token.",
+      "qty": 1,
+      "set_code": "emn",
+      "tags": [
+        "blink",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "34",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Eternal of Harsh Truths",
+      "oracle_text": "Afflict 2 (Whenever this creature becomes blocked, defending player loses 2 life.)\nWhenever this creature attacks and isn't blocked, draw a card.",
+      "qty": 1,
+      "set_code": "hou",
+      "tags": [],
+      "type_line": "Creature — Zombie Cleric"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "67",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dregscape Zombie",
+      "oracle_text": "Unearth {B} ({B}: Return this card from your graveyard to the battlefield. It gains haste. Exile it at the beginning of the next end step or if it would leave the battlefield. Unearth only as a sorcery.)",
+      "qty": 1,
+      "set_code": "mm3",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Zombie"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "71",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Gnawing Zombie",
+      "oracle_text": "{1}{B}, Sacrifice a creature: Target player loses 1 life and you gain 1 life.",
+      "qty": 1,
+      "set_code": "mm3",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "76",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Dispel",
+      "oracle_text": "Counter target instant spell.",
+      "qty": 1,
+      "set_code": "bfz",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "53",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Encrust",
+      "oracle_text": "Enchant artifact or creature\nEnchanted permanent doesn't untap during its controller's untap step and its activated abilities can't be activated.",
+      "qty": 1,
+      "set_code": "m15",
+      "tags": [],
+      "type_line": "Enchantment — Aura"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "40",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Echoing Truth",
+      "oracle_text": "Return target nonland permanent and all other permanents with the same name as that permanent to their owners' hands.",
+      "qty": 1,
+      "set_code": "mma",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "87",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dreadmalkin",
+      "oracle_text": "Menace (This creature can't be blocked except by two or more creatures.)\n{2}{B}, Sacrifice another creature or planeswalker: Put two +1/+1 counters on this creature.",
+      "qty": 1,
+      "set_code": "war",
+      "tags": [
+        "counters",
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Cat"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "198",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Gleaming Overseer",
+      "oracle_text": "When this creature enters, amass Zombies 1. (Put a +1/+1 counter on an Army you control. It's also a Zombie. If you don't control an Army, create a 0/0 black Zombie Army creature token first.)\nZombie tokens you control have hexproof and menace.",
+      "qty": 1,
+      "set_code": "war",
+      "tags": [
+        "counters",
+        "token"
+      ],
+      "type_line": "Creature — Zombie Wizard"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "111",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Vizier of the Scorpion",
+      "oracle_text": "When this creature enters, amass Zombies 1. (Put a +1/+1 counter on an Army you control. It's also a Zombie. If you don't control an Army, create a 0/0 black Zombie Army creature token first.)\nZombie tokens you control have deathtouch.",
+      "qty": 1,
+      "set_code": "war",
+      "tags": [
+        "counters",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Wizard"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "91",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Festering Mummy",
+      "oracle_text": "When this creature dies, you may put a -1/-1 counter on target creature.",
+      "qty": 1,
+      "set_code": "akh",
+      "tags": [
+        "counters",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "62",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Faerie Trickery",
+      "oracle_text": "Counter target non-Faerie spell. If that spell is countered this way, exile it instead of putting it into its owner's graveyard.",
+      "qty": 1,
+      "set_code": "lrw",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Kindred Instant — Faerie"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "69",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Embalmed Brawler",
+      "oracle_text": "Amplify 1 (As this creature enters, put a +1/+1 counter on it for each Zombie card you reveal in your hand.)\nWhenever this creature attacks or blocks, you lose 1 life for each +1/+1 counter on it.",
+      "qty": 1,
+      "set_code": "lgn",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Zombie"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "100",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Grim Physician",
+      "oracle_text": "When this creature dies, target creature an opponent controls gets -1/-1 until end of turn.",
+      "qty": 1,
+      "set_code": "thb",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "228",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Eternal Taskmaster",
+      "oracle_text": "This creature enters tapped.\nWhenever this creature attacks, you may pay {2}{B}. If you do, return target creature card from your graveyard to your hand.",
+      "qty": 1,
+      "set_code": "jmp",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Zombie"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "24",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Drowned",
+      "oracle_text": "{B}: Regenerate this creature.",
+      "qty": 1,
+      "set_code": "drk",
+      "tags": [],
+      "type_line": "Creature — Zombie"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "130",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Festering Goblin",
+      "oracle_text": "When this creature dies, target creature gets -1/-1 until end of turn.",
+      "qty": 1,
+      "set_code": "9ed",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Goblin"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "72",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Forsaken Drifters",
+      "oracle_text": "When this creature dies, mill four cards.",
+      "qty": 1,
+      "set_code": "bng",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "68",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Diregraf Captain",
+      "oracle_text": "Deathtouch\nOther Zombie creatures you control get +1/+1.\nWhenever another Zombie you control dies, target opponent loses 1 life.",
+      "qty": 1,
+      "set_code": "ddq",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Soldier"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "99",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Graveyard Marshal",
+      "oracle_text": "{2}{B}, Exile a creature card from your graveyard: Create a tapped 2/2 black Zombie creature token.",
+      "qty": 1,
+      "set_code": "m19",
+      "tags": [
+        "blink",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature — Zombie Soldier"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "62",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Into the Roil",
+      "oracle_text": "Kicker {1}{U} (You may pay an additional {1}{U} as you cast this spell.)\nReturn target nonland permanent to its owner's hand. If this spell was kicked, draw a card.",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "71",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Negate",
+      "oracle_text": "Counter target noncreature spell.",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "103",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Ghastly Gloomhunter",
+      "oracle_text": "Kicker {3}{B} (You may pay an additional {3}{B} as you cast this spell.)\nFlying, lifelink\nIf this creature was kicked, it enters with two +1/+1 counters on it.",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [
+        "counters",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Zombie Bat"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "24",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Distant Melody",
+      "oracle_text": "Choose a creature type. Draw a card for each permanent you control of that type.",
+      "qty": 1,
+      "set_code": "znc",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "479",
+      "color_identity": [],
+      "colors": [],
+      "name": "Command Tower",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "128",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Fleshbag Marauder",
+      "oracle_text": "When this creature enters, each player sacrifices a creature of their choice.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Warrior"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "341",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Sky Diamond",
+      "oracle_text": "This artifact enters tapped.\n{T}: Add {U}.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "396",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Fact or Fiction",
+      "oracle_text": "Reveal the top five cards of your library. An opponent separates those cards into two piles. Put one pile into your hand and the other into your graveyard.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "157",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Victimize",
+      "oracle_text": "Choose two target creature cards in your graveyard. Sacrifice a creature. If you do, return the chosen cards to the battlefield tapped.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "357",
+      "color_identity": [],
+      "colors": [],
+      "name": "Terramorphic Expanse",
+      "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "117",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Village Rites",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature.\nDraw two cards.",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "42",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Annul",
+      "oracle_text": "Counter target artifact or enchantment spell.",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "55",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Draugr Thought-Thief",
+      "oracle_text": "When this creature enters, look at the top card of target player's library. You may put that card into their graveyard.",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature — Zombie Rogue"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "117",
+      "color_identity": [],
+      "colors": [],
+      "name": "Path of Ancestry",
+      "oracle_text": "This land enters tapped.\n{T}: Add one mana of any color in your commander's color identity. When that mana is spent to cast a creature spell that shares a creature type with your commander, scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "78",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Piracy Charm",
+      "oracle_text": "Choose one —\n• Target creature gains islandwalk until end of turn. (It can't be blocked as long as defending player controls an Island.)\n• Target creature gets +2/-1 until end of turn.\n• Target player discards a card.",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "114",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Aetherspouts",
+      "oracle_text": "For each attacking creature, its owner puts it on their choice of the top or bottom of their library.",
+      "qty": 1,
+      "set_code": "c21",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "256",
+      "color_identity": [],
+      "colors": [],
+      "name": "Evolving Wilds",
+      "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "afr",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "79",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Brainstorm",
+      "oracle_text": "Draw three cards, then put two cards from your hand on top of your library in any order.",
+      "qty": 1,
+      "set_code": "afc",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "228",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Choked Estuary",
+      "oracle_text": "As this land enters, you may reveal an Island or Swamp card from your hand. If you don't, this land enters tapped.\n{T}: Add {U} or {B}.",
+      "qty": 1,
+      "set_code": "afc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "265",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Sunken Hollow",
+      "oracle_text": "({T}: Add {U} or {B}.)\nThis land enters tapped unless you control two or more basic lands.",
+      "qty": 1,
+      "set_code": "afc",
+      "tags": [],
+      "type_line": "Land — Island Swamp"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "212",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Bladestitched Skaab",
+      "oracle_text": "Other Zombies you control get +1/+0.",
+      "qty": 1,
+      "set_code": "mid",
+      "tags": [],
+      "type_line": "Creature — Zombie Soldier"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "102",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Ghoulish Procession",
+      "oracle_text": "Whenever one or more nontoken creatures die, create a 2/2 black Zombie creature token with decayed. This ability triggers only once each turn. (A creature with decayed can't block. When it attacks, sacrifice it at end of combat.)",
+      "qty": 1,
+      "set_code": "mid",
+      "tags": [
+        "stax",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "214",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Corpse Cobble",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice any number of creatures.\nCreate an X/X blue and black Zombie creature token with menace, where X is the total power of the sacrificed creatures.\nFlashback {3}{U}{B} (You may cast this card from your graveyard for its flashback cost and any additional costs. Then exile it.)",
+      "qty": 1,
+      "set_code": "mid",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "254",
+      "color_identity": [],
+      "colors": [],
+      "name": "Jack-o'-Lantern",
+      "oracle_text": "{1}, {T}, Sacrifice this artifact: Exile up to one target card from a graveyard. Draw a card.\n{1}, Exile this card from your graveyard: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "mid",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "99",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Eaten Alive",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature or pay {3}{B}.\nExile target creature or planeswalker.",
+      "qty": 1,
+      "set_code": "mid",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "83",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Vivisection",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature.\nDraw three cards.",
+      "qty": 1,
+      "set_code": "mid",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 8.0,
+      "collector_number": "20",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Gorex, the Tombshell",
+      "oracle_text": "As an additional cost to cast this spell, you may exile any number of creature cards from your graveyard. This spell costs {2} less to cast for each card exiled this way.\nDeathtouch\nWhenever Gorex attacks or dies, choose a card at random exiled with Gorex and put that card into its owner's hand.",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature — Zombie Turtle"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "131",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Zombie Apocalypse",
+      "oracle_text": "Return all Zombie creature cards from your graveyard to the battlefield tapped, then destroy all Humans.",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "110",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dark Salvation",
+      "oracle_text": "Target player creates X 2/2 black Zombie creature tokens, then up to one target creature gets -1/-1 until end of turn for each Zombie that player controls.",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "114",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dreadhorde Invasion",
+      "oracle_text": "At the beginning of your upkeep, you lose 1 life and amass Zombies 1. (Put a +1/+1 counter on an Army you control. It's also a Zombie. If you don't control an Army, create a 0/0 black Zombie Army creature token first.)\nWhenever a Zombie token you control with power 6 or greater attacks, it gains lifelink until end of turn.",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "counters",
+        "token"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "99",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Eternal Skylord",
+      "oracle_text": "When this creature enters, amass Zombies 2. (Put two +1/+1 counters on an Army you control. It's also a Zombie. If you don't control an Army, create a 0/0 black Zombie Army creature token first.)\nZombie tokens you control have flying.",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "counters",
+        "token"
+      ],
+      "type_line": "Creature — Zombie Wizard"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "122",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Liliana's Devotee",
+      "oracle_text": "Zombies you control get +1/+0.\nAt the beginning of your end step, if a creature died this turn, you may pay {1}{B}. If you do, create a 2/2 black Zombie creature token.",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature — Human Warlock"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "129",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Syphon Flesh",
+      "oracle_text": "Each other player sacrifices a creature. You create a 2/2 black Zombie creature token for each creature sacrificed this way.",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "stax",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "130",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Undead Augur",
+      "oracle_text": "Whenever this creature or another Zombie you control dies, you draw a card and you lose 1 life.",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Wizard"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "112",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Fell Stinger",
+      "oracle_text": "Deathtouch\nExploit (When this creature enters, you may sacrifice a creature.)\nWhen this creature exploits a creature, target player draws two cards and loses 2 life.",
+      "qty": 1,
+      "set_code": "vow",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Scorpion"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "93",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Archghoul of Thraben",
+      "oracle_text": "Whenever this creature or another Zombie you control dies, look at the top card of your library. If it's a Zombie card, you may reveal it and put it into your hand. If you don't put the card into your hand, you may put it into your graveyard.",
+      "qty": 1,
+      "set_code": "vow",
+      "tags": [
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Cleric"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "115",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Graf Reaver",
+      "oracle_text": "Exploit (When this creature enters, you may sacrifice a creature.)\nWhen this creature exploits a creature, destroy target planeswalker.\nAt the beginning of your upkeep, this creature deals 1 damage to you.",
+      "qty": 1,
+      "set_code": "vow",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Warrior"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "249",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Dread Summons",
+      "oracle_text": "Each player mills X cards. For each creature card put into a graveyard this way, you create a tapped 2/2 black Zombie creature token. (To mill a card, a player puts the top card of their library into their graveyard.)",
+      "qty": 1,
+      "set_code": "ncc",
+      "tags": [
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "442",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Charcoal Diamond",
+      "oracle_text": "This artifact enters tapped.\n{T}: Add {B}.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "128",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Ghost Lantern // Bind Spirit",
+      "oracle_text": "Whenever a creature you control dies, put a +1/+1 counter on equipped creature.\nEquip {1} // Return target creature card from your graveyard to your hand. (Then exile this card. You may cast the artifact later from exile.)",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "spellslinger",
+        "equipment",
+        "counters",
+        "reanimator"
+      ],
+      "type_line": "Artifact — Equipment // Instant — Adventure"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "900",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Mortuary Mire",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, you may put target creature card from your graveyard on top of your library.\n{T}: Add {B}.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 7.0,
+      "collector_number": "741",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Butcher of Malakir",
+      "oracle_text": "Flying\nWhenever this creature or another creature you control dies, each opponent sacrifices a creature of their choice.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Vampire Warrior"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "744",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Corpse Augur",
+      "oracle_text": "When this creature dies, you draw X cards and you lose X life, where X is the number of creature cards in target player's graveyard.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Wizard"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "721",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Forgotten Creation",
+      "oracle_text": "Skulk (This creature can't be blocked by creatures with greater power.)\nAt the beginning of your upkeep, you may discard all the cards in your hand. If you do, draw that many cards.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Creature — Zombie Horror"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "866",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mindcrank",
+      "oracle_text": "Whenever an opponent loses life, that player mills that many cards. (Damage causes loss of life.)",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "920",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Tainted Isle",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add {U} or {B}. Activate only if you control a Swamp.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "44",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Deep Analysis",
+      "oracle_text": "Target player draws two cards.\nFlashback—{1}{U}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "2x2",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "76",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Go for the Throat",
+      "oracle_text": "Destroy target nonartifact creature.",
+      "qty": 1,
+      "set_code": "2x2",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "456",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "qty": 14,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Basic Land — Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "461",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Swamp",
+      "oracle_text": "({T}: Add {B}.)",
+      "qty": 14,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Basic Land — Swamp"
+    }
+  ],
+  "case_id": "09",
+  "color_identity": [
+    "B",
+    "U"
+  ],
+  "commander": "Wilhelt, the Rotcleaver",
+  "commander_card": {
+    "cmc": 4.0,
+    "collector_number": "2",
+    "color_identity": [
+      "B",
+      "U"
+    ],
+    "colors": [
+      "B",
+      "U"
+    ],
+    "edhrec_rank": 2678,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/2/5/2501a911-d072-436d-ae3b-a5164e3b30aa.jpg?1783925384",
+      "normal": "https://cards.scryfall.io/normal/front/2/5/2501a911-d072-436d-ae3b-a5164e3b30aa.jpg?1783925384",
+      "small": "https://cards.scryfall.io/small/front/2/5/2501a911-d072-436d-ae3b-a5164e3b30aa.jpg?1783925384"
+    },
+    "keywords": [],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{2}{U}{B}",
+    "name": "Wilhelt, the Rotcleaver",
+    "oracle_id": "eada96a1-4964-4ad0-b0e3-2df08d6ae188",
+    "oracle_text": "Whenever another Zombie you control dies, if it didn't have decayed, create a 2/2 black Zombie creature token with decayed. (It can't block. When it attacks, sacrifice it at end of combat.)\nAt the beginning of your end step, you may sacrifice a Zombie. If you do, draw a card.",
+    "power": "3",
+    "prices": {
+      "usd": "11.33",
+      "usd_foil": "11.31"
+    },
+    "scryfall_uri": "https://scryfall.com/card/mic/2/wilhelt-the-rotcleaver?utm_source=api",
+    "set": "mic",
+    "toughness": "3",
+    "type_line": "Legendary Creature — Zombie Warrior"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "budget-wilhelt",
+  "source_platform": "moxfield",
+  "source_url": "https://moxfield.com/decks/UXK30FVy5kupYBvxiEfcHA"
+}

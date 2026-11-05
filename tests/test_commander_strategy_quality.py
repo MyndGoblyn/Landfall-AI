@@ -1478,7 +1478,7 @@ def test_deck_analysis_cut_suggestions_flag_redundant_off_theme_roles():
     cards = [redundant_draw] + [
         {
             "name": f"Cheap Draw {index}",
-            "oracle_text": "Draw a card.",
+            "oracle_text": "At the beginning of your upkeep, draw a card.",
             "type_line": "Instant",
             "cmc": 1,
             "tags": [],
@@ -2298,3 +2298,437 @@ def test_donation_archetype_outranks_incidental_combat_and_counters():
     assert "goad" in synergies
     assert "control-exchange plan" in joined
     assert "counter cards" not in joined
+
+
+def test_typal_quality_distinguishes_payoff_text_from_a_matching_body():
+    engine = make_engine()
+    commander = {
+        "name": "Goblin Commander",
+        "type_line": "Legendary Creature - Goblin Warrior",
+        "oracle_text": "Other Goblins you control get +1/+1.",
+        "color_identity": ["R"],
+    }
+    payoff = {
+        "name": "Goblin Rally Captain",
+        "type_line": "Creature - Goblin",
+        "oracle_text": "Other Goblins you control have haste.",
+        "cmc": 3,
+    }
+    incidental_body = {
+        "name": "Goblin Spellslinger",
+        "type_line": "Creature - Goblin Shaman",
+        "oracle_text": "Whenever you cast an instant or sorcery spell, deal 1 damage to each opponent.",
+        "cmc": 2,
+    }
+
+    payoff_quality = engine._recommendation_quality_metadata(payoff, "typal", commander)
+    body_quality = engine._recommendation_quality_metadata(incidental_body, "typal", commander)
+
+    assert "direct_synergy" in payoff_quality["evidence_tags"]
+    assert "direct_synergy" not in body_quality["evidence_tags"]
+    assert payoff_quality["score"] > body_quality["score"]
+
+
+def test_typal_combat_lane_rejects_off_type_personal_attack_trigger():
+    engine = make_engine()
+    commander = {
+        "name": "Dragon Attack Commander",
+        "type_line": "Legendary Creature - Dragon Avatar",
+        "oracle_text": "Whenever one or more Dragons you control attack, draw a card.",
+        "color_identity": ["R", "G"],
+    }
+    off_type_attacker = {
+        "name": "Unrelated Attacker",
+        "type_line": "Creature - Giant",
+        "oracle_text": "Whenever this creature attacks, draw a card.",
+        "cmc": 3,
+    }
+    team_support = {
+        "name": "Team Haste Support",
+        "type_line": "Creature - Human Warrior",
+        "oracle_text": "Creatures you control have haste.",
+        "cmc": 3,
+    }
+
+    assert not engine._card_matches_commander_context(
+        off_type_attacker,
+        "attack_triggers",
+        commander,
+    )
+    assert engine._card_matches_commander_context(
+        team_support,
+        "attack_triggers",
+        commander,
+    )
+
+
+def test_graveyard_quality_requires_a_reusable_job_and_explains_it():
+    engine = make_engine()
+    commander = {
+        "name": "Permanent Recursion Commander",
+        "type_line": "Legendary Creature - Elemental Avatar",
+        "oracle_text": "During each of your turns, you may play a permanent card of each permanent type from your graveyard.",
+        "color_identity": ["B", "G", "U"],
+    }
+    self_mill = {
+        "name": "Graveyard Supplier",
+        "type_line": "Creature - Satyr",
+        "oracle_text": "When this creature enters, mill three cards.",
+        "cmc": 2,
+    }
+    graveyard_hate = {
+        "name": "Graveyard Exiler",
+        "type_line": "Artifact",
+        "oracle_text": "Exile all cards from target player's graveyard.",
+        "cmc": 1,
+    }
+    redundant_recursion_spell = {
+        "name": "One-Shot Reanimation",
+        "type_line": "Sorcery",
+        "oracle_text": "Return target creature card from your graveyard to the battlefield.",
+        "cmc": 1,
+    }
+
+    quality = engine._recommendation_quality_metadata(
+        self_mill,
+        "graveyard",
+        commander,
+    )
+    reason = engine._generate_validated_recommendation_reason(
+        self_mill,
+        commander["name"],
+        "graveyard",
+        quality,
+        commander,
+    )
+    redundant_quality = engine._recommendation_quality_metadata(
+        redundant_recursion_spell,
+        "graveyard",
+        commander,
+    )
+
+    assert quality["job"] == "self-mill enabler"
+    assert {"direct_synergy", "enabler"}.issubset(quality["evidence_tags"])
+    assert "graveyard" in reason.lower()
+    assert not engine._card_matches_synergy(graveyard_hate, "graveyard")
+    assert redundant_quality["score"] < quality["score"]
+    assert "direct_synergy" not in redundant_quality["evidence_tags"]
+
+
+def test_own_creature_targeting_commander_rejects_incidental_graveyard_and_burn():
+    engine = make_engine()
+    commander = {
+        "name": "Targeting Recursion Commander",
+        "type_line": "Legendary Creature - Angel",
+        "oracle_text": (
+            "Whenever you cast an instant or sorcery spell that targets a creature you control, "
+            "exile that card instead of putting it into your graveyard as it resolves. "
+            "Return it to your hand at the beginning of the next end step."
+        ),
+        "color_identity": ["R", "W"],
+    }
+    cantrip = {
+        "name": "Targeting Cantrip",
+        "type_line": "Instant",
+        "oracle_text": "Target creature gets +1/+0 until end of turn. Draw a card.",
+        "cmc": 1,
+    }
+    burn = {
+        "name": "Burn Spell",
+        "type_line": "Instant",
+        "oracle_text": "Burn Spell deals 3 damage to any target.",
+        "cmc": 1,
+    }
+
+    synergies = engine._detect_commander_synergies(commander)
+    constraints = engine._get_commander_constraints(commander)
+    quality = engine._recommendation_quality_metadata(
+        cantrip,
+        "target_spells",
+        commander,
+    )
+    reason = engine._generate_validated_recommendation_reason(
+        cantrip,
+        commander["name"],
+        "target_spells",
+        quality,
+        commander,
+    )
+
+    assert synergies[0] == "target_spells"
+    assert "graveyard" not in synergies
+    assert constraints["target_scope"] == "own_creature"
+    assert engine._card_matches_commander_context(cantrip, "target_spells", commander)
+    assert not engine._card_matches_commander_context(burn, "target_spells", commander)
+    assert quality["job"] == "repeatable targeting cantrip"
+    assert "targeting your own creature" in reason.lower()
+
+
+def test_graveyard_return_text_is_not_misclassified_as_blink():
+    engine = make_engine()
+    meren = {
+        "name": "Meren of Clan Nel Toth",
+        "type_line": "Legendary Creature — Human Shaman",
+        "oracle_text": (
+            "Whenever another creature you control dies, you get an experience counter. "
+            "At the beginning of your end step, choose target creature card in your graveyard. "
+            "If that card's mana value is less than or equal to the number of experience "
+            "counters you have, return it to the battlefield. Otherwise, put it into your hand."
+        ),
+        "color_identity": ["B", "G"],
+    }
+
+    synergies = engine._detect_commander_synergies(meren)
+
+    assert "graveyard" in synergies
+    assert "sacrifice" in synergies
+    assert "blink" not in synergies
+
+
+def test_card_type_enumeration_is_not_split_into_unrelated_type_themes():
+    engine = make_engine()
+    atraxa = {
+        "name": "Atraxa, Grand Unifier",
+        "type_line": "Legendary Creature — Phyrexian Angel",
+        "oracle_text": (
+            "When Atraxa, Grand Unifier enters the battlefield, reveal the top ten "
+            "cards of your library. For each card type, you may put a card of that "
+            "type from among the revealed cards into your hand. Put the rest on the "
+            "bottom of your library in a random order."
+        ),
+        "color_identity": ["W", "U", "B", "G"],
+    }
+
+    synergies = engine._detect_commander_synergies(atraxa)
+    constraints = engine._get_commander_constraints(atraxa)
+
+    assert "card_type_diversity" in synergies
+    assert "artifact" not in synergies
+    assert "enchantment" not in synergies
+    assert "instant_sorcery" not in synergies
+    assert constraints["card_type_diversity"]
+    assert "planeswalker" in constraints["card_types_mentioned"]
+
+
+def test_main_deck_legality_rejects_supplementary_objects():
+    engine = make_engine()
+    sticker = {
+        "name": "Carnival Elephant Meteor",
+        "type_line": "Stickers",
+        "oracle_text": "Whenever this creature attacks, proliferate.",
+        "color_identity": [],
+        "legalities": {"commander": "legal"},
+    }
+    banned_card = {
+        "name": "Banned Example",
+        "type_line": "Artifact",
+        "oracle_text": "",
+        "color_identity": [],
+        "legalities": {"commander": "banned"},
+    }
+    legal_card = {
+        "name": "Legal Example",
+        "type_line": "Artifact Creature — Construct",
+        "oracle_text": "",
+        "color_identity": [],
+        "legalities": {"commander": "legal"},
+    }
+
+    assert not engine._is_legal_for_deck(sticker, ["B", "G"])
+    assert not engine._is_legal_for_deck(banned_card, ["B", "G"])
+    assert engine._is_legal_for_deck(legal_card, ["B", "G"])
+
+
+def test_light_paws_deck_context_requires_aura_recommendations():
+    engine = make_engine()
+    commander = {
+        "name": "Light-Paws, Emperor's Voice",
+        "type_line": "Legendary Creature — Fox Advisor",
+        "oracle_text": (
+            "Whenever an Aura you control enters, if you cast it, you may search your "
+            "library for an Aura card and put it onto the battlefield attached to Light-Paws."
+        ),
+        "color_identity": ["W"],
+    }
+    equipment = {
+        "name": "Sword of the Animist",
+        "type_line": "Artifact — Equipment",
+        "oracle_text": "Equipped creature gets +1/+1. Equip {2}.",
+    }
+    generic_enchantment_draw = {
+        "name": "Enduring Innocence",
+        "type_line": "Enchantment Creature - Sheep Glimmer",
+        "oracle_text": (
+            "Whenever one or more other creatures you control with power 2 or less enter, "
+            "draw a card."
+        ),
+    }
+    aura = {
+        "name": "Sheltered by Ghosts",
+        "type_line": "Enchantment — Aura",
+        "oracle_text": "Enchant creature you control. Enchanted creature gets +1/+0 and has ward {2}.",
+    }
+    aura_support = {
+        "name": "Aura Supporter",
+        "type_line": "Creature — Human",
+        "oracle_text": "Whenever you cast an Aura spell, draw a card.",
+    }
+    generic_token_maker = {
+        "name": "Generic Token Maker",
+        "type_line": "Artifact",
+        "oracle_text": "Create a 1/1 colorless creature token.",
+    }
+
+    assert not engine._card_matches_commander_context(equipment, "voltron", commander)
+    assert engine._card_matches_commander_context(aura, "voltron", commander)
+    assert engine._card_matches_commander_context(aura_support, "creature", commander)
+    assert not engine._card_matches_commander_context(generic_token_maker, "creature", commander)
+    assert engine._passes_deck_plan_role_floor(
+        aura_support, "draw", ["voltron", "enchantment"], {"aura_tutor_chain": True}
+    )
+    assert not engine._passes_deck_plan_role_floor(
+        equipment, "draw", ["voltron", "enchantment"], {"aura_tutor_chain": True}
+    )
+    assert not engine._passes_deck_plan_role_floor(
+        generic_enchantment_draw,
+        "draw",
+        ["voltron", "enchantment"],
+        {"aura_tutor_chain": True},
+    )
+
+
+def test_talrand_token_context_requires_spells_or_spell_payoffs():
+    engine = make_engine()
+    commander = {
+        "name": "Talrand, Sky Summoner",
+        "type_line": "Legendary Creature — Merfolk Wizard",
+        "oracle_text": (
+            "Whenever you cast an instant or sorcery spell, create a 2/2 blue Drake "
+            "creature token with flying."
+        ),
+        "color_identity": ["U"],
+    }
+    token_artifact = {
+        "name": "Idol of Oblivion",
+        "type_line": "Artifact",
+        "oracle_text": "Create a 10/10 colorless Eldrazi creature token.",
+    }
+    token_instant = {
+        "name": "Kozilek's Command",
+        "type_line": "Kindred Instant — Eldrazi",
+        "oracle_text": "Create two 0/1 colorless Eldrazi Spawn creature tokens.",
+    }
+
+    assert not engine._card_matches_commander_context(token_artifact, "tokens", commander)
+    assert engine._card_matches_commander_context(token_instant, "tokens", commander)
+    assert engine._passes_deck_plan_role_floor(
+        token_instant, "removal", ["instant_sorcery", "tokens"], {}
+    )
+    assert not engine._passes_deck_plan_role_floor(
+        token_artifact, "draw", ["instant_sorcery", "tokens"], {}
+    )
+
+
+def test_role_validation_rejects_opponent_resources_and_graveyard_hate():
+    engine = make_engine()
+    opponent_draw = {
+        "name": "Smothering Tithe",
+        "type_line": "Enchantment",
+        "oracle_text": "Whenever an opponent draws a card, that player may pay {2}.",
+    }
+    gifted_treasure = {
+        "name": "An Offer You Can't Refuse",
+        "type_line": "Instant",
+        "oracle_text": "Counter target noncreature spell. Its controller creates two Treasure tokens.",
+    }
+    graveyard_hate = {
+        "name": "Relic of Progenitus",
+        "type_line": "Artifact",
+        "oracle_text": "Exile Relic of Progenitus: Exile all graveyards. Draw a card.",
+    }
+    blink_spell = {
+        "name": "Essence Flux",
+        "type_line": "Instant",
+        "oracle_text": "Exile target creature you control, then return it to the battlefield.",
+    }
+    library_exile = {
+        "name": "Demonic Consultation",
+        "type_line": "Instant",
+        "oracle_text": "Exile the top six cards, then exile all other cards revealed this way.",
+    }
+    opponent_graveyards = {
+        "name": "Mnemonic Betrayal",
+        "type_line": "Sorcery",
+        "oracle_text": "Exile all opponents' graveyards.",
+    }
+
+    assert not engine._card_matches_role(opponent_draw, "draw")
+    assert not engine._card_matches_role(gifted_treasure, "ramp")
+    assert not engine._card_matches_role(graveyard_hate, "sweeper")
+    assert not engine._card_matches_role(blink_spell, "removal")
+    assert not engine._card_matches_role(library_exile, "sweeper")
+    assert not engine._card_matches_role(opponent_graveyards, "sweeper")
+    assert engine._is_graveyard_hate(opponent_graveyards["oracle_text"].lower())
+
+
+def test_donation_payloads_and_alt_cost_topdeck_cards_are_cut_protected():
+    engine = make_engine()
+    zedruu_payload = {
+        "name": "Transcendence",
+        "type_line": "Enchantment",
+        "oracle_text": "When you have 20 or more life, you lose the game.",
+        "cmc": 6,
+    }
+    statecraft = {
+        "name": "Statecraft",
+        "type_line": "Enchantment",
+        "oracle_text": (
+            "Prevent all combat damage that would be dealt to and dealt by creatures you control."
+        ),
+        "cmc": 4,
+    }
+    coveted_jewel = {
+        "name": "Coveted Jewel",
+        "type_line": "Artifact",
+        "oracle_text": (
+            "Whenever creatures an opponent controls attack you and aren't blocked, "
+            "that player draws three cards and gains control of this artifact."
+        ),
+        "cmc": 6,
+    }
+    grafted_skullcap = {
+        "name": "Grafted Skullcap",
+        "type_line": "Artifact",
+        "oracle_text": (
+            "At the beginning of your draw step, draw an additional card. "
+            "At the beginning of your end step, discard your hand."
+        ),
+        "cmc": 4,
+    }
+    yuriko = {
+        "name": "Yuriko, the Tiger's Shadow",
+        "type_line": "Legendary Creature — Human Ninja",
+        "oracle_text": (
+            "Whenever a Ninja you control deals combat damage to a player, reveal the top card "
+            "of your library and put that card into your hand. Each opponent loses life equal "
+            "to that card's mana value."
+        ),
+        "color_identity": ["U", "B"],
+    }
+    alternate_cost = {
+        "name": "Misdirection",
+        "type_line": "Instant",
+        "oracle_text": (
+            "You may exile a blue card from your hand rather than pay this spell's mana cost."
+        ),
+        "cmc": 5,
+    }
+
+    synergies = engine._detect_commander_synergies(yuriko)
+
+    assert "topdeck_value" in synergies
+    assert engine._card_supports_themes(zedruu_payload, {"donation"})
+    assert engine._card_supports_themes(statecraft, {"donation"})
+    assert engine._card_supports_themes(coveted_jewel, {"donation"})
+    assert engine._card_supports_themes(grafted_skullcap, {"donation"})
+    assert engine._card_supports_themes(alternate_cost, set(synergies))

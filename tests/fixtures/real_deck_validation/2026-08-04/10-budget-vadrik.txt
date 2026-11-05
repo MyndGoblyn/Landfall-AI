@@ -1,0 +1,79 @@
+# LandfallAI real-deck validation snapshot 10
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://archidekt.com/decks/4665428/budget_cedh_vadrik_astral_archmage
+
+# Commander
+1 Vadrik, Astral Archmage *CMDR*
+
+# Mainboard
+1 Underworld Breach
+1 Electrodominance
+1 Jeska's Will
+1 Brain Freeze
+1 Counterspell
+1 Brainstorm
+1 Clout of the Dominus
+1 Syncopate
+1 Mogg Salvage
+1 Condescend
+1 Downhill Charge
+1 Introduction to Prophecy
+1 Solve the Equation
+1 Mizzix's Mastery
+1 Clash of Wills
+1 Reckless Charge
+1 Blazing Shoal
+1 Sudden Breakthrough
+1 Epic Experiment
+1 Reiterate
+1 Seize the Spoils
+1 Visions of Ruin
+1 Ignite the Future
+1 Faithless Looting
+1 Fists of Flame
+1 Mystic Retrieval
+1 Seething Song
+1 Past in Flames
+1 Unexpected Windfall
+1 Recoup
+1 Pirate's Prize
+1 Stroke of Genius
+1 Drown in Dreams
+1 Fervent Mastery
+1 Ingenious Mastery
+1 Dispel
+1 Mind's Desire
+1 Quiet Speculation
+1 Tezzeret's Gambit
+1 Apex of Power
+1 Chain Reaction
+1 Invert // Invent
+1 Divination
+1 Negate
+1 Mana Geyser
+1 Command Tower
+1 Sol Ring
+1 Arcane Signet
+1 Fellwar Stone
+1 Talisman of Creativity
+1 Izzet Signet
+1 Fire Diamond
+1 Sky Diamond
+1 Runaway Steam-Kin
+1 Simian Spirit Guide
+1 Swiftfoot Boots
+1 Iron Myr
+1 Searing Touch
+1 Silundi Vision // Silundi Isle
+1 Valakut Awakening // Valakut Stoneforge
+1 Seething Anger
+1 Haze of Rage
+1 Petals of Insight
+1 Exotic Orchard
+1 Storm-Kiln Artist
+1 Frostboil Snarl
+1 Birgi, God of Storytelling // Harnfel, Horn of Bounty
+1 Shivan Reef
+15 Island
+15 Mountain
+1 Urabrask // The Great Work

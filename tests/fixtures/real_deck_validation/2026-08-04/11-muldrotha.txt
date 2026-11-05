@@ -1,0 +1,107 @@
+# LandfallAI real-deck validation snapshot 11
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://moxfield.com/decks/kTYAXLKbzUK41IgN_TBfjg
+
+# Commander
+1 Muldrotha, the Gravetide *CMDR*
+
+# Mainboard
+1 Oko, Thief of Crowns
+1 Wishclaw Talisman
+1 Eternal Witness
+1 Swan Song
+1 Dance of Many
+1 City of Traitors
+1 Survival of the Fittest
+1 Entomb
+1 Breeding Pool
+1 Ancient Tomb
+1 Phyrexian Tower
+1 Overgrown Tomb
+1 Watery Grave
+1 Phantasmal Image
+1 Intuition
+1 Waterlogged Grove
+1 Gaea's Cradle
+1 Gilded Drake
+1 Lion's Eye Diamond
+1 Bayou
+1 Tropical Island
+1 Underground Sea
+1 Crop Rotation
+1 Mesmeric Orb
+1 Polluted Delta
+1 Windswept Heath
+1 Sidisi, Undead Vizier
+1 Trinket Mage
+1 Pernicious Deed
+1 Cephalid Coliseum
+1 Vampiric Tutor
+1 Opposition Agent
+1 Command Beacon
+1 Pact of Negation
+1 Dark Ritual
+1 Urza's Saga
+1 Marsh Flats
+1 Scalding Tarn
+1 Misty Rainforest
+1 Verdant Catacombs
+1 Seal of Removal
+1 Wild Growth
+1 Boseiju, Who Endures
+1 Devoted Druid
+1 Mystic Remora
+1 Imperial Seal
+1 Mana Vault
+1 Bloom Tender
+1 Gifts Ungiven
+1 Snapcaster Mage
+1 Plaguecrafter
+1 Machine God's Effigy
+1 Haywire Mite
+1 Aether Spellbomb
+1 Rhystic Study
+1 The One Ring
+1 Invasion of Ikoria // Zilortha, Apex of Ikoria
+1 Thassa's Oracle
+1 Delighted Halfling
+1 Orcish Bowmasters
+1 Utopia Sprawl
+1 Command Tower
+1 Birds of Paradise
+1 Arcane Signet
+1 Sol Ring
+1 Hedge Maze
+1 Animate Dead
+1 Necromancy
+1 Six
+1 Sink into Stupor // Soporific Springs
+1 Shifting Woodland
+1 Ripples of Undeath
+1 Vexing Bauble
+1 Accursed Marauder
+1 Hazel's Brewmaster
+1 Insidious Fungus
+1 Hermit Druid
+1 Chrome Mox
+1 Gemstone Caverns
+1 Formidable Speaker
+1 Windfall
+1 Wan Shi Tong, Librarian
+1 The Cabbage Merchant
+1 Displacer Kitten
+1 Culling Ritual
+1 Abrupt Decay
+1 Deathrite Shaman
+1 Lotus Petal
+1 Mox Diamond
+1 Bloodstained Mire
+1 Flooded Strand
+1 Demonic Tutor
+1 Otawara, Soaring City
+1 Walking Ballista
+1 Flusterstorm
+1 Force of Will
+1 Fierce Guardianship
+1 Mental Misstep
+1 Mindbreak Trap

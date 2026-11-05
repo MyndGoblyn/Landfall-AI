@@ -1,0 +1,1475 @@
+{
+  "cards": [
+    {
+      "cmc": 4,
+      "collector_number": "119",
+      "color_identity": [
+        "W",
+        "U",
+        "B"
+      ],
+      "colors": [
+        "W",
+        "B",
+        "U"
+      ],
+      "name": "Alela, Artful Provocateur",
+      "oracle_text": "Flying, deathtouch, lifelink\nOther creatures you control with flying get +1/+0.\nWhenever you cast an artifact or enchantment spell, create a 1/1 blue Faerie creature token with flying.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "spellslinger",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature - Faerie Warlock"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "148",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [],
+      "name": "Ancient Den",
+      "oracle_text": "{T}: Add {W}.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 7,
+      "collector_number": "63",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Angel of the Ruins",
+      "oracle_text": "Flying\nWhen this creature enters, exile up to two target artifacts and/or enchantments.\nPlainscycling {2} ({2}, Discard this card: Search your library for a Plains card, reveal it, put it into your hand, then shuffle.)",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Creature Artifact - Angel"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "373",
+      "color_identity": [
+        "W",
+        "U",
+        "B"
+      ],
+      "colors": [],
+      "name": "Arcane Sanctum",
+      "oracle_text": "This land enters tapped.\n{T}: Add {W}, {U}, or {B}.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "57",
+      "color_identity": [],
+      "colors": [],
+      "name": "Arcane Signet",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "tmc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "103",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Armix, Filigree Thrasher",
+      "oracle_text": "Whenever Armix attacks, you may discard a card. When you do, target creature defending player controls gets -X/-X until end of turn, where X is the number of artifacts you control plus the number of artifact cards in your graveyard.\nPartner (You can have two commanders if both have partner.)",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Legendary Creature Artifact - Golem"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "60",
+      "color_identity": [],
+      "colors": [],
+      "name": "Ash Barrens",
+      "oracle_text": "{T}: Add {C}.\nBasic landcycling {1} ({1}, Discard this card: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.)",
+      "qty": 1,
+      "set_code": "tmc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "231",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Austere Command",
+      "oracle_text": "Choose two —\n• Destroy all artifacts.\n• Destroy all enchantments.\n• Destroy all creatures with mana value 3 or less.\n• Destroy all creatures with mana value 4 or greater.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "261",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [],
+      "name": "Azorius Chancery",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, return a land you control to its owner's hand.\n{T}: Add {W}{U}.",
+      "qty": 1,
+      "set_code": "dsc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "312",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [],
+      "name": "Azorius Signet",
+      "oracle_text": "{1}, {T}: Add {W}{U}.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "318",
+      "color_identity": [
+        "U",
+        "B"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Baleful Strix",
+      "oracle_text": "Flying, deathtouch\nWhen this creature enters, draw a card.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Creature Artifact - Bird"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "162",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Bident of Thassa",
+      "oracle_text": "Whenever a creature you control deals combat damage to a player, you may draw a card.\n{1}{U}, {T}: Creatures your opponents control attack this turn if able.",
+      "qty": 1,
+      "set_code": "blc",
+      "tags": [],
+      "type_line": "Legendary Artifact Enchantment"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "149",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Bojuka Bog",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "234",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Bronze Guardian",
+      "oracle_text": "Double strike\nWard {2} (Whenever this creature becomes the target of a spell or ability an opponent controls, counter it unless that player pays {2}.)\nOther artifacts you control have ward {2}.\nBronze Guardian's power is equal to the number of artifacts you control.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [],
+      "type_line": "Creature Artifact - Golem"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "747",
+      "color_identity": [],
+      "colors": [],
+      "name": "Chief of the Foundry",
+      "oracle_text": "Other artifact creatures you control get +1/+1.",
+      "qty": 1,
+      "set_code": "j25",
+      "tags": [],
+      "type_line": "Creature Artifact - Construct"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "123",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [
+        "W",
+        "U"
+      ],
+      "name": "Chrome Courier",
+      "oracle_text": "Flying\nWhen this creature enters, reveal the top two cards of your library. Put one of them into your hand and the other into your graveyard. If you put an artifact card into your hand this way, you gain 3 life.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Creature Artifact - Thopter"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "63",
+      "color_identity": [],
+      "colors": [],
+      "name": "Command Tower",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "tmc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "136",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Cranial Plating",
+      "oracle_text": "Equipped creature gets +1/+0 for each artifact you control.\n{B}{B}: Attach this Equipment to target creature you control.\nEquip {1}",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "equipment"
+      ],
+      "type_line": "Artifact - Equipment"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "180",
+      "color_identity": [],
+      "colors": [],
+      "name": "Darksteel Citadel",
+      "oracle_text": "Indestructible\n{T}: Add {C}.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "137",
+      "color_identity": [],
+      "colors": [],
+      "name": "Darksteel Juggernaut",
+      "oracle_text": "Indestructible\nDarksteel Juggernaut's power and toughness are each equal to the number of artifacts you control.\nThis creature attacks each combat if able.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Creature Artifact - Juggernaut"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "284",
+      "color_identity": [
+        "W",
+        "B"
+      ],
+      "colors": [
+        "W",
+        "B"
+      ],
+      "name": "Despark",
+      "oracle_text": "Exile target permanent with mana value 4 or greater.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "71",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Digsite Engineer",
+      "oracle_text": "Whenever you cast an artifact spell, you may pay {2}. If you do, create a 0/0 colorless Construct artifact creature token with \"This token gets +1/+1 for each artifact you control.\"",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Creature - Artificer Dwarf"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "270",
+      "color_identity": [
+        "U",
+        "B"
+      ],
+      "colors": [],
+      "name": "Dimir Aqueduct",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, return a land you control to its owner's hand.\n{T}: Add {U}{B}.",
+      "qty": 1,
+      "set_code": "dsc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "129",
+      "color_identity": [
+        "U",
+        "B"
+      ],
+      "colors": [],
+      "name": "Dimir Signet",
+      "oracle_text": "{1}, {T}: Add {U}{B}.",
+      "qty": 1,
+      "set_code": "drc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "140",
+      "color_identity": [],
+      "colors": [],
+      "name": "Etched Champion",
+      "oracle_text": "Metalcraft — This creature has protection from each color as long as you control three or more artifacts.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Creature Artifact - Soldier"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "72",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Etherium Sculptor",
+      "oracle_text": "Artifact spells you cast cost {1} less to cast.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature Artifact - Artificer Vedalken"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "222",
+      "color_identity": [
+        "W",
+        "U",
+        "B"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Ethersworn Adjudicator",
+      "oracle_text": "Flying\n{1}{W}{B}, {T}: Destroy target creature or enchantment.\n{2}{U}: Untap this creature.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [],
+      "type_line": "Creature Artifact - Knight Vedalken"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "65",
+      "color_identity": [],
+      "colors": [],
+      "name": "Evolving Wilds",
+      "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "tmc",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "66",
+      "color_identity": [],
+      "colors": [],
+      "name": "Exotic Orchard",
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "qty": 1,
+      "set_code": "tmc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "312",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Filigree Attendant",
+      "oracle_text": "Flying\nFiligree Attendant's power is equal to the number of artifacts you control.",
+      "qty": 1,
+      "set_code": "j25",
+      "tags": [],
+      "type_line": "Creature Artifact - Homunculus"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "407",
+      "color_identity": [
+        "W",
+        "B"
+      ],
+      "colors": [],
+      "name": "Goldmire Bridge",
+      "oracle_text": "This land enters tapped.\nIndestructible\n{T}: Add {W} or {B}.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "14",
+      "color_identity": [],
+      "colors": [],
+      "name": "Hexavus",
+      "oracle_text": "Flying\nThis creature enters with six +1/+1 counters on it.\n{1}, Remove a +1/+1 counter from this creature: Put a flying counter on another target creature.\n{1}, Remove a counter from another creature you control: Put a +1/+1 counter on this creature.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature Artifact - Construct"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "72",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Indomitable Archangel",
+      "oracle_text": "Flying\nMetalcraft — Artifacts you control have shroud as long as you control three or more artifacts. (An artifact with shroud can't be the target of spells or abilities.)",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Creature - Angel"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "316",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "qty": 4,
+      "set_code": "tmt",
+      "tags": [],
+      "type_line": "Basic Land - Island"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "15",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [],
+      "name": "Kayla's Music Box",
+      "oracle_text": "{W}, {T}: Look at the top card of your library, then exile it face down. (You may look at it any time.)\n{T}: Until end of turn, you may play cards you own exiled with Kayla's Music Box.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Legendary Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "145",
+      "color_identity": [],
+      "colors": [],
+      "name": "Liquimetal Torque",
+      "oracle_text": "{T}: Add {C}.\n{T}: Target nonland permanent becomes an artifact in addition to its other types until end of turn.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "38",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Losheel, Clockwork Scholar",
+      "oracle_text": "Prevent all combat damage that would be dealt to attacking artifact creatures you control.\nWhenever one or more artifact creatures you control enter, draw a card. This ability triggers only once each turn.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Legendary Creature - Artificer Elephant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "8",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "March of Progress",
+      "oracle_text": "Choose target artifact creature you control. For each creature chosen this way, create a token that's a copy of it.\nOverload {6}{U} (You may cast this spell for its overload cost. If you do, change its text by replacing all instances of \"target\" with \"each.\")",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "109",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Marionette Master",
+      "oracle_text": "Fabricate 3 (When this creature enters, put three +1/+1 counters on it or create three 1/1 colorless Servo artifact creature tokens.)\nWhenever an artifact you control is put into a graveyard from the battlefield, target opponent loses life equal to this creature's power.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature - Human Artificer"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "226",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Master of Etherium",
+      "oracle_text": "Master of Etherium's power and toughness are each equal to the number of artifacts you control.\nOther artifact creatures you control get +1/+1.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [],
+      "type_line": "Creature Artifact - Wizard Vedalken"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "189",
+      "color_identity": [
+        "U",
+        "B"
+      ],
+      "colors": [],
+      "name": "Mistvault Bridge",
+      "oracle_text": "This land enters tapped.\nIndestructible\n{T}: Add {U} or {B}.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 7,
+      "collector_number": "322",
+      "color_identity": [],
+      "colors": [],
+      "name": "Myr Battlesphere",
+      "oracle_text": "When this creature enters, create four 1/1 colorless Myr artifact creature tokens.\nWhenever this creature attacks, you may tap X untapped Myr you control. If you do, this creature gets +X/+0 until end of turn and deals X damage to the player or planeswalker it's attacking.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature Artifact - Construct Myr"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "191",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Noxious Gearhulk",
+      "oracle_text": "Menace\nWhen this creature enters, you may destroy another target creature. If a creature is destroyed this way, you gain life equal to its toughness.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [],
+      "type_line": "Creature Artifact - Construct"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "80",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "One with the Machine",
+      "oracle_text": "Draw cards equal to the greatest mana value among artifacts you control.",
+      "qty": 1,
+      "set_code": "drc",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "164",
+      "color_identity": [
+        "W",
+        "B"
+      ],
+      "colors": [],
+      "name": "Orzhov Basilica",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, return a land you control to its owner's hand.\n{T}: Add {W}{B}.",
+      "qty": 1,
+      "set_code": "drc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "323",
+      "color_identity": [
+        "W",
+        "B"
+      ],
+      "colors": [],
+      "name": "Orzhov Signet",
+      "oracle_text": "{1}, {T}: Add {W}{B}.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "70",
+      "color_identity": [],
+      "colors": [],
+      "name": "Path of Ancestry",
+      "oracle_text": "This land enters tapped.\n{T}: Add one mana of any color in your commander's color identity. When that mana is spent to cast a creature spell that shares a creature type with your commander, scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
+      "qty": 1,
+      "set_code": "tmc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "199",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Phyrexian Rebirth",
+      "oracle_text": "Destroy all creatures, then create an X/X colorless Phyrexian Horror artifact creature token, where X is the number of creatures destroyed this way.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "315",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [],
+      "name": "Plains",
+      "oracle_text": "({T}: Add {W}.)",
+      "qty": 4,
+      "set_code": "tmt",
+      "tags": [],
+      "type_line": "Basic Land - Plains"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "413",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [],
+      "name": "Prairie Stream",
+      "oracle_text": "({T}: Add {W} or {U}.)\nThis land enters tapped unless you control two or more basic lands.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [],
+      "type_line": "Land - Plains Island"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "161",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Preordain",
+      "oracle_text": "Scry 2, then draw a card. (To scry 2, look at the top two cards of your library, then put any number of them on the bottom and the rest on top in any order.)",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "171",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [],
+      "name": "Razortide Bridge",
+      "oracle_text": "This land enters tapped.\nIndestructible\n{T}: Add {W} or {U}.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "157",
+      "color_identity": [],
+      "colors": [],
+      "name": "Relic of Progenitus",
+      "oracle_text": "{T}: Target player exiles a card from their graveyard.\n{1}, Exile this artifact: Exile all graveyards. Draw a card.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "283",
+      "color_identity": [
+        "U",
+        "B"
+      ],
+      "colors": [],
+      "name": "River of Tears",
+      "oracle_text": "{T}: Add {U}. If you played a land this turn, add {B} instead.",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "82",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Sai, Master Thopterist",
+      "oracle_text": "Whenever you cast an artifact spell, create a 1/1 colorless Thopter artifact creature token with flying.\n{1}{U}, Sacrifice two artifacts: Draw a card.",
+      "qty": 1,
+      "set_code": "drc",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature - Human Artificer"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "5",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Sanwell, Avenger Ace",
+      "oracle_text": "As long as an artifact creature you control is attacking, prevent all damage that would be dealt to Sanwell.\nWhenever Sanwell becomes tapped, exile the top six cards of your library. You may cast a Vehicle or artifact creature spell from among them. Then put the rest on the bottom of your library in a random order.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Legendary Creature - Human Pilot"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "252",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Scholar of New Horizons",
+      "oracle_text": "This creature enters with a +1/+1 counter on it.\n{T}, Remove a counter from a permanent you control: Search your library for a Plains card and reveal it. If an opponent controls more lands than you, you may put that card onto the battlefield tapped. If you don't put the card onto the battlefield, put it into your hand. Then shuffle.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature - Human Scout"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "176",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Seat of the Synod",
+      "oracle_text": "{T}: Add {U}.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "235",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Sharding Sphinx",
+      "oracle_text": "Flying\nWhenever an artifact creature you control deals combat damage to a player, you may create a 1/1 blue Thopter artifact creature token with flying.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature Artifact - Sphinx"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "128",
+      "color_identity": [
+        "W",
+        "U",
+        "B"
+      ],
+      "colors": [
+        "W",
+        "B",
+        "U"
+      ],
+      "name": "Sharuum the Hegemon",
+      "oracle_text": "Flying\nWhen Sharuum enters, you may return target artifact card from your graveyard to the battlefield.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Creature Artifact - Sphinx"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "353",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Shimmer Dragon",
+      "oracle_text": "Flying\nAs long as you control four or more artifacts, this creature has hexproof. (It can't be the target of spells or abilities your opponents control.)\nTap two untapped artifacts you control: Draw a card.",
+      "qty": 1,
+      "set_code": "j25",
+      "tags": [],
+      "type_line": "Creature - Dragon"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "355",
+      "color_identity": [],
+      "colors": [],
+      "name": "Skullclamp",
+      "oracle_text": "Equipped creature gets +1/-1.\nWhenever equipped creature dies, draw two cards.\nEquip {1}",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [
+        "aristocrats",
+        "equipment"
+      ],
+      "type_line": "Artifact - Equipment"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "181",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [],
+      "name": "Skycloud Expanse",
+      "oracle_text": "{1}, {T}: Add {W}{U}.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "59",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sol Ring",
+      "oracle_text": "{T}: Add {C}{C}.",
+      "qty": 1,
+      "set_code": "tmc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "360",
+      "color_identity": [],
+      "colors": [],
+      "name": "Solemn Simulacrum",
+      "oracle_text": "When this creature enters, you may search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.\nWhen this creature dies, you may draw a card.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [
+        "blink",
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Creature Artifact - Golem"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "383",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [
+        "W",
+        "U"
+      ],
+      "name": "Sphinx's Revelation",
+      "oracle_text": "You gain X life and draw X cards.",
+      "qty": 1,
+      "set_code": "rvr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "183",
+      "color_identity": [],
+      "colors": [],
+      "name": "Spire of Industry",
+      "oracle_text": "{T}: Add {C}.\n{T}, Pay 1 life: Add one mana of any color. Activate only if you control an artifact.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "327",
+      "color_identity": [],
+      "colors": [],
+      "name": "Steel Hellkite",
+      "oracle_text": "Flying\n{2}: This creature gets +1/+0 until end of turn.\n{X}: Destroy each nonland permanent with mana value X whose controller was dealt combat damage by this creature this turn. Activate only once each turn.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [],
+      "type_line": "Creature Artifact - Dragon"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "144",
+      "color_identity": [],
+      "colors": [],
+      "name": "Steel Overseer",
+      "oracle_text": "{T}: Put a +1/+1 counter on each artifact creature you control.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature Artifact - Construct"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "76",
+      "color_identity": [
+        "U",
+        "B"
+      ],
+      "colors": [],
+      "name": "Sunken Hollow",
+      "oracle_text": "({T}: Add {U} or {B}.)\nThis land enters tapped unless you control two or more basic lands.",
+      "qty": 1,
+      "set_code": "tmc",
+      "tags": [],
+      "type_line": "Land - Island Swamp"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "317",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Swamp",
+      "oracle_text": "({T}: Add {B}.)",
+      "qty": 3,
+      "set_code": "tmt",
+      "tags": [],
+      "type_line": "Basic Land - Swamp"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "361",
+      "color_identity": [],
+      "colors": [],
+      "name": "Swiftfoot Boots",
+      "oracle_text": "Equipped creature has hexproof and haste. (It can't be the target of spells or abilities your opponents control. It can attack and {T} no matter when it came under your control.)\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [
+        "spellslinger",
+        "equipment"
+      ],
+      "type_line": "Artifact - Equipment"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "45",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Swords to Plowshares",
+      "oracle_text": "Exile target creature. Its controller gains life equal to its power.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "3",
+      "color_identity": [
+        "W",
+        "U",
+        "B"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Tawnos, Solemn Survivor",
+      "oracle_text": "{2}, {T}: Create a token that's a copy of up to one target artifact token you control. Mill two cards.\n{1}{W}{U}{B}, {T}, Sacrifice two artifact tokens, Exile an artifact or creature card from your graveyard: Create a token that's a copy of the exiled card, except it's an artifact in addition to its other types. Activate only as a sorcery.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Legendary Creature - Human Artificer"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "76",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Tempered Steel",
+      "oracle_text": "Artifact creatures you control get +2/+2.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "176",
+      "color_identity": [
+        "U",
+        "B"
+      ],
+      "colors": [],
+      "name": "Temple of Deceit",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{T}: Add {U} or {B}.",
+      "qty": 1,
+      "set_code": "drc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "186",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [],
+      "name": "Temple of Enlightenment",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{T}: Add {W} or {U}.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "406",
+      "color_identity": [
+        "W",
+        "B"
+      ],
+      "colors": [],
+      "name": "Temple of Silence",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, scry 1. (Look at the top card of your library. You may put that card on the bottom.)\n{T}: Add {W} or {B}.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "65",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Teshar, Ancestor's Apostle",
+      "oracle_text": "Flying\nWhenever you cast a historic spell, return target creature card with mana value 3 or less from your graveyard to the battlefield. (Artifacts, legendaries, and Sagas are historic.)",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Legendary Creature - Cleric Bird"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "19",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [],
+      "name": "Thopter Shop",
+      "oracle_text": "Whenever one or more artifact creatures you control die, draw a card. This ability triggers only once each turn.\n{2}{W}, {T}: Create a 1/1 colorless Thopter artifact creature token with flying.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "83",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Thopter Spy Network",
+      "oracle_text": "At the beginning of your upkeep, if you control an artifact, create a 1/1 colorless Thopter artifact creature token with flying.\nWhenever one or more artifact creatures you control deal combat damage to a player, draw a card.",
+      "qty": 1,
+      "set_code": "drc",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 7,
+      "collector_number": "79",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Thought Monitor",
+      "oracle_text": "Affinity for artifacts (This spell costs {1} less to cast for each artifact you control.)\nFlying\nWhen this creature enters, draw two cards.",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature Artifact - Construct"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "368",
+      "color_identity": [],
+      "colors": [],
+      "name": "Thought Vessel",
+      "oracle_text": "You have no maximum hand size.\n{T}: Add {C}.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "32",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Unbreakable Formation",
+      "oracle_text": "Creatures you control gain indestructible until end of turn.\nAddendum — If you cast this spell during your main phase, put a +1/+1 counter on each of those creatures and they gain vigilance until end of turn.",
+      "qty": 1,
+      "set_code": "rvr",
+      "tags": [
+        "counters",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "780",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Vault of Whispers",
+      "oracle_text": "{T}: Add {B}.",
+      "qty": 1,
+      "set_code": "j25",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "243",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Vedalken Humiliator",
+      "oracle_text": "Metalcraft — Whenever this creature attacks, if you control three or more artifacts, creatures your opponents control lose all abilities and have base power and toughness 1/1 until end of turn.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [],
+      "type_line": "Creature - Wizard Vedalken"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "330",
+      "color_identity": [
+        "W",
+        "B"
+      ],
+      "colors": [
+        "W",
+        "B"
+      ],
+      "name": "Vindicate",
+      "oracle_text": "Destroy target permanent.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "85",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Whirler Rogue",
+      "oracle_text": "When this creature enters, create two 1/1 colorless Thopter artifact creature tokens with flying.\nTap two untapped artifacts you control: Target creature can't be blocked this turn.",
+      "qty": 1,
+      "set_code": "drc",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature - Human Artificer Rogue"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "10",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Wire Surgeons",
+      "oracle_text": "Fear (This creature can't be blocked except by artifact creatures and/or black creatures.)\nEach artifact creature card in your graveyard has encore. Its encore cost is equal to its mana cost. (Exile it and pay its mana cost: For each opponent, create a token copy that attacks that opponent this turn if able. They gain haste. Sacrifice them at the beginning of the next end step. Activate only as a sorcery.)",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Creature - Human Artificer"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "11",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Wreck Hunter",
+      "oracle_text": "Flash\nWhen this creature enters, choose target player. You create a tapped Powerstone token for each nonland card in that player's graveyard that was put there from the battlefield this turn. (It's an artifact with \"{T}: Add {C}. This mana can't be spent to cast a nonartifact spell.\")",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Creature - Human Artificer"
+    }
+  ],
+  "case_id": "17",
+  "color_identity": [],
+  "commander": null,
+  "commander_card": null,
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "unfinished-urza",
+  "source_platform": "archidekt",
+  "source_url": "https://archidekt.com/decks/20910613/unfinished_urza_precon"
+}

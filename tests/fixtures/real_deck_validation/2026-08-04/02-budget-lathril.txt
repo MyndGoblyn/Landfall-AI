@@ -1,0 +1,92 @@
+# LandfallAI real-deck validation snapshot 02
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://archidekt.com/decks/6718162/elf_ballin_on_a_budget_100_lathril_deck
+
+# Commander
+1 Lathril, Blade of the Elves *CMDR*
+
+# Mainboard
+1 Skemfar Shadowsage
+1 Necroblossom Snarl
+1 Oran-Rief, the Vastwood
+1 Path of Ancestry
+1 Snake Umbra
+1 Putrefy
+1 Elven Ambush
+1 Growing Rites of Itlimoc // Itlimoc, Cradle of the Sun
+1 Deathrite Shaman
+1 Wirewood Channeler
+1 Vanquisher's Banner
+1 Crippling Fear
+1 Pact of the Serpent
+1 Drannith Ruins
+1 Poison-Tip Archer
+1 Windswift Slice
+1 Marwyn, the Nurturer
+1 Gilt-Leaf Palace
+1 Priest of Titania
+1 Fyndhorn Elves
+1 Abomination of Llanowar
+1 Canopy Tactician
+1 Song of Freyalise
+1 Golgari Charm
+1 In Garruk's Wake
+1 Ulvenwald Oddity // Ulvenwald Behemoth
+1 Crashing Drawbridge
+1 Tyvar, Jubilant Brawler
+1 Awakening
+1 Moldervine Reclamation
+1 Lys Alana Huntmaster
+1 Vorrac Battlehorns
+1 Gala Greeters
+1 Elvish Guidance
+1 Copperhorn Scout
+1 Galadhrim Ambush
+1 Arwen, Weaver of Hope
+1 Curtains' Call
+1 Ivy Lane Denizen
+1 Elvish Mystic
+1 Golgari Rot Farm
+1 Arbor Elf
+1 Opal Palace
+1 Myriad Landscape
+1 Leaf-Crowned Visionary
+1 Llanowar Elves
+1 Sign in Blood
+1 Beast Whisperer
+1 Command Tower
+10 Forest
+1 Woodland Cemetery
+1 Exotic Orchard
+1 Rogue's Passage
+1 Secluded Courtyard
+1 Harvest Season
+1 Beast Within
+1 Reclamation Sage
+1 Elvish Promenade
+1 Immaculate Magistrate
+1 Sylvan Offering
+1 Elvish Archdruid
+1 Bear Umbra
+1 Unclaimed Territory
+1 Bojuka Bog
+7 Swamp
+1 Llanowar Wastes
+1 Reliquary Tower
+1 Assassin's Trophy
+1 Tyvar's Stand
+1 Timberwatch Elf
+1 Vitalize
+1 Wood Elves
+1 Skullclamp
+1 Whispersilk Cloak
+1 Overwhelming Stampede
+1 Herald's Horn
+1 Tainted Wood
+1 Elvish Visionary
+1 Staff of Domination
+1 Shamanic Revelation
+1 Elvish Warmaster
+1 Elven Chorus
+1 Elves of Deep Shadow
+1 Swiftfoot Boots

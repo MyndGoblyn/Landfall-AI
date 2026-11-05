@@ -1,0 +1,412 @@
+{
+  "schema_version": 1,
+  "validation_date": "2026-08-04",
+  "source_annotation": "User-supplied human-reviewed validation manifest prepared 2026-07-30; its structured intent and review criteria are embedded in this file.",
+  "source_annotation_sha256": "d8514d877185a7c3e132bf9c5785d08c95a5c28b97fffeaf73fe579ce74f8f16",
+  "candidate_catalog": "backend/data/scryfall_oracle_cards.json",
+  "review_policy": {
+    "strict_pass_required": 15,
+    "top_additions_reviewed": 5,
+    "all_cuts_reviewed": true,
+    "all_swaps_reviewed": true,
+    "changed_top_choices_reviewed": true,
+    "notes": "Intent profiles encode the supplied validation annotations. Total budget targets are contextual unless the source supplied a defensible per-card ceiling."
+  },
+  "cases": [
+    {
+      "case_id": "01",
+      "label": "Budget Yuriko",
+      "snapshot_file": "01-budget-yuriko.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 6,
+        "power_level_max": 7,
+        "budget_mode": "target",
+        "budget_limit_usd": 50,
+        "optimization_mode": "tune",
+        "primary_strategy": "Budget Ninja typal tempo with evasive enablers and top-deck mana-value pressure",
+        "desired_experience": "Improve cheap interaction and enabler quality without converting the list into cEDH Yuriko.",
+        "protected_cards": [],
+        "protected_packages": [
+          {"name": "Evasive enablers", "cards": ["Ornithopter", "Memnite", "Slither Blade", "Changeling Outcast", "Faerie Seer", "Mothdust Changeling", "Phyrexian Walker", "Universal Automaton"]},
+          {"name": "Reveal value", "cards": ["Shadow of Mortality", "Dig Through Time", "Boon of the Wish-Giver", "Sword Coast Serpent // Capsizing Wave", "Street Wraith"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": ["typal_core", "no_fast_mana"]
+      },
+      "review_focus": ["budget", "casual-versus-cEDH separation", "evasive enablers", "Ninja density", "top-deck setup", "alternate-cost reveal cards"]
+    },
+    {
+      "case_id": "02",
+      "label": "Budget Lathril",
+      "snapshot_file": "02-budget-lathril.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 6,
+        "power_level_max": 6,
+        "budget_mode": "target",
+        "budget_limit_usd": 100,
+        "optimization_mode": "tune",
+        "primary_strategy": "Elf typal go-wide mana and Lathril drain",
+        "desired_experience": "Improve protection and recovery while retaining a dense Elf core.",
+        "protected_cards": [],
+        "protected_packages": [
+          {"name": "Elf mana combo", "cards": ["Priest of Titania", "Elvish Archdruid", "Marwyn, the Nurturer", "Staff of Domination"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": ["typal_core", "no_fast_mana"]
+      },
+      "review_focus": ["budget", "Elf density", "protection", "recovery", "go-wide payoffs", "combo package safety"]
+    },
+    {
+      "case_id": "03",
+      "label": "Budget Meren",
+      "snapshot_file": "03-budget-meren.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 5,
+        "power_level_max": 6,
+        "budget_mode": "target",
+        "optimization_mode": "tune",
+        "primary_strategy": "Budget creature-heavy sacrifice and graveyard recursion",
+        "desired_experience": "Add resilient outlets and creature-based utility without premium tutors or generic Golgari goodstuff.",
+        "protected_cards": [],
+        "protected_packages": [
+          {"name": "Sacrifice outlets", "cards": ["Viscera Seer", "Woe Strider", "Yahenni, Undying Partisan", "Evolutionary Leap", "Vampiric Rites", "Shadowheart, Dark Justiciar"]},
+          {"name": "Recursive toolbox", "cards": ["Spore Frog", "Sakura-Tribe Elder", "Eternal Witness", "Reclamation Sage", "Ravenous Chupacabra"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": ["no_fast_mana"]
+      },
+      "review_focus": ["budget", "sacrifice outlets", "creature toolbox", "recursion", "graveyard resilience"]
+    },
+    {
+      "case_id": "04",
+      "label": "Light-Paws Voltron",
+      "snapshot_file": "04-light-paws.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 6,
+        "power_level_max": 7,
+        "budget_mode": "target",
+        "budget_limit_usd": 30,
+        "optimization_mode": "tune",
+        "primary_strategy": "Low-curve Aura toolbox Voltron",
+        "desired_experience": "Strengthen protection and recovery while keeping Light-Paws and Auras central.",
+        "protected_cards": ["Kor Spiritdancer", "Sram, Senior Edificer", "Mesa Enchantress"],
+        "protected_packages": [],
+        "excluded_cards": [],
+        "intentional_constraints": ["no_fast_mana"]
+      },
+      "review_focus": ["budget", "Aura ladder", "protection", "commander damage", "reject Equipment conversion"]
+    },
+    {
+      "case_id": "05",
+      "label": "Budget Talrand",
+      "snapshot_file": "05-budget-talrand.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 5,
+        "power_level_max": 6,
+        "budget_mode": "target",
+        "optimization_mode": "tune",
+        "primary_strategy": "Budget draw-go spellslinger with Drake token pressure",
+        "desired_experience": "Improve low-cost interaction and card velocity without diluting instant and sorcery density.",
+        "protected_cards": ["Murmuring Mystic", "Archmage Emeritus", "Wavebreak Hippocamp", "Alandra, Sky Dreamer"],
+        "protected_packages": [],
+        "excluded_cards": [],
+        "intentional_constraints": ["spell_density", "no_fast_mana"]
+      },
+      "review_focus": ["budget", "spell density", "instant-speed play", "card velocity", "token payoff relevance"]
+    },
+    {
+      "case_id": "06",
+      "label": "Political Zedruu",
+      "snapshot_file": "06-political-zedruu.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 4,
+        "power_level_max": 5,
+        "budget_mode": "target",
+        "optimization_mode": "preserve",
+        "primary_strategy": "Budget political group hug and selective permanent donation",
+        "desired_experience": "Improve donation quality and defensive interaction while preserving table-facing political play.",
+        "protected_cards": [],
+        "protected_packages": [
+          {"name": "Political donation", "cards": ["Bazaar Trader", "Akroan Horse", "Humble Defector", "Vedalken Plotter", "Pendant of Prosperity", "Coveted Jewel", "Bucknard's Everfull Purse"]},
+          {"name": "Donation payloads", "cards": ["Steel Golem", "Grid Monitor", "Aggressive Mining", "Statecraft", "Transcendence", "Illusions of Grandeur", "Nine Lives"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": ["no_fast_mana"]
+      },
+      "review_focus": ["budget", "politics", "group hug", "donation quality", "bad-gift protection", "avoid generic control conversion"]
+    },
+    {
+      "case_id": "07",
+      "label": "High-power Krenko",
+      "snapshot_file": "07-krenko.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 7,
+        "power_level_max": 8,
+        "budget_mode": "target",
+        "budget_limit_usd": 100,
+        "optimization_mode": "tune",
+        "primary_strategy": "High-power Goblin typal tokens and compact activation combos",
+        "desired_experience": "Improve speed, protection, and card advantage while preserving Goblin and Krenko combo density.",
+        "protected_cards": [],
+        "protected_packages": [
+          {"name": "Snoop line", "cards": ["Conspicuous Snoop", "Kiki-Jiki, Mirror Breaker", "Goblin Recruiter"]},
+          {"name": "Activation engine", "cards": ["Skirk Prospector", "Goblin Bombardment", "Mass Hysteria", "Goblin Chieftain", "Goblin Warchief", "Crashing Drawbridge"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": ["typal_core"]
+      },
+      "review_focus": ["budget", "Goblin density", "haste", "activation engine", "compact Goblin combos", "sweeper resilience"]
+    },
+    {
+      "case_id": "08",
+      "label": "Atraxa Blink",
+      "snapshot_file": "08-atraxa.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 7,
+        "power_level_max": 7,
+        "budget_mode": "target",
+        "budget_limit_usd": 200,
+        "optimization_mode": "tune",
+        "primary_strategy": "Four-color blink value with deliberate card-type diversity",
+        "desired_experience": "Improve fixing and efficient blink interaction without converting to a combo race.",
+        "protected_cards": [],
+        "protected_packages": [
+          {"name": "Blink engines", "cards": ["Soulherder", "Panharmonicon", "Deadeye Navigator", "Felidar Guardian", "Restoration Angel", "Virtue of Knowledge // Vantress Visions"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": []
+      },
+      "review_focus": ["budget", "blink", "card-type diversity", "four-color fixing", "curve pressure", "value-over-combo identity"]
+    },
+    {
+      "case_id": "09",
+      "label": "Budget Wilhelt",
+      "snapshot_file": "09-budget-wilhelt.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 5,
+        "power_level_max": 6,
+        "budget_mode": "target",
+        "budget_limit_usd": 25,
+        "optimization_mode": "tune",
+        "primary_strategy": "Mega-budget Zombie typal aristocrats and graveyard recursion",
+        "desired_experience": "Improve sacrifice consistency and card velocity without abandoning Zombies.",
+        "protected_cards": [],
+        "protected_packages": [
+          {"name": "Zombie aristocrats", "cards": ["Diregraf Captain", "Undead Augur", "Ghoulish Procession", "Dreadhorde Invasion", "Gnawing Zombie", "Syr Konrad, the Grim"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": ["typal_core", "no_fast_mana"]
+      },
+      "review_focus": ["mega-budget", "Zombie density", "sacrifice", "death payoffs", "recursion", "decayed-token logic"]
+    },
+    {
+      "case_id": "10",
+      "label": "Budget Vadrik Storm",
+      "snapshot_file": "10-budget-vadrik.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 8,
+        "power_level_max": 9,
+        "budget_mode": "target",
+        "optimization_mode": "competitive",
+        "primary_strategy": "Budget high-power Vadrik cost-reduction storm",
+        "desired_experience": "Improve combo compactness, protection, and mana efficiency while retaining budget spell-chain lines.",
+        "protected_cards": [],
+        "protected_packages": [
+          {"name": "Storm graveyard line", "cards": ["Underworld Breach", "Brain Freeze", "Past in Flames"]},
+          {"name": "Repeatable spell lines", "cards": ["Reiterate", "Searing Touch", "Haze of Rage", "Petals of Insight"]},
+          {"name": "Power reduction enablers", "cards": ["Blazing Shoal", "Downhill Charge", "Seething Anger", "Reckless Charge", "Fists of Flame"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": ["spell_density"]
+      },
+      "review_focus": ["budget high power", "spell density", "Vadrik power growth", "cost reduction", "storm lines", "competitive efficiency"]
+    },
+    {
+      "case_id": "11",
+      "label": "Optimized Muldrotha",
+      "snapshot_file": "11-muldrotha.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 8,
+        "power_level_max": 8,
+        "budget_mode": "unrestricted",
+        "optimization_mode": "competitive",
+        "primary_strategy": "Optimized permanent-based graveyard control and compact wins",
+        "desired_experience": "Increase resilience and efficiency while retaining Muldrotha permanent recursion and strong stack interaction.",
+        "protected_cards": ["Force of Will", "Fierce Guardianship", "Mindbreak Trap", "Flusterstorm"],
+        "protected_packages": [
+          {"name": "Graveyard win access", "cards": ["Hermit Druid", "Thassa's Oracle", "Lion's Eye Diamond", "Intuition"]},
+          {"name": "Activated-ability package", "cards": ["Devoted Druid", "Hazel's Brewmaster", "Walking Ballista"]},
+          {"name": "Permanent interaction", "cards": ["Pernicious Deed", "Seal of Removal", "Haywire Mite", "Aether Spellbomb", "Plaguecrafter", "Accursed Marauder"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": []
+      },
+      "review_focus": ["competitive efficiency", "permanent-type recursion", "graveyard setup", "stack interaction", "compact wins", "premium card pool"]
+    },
+    {
+      "case_id": "12",
+      "label": "cEDH Yuriko",
+      "snapshot_file": "12-cedh-yuriko.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true, "issue_codes": ["low_land_count"]},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 9,
+        "power_level_max": 10,
+        "budget_mode": "unrestricted",
+        "optimization_mode": "competitive",
+        "primary_strategy": "cEDH Yuriko tempo-combo with early enablers, free interaction, and compact wins",
+        "desired_experience": "Optimize for tournament-speed interaction and compact wins rather than casual Ninja flavor.",
+        "protected_cards": ["Force of Will", "Force of Negation", "Fierce Guardianship", "Mindbreak Trap", "Mental Misstep", "Misdirection", "Commandeer"],
+        "protected_packages": [
+          {"name": "Doomsday Oracle", "cards": ["Doomsday", "Thassa's Oracle"]},
+          {"name": "Oracle consultation", "cards": ["Thassa's Oracle", "Demonic Consultation", "Tainted Pact"]},
+          {"name": "Early enablers", "cards": ["Ornithopter", "Memnite", "Gingerbrute", "Changeling Outcast", "Mothdust Changeling", "Phyrexian Walker", "Universal Automaton"]},
+          {"name": "Reveal value", "cards": ["Shadow of Mortality", "Temporal Trespass", "Sea Gate Restoration // Sea Gate, Reborn", "Agadeem's Awakening // Agadeem, the Undercrypt"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": []
+      },
+      "review_focus": ["cEDH speed", "free interaction", "early enablers", "top-deck setup", "compact wins", "comparison with budget Yuriko"]
+    },
+    {
+      "case_id": "13",
+      "label": "cEDH Najeela",
+      "snapshot_file": "13-cedh-najeela.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true, "issue_codes": ["low_land_count"]},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 10,
+        "power_level_max": 10,
+        "budget_mode": "unrestricted",
+        "optimization_mode": "competitive",
+        "primary_strategy": "Tournament cEDH Najeela proactive midrange and compact combat combos",
+        "desired_experience": "Prioritize tournament-speed mana, interaction, protection, and commander-centric combat wins.",
+        "protected_cards": ["Fierce Guardianship", "Deflecting Swat", "Mental Misstep", "Flusterstorm", "Pact of Negation", "Swan Song", "Silence"],
+        "protected_packages": [
+          {"name": "Najeela combat line", "cards": ["Derevi, Empyrial Tactician", "Nature's Rhythm"]},
+          {"name": "Fast mana", "cards": ["Mox Diamond", "Chrome Mox", "Lotus Petal", "Mana Vault", "Mox Amber", "Simian Spirit Guide", "Elvish Spirit Guide"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": []
+      },
+      "review_focus": ["tournament speed", "five-color interaction", "fast mana", "combat combo", "commander pressure", "metagame efficiency"]
+    },
+    {
+      "case_id": "14",
+      "label": "Janky Zedruu",
+      "snapshot_file": "14-jank-zedruu.json",
+      "expected_input": {"status": "ready", "analysis_allowed": true, "recommendations_allowed": true},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 3,
+        "power_level_max": 4,
+        "budget_mode": "unrestricted",
+        "optimization_mode": "preserve",
+        "primary_strategy": "Intentional Bad Santa jank that donates harmful and awkward permanents",
+        "desired_experience": "Preserve chaotic political bad-gift gameplay and flavor over efficiency.",
+        "protected_cards": [],
+        "protected_packages": [
+          {"name": "Donation effects", "cards": ["Donate", "Harmless Offering", "Bazaar Trader", "Puca's Mischief", "Role Reversal", "Sudden Substitution", "Wrong Turn", "Vedalken Plotter"]},
+          {"name": "Bad gifts", "cards": ["Aggressive Mining", "Sky Swallower", "Eater of Days", "Grid Monitor", "Rust Elemental", "Thought Devourer", "Statecraft", "Thought Lash", "Illusions of Grandeur", "Jinxed Idol", "Steel Golem", "Crown of Doom", "Akroan Horse", "Pendant of Prosperity"]}
+        ],
+        "excluded_cards": [],
+        "intentional_constraints": ["intentional_jank", "flavor_first"]
+      },
+      "review_focus": ["intentional jank", "bad gifts", "donation", "politics", "abstention from generic optimization", "comparison with political Zedruu"]
+    },
+    {
+      "case_id": "15",
+      "label": "18-land Grist",
+      "snapshot_file": "15-low-land-grist.json",
+      "expected_input": {"status": "review", "analysis_allowed": true, "recommendations_allowed": true, "issue_codes": ["severe_mana_base_risk"]},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 2,
+        "power_level_max": 3,
+        "budget_mode": "target",
+        "optimization_mode": "preserve",
+        "primary_strategy": "Extremely low-budget Insect-heavy Grist deck with an intentional 18-land risk premise",
+        "desired_experience": "Preserve the original risky snapshot; diagnose the mana risk without silently normalizing it.",
+        "protected_cards": [],
+        "protected_packages": [],
+        "excluded_cards": [],
+        "intentional_constraints": ["typal_core", "intentional_jank", "flavor_first", "low_land_count", "no_fast_mana"]
+      },
+      "review_focus": ["severe land warning", "explicit low-land preservation", "extreme budget", "Insect density", "no blind repair"]
+    },
+    {
+      "case_id": "16",
+      "label": "97-Mountain joke",
+      "snapshot_file": "16-mountain-joke.json",
+      "expected_input": {"status": "review", "analysis_allowed": true, "recommendations_allowed": false, "issue_codes": ["intentional_constraint_confirmation"]},
+      "intent_profile": {
+        "confirmed": true,
+        "power_level_min": 1,
+        "power_level_max": 1,
+        "budget_mode": "unrestricted",
+        "optimization_mode": "preserve",
+        "primary_strategy": "Deliberately nonfunctional 97-Mountain joke deck",
+        "desired_experience": "Preserve the joke construction and report diagnostics without automatic repair.",
+        "protected_cards": [],
+        "protected_packages": [],
+        "excluded_cards": [],
+        "intentional_constraints": ["intentional_jank", "flavor_first"]
+      },
+      "review_focus": ["extreme repetition", "recommendation pause", "no crash", "no blind repair"]
+    },
+    {
+      "case_id": "17",
+      "label": "Unfinished Urza",
+      "snapshot_file": "17-unfinished-urza.json",
+      "expected_input": {"status": "blocked", "analysis_allowed": false, "recommendations_allowed": false, "issue_codes": ["commander_missing", "incomplete_mainboard"]},
+      "intent_profile": {
+        "confirmed": false,
+        "budget_mode": "unknown",
+        "optimization_mode": "preserve",
+        "protected_cards": [],
+        "protected_packages": [],
+        "excluded_cards": [],
+        "intentional_constraints": []
+      },
+      "review_focus": ["98-card preservation", "missing commander", "analysis block", "no recommendations"]
+    },
+    {
+      "case_id": "18",
+      "label": "Partial Lathril",
+      "snapshot_file": "18-partial-lathril.json",
+      "expected_input": {"status": "blocked", "analysis_allowed": false, "recommendations_allowed": false, "issue_codes": ["severely_incomplete"]},
+      "intent_profile": {
+        "confirmed": false,
+        "budget_mode": "unknown",
+        "optimization_mode": "preserve",
+        "protected_cards": [],
+        "protected_packages": [],
+        "excluded_cards": [],
+        "intentional_constraints": ["typal_core"]
+      },
+      "review_focus": ["24 submitted cards", "zero lands", "severe incompleteness", "analysis block", "no fabricated optimization"]
+    }
+  ]
+}

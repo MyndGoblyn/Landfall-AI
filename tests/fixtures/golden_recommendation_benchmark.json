@@ -1,0 +1,815 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "commander_target_scaling_prefers_multi_target_card_flow",
+      "mode": "commander",
+      "top_k": 2,
+      "synergy": "target_spells",
+      "minimum_score": 72,
+      "commander": {
+        "name": "Target Cost Commander",
+        "oracle_text": "Spells you cast cost {1} less to cast for each target.",
+        "type_line": "Legendary Creature - Wizard",
+        "cmc": 4,
+        "color_identity": ["R"]
+      },
+      "cards": [
+        {
+          "name": "Wide Burn",
+          "oracle_text": "Wide Burn deals X damage divided as you choose among any number of target creatures.",
+          "type_line": "Sorcery",
+          "cmc": 4,
+          "color_identity": ["R"]
+        },
+        {
+          "name": "Insightful Wide Burn",
+          "oracle_text": "Insightful Wide Burn deals X damage divided as you choose among any number of target creatures. Draw a card.",
+          "type_line": "Sorcery",
+          "cmc": 4,
+          "color_identity": ["R"]
+        },
+        {
+          "name": "Lightning Strike",
+          "oracle_text": "Lightning Strike deals 3 damage to any target.",
+          "type_line": "Instant",
+          "cmc": 2,
+          "color_identity": ["R"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Insightful Wide Burn",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "card_flow"],
+          "required_reason_fragments": ["scalable targeted spell"]
+        },
+        {
+          "name": "Wide Burn",
+          "label": "strong",
+          "required_evidence_tags": ["direct_synergy"],
+          "required_reason_fragments": ["scalable targeted spell"]
+        },
+        {
+          "name": "Lightning Strike",
+          "label": "reject"
+        }
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "commander_creature_tokens_rejects_resource_tokens",
+      "mode": "commander",
+      "top_k": 1,
+      "synergy": "tokens",
+      "minimum_score": 72,
+      "commander": {
+        "name": "Creature Token Commander",
+        "oracle_text": "Whenever you create one or more creature tokens, draw a card.",
+        "type_line": "Legendary Creature - Shaman",
+        "cmc": 3,
+        "color_identity": ["R"]
+      },
+      "cards": [
+        {
+          "name": "Big Score",
+          "oracle_text": "As an additional cost to cast this spell, discard a card. Draw two cards and create two Treasure tokens.",
+          "type_line": "Instant",
+          "cmc": 4,
+          "color_identity": ["R"]
+        },
+        {
+          "name": "Dragon Fodder",
+          "oracle_text": "Create two 1/1 red Goblin creature tokens.",
+          "type_line": "Sorcery",
+          "cmc": 2,
+          "color_identity": ["R"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Dragon Fodder",
+          "label": "core",
+          "required_evidence_tags": ["creature_token_support"],
+          "required_reason_fragments": ["creature material"],
+          "banned_reason_fragments": ["Treasure"]
+        },
+        {
+          "name": "Big Score",
+          "label": "reject"
+        }
+      ],
+      "gates": {
+        "min_results": 1,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "commander_board_conversion_prefers_material_over_etb_value",
+      "mode": "commander",
+      "top_k": 2,
+      "synergy": "board_conversion",
+      "minimum_score": 72,
+      "commander": {
+        "name": "Wide Board Converter",
+        "oracle_text": "Other creatures you control have base power and toughness 4/2. Creatures you control attack each combat if able.",
+        "type_line": "Legendary Creature - Warrior",
+        "cmc": 5,
+        "color_identity": []
+      },
+      "cards": [
+        {
+          "name": "Solemn Simulacrum",
+          "oracle_text": "When Solemn Simulacrum enters the battlefield, search your library for a basic land card. When it dies, you may draw a card.",
+          "type_line": "Artifact Creature - Golem",
+          "cmc": 4,
+          "color_identity": []
+        },
+        {
+          "name": "Signal Pest",
+          "oracle_text": "Battle cry.",
+          "type_line": "Artifact Creature - Pest",
+          "cmc": 1,
+          "color_identity": []
+        },
+        {
+          "name": "Servo Engine",
+          "oracle_text": "When Servo Engine enters the battlefield, create two 1/1 colorless Servo artifact creature tokens.",
+          "type_line": "Artifact Creature - Construct",
+          "cmc": 3,
+          "color_identity": []
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Servo Engine",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "creature_token_support"],
+          "required_reason_fragments": ["creature material"]
+        },
+        {
+          "name": "Signal Pest",
+          "label": "strong",
+          "required_evidence_tags": ["enabler", "low_setup_cost"]
+        },
+        {
+          "name": "Solemn Simulacrum",
+          "label": "reject"
+        }
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "commander_enchantment_toolbox_respects_tutor_window",
+      "mode": "commander",
+      "top_k": 2,
+      "synergy": "enchantment",
+      "minimum_score": 72,
+      "commander": {
+        "name": "Zur the Enchanter",
+        "oracle_text": "Flying. Whenever Zur the Enchanter attacks, you may search your library for an enchantment card with mana value 3 or less, put it onto the battlefield, then shuffle.",
+        "type_line": "Legendary Creature - Human Wizard",
+        "cmc": 4,
+        "color_identity": ["W", "U", "B"]
+      },
+      "cards": [
+        {
+          "name": "Omniscience",
+          "oracle_text": "You may cast spells from your hand without paying their mana costs.",
+          "type_line": "Enchantment",
+          "cmc": 10,
+          "color_identity": ["U"]
+        },
+        {
+          "name": "Curiosity",
+          "oracle_text": "Enchant creature. Whenever enchanted creature deals damage to an opponent, you may draw a card.",
+          "type_line": "Enchantment - Aura",
+          "cmc": 1,
+          "color_identity": ["U"]
+        },
+        {
+          "name": "Mystic Remora",
+          "oracle_text": "Cumulative upkeep {1}. Whenever an opponent casts a noncreature spell, you may draw a card unless that player pays {4}.",
+          "type_line": "Enchantment",
+          "cmc": 1,
+          "color_identity": ["U"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Mystic Remora",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "tutorable_enchantment", "card_flow"],
+          "required_reason_fragments": ["tutorable enchantment card flow"]
+        },
+        {
+          "name": "Curiosity",
+          "label": "strong",
+          "required_evidence_tags": ["tutorable_enchantment", "card_flow"],
+          "required_reason_fragments": ["mana value 1"]
+        },
+        {
+          "name": "Omniscience",
+          "label": "reject"
+        }
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "commander_named_counters_rejects_unrelated_counter_package",
+      "mode": "commander",
+      "top_k": 1,
+      "synergy": "counters",
+      "minimum_score": 72,
+      "commander": {
+        "name": "Named Counter Commander",
+        "oracle_text": "Whenever this creature attacks, put a blight counter on target land.",
+        "type_line": "Legendary Creature - God",
+        "cmc": 5,
+        "color_identity": ["B"]
+      },
+      "cards": [
+        {
+          "name": "Hardened Scales",
+          "oracle_text": "If one or more +1/+1 counters would be put on a creature you control, that many plus one are put on it instead.",
+          "type_line": "Enchantment",
+          "cmc": 1,
+          "color_identity": ["G"]
+        },
+        {
+          "name": "Contagion Clasp",
+          "oracle_text": "When Contagion Clasp enters, put a -1/-1 counter on target creature. {4}, {T}: Proliferate.",
+          "type_line": "Artifact",
+          "cmc": 2,
+          "color_identity": []
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Contagion Clasp",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "counter_scaling"],
+          "required_reason_fragments": ["blight counters"]
+        },
+        {
+          "name": "Hardened Scales",
+          "label": "reject"
+        }
+      ],
+      "gates": {
+        "min_results": 1,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "commander_spell_chain_prefers_cheap_card_flow",
+      "mode": "commander",
+      "top_k": 2,
+      "synergy": "instant_sorcery",
+      "minimum_score": 72,
+      "commander": {
+        "name": "Spell Chain Commander",
+        "oracle_text": "Whenever you cast an instant or sorcery spell, create a 1/1 red Elemental creature token.",
+        "type_line": "Legendary Creature - Wizard",
+        "cmc": 4,
+        "color_identity": ["U", "R"]
+      },
+      "cards": [
+        {
+          "name": "Lightning Bolt",
+          "oracle_text": "Lightning Bolt deals 3 damage to any target.",
+          "type_line": "Instant",
+          "cmc": 1,
+          "color_identity": ["R"]
+        },
+        {
+          "name": "Young Pyromancer",
+          "oracle_text": "Whenever you cast an instant or sorcery spell, create a 1/1 red Elemental creature token.",
+          "type_line": "Creature - Human Shaman",
+          "cmc": 2,
+          "color_identity": ["R"]
+        },
+        {
+          "name": "Consider",
+          "oracle_text": "Surveil 1. Draw a card.",
+          "type_line": "Instant",
+          "cmc": 1,
+          "color_identity": ["U"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Consider",
+          "label": "core",
+          "required_evidence_tags": ["enabler", "low_setup_cost", "card_flow"],
+          "required_reason_fragments": ["spell chain"]
+        },
+        {
+          "name": "Young Pyromancer",
+          "label": "strong",
+          "required_evidence_tags": ["direct_synergy"]
+        },
+        {
+          "name": "Lightning Bolt",
+          "label": "reject"
+        }
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "deck_draw_gap_prefers_repeatable_efficient_card_flow",
+      "mode": "deck_role",
+      "top_k": 2,
+      "role": "draw",
+      "categories": ["draw"],
+      "color_identity": ["U"],
+      "gaps": {
+        "roles": {"draw": 3},
+        "lands": {},
+        "synergy": []
+      },
+      "current_cards": [
+        {
+          "name": "Existing Creature",
+          "oracle_text": "Vigilance.",
+          "type_line": "Creature - Knight",
+          "cmc": 3,
+          "color_identity": ["U"]
+        }
+      ],
+      "cards": [
+        {
+          "name": "Expensive Insight",
+          "oracle_text": "At the beginning of your upkeep, draw a card.",
+          "type_line": "Enchantment",
+          "cmc": 7,
+          "color_identity": ["U"]
+        },
+        {
+          "name": "Quick Study",
+          "oracle_text": "Draw two cards.",
+          "type_line": "Instant",
+          "cmc": 3,
+          "color_identity": ["U"]
+        },
+        {
+          "name": "Insight Engine",
+          "oracle_text": "At the beginning of your upkeep, draw a card.",
+          "type_line": "Enchantment",
+          "cmc": 3,
+          "color_identity": ["U"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Insight Engine",
+          "label": "core",
+          "required_evidence_tags": ["card_flow", "repeatable_engine"],
+          "required_reason_fragments": ["card flow"]
+        },
+        {
+          "name": "Quick Study",
+          "label": "strong",
+          "required_evidence_tags": ["card_flow"],
+          "required_reason_fragments": ["card flow"]
+        },
+        {
+          "name": "Expensive Insight",
+          "label": "weak"
+        }
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "commander_own_creature_targeting_rejects_burn_and_removal",
+      "mode": "commander",
+      "top_k": 2,
+      "synergy": "target_spells",
+      "minimum_score": 84,
+      "commander": {
+        "name": "Targeting Recursion Commander",
+        "oracle_text": "Whenever you cast an instant or sorcery spell that targets a creature you control, exile that card instead of putting it into your graveyard as it resolves. Return it to your hand at the beginning of the next end step.",
+        "type_line": "Legendary Creature - Angel",
+        "cmc": 3,
+        "color_identity": ["R", "W"]
+      },
+      "cards": [
+        {
+          "name": "Targeting Cantrip",
+          "oracle_text": "Target creature gets +1/+0 until end of turn. Draw a card.",
+          "type_line": "Instant",
+          "cmc": 1,
+          "color_identity": ["R"]
+        },
+        {
+          "name": "Targeting Protection",
+          "oracle_text": "Target creature gains indestructible until end of turn.",
+          "type_line": "Instant",
+          "cmc": 1,
+          "color_identity": ["W"]
+        },
+        {
+          "name": "Lightning Bolt",
+          "oracle_text": "Lightning Bolt deals 3 damage to any target.",
+          "type_line": "Instant",
+          "cmc": 1,
+          "color_identity": ["R"]
+        },
+        {
+          "name": "Creature Exile",
+          "oracle_text": "Exile target creature.",
+          "type_line": "Instant",
+          "cmc": 2,
+          "color_identity": ["W"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Targeting Cantrip",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "card_flow"],
+          "required_reason_fragments": ["targeting your own creature"]
+        },
+        {
+          "name": "Targeting Protection",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "protection"],
+          "required_reason_fragments": ["targeting your own creature"]
+        },
+        {"name": "Lightning Bolt", "label": "reject"},
+        {"name": "Creature Exile", "label": "reject"}
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "commander_permanent_graveyard_engine_rejects_exile_and_redundancy",
+      "mode": "commander",
+      "top_k": 2,
+      "synergy": "graveyard",
+      "minimum_score": 84,
+      "commander": {
+        "name": "Permanent Recursion Commander",
+        "oracle_text": "During each of your turns, you may play a land and cast a permanent spell of each permanent type from your graveyard.",
+        "type_line": "Legendary Creature - Elemental Avatar",
+        "cmc": 6,
+        "color_identity": ["B", "G", "U"]
+      },
+      "cards": [
+        {
+          "name": "Graveyard Supplier",
+          "oracle_text": "When this creature enters, mill three cards.",
+          "type_line": "Creature - Satyr",
+          "cmc": 2,
+          "color_identity": ["B"]
+        },
+        {
+          "name": "Land Recursion Engine",
+          "oracle_text": "Return up to three target land cards from your graveyard to your hand. Mill three cards.",
+          "type_line": "Sorcery",
+          "cmc": 2,
+          "color_identity": ["G"]
+        },
+        {
+          "name": "Own Graveyard Exiler",
+          "oracle_text": "Exile target card from your graveyard.",
+          "type_line": "Enchantment",
+          "cmc": 1,
+          "color_identity": ["B"]
+        },
+        {
+          "name": "Redundant Reanimation",
+          "oracle_text": "Return target creature card from your graveyard to the battlefield.",
+          "type_line": "Sorcery",
+          "cmc": 1,
+          "color_identity": ["B"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Graveyard Supplier",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "enabler"],
+          "required_reason_fragments": ["graveyard"]
+        },
+        {
+          "name": "Land Recursion Engine",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "enabler"],
+          "required_reason_fragments": ["graveyard"]
+        },
+        {"name": "Own Graveyard Exiler", "label": "reject"},
+        {"name": "Redundant Reanimation", "label": "weak"}
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "commander_typal_prefers_payoffs_over_incidental_body",
+      "mode": "commander",
+      "top_k": 2,
+      "synergy": "typal",
+      "minimum_score": 80,
+      "commander": {
+        "name": "Goblin Commander",
+        "oracle_text": "Other Goblins you control get +1/+1.",
+        "type_line": "Legendary Creature - Goblin Warrior",
+        "cmc": 4,
+        "color_identity": ["R"]
+      },
+      "cards": [
+        {
+          "name": "Goblin Rally Captain",
+          "oracle_text": "Other Goblins you control have haste.",
+          "type_line": "Creature - Goblin",
+          "cmc": 3,
+          "color_identity": ["R"]
+        },
+        {
+          "name": "Goblin Recruiter",
+          "oracle_text": "When this creature enters, search your library for a Goblin card, reveal it, put it into your hand, then shuffle.",
+          "type_line": "Creature - Goblin Scout",
+          "cmc": 2,
+          "color_identity": ["R"]
+        },
+        {
+          "name": "Goblin Spellslinger",
+          "oracle_text": "Whenever you cast an instant or sorcery spell, deal 1 damage to each opponent.",
+          "type_line": "Creature - Goblin Shaman",
+          "cmc": 2,
+          "color_identity": ["R"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Goblin Rally Captain",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "typal_density"],
+          "required_reason_fragments": ["right creature density"]
+        },
+        {
+          "name": "Goblin Recruiter",
+          "label": "core",
+          "required_evidence_tags": ["direct_synergy", "typal_density"],
+          "required_reason_fragments": ["right creature density"]
+        },
+        {"name": "Goblin Spellslinger", "label": "reject"}
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "deck_ramp_gap_prefers_real_acceleration_over_land_access",
+      "mode": "deck_role",
+      "top_k": 2,
+      "role": "ramp",
+      "categories": ["ramp"],
+      "color_identity": ["G"],
+      "gaps": {
+        "roles": {"ramp": 3},
+        "lands": {},
+        "synergy": []
+      },
+      "current_cards": [],
+      "cards": [
+        {
+          "name": "Nature Route",
+          "oracle_text": "Search your library for a Forest card, put that card onto the battlefield, then shuffle.",
+          "type_line": "Sorcery",
+          "cmc": 2,
+          "color_identity": ["G"]
+        },
+        {
+          "name": "Two-Land Growth",
+          "oracle_text": "Search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.",
+          "type_line": "Sorcery",
+          "cmc": 4,
+          "color_identity": ["G"]
+        },
+        {
+          "name": "Map the District",
+          "oracle_text": "Search your library for a basic land card, reveal it, put it into your hand, then shuffle.",
+          "type_line": "Sorcery",
+          "cmc": 3,
+          "color_identity": ["G"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Nature Route",
+          "label": "core",
+          "required_evidence_tags": ["mana_development", "reliable_role_source", "effective_role_gain"],
+          "required_reason_fragments": ["effective ramp source"]
+        },
+        {
+          "name": "Two-Land Growth",
+          "label": "strong",
+          "required_evidence_tags": ["mana_development", "effective_role_gain"]
+        },
+        {"name": "Map the District", "label": "weak"}
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "deck_removal_gap_prefers_flexible_answers",
+      "mode": "deck_role",
+      "top_k": 2,
+      "role": "removal",
+      "categories": ["removal"],
+      "color_identity": ["W"],
+      "gaps": {
+        "roles": {"removal": 2},
+        "lands": {},
+        "synergy": []
+      },
+      "current_cards": [],
+      "cards": [
+        {
+          "name": "Flexible Unmaking",
+          "oracle_text": "Exile target nonland permanent.",
+          "type_line": "Instant",
+          "cmc": 3,
+          "color_identity": ["W"]
+        },
+        {
+          "name": "Creature Verdict",
+          "oracle_text": "Destroy target creature.",
+          "type_line": "Instant",
+          "cmc": 3,
+          "color_identity": ["W"]
+        },
+        {
+          "name": "Combat Rebuke",
+          "oracle_text": "Exile target attacking creature.",
+          "type_line": "Instant",
+          "cmc": 1,
+          "color_identity": ["W"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Flexible Unmaking",
+          "label": "core",
+          "required_evidence_tags": ["interaction", "reliable_role_source", "effective_role_gain"],
+          "required_reason_fragments": ["effective removal source"]
+        },
+        {
+          "name": "Creature Verdict",
+          "label": "strong",
+          "required_evidence_tags": ["interaction", "reliable_role_source"]
+        },
+        {"name": "Combat Rebuke", "label": "weak"}
+      ],
+      "gates": {
+        "min_results": 2,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "deck_protection_gap_rejects_self_only_ward",
+      "mode": "deck_role",
+      "top_k": 1,
+      "role": "protection",
+      "categories": ["protection"],
+      "color_identity": ["W"],
+      "gaps": {
+        "roles": {"protection": 2},
+        "lands": {},
+        "synergy": []
+      },
+      "current_cards": [],
+      "cards": [
+        {
+          "name": "Protect the Formation",
+          "oracle_text": "Creatures you control gain indestructible until end of turn.",
+          "type_line": "Instant",
+          "cmc": 2,
+          "color_identity": ["W"]
+        },
+        {
+          "name": "Naturally Warded Body",
+          "oracle_text": "Ward {2}.",
+          "type_line": "Creature - Knight",
+          "cmc": 2,
+          "color_identity": ["W"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Protect the Formation",
+          "label": "core",
+          "required_evidence_tags": ["protection", "reliable_role_source", "effective_role_gain"],
+          "required_reason_fragments": ["effective protection source"]
+        },
+        {"name": "Naturally Warded Body", "label": "reject"}
+      ],
+      "gates": {
+        "min_results": 1,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    },
+    {
+      "id": "deck_hidden_draw_quality_gap_prefers_reliable_engine",
+      "mode": "deck_role",
+      "top_k": 1,
+      "role": "draw",
+      "categories": ["draw"],
+      "color_identity": ["U"],
+      "gaps": {
+        "roles": {"draw": 3},
+        "lands": {},
+        "synergy": []
+      },
+      "current_cards": [
+        {
+          "name": "Ten Cantrips",
+          "oracle_text": "Draw a card.",
+          "type_line": "Instant",
+          "cmc": 1,
+          "qty": 10,
+          "color_identity": ["U"]
+        }
+      ],
+      "cards": [
+        {
+          "name": "Reliable Insight",
+          "oracle_text": "At the beginning of your upkeep, draw a card.",
+          "type_line": "Enchantment",
+          "cmc": 2,
+          "color_identity": ["U"]
+        },
+        {
+          "name": "Another Cantrip",
+          "oracle_text": "Draw a card.",
+          "type_line": "Instant",
+          "cmc": 1,
+          "color_identity": ["U"]
+        },
+        {
+          "name": "Expensive Insight",
+          "oracle_text": "At the beginning of your upkeep, draw a card.",
+          "type_line": "Enchantment",
+          "cmc": 7,
+          "color_identity": ["U"]
+        }
+      ],
+      "judgments": [
+        {
+          "name": "Reliable Insight",
+          "label": "core",
+          "required_evidence_tags": ["repeatable_engine", "reliable_role_source", "effective_role_gain"],
+          "required_reason_fragments": ["moving reliable coverage from 7.3 to 8.3"]
+        },
+        {"name": "Another Cantrip", "label": "strong"},
+        {"name": "Expensive Insight", "label": "weak"}
+      ],
+      "gates": {
+        "min_results": 1,
+        "min_precision_at_k": 1.0,
+        "min_ndcg_at_k": 1.0
+      }
+    }
+  ],
+  "global_banned_reason_fragments": [
+    "validated match",
+    "fits because it fits",
+    "supports the package"
+  ]
+}

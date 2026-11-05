@@ -1,0 +1,1607 @@
+{
+  "cards": [
+    {
+      "cmc": 0,
+      "collector_number": "89",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "qty": 3,
+      "set_code": "und",
+      "tags": [],
+      "type_line": "Basic Land — Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "266",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [],
+      "name": "Forest",
+      "oracle_text": "({T}: Add {G}.)",
+      "qty": 3,
+      "set_code": "eld",
+      "tags": [],
+      "type_line": "Basic Land — Forest"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "87",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [],
+      "name": "Plains",
+      "oracle_text": "({T}: Add {W}.)",
+      "qty": 6,
+      "set_code": "und",
+      "tags": [],
+      "type_line": "Basic Land — Plains"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "331",
+      "color_identity": [],
+      "colors": [],
+      "name": "Arcane Signet",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "333",
+      "color_identity": [],
+      "colors": [],
+      "name": "Command Tower",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "GRN-233",
+      "color_identity": [],
+      "colors": [],
+      "name": "Chromatic Lantern",
+      "oracle_text": "Lands you control have \"{T}: Add one mana of any color.\"\n{T}: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "MM3-157",
+      "color_identity": [
+        "G",
+        "U"
+      ],
+      "colors": [
+        "G",
+        "U"
+      ],
+      "name": "Coiling Oracle",
+      "oracle_text": "When this creature enters, reveal the top card of your library. If it's a land card, put it onto the battlefield. Otherwise, put that card into your hand.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Snake Elf Druid"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "MH1-7",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Ephemerate",
+      "oracle_text": "Exile target creature you control, then return it to the battlefield under its owner's control.\nRebound (If you cast this spell from your hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "C18-245",
+      "color_identity": [],
+      "colors": [],
+      "name": "Evolving Wilds",
+      "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "RIX-82",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Ravenous Chupacabra",
+      "oracle_text": "When this creature enters, destroy target creature an opponent controls.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Creature — Beast Horror"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "CM2-264",
+      "color_identity": [
+        "B",
+        "G",
+        "W"
+      ],
+      "colors": [],
+      "name": "Sandsteppe Citadel",
+      "oracle_text": "This land enters tapped.\n{T}: Add {W}, {B}, or {G}.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "C18-222",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sol Ring",
+      "oracle_text": "{T}: Add {C}{C}.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "DDU-62",
+      "color_identity": [],
+      "colors": [],
+      "name": "Solemn Simulacrum",
+      "oracle_text": "When this creature enters, you may search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.\nWhen this creature dies, you may draw a card.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Artifact Creature — Golem"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "CM2-224",
+      "color_identity": [],
+      "colors": [],
+      "name": "Thought Vessel",
+      "oracle_text": "You have no maximum hand size.\n{T}: Add {C}.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 7.0,
+      "collector_number": "43",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Agent of Treachery",
+      "oracle_text": "When this creature enters, gain control of target permanent.\nAt the beginning of your end step, if you control three or more permanents you don't own, draw three cards.",
+      "qty": 1,
+      "set_code": "m20",
+      "tags": [],
+      "type_line": "Creature — Human Rogue"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "220",
+      "color_identity": [
+        "B",
+        "G",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "G",
+        "U"
+      ],
+      "name": "Yarok, the Desecrated",
+      "oracle_text": "Deathtouch, lifelink\nIf a permanent entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.",
+      "qty": 1,
+      "set_code": "m20",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Legendary Creature — Elemental Horror"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "244",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Darkwater Catacombs",
+      "oracle_text": "{1}, {T}: Add {U}{B}.",
+      "qty": 1,
+      "set_code": "cm2",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "250",
+      "color_identity": [],
+      "colors": [],
+      "name": "Exotic Orchard",
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "qty": 1,
+      "set_code": "cm2",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "265",
+      "color_identity": [
+        "U",
+        "W"
+      ],
+      "colors": [],
+      "name": "Prairie Stream",
+      "oracle_text": "({T}: Add {W} or {U}.)\nThis land enters tapped unless you control two or more basic lands.",
+      "qty": 1,
+      "set_code": "c19",
+      "tags": [],
+      "type_line": "Land — Plains Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "268",
+      "color_identity": [],
+      "colors": [],
+      "name": "Reliquary Tower",
+      "oracle_text": "You have no maximum hand size.\n{T}: Add {C}.",
+      "qty": 1,
+      "set_code": "c19",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "278",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Sunken Hollow",
+      "oracle_text": "({T}: Add {U} or {B}.)\nThis land enters tapped unless you control two or more basic lands.",
+      "qty": 1,
+      "set_code": "c19",
+      "tags": [],
+      "type_line": "Land — Island Swamp"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "13",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Flickerwisp",
+      "oracle_text": "Flying\nWhen this creature enters, exile another target permanent. Return that card to the battlefield under its owner's control at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "c13",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Elemental"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "16",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Eerie Interlude",
+      "oracle_text": "Exile any number of target creatures you control. Return those cards to the battlefield under their owner's control at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "soi",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "61",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Essence Flux",
+      "oracle_text": "Exile target creature you control, then return that card to the battlefield under its owner's control. If it's a Spirit, put a +1/+1 counter on it.",
+      "qty": 1,
+      "set_code": "soi",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "214",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Swamp",
+      "oracle_text": "({T}: Add {B}.)",
+      "qty": 1,
+      "set_code": "ust",
+      "tags": [],
+      "type_line": "Basic Land — Swamp"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "19",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Felidar Guardian",
+      "oracle_text": "When this creature enters, you may exile another target permanent you control, then return that card to the battlefield under its owner's control.",
+      "qty": 1,
+      "set_code": "aer",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Cat Beast"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "16",
+      "color_identity": [
+        "U",
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Momentary Blink",
+      "oracle_text": "Exile target creature you control, then return it to the battlefield under its owner's control.\nFlashback {3}{U} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "mm3",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "194",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Reclamation Sage",
+      "oracle_text": "When this creature enters, you may destroy target artifact or enchantment.",
+      "qty": 1,
+      "set_code": "m15",
+      "tags": [],
+      "type_line": "Creature — Elf Shaman"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "288",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Rampant Growth",
+      "oracle_text": "Search your library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "10e",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "68",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Spark Double",
+      "oracle_text": "You may have this creature enter as a copy of a creature or planeswalker you control, except it enters with an additional +1/+1 counter on it if it's a creature, it enters with an additional loyalty counter on it if it's a planeswalker, and it isn't legendary.",
+      "qty": 1,
+      "set_code": "war",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Illusion"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "72",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Teferi's Time Twist",
+      "oracle_text": "Exile target permanent you control. Return that card to the battlefield under its owner's control at the beginning of the next end step. If it enters as a creature, it enters with an additional +1/+1 counter on it.",
+      "qty": 1,
+      "set_code": "war",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "214",
+      "color_identity": [
+        "U",
+        "W"
+      ],
+      "colors": [
+        "U",
+        "W"
+      ],
+      "name": "Soulherder",
+      "oracle_text": "Whenever a creature is exiled from the battlefield, put a +1/+1 counter on this creature.\nAt the beginning of your end step, you may exile another target creature you control, then return that card to the battlefield under its owner's control.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Spirit"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "261",
+      "color_identity": [
+        "G",
+        "W"
+      ],
+      "colors": [],
+      "name": "Canopy Vista",
+      "oracle_text": "({T}: Add {G} or {W}.)\nThis land enters tapped unless you control two or more basic lands.",
+      "qty": 1,
+      "set_code": "c20",
+      "tags": [],
+      "type_line": "Land — Forest Plains"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "282",
+      "color_identity": [
+        "U",
+        "W"
+      ],
+      "colors": [],
+      "name": "Irrigated Farmland",
+      "oracle_text": "({T}: Add {W} or {U}.)\nThis land enters tapped.\nCycling {2} ({2}, Discard this card: Draw a card.)",
+      "qty": 1,
+      "set_code": "c20",
+      "tags": [],
+      "type_line": "Land — Plains Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "312",
+      "color_identity": [
+        "U",
+        "W"
+      ],
+      "colors": [],
+      "name": "Skycloud Expanse",
+      "oracle_text": "{1}, {T}: Add {W}{U}.",
+      "qty": 1,
+      "set_code": "c20",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "16",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Flicker of Fate",
+      "oracle_text": "Exile target creature or enchantment, then return it to the battlefield under its owner's control.",
+      "qty": 1,
+      "set_code": "thb",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "1",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Blessed Sanctuary",
+      "oracle_text": "Prevent all noncombat damage that would be dealt to you and creatures you control.\nWhenever a nontoken creature you control enters, create a 2/2 white Unicorn creature token.",
+      "qty": 1,
+      "set_code": "jmp",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "47",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Deadeye Navigator",
+      "oracle_text": "Soulbond (You may pair this creature with another unpaired creature when either enters. They remain paired for as long as you control both of them.)\nAs long as Deadeye Navigator is paired with another creature, each of those creatures has \"{1}{U}: Exile this creature, then return it to the battlefield under your control.\"",
+      "qty": 1,
+      "set_code": "avr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Spirit"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "57",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Ghostly Flicker",
+      "oracle_text": "Exile two target artifacts, creatures, and/or lands you control, then return those cards to the battlefield under your control.",
+      "qty": 1,
+      "set_code": "avr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "200",
+      "color_identity": [
+        "B",
+        "G",
+        "W"
+      ],
+      "colors": [
+        "B",
+        "G",
+        "W"
+      ],
+      "name": "Siege Rhino",
+      "oracle_text": "Trample\nWhen this creature enters, each opponent loses 3 life and you gain 3 life.",
+      "qty": 1,
+      "set_code": "ktk",
+      "tags": [],
+      "type_line": "Creature — Rhino"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "7",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Cloudshift",
+      "oracle_text": "Exile target creature you control, then return that card to the battlefield under your control.",
+      "qty": 1,
+      "set_code": "a25",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "149",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Farseek",
+      "oracle_text": "Search your library for a Plains, Island, Swamp, or Mountain card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "c17",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "28",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Restoration Angel",
+      "oracle_text": "Flash\nFlying\nWhen this creature enters, you may exile target non-Angel creature you control, then return that card to the battlefield under your control.",
+      "qty": 1,
+      "set_code": "ima",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Angel"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "252p",
+      "color_identity": [],
+      "colors": [],
+      "name": "Skyclave Relic",
+      "oracle_text": "Kicker {3}\nIndestructible\nWhen this artifact enters, if it was kicked, create two tapped tokens that are copies of this artifact.\n{T}: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "pznr",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "239",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Kodama of the East Tree",
+      "oracle_text": "Reach\nWhenever another permanent you control enters, if it wasn't put onto the battlefield with this ability, you may put a permanent card with equal or lesser mana value from your hand onto the battlefield.\nPartner (You can have two commanders if both have partner.)",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Creature — Spirit"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "225",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Farhaven Elf",
+      "oracle_text": "When this creature enters, you may search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Elf Druid"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "425",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Eternal Witness",
+      "oracle_text": "When this creature enters, you may return target card from your graveyard to your hand.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Human Shaman"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "247",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Yavimaya Dryad",
+      "oracle_text": "Forestwalk (This creature can't be blocked as long as defending player controls a Forest.)\nWhen this creature enters, you may search your library for a Forest card, put it onto the battlefield tapped under target player's control, then shuffle.",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Dryad"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "245",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Darkmoss Bridge",
+      "oracle_text": "This land enters tapped.\nIndestructible\n{T}: Add {B} or {G}.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "247",
+      "color_identity": [
+        "B",
+        "W"
+      ],
+      "colors": [],
+      "name": "Goldmire Bridge",
+      "oracle_text": "This land enters tapped.\nIndestructible\n{T}: Add {W} or {B}.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "49",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Dissipate",
+      "oracle_text": "Counter target spell. If that spell is countered this way, exile it instead of putting it into its owner's graveyard.",
+      "qty": 1,
+      "set_code": "mid",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "373",
+      "color_identity": [
+        "U",
+        "W"
+      ],
+      "colors": [
+        "U",
+        "W"
+      ],
+      "name": "Hallowed Respite",
+      "oracle_text": "Exile target nonlegendary creature, then return it to the battlefield under its owner's control. If it entered under your control, put a +1/+1 counter on it. Otherwise, tap it.\nFlashback {1}{W}{U} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "mid",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "87",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Wash Away",
+      "oracle_text": "Cleave {1}{U}{U} (You may cast this spell for its cleave cost. If you do, remove the words in square brackets.)\nCounter target spell [that wasn't cast from its owner's hand].",
+      "qty": 1,
+      "set_code": "vow",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "249",
+      "color_identity": [],
+      "colors": [],
+      "name": "Cabaretti Courtyard",
+      "oracle_text": "When this land enters, sacrifice it. When you do, search your library for a basic Mountain, Forest, or Plains card, put it onto the battlefield tapped, then shuffle and you gain 1 life.",
+      "qty": 1,
+      "set_code": "snc",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "30",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Lae'zel's Acrobatics",
+      "oracle_text": "Exile all nontoken creatures you control, then roll a d20.\n1—9 | Return those cards to the battlefield under their owner's control at the beginning of the next end step.\n10—20 | Return those cards to the battlefield under their owner's control, then exile them again. Return those cards to the battlefield under their owner's control at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "blink",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "298",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Ertai Resurrected",
+      "oracle_text": "Flash\nWhen Ertai Resurrected enters, choose up to one —\n• Counter target spell, activated ability, or triggered ability. Its controller draws a card.\n• Destroy another target creature or planeswalker. Its controller draws a card.",
+      "qty": 1,
+      "set_code": "dmu",
+      "tags": [],
+      "type_line": "Legendary Creature — Phyrexian Human Wizard"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "189",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [],
+      "name": "Mistvault Bridge",
+      "oracle_text": "This land enters tapped.\nIndestructible\n{T}: Add {U} or {B}.",
+      "qty": 1,
+      "set_code": "brc",
+      "tags": [],
+      "type_line": "Artifact Land"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "281",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Counterspell",
+      "oracle_text": "Counter target spell.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "292",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Peregrine Drake",
+      "oracle_text": "Flying\nWhen this creature enters, untap up to five lands.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Creature — Drake"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "335",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "The Eternal Wanderer",
+      "oracle_text": "No more than one creature can attack The Eternal Wanderer each combat.\n+1: Exile up to one target artifact or creature. Return that card to the battlefield under its owner's control at the beginning of that player's next end step.\n0: Create a 2/2 white Samurai creature token with double strike.\n−4: For each player, choose a creature that player controls. Each player sacrifices all creatures they control not chosen this way.",
+      "qty": 1,
+      "set_code": "one",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Legendary Planeswalker"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "194",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [],
+      "name": "Invasion of Zendikar // Awakened Skyclave",
+      "oracle_text": "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's defeated, exile it, then cast it transformed.)\nWhen this Siege enters, search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle. // Vigilance, haste\nAs long as this creature is on the battlefield, it's a land in addition to its other types.\n{T}: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "mom",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Battle — Siege // Creature — Elemental"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "114",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Invasion of Fiora // Marchesa, Resolute Monarch",
+      "oracle_text": "(As a Siege enters, choose an opponent to protect it. You and others can attack it. When it's defeated, exile it, then cast it transformed.)\nWhen this Siege enters, choose one or both —\n• Destroy all legendary creatures.\n• Destroy all nonlegendary creatures. // Menace, deathtouch\nWhenever Marchesa attacks, remove all counters from up to one target permanent.\nAt the beginning of your upkeep, if you haven't been dealt combat damage since your last turn, you draw a card and you lose 1 life.",
+      "qty": 1,
+      "set_code": "mom",
+      "tags": [
+        "blink",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Battle — Siege // Legendary Creature — Human Noble"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "211",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Swords to Plowshares",
+      "oracle_text": "Exile target creature. Its controller gains life equal to its power.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "263",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Wood Elves",
+      "oracle_text": "When this creature enters, search your library for a Forest card, put that card onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "ltc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Elf Scout"
+    },
+    {
+      "cmc": 6.0,
+      "collector_number": "207",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Farewell",
+      "oracle_text": "Choose one or more —\n• Exile all artifacts.\n• Exile all creatures.\n• Exile all enchantments.\n• Exile all graveyards.",
+      "qty": 1,
+      "set_code": "who",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "76",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Virtue of Knowledge // Vantress Visions",
+      "oracle_text": "If a permanent entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time. // Copy target activated or triggered ability you control. You may choose new targets for the copy.",
+      "qty": 1,
+      "set_code": "woe",
+      "tags": [],
+      "type_line": "Enchantment // Instant — Adventure"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "498",
+      "color_identity": [
+        "G",
+        "U",
+        "W"
+      ],
+      "colors": [
+        "G",
+        "U",
+        "W"
+      ],
+      "name": "Galadriel, Light of Valinor",
+      "oracle_text": "Alliance — Whenever another creature you control enters, choose one that hasn't been chosen this turn —\n• Add {G}{G}{G}.\n• Put a +1/+1 counter on each creature you control.\n• Scry 2, then draw a card.",
+      "qty": 1,
+      "set_code": "ltc",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Legendary Creature — Elf Noble"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "331",
+      "color_identity": [
+        "G",
+        "U"
+      ],
+      "colors": [],
+      "name": "Waterlogged Grove",
+      "oracle_text": "{T}, Pay 1 life: Add {G} or {U}.\n{1}, {T}, Sacrifice this land: Draw a card.",
+      "qty": 1,
+      "set_code": "who",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "219",
+      "color_identity": [
+        "U",
+        "W"
+      ],
+      "colors": [
+        "U",
+        "W"
+      ],
+      "name": "Abuelo, Ancestral Echo",
+      "oracle_text": "Flying, ward {2}\n{1}{W}{U}: Exile another target creature or artifact you control. Return it to the battlefield under its owner's control at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "lci",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Creature — Spirit"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "191",
+      "color_identity": [
+        "B",
+        "W"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Damn",
+      "oracle_text": "Destroy target creature. A creature destroyed this way can't be regenerated.\nOverload {2}{W}{W} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "261",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Topiary Stomper",
+      "oracle_text": "Vigilance (Attacking doesn't cause this creature to tap.)\nWhen this creature enters, search your library for a basic land card, put it onto the battlefield tapped, then shuffle.\nThis creature can't attack or block unless you control seven or more lands.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Plant Dinosaur"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "19",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Ghostway",
+      "oracle_text": "Exile each creature you control. Return those cards to the battlefield under their owner's control at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "rvr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "271",
+      "color_identity": [],
+      "colors": [],
+      "name": "Krosan Verge",
+      "oracle_text": "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for a Forest card and a Plains card, put them onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "288",
+      "color_identity": [
+        "G",
+        "U",
+        "W"
+      ],
+      "colors": [],
+      "name": "Seaside Citadel",
+      "oracle_text": "This land enters tapped.\n{T}: Add {G}, {W}, or {U}.",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "266",
+      "color_identity": [
+        "U",
+        "W"
+      ],
+      "colors": [],
+      "name": "Glacial Fortress",
+      "oracle_text": "This land enters tapped unless you control a Plains or an Island.\n{T}: Add {W} or {U}.",
+      "qty": 1,
+      "set_code": "pip",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "237",
+      "color_identity": [],
+      "colors": [],
+      "name": "Panharmonicon",
+      "oracle_text": "If an artifact or creature entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.",
+      "qty": 1,
+      "set_code": "pip",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "1",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Another Round",
+      "oracle_text": "Exile any number of creatures you control, then return them to the battlefield under their owner's control. Then repeat this process X more times.",
+      "qty": 1,
+      "set_code": "otj",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "85",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Path to Exile",
+      "oracle_text": "Exile target creature. Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "273",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [],
+      "name": "Bojuka Bog",
+      "oracle_text": "This land enters tapped.\nWhen this land enters, exile target player's graveyard.\n{T}: Add {B}.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "215",
+      "color_identity": [
+        "B",
+        "U"
+      ],
+      "colors": [
+        "B",
+        "U"
+      ],
+      "name": "Baleful Strix",
+      "oracle_text": "Flying, deathtouch\nWhen this creature enters, draw a card.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [
+        "aristocrats"
+      ],
+      "type_line": "Artifact Creature — Bird"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "300",
+      "color_identity": [
+        "G",
+        "U"
+      ],
+      "colors": [],
+      "name": "Hinterland Harbor",
+      "oracle_text": "This land enters tapped unless you control a Forest or an Island.\n{T}: Add {G} or {U}.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "191",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Elvish Rejuvenator",
+      "oracle_text": "When this creature enters, look at the top five cards of your library. You may put a land card from among them onto the battlefield tapped. Put the rest on the bottom of your library in a random order.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Elf Druid"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "301",
+      "color_identity": [
+        "B",
+        "W"
+      ],
+      "colors": [],
+      "name": "Isolated Chapel",
+      "oracle_text": "This land enters tapped unless you control a Plains or a Swamp.\n{T}: Add {W} or {B}.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "307",
+      "color_identity": [
+        "B",
+        "G",
+        "U"
+      ],
+      "colors": [],
+      "name": "Opulent Palace",
+      "oracle_text": "This land enters tapped.\n{T}: Add {B}, {G}, or {U}.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "341",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Woodland Cemetery",
+      "oracle_text": "This land enters tapped unless you control a Swamp or a Forest.\n{T}: Add {B} or {G}.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "342",
+      "color_identity": [
+        "G",
+        "U"
+      ],
+      "colors": [],
+      "name": "Yavimaya Coast",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add {G} or {U}. This land deals 1 damage to you.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "168",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Clifftop Lookout",
+      "oracle_text": "Reach\nWhen this creature enters, reveal cards from the top of your library until you reveal a land card. Put that card onto the battlefield tapped and the rest on the bottom of your library in a random order.",
+      "qty": 1,
+      "set_code": "blb",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Frog Scout"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "303",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Dour Port-Mage",
+      "oracle_text": "Whenever one or more other creatures you control leave the battlefield without dying, draw a card.\n{1}{U}, {T}: Return another target creature you control to its owner's hand.",
+      "qty": 1,
+      "set_code": "blb",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Frog Wizard"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "271",
+      "color_identity": [],
+      "colors": [],
+      "name": "Valgavoth's Lair",
+      "oracle_text": "Hexproof\nThis land enters tapped. As it enters, choose a color.\n{T}: Add one mana of the chosen color.",
+      "qty": 1,
+      "set_code": "dsk",
+      "tags": [],
+      "type_line": "Enchantment Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "269",
+      "color_identity": [],
+      "colors": [],
+      "name": "Terramorphic Expanse",
+      "oracle_text": "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "dsk",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    }
+  ],
+  "case_id": "08",
+  "color_identity": [
+    "B",
+    "G",
+    "U",
+    "W"
+  ],
+  "commander": "Atraxa, Grand Unifier",
+  "commander_card": {
+    "cmc": 7.0,
+    "collector_number": "196",
+    "color_identity": [
+      "B",
+      "G",
+      "U",
+      "W"
+    ],
+    "colors": [
+      "B",
+      "G",
+      "U",
+      "W"
+    ],
+    "edhrec_rank": 3555,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/4/a/4a1f905f-1d55-4d02-9d24-e58070793d3f.jpg?1783918003",
+      "normal": "https://cards.scryfall.io/normal/front/4/a/4a1f905f-1d55-4d02-9d24-e58070793d3f.jpg?1783918003",
+      "small": "https://cards.scryfall.io/small/front/4/a/4a1f905f-1d55-4d02-9d24-e58070793d3f.jpg?1783918003"
+    },
+    "keywords": [
+      "Deathtouch",
+      "Flying",
+      "Lifelink",
+      "Vigilance"
+    ],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{3}{G}{W}{U}{B}",
+    "name": "Atraxa, Grand Unifier",
+    "oracle_id": "abbcb153-0763-44c6-964f-b4ff0eb64257",
+    "oracle_text": "Flying, vigilance, deathtouch, lifelink\nWhen Atraxa enters, reveal the top ten cards of your library. For each card type, you may put a card of that type from among the revealed cards into your hand. Put the rest on the bottom of your library in a random order. (Artifact, battle, creature, enchantment, instant, land, planeswalker, and sorcery are card types.)",
+    "power": "7",
+    "prices": {
+      "usd": "16.64",
+      "usd_foil": "18.41"
+    },
+    "scryfall_uri": "https://scryfall.com/card/one/196/atraxa-grand-unifier?utm_source=api",
+    "set": "one",
+    "toughness": "7",
+    "type_line": "Legendary Creature — Phyrexian Angel"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "atraxa",
+  "source_platform": "moxfield",
+  "source_url": "https://moxfield.com/decks/njMiTWJsREmUXPB4L97A3w"
+}

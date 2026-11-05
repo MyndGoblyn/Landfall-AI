@@ -1,0 +1,98 @@
+# LandfallAI real-deck validation snapshot 08
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://moxfield.com/decks/njMiTWJsREmUXPB4L97A3w
+
+# Commander
+1 Atraxa, Grand Unifier *CMDR*
+
+# Mainboard
+3 Island
+3 Forest
+6 Plains
+1 Arcane Signet
+1 Command Tower
+1 Chromatic Lantern
+1 Coiling Oracle
+1 Ephemerate
+1 Evolving Wilds
+1 Ravenous Chupacabra
+1 Sandsteppe Citadel
+1 Sol Ring
+1 Solemn Simulacrum
+1 Thought Vessel
+1 Agent of Treachery
+1 Yarok, the Desecrated
+1 Darkwater Catacombs
+1 Exotic Orchard
+1 Prairie Stream
+1 Reliquary Tower
+1 Sunken Hollow
+1 Flickerwisp
+1 Eerie Interlude
+1 Essence Flux
+1 Swamp
+1 Felidar Guardian
+1 Momentary Blink
+1 Reclamation Sage
+1 Rampant Growth
+1 Spark Double
+1 Teferi's Time Twist
+1 Soulherder
+1 Canopy Vista
+1 Irrigated Farmland
+1 Skycloud Expanse
+1 Flicker of Fate
+1 Blessed Sanctuary
+1 Deadeye Navigator
+1 Ghostly Flicker
+1 Siege Rhino
+1 Cloudshift
+1 Farseek
+1 Restoration Angel
+1 Skyclave Relic
+1 Kodama of the East Tree
+1 Farhaven Elf
+1 Eternal Witness
+1 Yavimaya Dryad
+1 Darkmoss Bridge
+1 Goldmire Bridge
+1 Dissipate
+1 Hallowed Respite
+1 Wash Away
+1 Cabaretti Courtyard
+1 Lae'zel's Acrobatics
+1 Ertai Resurrected
+1 Mistvault Bridge
+1 Counterspell
+1 Peregrine Drake
+1 The Eternal Wanderer
+1 Invasion of Zendikar // Awakened Skyclave
+1 Invasion of Fiora // Marchesa, Resolute Monarch
+1 Swords to Plowshares
+1 Wood Elves
+1 Farewell
+1 Virtue of Knowledge // Vantress Visions
+1 Galadriel, Light of Valinor
+1 Waterlogged Grove
+1 Abuelo, Ancestral Echo
+1 Damn
+1 Topiary Stomper
+1 Ghostway
+1 Krosan Verge
+1 Seaside Citadel
+1 Glacial Fortress
+1 Panharmonicon
+1 Another Round
+1 Path to Exile
+1 Bojuka Bog
+1 Baleful Strix
+1 Hinterland Harbor
+1 Elvish Rejuvenator
+1 Isolated Chapel
+1 Opulent Palace
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Clifftop Lookout
+1 Dour Port-Mage
+1 Valgavoth's Lair
+1 Terramorphic Expanse

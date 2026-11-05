@@ -1,0 +1,1281 @@
+{
+  "cards": [
+    {
+      "cmc": 2,
+      "collector_number": "161",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Underworld Breach",
+      "oracle_text": "Each nonland card in your graveyard has escape. The escape cost is equal to the card's mana cost plus exile three other cards from your graveyard. (You may cast cards from your graveyard for their escape cost.)\nAt the beginning of the end step, sacrifice this enchantment.",
+      "qty": 1,
+      "set_code": "thb",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "99",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Electrodominance",
+      "oracle_text": "Electrodominance deals X damage to any target. You may cast a spell with mana value X or less from your hand without paying its mana cost.",
+      "qty": 1,
+      "set_code": "rna",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "799",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Jeska's Will",
+      "oracle_text": "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Add {R} for each card in target opponent's hand.\n• Exile the top three cards of your library. You may play them this turn.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "SCG-29",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Brain Freeze",
+      "oracle_text": "Target player mills three cards.\nStorm (When you cast this spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "64",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Counterspell",
+      "oracle_text": "Counter target spell.",
+      "qty": 1,
+      "set_code": "ice",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "61",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Brainstorm",
+      "oracle_text": "Draw three cards, then put two cards from your hand on top of your library in any order.",
+      "qty": 1,
+      "set_code": "mmq",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "99",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [
+        "R",
+        "U"
+      ],
+      "name": "Clout of the Dominus",
+      "oracle_text": "Enchant creature\nAs long as enchanted creature is blue, it gets +1/+1 and has shroud. (It can't be the target of spells or abilities.)\nAs long as enchanted creature is red, it gets +1/+1 and has haste.",
+      "qty": 1,
+      "set_code": "eve",
+      "tags": [],
+      "type_line": "Enchantment - Aura"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "3",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Syncopate",
+      "oracle_text": "Counter target spell unless its controller pays {X}. If that spell is countered this way, exile it instead of putting it into its owner's graveyard.",
+      "qty": 1,
+      "set_code": "gk1",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "282",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Mogg Salvage",
+      "oracle_text": "If an opponent controls an Island and you control a Mountain, you may cast this spell without paying its mana cost.\nDestroy target artifact.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "27",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Condescend",
+      "oracle_text": "Counter target spell unless its controller pays {X}. Scry 2. (Look at the top two cards of your library, then put any number of them on the bottom and the rest on top in any order.)",
+      "qty": 1,
+      "set_code": "5dn",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "79",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Downhill Charge",
+      "oracle_text": "You may sacrifice a Mountain rather than pay this spell's mana cost.\nTarget creature gets +X/+0 until end of turn, where X is the number of Mountains you control.",
+      "qty": 1,
+      "set_code": "nem",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "4",
+      "color_identity": [],
+      "colors": [],
+      "name": "Introduction to Prophecy",
+      "oracle_text": "Scry 2, then draw a card.",
+      "qty": 1,
+      "set_code": "stx",
+      "tags": [],
+      "type_line": "Sorcery - Lesson"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "54",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Solve the Equation",
+      "oracle_text": "Search your library for an instant or sorcery card, reveal it, put it into your hand, then shuffle.",
+      "qty": 1,
+      "set_code": "stx",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "43",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Mizzix's Mastery",
+      "oracle_text": "Exile target card that's an instant or sorcery from your graveyard. For each card exiled this way, copy it, and you may cast the copy without paying its mana cost. Exile Mizzix's Mastery.\nOverload {5}{R}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")",
+      "qty": 1,
+      "set_code": "sta",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "49",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Clash of Wills",
+      "oracle_text": "Counter target spell unless its controller pays {X}.",
+      "qty": 1,
+      "set_code": "ori",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "215",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Reckless Charge",
+      "oracle_text": "Target creature gets +3/+0 and gains haste until end of turn.\nFlashback {2}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "ody",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "BOK-96",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Blazing Shoal",
+      "oracle_text": "You may exile a red card with mana value X from your hand rather than pay this spell's mana cost.\nTarget creature gets +X/+0 until end of turn.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant - Arcane"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "610",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Sudden Breakthrough",
+      "oracle_text": "Target creature gets +2/+0 and gains first strike until end of turn.\nCreate a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [
+        "stax",
+        "treasure",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "216",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [
+        "R",
+        "U"
+      ],
+      "name": "Epic Experiment",
+      "oracle_text": "Exile the top X cards of your library. You may cast instant and sorcery spells with mana value X or less from among them without paying their mana costs. Then put all cards exiled this way that weren't cast into your graveyard.",
+      "qty": 1,
+      "set_code": "c21",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "182",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Reiterate",
+      "oracle_text": "Buyback {3} (You may pay an additional {3} as you cast this spell. If you do, put this card into your hand as it resolves.)\nCopy target instant or sorcery spell. You may choose new targets for the copy.",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "149",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Seize the Spoils",
+      "oracle_text": "As an additional cost to cast this spell, discard a card.\nDraw two cards and create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [
+        "treasure",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "36",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Visions of Ruin",
+      "oracle_text": "Each opponent sacrifices an artifact. For each artifact sacrificed this way, you create a Treasure token.\nFlashback {8}{R}{R}. This spell costs {X} less to cast this way, where X is the greatest mana value of a commander you own on the battlefield or in the command zone. (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "blink",
+        "treasure",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "555",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Ignite the Future",
+      "oracle_text": "Exile the top three cards of your library. Until the end of your next turn, you may play those cards. If this spell was cast from a graveyard, you may play cards this way without paying their mana costs.\nFlashback {7}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "87",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Faithless Looting",
+      "oracle_text": "Draw two cards, then discard two cards.\nFlashback {2}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "dka",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "414",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Fists of Flame",
+      "oracle_text": "Draw a card. Until end of turn, target creature gains trample and gets +1/+0 for each card you've drawn this turn. (A creature with trample can deal excess combat damage to the player or planeswalker it's attacking.)",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "90",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mystic Retrieval",
+      "oracle_text": "Return target instant or sorcery card from your graveyard to your hand.\nFlashback {2}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "c19",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "179",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Seething Song",
+      "oracle_text": "Add {R}{R}{R}{R}{R}.",
+      "qty": 1,
+      "set_code": "c21",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "105",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Past in Flames",
+      "oracle_text": "Each instant and sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost.\nFlashback {4}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "mm3",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "164",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Unexpected Windfall",
+      "oracle_text": "As an additional cost to cast this spell, discard a card.\nDraw two cards and create two Treasure tokens. (They're artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "afr",
+      "tags": [
+        "treasure",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "DDK-63",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Recoup",
+      "oracle_text": "Target sorcery card in your graveyard gains flashback until end of turn. The flashback cost is equal to its mana cost. (Mana cost includes color.)\nFlashback {3}{R} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "68",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Pirate's Prize",
+      "oracle_text": "Draw two cards. Create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "xln",
+      "tags": [
+        "stax",
+        "treasure",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "238",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Stroke of Genius",
+      "oracle_text": "Target player draws X cards.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "13",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Drown in Dreams",
+      "oracle_text": "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Target player draws X cards.\n• Target player mills twice X cards.",
+      "qty": 1,
+      "set_code": "mic",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "101",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Fervent Mastery",
+      "oracle_text": "You may pay {2}{R}{R} rather than pay this spell's mana cost.\nIf the {2}{R}{R} cost was paid, an opponent discards any number of cards, then draws that many cards.\nSearch your library for up to three cards, put them into your hand, shuffle, then discard three cards at random.",
+      "qty": 1,
+      "set_code": "stx",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "44",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Ingenious Mastery",
+      "oracle_text": "You may pay {2}{U} rather than pay this spell's mana cost.\nIf the {2}{U} cost was paid, you draw three cards, then an opponent creates two Treasure tokens and they scry 2. If that cost wasn't paid, you draw X cards.",
+      "qty": 1,
+      "set_code": "stx",
+      "tags": [
+        "treasure",
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "BFZ-76",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Dispel",
+      "oracle_text": "Counter target instant spell.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "123",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mind's Desire",
+      "oracle_text": "Shuffle your library. Then exile the top card of your library. Until end of turn, you may play that card without paying its mana cost.\nStorm (When you cast this spell, copy it for each spell cast before it this turn.)",
+      "qty": 1,
+      "set_code": "c21",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "68",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Quiet Speculation",
+      "oracle_text": "Search target player's library for up to three cards with flashback and put them into that player's graveyard. Then the player shuffles.",
+      "qty": 1,
+      "set_code": "ema",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "235",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Tezzeret's Gambit",
+      "oracle_text": "({U/P} can be paid with either {U} or 2 life.)\nDraw two cards, then proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)",
+      "qty": 1,
+      "set_code": "ncc",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 10,
+      "collector_number": "114",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Apex of Power",
+      "oracle_text": "Exile the top seven cards of your library. Until end of turn, you may cast spells from among them.\nIf this spell was cast from your hand, add ten mana of any one color.",
+      "qty": 1,
+      "set_code": "afc",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "97",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Chain Reaction",
+      "oracle_text": "Chain Reaction deals X damage to each creature, where X is the number of creatures on the battlefield.",
+      "qty": 1,
+      "set_code": "onc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 7,
+      "collector_number": "228",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [
+        "R",
+        "U"
+      ],
+      "name": "Invert // Invent",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "36",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Divination",
+      "oracle_text": "Draw two cards.",
+      "qty": 1,
+      "set_code": "bng",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "81",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Negate",
+      "oracle_text": "Counter target noncreature spell.",
+      "qty": 1,
+      "set_code": "sta",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "151",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Mana Geyser",
+      "oracle_text": "Add {R} for each tapped land your opponents control.",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "CMD-269",
+      "color_identity": [],
+      "colors": [],
+      "name": "Command Tower",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "276",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sol Ring",
+      "oracle_text": "{T}: Add {C}{C}.",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "257",
+      "color_identity": [],
+      "colors": [],
+      "name": "Arcane Signet",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "356",
+      "color_identity": [],
+      "colors": [],
+      "name": "Fellwar Stone",
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "876",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [],
+      "name": "Talisman of Creativity",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add {U} or {R}. This artifact deals 1 damage to you.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "362",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [],
+      "name": "Izzet Signet",
+      "oracle_text": "{1}, {T}: Add {U}{R}.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "445",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [],
+      "name": "Fire Diamond",
+      "oracle_text": "This artifact enters tapped.\n{T}: Add {R}.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "449",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Sky Diamond",
+      "oracle_text": "This artifact enters tapped.\n{T}: Add {U}.",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "115",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Runaway Steam-Kin",
+      "oracle_text": "Whenever you cast a red spell, if this creature has fewer than three +1/+1 counters on it, put a +1/+1 counter on this creature.\nRemove three +1/+1 counters from this creature: Add {R}{R}{R}.",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [
+        "counters",
+        "spellslinger"
+      ],
+      "type_line": "Creature - Elemental"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "190",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Simian Spirit Guide",
+      "oracle_text": "Exile this card from your hand: Add {R}.",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Creature - Ape Spirit"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "121",
+      "color_identity": [],
+      "colors": [],
+      "name": "Swiftfoot Boots",
+      "oracle_text": "Equipped creature has hexproof and haste. (It can't be the target of spells or abilities your opponents control. It can attack and {T} no matter when it came under your control.)\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+      "qty": 1,
+      "set_code": "brr",
+      "tags": [
+        "spellslinger",
+        "equipment"
+      ],
+      "type_line": "Artifact - Equipment"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "SOM-168",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [],
+      "name": "Iron Myr",
+      "oracle_text": "{T}: Add {R}.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Creature Artifact - Myr"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "201",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Searing Touch",
+      "oracle_text": "Buyback {4} (You may pay an additional {4} as you cast this spell. If you do, put this card into your hand as it resolves.)\nSearing Touch deals 1 damage to any target.",
+      "qty": 1,
+      "set_code": "tmp",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "80",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Silundi Vision // Silundi Isle",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "ZNR-174",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Valakut Awakening // Valakut Stoneforge",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "96",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Seething Anger",
+      "oracle_text": "Buyback {3} (You may pay an additional {3} as you cast this spell. If you do, put this card into your hand as it resolves.)\nTarget creature gets +3/+0 until end of turn.",
+      "qty": 1,
+      "set_code": "sth",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "169",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Haze of Rage",
+      "oracle_text": "Buyback {2} (You may pay an additional {2} as you cast this spell. If you do, put this card into your hand as it resolves.)\nCreatures you control get +1/+0 until end of turn.\nStorm (When you cast this spell, copy it for each spell cast before it this turn.)",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "60",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Petals of Insight",
+      "oracle_text": "Look at the top three cards of your library. You may put those cards on the bottom of your library in any order. If you do, return Petals of Insight to its owner's hand. Otherwise, draw three cards.",
+      "qty": 1,
+      "set_code": "mma",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery - Arcane"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "CON-142",
+      "color_identity": [],
+      "colors": [],
+      "name": "Exotic Orchard",
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "115",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Storm-Kiln Artist",
+      "oracle_text": "This creature gets +1/+0 for each artifact you control.\nMagecraft — Whenever you cast or copy an instant or sorcery spell, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "stx",
+      "tags": [
+        "treasure",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Creature - Shaman Dwarf"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "403",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [],
+      "name": "Frostboil Snarl",
+      "oracle_text": "As this land enters, you may reveal an Island or Mountain card from your hand. If you don't, this land enters tapped.\n{T}: Add {U} or {R}.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "311",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Birgi, God of Storytelling // Harnfel, Horn of Bounty",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [],
+      "type_line": "Legendary Creature - God"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "255",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [],
+      "name": "Shivan Reef",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add {U} or {R}. This land deals 1 damage to you.",
+      "qty": 1,
+      "set_code": "dmu",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "278",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "qty": 15,
+      "set_code": "mom",
+      "tags": [],
+      "type_line": "Basic Land - Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "280",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [],
+      "name": "Mountain",
+      "oracle_text": "({T}: Add {R}.)",
+      "qty": 15,
+      "set_code": "mom",
+      "tags": [],
+      "type_line": "Basic Land - Mountain"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "299",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Urabrask // The Great Work",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "mom",
+      "tags": [],
+      "type_line": "Legendary Creature - Praetor Phyrexian"
+    }
+  ],
+  "case_id": "10",
+  "color_identity": [
+    "U",
+    "R"
+  ],
+  "commander": "Vadrik, Astral Archmage",
+  "commander_card": {
+    "cmc": 3.0,
+    "collector_number": "248",
+    "color_identity": [
+      "R",
+      "U"
+    ],
+    "colors": [
+      "R",
+      "U"
+    ],
+    "edhrec_rank": 11495,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/4/5/454666bb-f81d-4845-84aa-d6f8f80ce86a.jpg?1783925550",
+      "normal": "https://cards.scryfall.io/normal/front/4/5/454666bb-f81d-4845-84aa-d6f8f80ce86a.jpg?1783925550",
+      "small": "https://cards.scryfall.io/small/front/4/5/454666bb-f81d-4845-84aa-d6f8f80ce86a.jpg?1783925550"
+    },
+    "keywords": [],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{1}{U}{R}",
+    "name": "Vadrik, Astral Archmage",
+    "oracle_id": "a9ab17ce-ba07-4ce8-99f9-9c4c633957f7",
+    "oracle_text": "If it's neither day nor night, it becomes day as Vadrik enters.\nInstant and sorcery spells you cast cost {X} less to cast, where X is Vadrik's power.\nWhenever day becomes night or night becomes day, put a +1/+1 counter on Vadrik.",
+    "power": "1",
+    "prices": {
+      "usd": "0.39",
+      "usd_foil": "0.40"
+    },
+    "scryfall_uri": "https://scryfall.com/card/mid/248/vadrik-astral-archmage?utm_source=api",
+    "set": "mid",
+    "toughness": "2",
+    "type_line": "Legendary Creature — Human Wizard"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "budget-vadrik",
+  "source_platform": "archidekt",
+  "source_url": "https://archidekt.com/decks/4665428/budget_cedh_vadrik_astral_archmage"
+}

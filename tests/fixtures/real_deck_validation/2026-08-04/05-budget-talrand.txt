@@ -1,0 +1,78 @@
+# LandfallAI real-deck validation snapshot 05
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://archidekt.com/decks/13291295/talrand_sky_summoner
+
+# Commander
+1 Talrand, Sky Summoner *CMDR*
+
+# Mainboard
+1 Frantic Search
+1 Spy Network
+1 Brainstorm
+1 Counterspell
+1 Ponder
+1 Murmuring Mystic
+1 Impulse
+1 Archmage Emeritus
+1 Reality Shift
+1 Rapid Hybridization
+1 Wavebreak Hippocamp
+1 Consider
+1 Aetherize
+1 Telling Time
+1 An Offer You Can't Refuse
+1 Think Twice
+1 Silundi Vision // Silundi Isle
+1 Mission Briefing
+1 Gitaxian Probe
+1 Curse of the Swine
+1 Sapphire Medallion
+1 Bident of Thassa
+1 Case of the Ransacked Lab
+1 Arcane Signet
+1 Unwind
+1 Opt
+1 Thought Vessel
+1 Flood of Recollection
+1 Favorable Winds
+1 Pongify
+1 Curiosity Crafter
+1 Dispel
+1 Serum Visions
+1 Resculpt
+1 Abjure
+1 Snap
+1 Sol Ring
+1 Reliquary Tower
+1 Anticipate
+1 High Tide
+1 Peek
+1 Archmage of Runes
+1 Mind Stone
+1 Portent
+1 Rewind
+1 Wash Out
+1 Predict
+1 Haughty Djinn
+1 Reconnaissance Mission
+1 Hullbreaker Horror
+1 Quicken
+1 Octavia, Living Thesis
+1 Winged Words
+1 Archaeomancer
+1 Negate
+1 Heraldic Banner
+1 Arcane Denial
+1 Alandra, Sky Dreamer
+1 Archmage's Charm
+1 Mystic Sanctuary
+1 Lonely Sandbar
+1 Riptide Laboratory
+1 Remote Isle
+1 Dramatic Reversal
+1 Preordain
+1 Quick Study
+1 Deliberate
+30 Island
+1 Bender's Waterskin
+1 The Magic Mirror

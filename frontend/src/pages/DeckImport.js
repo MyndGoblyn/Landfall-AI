@@ -61,6 +61,10 @@ export default function DeckImport() {
         { headers: getAuthHeaders() }
       );
       toast.success(`Imported ${response.data.cards_count} cards!`);
+      const issues = response.data.input_assessment?.issues || [];
+      if (issues.length > 0) {
+        toast.warning(issues[0].message, { duration: 7000 });
+      }
       setTimeout(() => navigate('/dashboard'), 1500);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Import failed');

@@ -1,0 +1,1288 @@
+{
+  "cards": [
+    {
+      "cmc": 6,
+      "collector_number": "153",
+      "color_identity": [
+        "W",
+        "R"
+      ],
+      "colors": [
+        "W",
+        "R"
+      ],
+      "name": "Leave // Chance",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "hou",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "31",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Disallow",
+      "oracle_text": "Counter target spell, activated ability, or triggered ability. (Mana abilities can't be targeted.)",
+      "qty": 1,
+      "set_code": "aer",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "55",
+      "color_identity": [],
+      "colors": [],
+      "name": "Crown of Doom",
+      "oracle_text": "Whenever a creature attacks you or a planeswalker you control, it gets +2/+0 until end of turn.\n{2}: Target player other than this artifact's owner gains control of it. Activate only during your turn.",
+      "qty": 1,
+      "set_code": "c14",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "265",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [],
+      "name": "Mountain",
+      "oracle_text": "({T}: Add {R}.)",
+      "qty": 7,
+      "set_code": "ktk",
+      "tags": [],
+      "type_line": "Basic Land - Mountain"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "127",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Aggressive Mining",
+      "oracle_text": "You can't play lands.\nSacrifice a land: Draw two cards. Activate only once each turn.",
+      "qty": 1,
+      "set_code": "m15",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "108",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Stifle",
+      "oracle_text": "Counter target activated or triggered ability. (Mana abilities can't be targeted.)",
+      "qty": 1,
+      "set_code": "cns",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "48",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Perplexing Chimera",
+      "oracle_text": "Whenever an opponent casts a spell, you may exchange control of this creature and that spell. If you do, you may choose new targets for the spell. (If the spell becomes a permanent, you control that permanent.)",
+      "qty": 1,
+      "set_code": "bng",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature Enchantment - Chimera"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "237",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "qty": 10,
+      "set_code": "ths",
+      "tags": [],
+      "type_line": "Basic Land - Island"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "135",
+      "color_identity": [
+        "W",
+        "R"
+      ],
+      "colors": [
+        "W",
+        "R"
+      ],
+      "name": "Wear // Tear",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "dgm",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "66",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Vedalken Plotter",
+      "oracle_text": "When this creature enters, exchange control of target land you control and target land an opponent controls.",
+      "qty": 1,
+      "set_code": "cmd",
+      "tags": [],
+      "type_line": "Creature - Wizard Vedalken"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "162",
+      "color_identity": [],
+      "colors": [],
+      "name": "Torpor Orb",
+      "oracle_text": "Creatures entering don't cause abilities to trigger.",
+      "qty": 1,
+      "set_code": "nph",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "32",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Lightmine Field",
+      "oracle_text": "Whenever one or more creatures attack, this enchantment deals damage to each of those creatures equal to the number of attacking creatures.",
+      "qty": 1,
+      "set_code": "roe",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "72",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Bazaar Trader",
+      "oracle_text": "{T}: Target player gains control of target artifact, creature, or land you control.",
+      "qty": 1,
+      "set_code": "wwk",
+      "tags": [],
+      "type_line": "Creature - Goblin"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "17",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Scepter of Dominance",
+      "oracle_text": "{W}, {T}: Tap target permanent.",
+      "qty": 1,
+      "set_code": "con",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "51",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mindlock Orb",
+      "oracle_text": "Players can't search libraries.",
+      "qty": 1,
+      "set_code": "ala",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "99",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [
+        "R",
+        "U"
+      ],
+      "name": "Clout of the Dominus",
+      "oracle_text": "Enchant creature\nAs long as enchanted creature is blue, it gets +1/+1 and has shroud. (It can't be the target of spells or abilities.)\nAs long as enchanted creature is red, it gets +1/+1 and has haste.",
+      "qty": 1,
+      "set_code": "eve",
+      "tags": [],
+      "type_line": "Enchantment - Aura"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "47",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Puca's Mischief",
+      "oracle_text": "At the beginning of your upkeep, you may exchange control of target nonland permanent you control and target nonland permanent an opponent controls with equal or lesser mana value.",
+      "qty": 1,
+      "set_code": "shm",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "88",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Trickbind",
+      "oracle_text": "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nCounter target activated or triggered ability. If a permanent's ability is countered this way, activated abilities of that permanent can't be activated this turn. (Mana abilities can't be targeted.)",
+      "qty": 1,
+      "set_code": "tsp",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "370",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [],
+      "name": "Plains",
+      "oracle_text": "({T}: Add {W}.)",
+      "qty": 7,
+      "set_code": "cst",
+      "tags": [],
+      "type_line": "Basic Land - Plains"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "34",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Sky Swallower",
+      "oracle_text": "Flying\nWhen this creature enters, target opponent gains control of all other permanents you control.",
+      "qty": 1,
+      "set_code": "gpt",
+      "tags": [],
+      "type_line": "Creature - Leviathan"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "324",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [],
+      "name": "Shivan Reef",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add {U} or {R}. This land deals 1 damage to you.",
+      "qty": 1,
+      "set_code": "9ed",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "157",
+      "color_identity": [],
+      "colors": [],
+      "name": "Summoner's Egg",
+      "oracle_text": "Imprint — When this creature enters, you may exile a card from your hand face down.\nWhen this creature dies, turn the exiled card face up. If it's a creature card, put it onto the battlefield under your control.",
+      "qty": 1,
+      "set_code": "5dn",
+      "tags": [
+        "blink",
+        "reanimator",
+        "aristocrats"
+      ],
+      "type_line": "Creature Artifact - Egg"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "262",
+      "color_identity": [
+        "W",
+        "U",
+        "R"
+      ],
+      "colors": [],
+      "name": "Mystic Monastery",
+      "oracle_text": "This land enters tapped.\n{T}: Add {U}, {R}, or {W}.",
+      "qty": 1,
+      "set_code": "c19",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "242",
+      "color_identity": [],
+      "colors": [],
+      "name": "Exotic Orchard",
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "qty": 1,
+      "set_code": "c19",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "333",
+      "color_identity": [],
+      "colors": [],
+      "name": "Command Tower",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "55",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mirrormade",
+      "oracle_text": "You may have this enchantment enter as a copy of any artifact or enchantment on the battlefield.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "125",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Fires of Invention",
+      "oracle_text": "You can cast spells only during your turn and you can cast no more than two spells each turn.\nYou may cast spells with mana value less than or equal to the number of lands you control without paying their mana costs.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "C18-222",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sol Ring",
+      "oracle_text": "{T}: Add {C}{C}.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "DST-120",
+      "color_identity": [],
+      "colors": [],
+      "name": "Eater of Days",
+      "oracle_text": "Flying, trample\nWhen this creature enters, you skip your next two turns.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Creature Artifact - Leviathan"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "UMA-61",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Laboratory Maniac",
+      "oracle_text": "If you would draw a card while your library has no cards in it, you win the game instead.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Creature - Human Wizard"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "KLD-14",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Fragmentize",
+      "oracle_text": "Destroy target artifact or enchantment with mana value 4 or less.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "210",
+      "color_identity": [],
+      "colors": [],
+      "name": "Akroan Horse",
+      "oracle_text": "Defender\nWhen this creature enters, an opponent gains control of it.\nAt the beginning of your upkeep, each opponent creates a 1/1 white Soldier creature token.",
+      "qty": 1,
+      "set_code": "ths",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature Artifact - Horse"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "219",
+      "color_identity": [],
+      "colors": [],
+      "name": "Icy Manipulator",
+      "oracle_text": "{1}, {T}: Tap target artifact, creature, or land.",
+      "qty": 1,
+      "set_code": "dom",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "135",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Humble Defector",
+      "oracle_text": "{T}: Draw two cards. Target opponent gains control of this creature. Activate only during your turn.",
+      "qty": 1,
+      "set_code": "a25",
+      "tags": [],
+      "type_line": "Creature - Human Rogue"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "206",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [
+        "W",
+        "U"
+      ],
+      "name": "Hanna, Ship's Navigator",
+      "oracle_text": "{1}{W}{U}, {T}: Return target artifact or enchantment card from your graveyard to your hand.",
+      "qty": 1,
+      "set_code": "a25",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Creature - Human Artificer"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "171",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Trove of Temptation",
+      "oracle_text": "Each opponent must attack you or a planeswalker you control with at least one creature each combat if able.\nAt the beginning of your end step, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "xln",
+      "tags": [
+        "stax",
+        "treasure",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "37",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [
+        "W",
+        "U"
+      ],
+      "name": "Fractured Identity",
+      "oracle_text": "Exile target nonland permanent. Each player other than its controller creates a token that's a copy of it.",
+      "qty": 1,
+      "set_code": "c17",
+      "tags": [
+        "blink",
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "83",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Abrade",
+      "oracle_text": "Choose one —\n• Abrade deals 3 damage to target creature.\n• Destroy target artifact.",
+      "qty": 1,
+      "set_code": "hou",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "301",
+      "color_identity": [],
+      "colors": [],
+      "name": "Homeward Path",
+      "oracle_text": "{T}: Add {C}.\n{T}: Each player gains control of all creatures they own.",
+      "qty": 1,
+      "set_code": "c16",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "131",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Harmless Offering",
+      "oracle_text": "Target opponent gains control of target permanent you control.",
+      "qty": 1,
+      "set_code": "emn",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "71",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Paradox Haze",
+      "oracle_text": "Enchant player\nAt the beginning of enchanted player's first upkeep each turn, that player gets an additional upkeep step after this step.",
+      "qty": 1,
+      "set_code": "tsp",
+      "tags": [],
+      "type_line": "Enchantment - Aura"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "183",
+      "color_identity": [],
+      "colors": [],
+      "name": "Grid Monitor",
+      "oracle_text": "You can't cast creature spells.",
+      "qty": 1,
+      "set_code": "mrd",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature Artifact - Construct"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "195",
+      "color_identity": [],
+      "colors": [],
+      "name": "Leveler",
+      "oracle_text": "When this creature enters, exile all cards from your library.",
+      "qty": 1,
+      "set_code": "mrd",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Creature Artifact - Juggernaut"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "234",
+      "color_identity": [],
+      "colors": [],
+      "name": "Rust Elemental",
+      "oracle_text": "Flying\nAt the beginning of your upkeep, sacrifice another artifact. If you can't, tap this creature and you lose 4 life.",
+      "qty": 1,
+      "set_code": "mrd",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Creature Artifact - Elemental"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "105",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Thought Devourer",
+      "oracle_text": "Flying\nYour maximum hand size is reduced by four.",
+      "qty": 1,
+      "set_code": "ody",
+      "tags": [],
+      "type_line": "Creature - Beast"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "29",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Alexi's Cloak",
+      "oracle_text": "Flash\nEnchant creature\nEnchanted creature has shroud. (It can't be the target of spells or abilities.)",
+      "qty": 1,
+      "set_code": "pcy",
+      "tags": [],
+      "type_line": "Enchantment - Aura"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "77",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Embargo",
+      "oracle_text": "Nonland permanents don't untap during their controllers' untap steps.\nAt the beginning of your upkeep, you lose 2 life.",
+      "qty": 1,
+      "set_code": "mmq",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "106",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Statecraft",
+      "oracle_text": "Prevent all combat damage that would be dealt to and dealt by creatures you control.",
+      "qty": 1,
+      "set_code": "mmq",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "31",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Donate",
+      "oracle_text": "Target player gains control of target permanent you control.",
+      "qty": 1,
+      "set_code": "uds",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "93",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Cinder Giant",
+      "oracle_text": "At the beginning of your upkeep, this creature deals 2 damage to each other creature you control.",
+      "qty": 1,
+      "set_code": "wth",
+      "tags": [],
+      "type_line": "Creature - Giant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "39",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Thought Lash",
+      "oracle_text": "Cumulative upkeep—Exile the top card of your library. (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nWhen a player doesn't pay this enchantment's cumulative upkeep, that player exiles all cards from their library.\nExile the top card of your library: Prevent the next 1 damage that would be dealt to you this turn.",
+      "qty": 1,
+      "set_code": "all",
+      "tags": [
+        "counters",
+        "stax",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "79",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Illusions of Grandeur",
+      "oracle_text": "Cumulative upkeep {2} (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nWhen this enchantment enters, you gain 20 life.\nWhen this enchantment leaves the battlefield, you lose 20 life.",
+      "qty": 1,
+      "set_code": "ice",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "counters",
+        "reanimator"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "316",
+      "color_identity": [],
+      "colors": [],
+      "name": "Despotic Scepter",
+      "oracle_text": "{T}: Destroy target permanent you own. It can't be regenerated.",
+      "qty": 1,
+      "set_code": "ice",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "353",
+      "color_identity": [],
+      "colors": [],
+      "name": "Glacial Chasm",
+      "oracle_text": "Cumulative upkeep—Pay 2 life. (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nWhen this land enters, sacrifice a land.\nCreatures you control can't attack.\nPrevent all damage that would be dealt to you.",
+      "qty": 1,
+      "set_code": "ice",
+      "tags": [
+        "counters",
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "99",
+      "color_identity": [],
+      "colors": [],
+      "name": "Rainbow Vale",
+      "oracle_text": "{T}: Add one mana of any color. An opponent gains control of this land at the beginning of the next end step.",
+      "qty": 1,
+      "set_code": "fem",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "119",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sorrow's Path",
+      "oracle_text": "{T}: Choose two target blocking creatures controlled by the same opponent. If each of those creatures could block all creatures that the other is blocking, remove both of them from combat. Each one then blocks all creatures the other was blocking.\nWhenever this land becomes tapped, it deals 2 damage to you and each creature you control.",
+      "qty": 1,
+      "set_code": "drk",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "33",
+      "color_identity": [
+        "W",
+        "R"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Orim's Thunder",
+      "oracle_text": "Kicker {R} (You may pay an additional {R} as you cast this spell.)\nDestroy target artifact or enchantment. If this spell was kicked, it deals damage equal to that permanent's mana value to target creature.",
+      "qty": 1,
+      "set_code": "cm2",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "247s",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [],
+      "name": "Sulfur Falls",
+      "oracle_text": "This land enters tapped unless you control an Island or a Mountain.\n{T}: Add {U} or {R}.",
+      "qty": 1,
+      "set_code": "pdom",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "223",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [
+        "W",
+        "U"
+      ],
+      "name": "Time Wipe",
+      "oracle_text": "Return a creature you control to its owner's hand, then destroy all creatures.",
+      "qty": 1,
+      "set_code": "war",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "214",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [
+        "R",
+        "U"
+      ],
+      "name": "Role Reversal",
+      "oracle_text": "Exchange control of two target permanents that share a permanent type.",
+      "qty": 1,
+      "set_code": "war",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "32",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Rest in Peace",
+      "oracle_text": "When this enchantment enters, exile all graveyards.\nIf a card or token would be put into a graveyard from anywhere, exile it instead.",
+      "qty": 1,
+      "set_code": "a25",
+      "tags": [
+        "blink",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "11",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Generous Gift",
+      "oracle_text": "Destroy target permanent. Its controller creates a 3/3 green Elephant creature token.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "231",
+      "color_identity": [
+        "U",
+        "R"
+      ],
+      "colors": [],
+      "name": "Talisman of Creativity",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add {U} or {R}. This artifact deals 1 damage to you.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "77",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Tale's End",
+      "oracle_text": "Counter target activated ability, triggered ability, or legendary spell.",
+      "qty": 1,
+      "set_code": "m20",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "11",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Sudden Substitution",
+      "oracle_text": "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nExchange control of target noncreature spell and target creature. Then the spell's controller may choose new targets for it.",
+      "qty": 1,
+      "set_code": "c19",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "56",
+      "color_identity": [],
+      "colors": [],
+      "name": "Pendant of Prosperity",
+      "oracle_text": "This artifact enters under the control of an opponent of your choice.\n{2}, {T}: Draw a card, then you may put a land card from your hand onto the battlefield. This artifact's owner draws a card, then that player may put a land card from their hand onto the battlefield.",
+      "qty": 1,
+      "set_code": "c19",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "8ED-116",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Zur's Weirding",
+      "oracle_text": "Players play with their hands revealed.\nIf a player would draw a card, they reveal it instead. Then any other player may pay 2 life. If a player does, put that card into its owner's graveyard. Otherwise, that player draws a card.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "M10-212",
+      "color_identity": [],
+      "colors": [],
+      "name": "Howling Mine",
+      "oracle_text": "At the beginning of each player's draw step, if this artifact is untapped, that player draws an additional card.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "339",
+      "color_identity": [],
+      "colors": [],
+      "name": "Swiftfoot Boots",
+      "oracle_text": "Equipped creature has hexproof and haste. (It can't be the target of spells or abilities your opponents control. It can attack and {T} no matter when it came under your control.)\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+      "qty": 1,
+      "set_code": "clb",
+      "tags": [
+        "spellslinger",
+        "equipment"
+      ],
+      "type_line": "Artifact - Equipment"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "143",
+      "color_identity": [],
+      "colors": [],
+      "name": "Reliquary Tower",
+      "oracle_text": "You have no maximum hand size.\n{T}: Add {C}.",
+      "qty": 1,
+      "set_code": "con",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "208",
+      "color_identity": [],
+      "colors": [],
+      "name": "Jinxed Idol",
+      "oracle_text": "At the beginning of your upkeep, this artifact deals 2 damage to you.\nSacrifice a creature: Target opponent gains control of this artifact.",
+      "qty": 1,
+      "set_code": "m11",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "104",
+      "color_identity": [],
+      "colors": [],
+      "name": "Avarice Totem",
+      "oracle_text": "{5}: Exchange control of this artifact and target nonland permanent.",
+      "qty": 1,
+      "set_code": "5dn",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "107",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Wrong Turn",
+      "oracle_text": "Target opponent gains control of target creature. (If an attacking or blocking creature changes controllers, it's removed from combat.)",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "144",
+      "color_identity": [],
+      "colors": [],
+      "name": "Contested War Zone",
+      "oracle_text": "Whenever a creature deals combat damage to you, that creature's controller gains control of this land.\n{T}: Add {C}.\n{1}, {T}: Attacking creatures get +1/+0 until end of turn.",
+      "qty": 1,
+      "set_code": "mbs",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "371",
+      "color_identity": [
+        "W",
+        "U"
+      ],
+      "colors": [
+        "W",
+        "U"
+      ],
+      "name": "Moderation",
+      "oracle_text": "You can't cast more than one spell each turn.\nWhenever you cast a spell, draw a card.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "45",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Defabricate",
+      "oracle_text": "Choose one —\n• Counter target artifact or enchantment spell. If that spell is countered this way, exile it instead of putting it into its owner's graveyard.\n• Counter target activated or triggered ability.",
+      "qty": 1,
+      "set_code": "bro",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "357",
+      "color_identity": [],
+      "colors": [],
+      "name": "Fractured Powerstone",
+      "oracle_text": "{T}: Add {C}.\n{T}: Roll the planar die. Activate only as a sorcery.",
+      "qty": 1,
+      "set_code": "moc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "344",
+      "color_identity": [],
+      "colors": [],
+      "name": "Steel Golem",
+      "oracle_text": "You can't cast creature spells.",
+      "qty": 1,
+      "set_code": "10e",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature Artifact - Golem"
+    }
+  ],
+  "case_id": "14",
+  "color_identity": [
+    "W",
+    "U",
+    "R"
+  ],
+  "commander": "Zedruu the Greathearted",
+  "commander_card": {
+    "cmc": 4.0,
+    "collector_number": "231",
+    "color_identity": [
+      "R",
+      "U",
+      "W"
+    ],
+    "colors": [
+      "R",
+      "U",
+      "W"
+    ],
+    "edhrec_rank": 8602,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/e/9/e9ea2a6b-5aaf-4178-b945-f409fe83c41a.jpg?1783937042",
+      "normal": "https://cards.scryfall.io/normal/front/e/9/e9ea2a6b-5aaf-4178-b945-f409fe83c41a.jpg?1783937042",
+      "small": "https://cards.scryfall.io/small/front/e/9/e9ea2a6b-5aaf-4178-b945-f409fe83c41a.jpg?1783937042"
+    },
+    "keywords": [],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{1}{U}{R}{W}",
+    "name": "Zedruu the Greathearted",
+    "oracle_id": "514179c0-a50b-4565-8e71-9dad256edd85",
+    "oracle_text": "At the beginning of your upkeep, you gain X life and draw X cards, where X is the number of permanents you own that your opponents control.\n{U}{R}{W}: Target opponent gains control of target permanent you control.",
+    "power": "2",
+    "prices": {
+      "usd": "2.27"
+    },
+    "scryfall_uri": "https://scryfall.com/card/c16/231/zedruu-the-greathearted?utm_source=api",
+    "set": "c16",
+    "toughness": "4",
+    "type_line": "Legendary Creature — Minotaur Monk"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "jank-zedruu",
+  "source_platform": "archidekt",
+  "source_url": "https://archidekt.com/decks/330081/extreme_jank_bad_santa_zedruu"
+}

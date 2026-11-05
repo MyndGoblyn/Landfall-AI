@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "draw_role_respects_identity_and_legality",
+      "query": "o:draw id<=u f:commander",
+      "limit": 20,
+      "required_names": ["Quick Study", "Repeatable Insight Engine"],
+      "rejected_names": ["Red Insight", "Banned Insight", "Drawbridge Guard"],
+      "expected_order": ["Quick Study", "Repeatable Insight Engine"],
+      "cards": [
+        {
+          "name": "Repeatable Insight Engine",
+          "oracle_id": "repeatable-insight",
+          "type_line": "Artifact",
+          "oracle_text": "Whenever an artifact enters under your control, draw a card.",
+          "cmc": 3,
+          "color_identity": ["U"],
+          "edhrec_rank": 20,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Quick Study",
+          "oracle_id": "quick-study",
+          "type_line": "Instant",
+          "oracle_text": "Draw two cards.",
+          "cmc": 3,
+          "color_identity": ["U"],
+          "edhrec_rank": 10,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Red Insight",
+          "oracle_id": "red-insight",
+          "type_line": "Sorcery",
+          "oracle_text": "Draw two cards.",
+          "cmc": 2,
+          "color_identity": ["R"],
+          "edhrec_rank": 1,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Banned Insight",
+          "oracle_id": "banned-insight",
+          "type_line": "Sorcery",
+          "oracle_text": "Draw three cards.",
+          "cmc": 1,
+          "color_identity": ["U"],
+          "edhrec_rank": 2,
+          "legalities": {"commander": "banned"}
+        },
+        {
+          "name": "Drawbridge Guard",
+          "oracle_id": "drawbridge-guard",
+          "type_line": "Creature — Soldier",
+          "oracle_text": "Vigilance",
+          "cmc": 2,
+          "color_identity": ["U"],
+          "edhrec_rank": 3,
+          "legalities": {"commander": "legal"}
+        }
+      ]
+    },
+    {
+      "id": "spell_chain_requires_type_cost_and_action",
+      "query": "((t:instant OR t:sorcery) (cmc<=3) (o:draw OR o:scry)) id<=ur f:commander",
+      "limit": 20,
+      "required_names": ["Consider", "Measured Inspiration"],
+      "rejected_names": ["Ancient Insight", "Creature Vision"],
+      "expected_order": ["Consider", "Measured Inspiration"],
+      "cards": [
+        {
+          "name": "Consider",
+          "oracle_id": "consider",
+          "type_line": "Instant",
+          "oracle_text": "Surveil 1. Draw a card.",
+          "cmc": 1,
+          "color_identity": ["U"],
+          "edhrec_rank": 5,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Measured Inspiration",
+          "oracle_id": "measured-inspiration",
+          "type_line": "Sorcery",
+          "oracle_text": "Scry 2, then draw a card.",
+          "cmc": 3,
+          "color_identity": ["U", "R"],
+          "edhrec_rank": 15,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Ancient Insight",
+          "oracle_id": "ancient-insight",
+          "type_line": "Sorcery",
+          "oracle_text": "Draw four cards.",
+          "cmc": 6,
+          "color_identity": ["U"],
+          "edhrec_rank": 1,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Creature Vision",
+          "oracle_id": "creature-vision",
+          "type_line": "Creature — Wizard",
+          "oracle_text": "When this creature enters, draw a card.",
+          "cmc": 2,
+          "color_identity": ["U"],
+          "edhrec_rank": 2,
+          "legalities": {"commander": "legal"}
+        }
+      ]
+    },
+    {
+      "id": "typal_regex_finds_type_and_rules_text",
+      "query": "(t:Dragon OR o:/\\b(?:Dragon|Dragons)\\b/) id<=rg f:commander",
+      "limit": 20,
+      "required_names": ["Scaled Nurturer", "Dragon Rally"],
+      "rejected_names": ["Goblin Rally", "Azure Dragon"],
+      "expected_order": ["Dragon Rally", "Scaled Nurturer"],
+      "cards": [
+        {
+          "name": "Scaled Nurturer",
+          "oracle_id": "scaled-nurturer",
+          "type_line": "Creature — Dragon Druid",
+          "oracle_text": "{T}: Add {G}.",
+          "cmc": 2,
+          "color_identity": ["G"],
+          "edhrec_rank": 30,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Dragon Rally",
+          "oracle_id": "dragon-rally",
+          "type_line": "Enchantment",
+          "oracle_text": "Dragons you control get +1/+1.",
+          "cmc": 3,
+          "color_identity": ["R"],
+          "edhrec_rank": 10,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Goblin Rally",
+          "oracle_id": "goblin-rally",
+          "type_line": "Enchantment",
+          "oracle_text": "Goblins you control get +1/+1.",
+          "cmc": 3,
+          "color_identity": ["R"],
+          "edhrec_rank": 1,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Azure Dragon",
+          "oracle_id": "azure-dragon",
+          "type_line": "Creature — Dragon",
+          "oracle_text": "Flying",
+          "cmc": 5,
+          "color_identity": ["U"],
+          "edhrec_rank": 2,
+          "legalities": {"commander": "legal"}
+        }
+      ]
+    },
+    {
+      "id": "commander_discovery_requires_exact_identity_and_artifact_plan",
+      "query": "is:commander t:creature f:commander id=ur (t:artifact OR o:artifact OR otag:artifact)",
+      "limit": 20,
+      "required_names": ["Izzet Artificer"],
+      "rejected_names": ["Izzet Spellsage", "Mono-Blue Artificer", "Artifact Adept"],
+      "expected_order": ["Izzet Artificer"],
+      "cards": [
+        {
+          "name": "Izzet Artificer",
+          "oracle_id": "izzet-artificer",
+          "type_line": "Legendary Creature — Human Artificer",
+          "oracle_text": "Whenever you cast an artifact spell, draw a card.",
+          "cmc": 4,
+          "color_identity": ["U", "R"],
+          "edhrec_rank": 20,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Izzet Spellsage",
+          "oracle_id": "izzet-spellsage",
+          "type_line": "Legendary Creature — Human Wizard",
+          "oracle_text": "Whenever you cast an instant or sorcery spell, scry 1.",
+          "cmc": 3,
+          "color_identity": ["U", "R"],
+          "edhrec_rank": 1,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Mono-Blue Artificer",
+          "oracle_id": "mono-blue-artificer",
+          "type_line": "Legendary Creature — Human Artificer",
+          "oracle_text": "Artifacts you control have ward {1}.",
+          "cmc": 3,
+          "color_identity": ["U"],
+          "edhrec_rank": 2,
+          "legalities": {"commander": "legal"}
+        },
+        {
+          "name": "Artifact Adept",
+          "oracle_id": "artifact-adept",
+          "type_line": "Creature — Human Artificer",
+          "oracle_text": "Artifacts you control have ward {1}.",
+          "cmc": 2,
+          "color_identity": ["U", "R"],
+          "edhrec_rank": 3,
+          "legalities": {"commander": "legal"}
+        }
+      ]
+    }
+  ]
+}

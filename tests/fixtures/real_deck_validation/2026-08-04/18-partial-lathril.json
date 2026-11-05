@@ -1,0 +1,450 @@
+{
+  "cards": [
+    {
+      "cmc": 5,
+      "collector_number": "168",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Return of the Wildspeaker",
+      "oracle_text": "Choose one —\n• Draw cards equal to the greatest power among non-Human creatures you control.\n• Non-Human creatures you control get +3/+3 until end of turn.",
+      "qty": 1,
+      "set_code": "afc",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "244",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [],
+      "name": "Lifecrafter's Bestiary",
+      "oracle_text": "At the beginning of your upkeep, scry 1.\nWhenever you cast a creature spell, you may pay {G}. If you do, draw a card.",
+      "qty": 1,
+      "set_code": "c20",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "77",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Voice of Many",
+      "oracle_text": "When this creature enters, draw a card for each opponent who controls fewer creatures than you.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "M19-314",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Llanowar Elves",
+      "oracle_text": "{T}: Add {G}.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "GK1-56",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Elves of Deep Shadow",
+      "oracle_text": "{T}: Add {B}. This creature deals 1 damage to you.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "A25-160",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Arbor Elf",
+      "oracle_text": "{T}: Untap target Forest.",
+      "qty": 1,
+      "set_code": "plst",
+      "tags": [],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "228",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Fyndhorn Elves",
+      "oracle_text": "{T}: Add {G}.",
+      "qty": 1,
+      "set_code": "cmr",
+      "tags": [],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "58",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Elvish Mystic",
+      "oracle_text": "{T}: Add {G}.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "80",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Wood Elves",
+      "oracle_text": "When this creature enters, search your library for a Forest card, put that card onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature - Elf Scout"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "74",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Springbloom Druid",
+      "oracle_text": "When this creature enters, you may sacrifice a land. If you do, search your library for up to two basic land cards, put them onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "62",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Farhaven Elf",
+      "oracle_text": "When this creature enters, you may search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "378",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Canopy Tactician",
+      "oracle_text": "Other Elves you control get +1/+1.\n{T}: Add {G}{G}{G}.",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [],
+      "type_line": "Creature - Warrior Elf"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "68",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Marwyn, the Nurturer",
+      "oracle_text": "Whenever another Elf you control enters, put a +1/+1 counter on Marwyn.\n{T}: Add an amount of {G} equal to Marwyn's power.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Legendary Creature - Elf Druid"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "57",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Elvish Archdruid",
+      "oracle_text": "Other Elf creatures you control get +1/+1.\n{T}: Add {G} for each Elf you control.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "100",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Gnarlroot Trapper",
+      "oracle_text": "{T}, Pay 1 life: Add {G}. Spend this mana only to cast an Elf creature spell.\n{T}: Target attacking Elf you control gains deathtouch until end of turn. (Any amount of damage it deals to a creature is enough to destroy it.)",
+      "qty": 1,
+      "set_code": "ori",
+      "tags": [
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 6,
+      "collector_number": "97",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Collective Unconscious",
+      "oracle_text": "Draw a card for each creature you control.",
+      "qty": 1,
+      "set_code": "cma",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "54",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Beast Whisperer",
+      "oracle_text": "Whenever you cast a creature spell, draw a card.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature - Elf Druid"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "171",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Shamanic Revelation",
+      "oracle_text": "Draw a card for each creature you control.\nFerocious — You gain 4 life for each creature you control with power 4 or greater.",
+      "qty": 1,
+      "set_code": "afc",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "109",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Skemfar Avenger",
+      "oracle_text": "Whenever another nontoken Elf or Berserker you control dies, you draw a card and you lose 1 life.",
+      "qty": 1,
+      "set_code": "khm",
+      "tags": [
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Creature - Elf Berserker"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "63",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Harvest Season",
+      "oracle_text": "Search your library for up to X basic land cards, where X is the number of tapped creatures you control, put those cards onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "khc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "208",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Harmonize",
+      "oracle_text": "Draw three cards.",
+      "qty": 1,
+      "set_code": "tsr",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "134",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Ambition's Cost",
+      "oracle_text": "You draw three cards and you lose 3 life.",
+      "qty": 1,
+      "set_code": "c21",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "81",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Plumb the Forbidden",
+      "oracle_text": "As an additional cost to cast this spell, you may sacrifice one or more creatures. When you do, copy this spell for each creature sacrificed this way.\nYou draw a card and lose 1 life.",
+      "qty": 1,
+      "set_code": "stx",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    }
+  ],
+  "case_id": "18",
+  "color_identity": [
+    "B",
+    "G"
+  ],
+  "commander": "Lathril, Blade of the Elves",
+  "commander_card": {
+    "cmc": 4.0,
+    "collector_number": "242",
+    "color_identity": [
+      "B",
+      "G"
+    ],
+    "colors": [
+      "B",
+      "G"
+    ],
+    "edhrec_rank": 2198,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/8/d/8d4e5480-a287-4a25-b855-a26dae555b1c.jpg?1783909053",
+      "normal": "https://cards.scryfall.io/normal/front/8/d/8d4e5480-a287-4a25-b855-a26dae555b1c.jpg?1783909053",
+      "small": "https://cards.scryfall.io/small/front/8/d/8d4e5480-a287-4a25-b855-a26dae555b1c.jpg?1783909053"
+    },
+    "keywords": [
+      "Menace"
+    ],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{2}{B}{G}",
+    "name": "Lathril, Blade of the Elves",
+    "oracle_id": "9b568c34-ba0a-44a7-a0ee-bee3a37b3396",
+    "oracle_text": "Menace (This creature can't be blocked except by two or more creatures.)\nWhenever Lathril deals combat damage to a player, create that many 1/1 green Elf Warrior creature tokens.\n{T}, Tap ten untapped Elves you control: Each opponent loses 10 life and you gain 10 life.",
+    "power": "2",
+    "prices": {
+      "usd": "1.09",
+      "usd_foil": "2.08"
+    },
+    "scryfall_uri": "https://scryfall.com/card/fdn/242/lathril-blade-of-the-elves?utm_source=api",
+    "set": "fdn",
+    "toughness": "3",
+    "type_line": "Legendary Creature — Elf Noble"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "partial-lathril",
+  "source_platform": "archidekt",
+  "source_url": "https://archidekt.com/decks/1799945/lathril_budget_build"
+}

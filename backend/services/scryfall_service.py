@@ -4,20 +4,19 @@ from typing import Dict, List, Optional
 import logging
 import os
 from datetime import datetime, timedelta, timezone
+from services.card_catalog import (
+    CATALOG_CARD_FIELDS,
+    CATALOG_FACE_FIELDS,
+    slim_catalog_card,
+)
 
 logger = logging.getLogger(__name__)
 
 class ScryfallService:
     BASE_URL = "https://api.scryfall.com"
-    SLIM_CARD_FIELDS = (
-        "name", "oracle_id", "type_line", "oracle_text", "mana_cost", "cmc",
-        "power", "toughness", "colors", "color_identity",
-        "set", "collector_number", "prices", "keywords", "legalities",
-        "image_uris", "card_faces", "scryfall_uri",
-    )
-    SLIM_FACE_FIELDS = (
-        "name", "type_line", "oracle_text", "mana_cost", "cmc", "colors", "image_uris",
-    )
+    COLLECTION_BATCH_SIZE = 75
+    SLIM_CARD_FIELDS = CATALOG_CARD_FIELDS
+    SLIM_FACE_FIELDS = CATALOG_FACE_FIELDS
     
     def __init__(self, db=None):
         self.db = db
@@ -28,12 +27,25 @@ class ScryfallService:
         self.request_timeout = aiohttp.ClientTimeout(
             total=float(os.environ.get("SCRYFALL_REQUEST_TIMEOUT_SECONDS", "12"))
         )
+        self.collection_request_interval = float(
+            os.environ.get("SCRYFALL_COLLECTION_INTERVAL_SECONDS", "0.5")
+        )
+        self.request_headers = {
+            "User-Agent": os.environ.get(
+                "SCRYFALL_USER_AGENT",
+                "LandfallAI/1.0 (Commander recommendation service)",
+            ),
+            "Accept": "application/json;q=0.9,*/*;q=0.8",
+        }
         self.cache_stats = {
             "card_l1_hits": 0,
             "card_l2_hits": 0,
             "card_network_misses": 0,
             "card_not_found": 0,
             "card_errors": 0,
+            "collection_network_requests": 0,
+            "collection_cards_resolved": 0,
+            "collection_errors": 0,
             "search_l1_hits": 0,
             "search_l2_hits": 0,
             "search_network_misses": 0,
@@ -44,7 +56,7 @@ class ScryfallService:
     
     async def get_session(self) -> aiohttp.ClientSession:
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession(headers=self.request_headers)
         return self.session
     
     async def close(self):
@@ -94,21 +106,7 @@ class ScryfallService:
 
     def _slim_card(self, card: Dict) -> Dict:
         """Keep the card fields the engine actually reads."""
-        slim = {
-            field: card.get(field)
-            for field in self.SLIM_CARD_FIELDS
-            if field in card
-        }
-        if "card_faces" in slim and slim["card_faces"]:
-            slim["card_faces"] = [
-                {
-                    field: face.get(field)
-                    for field in self.SLIM_FACE_FIELDS
-                    if field in face
-                }
-                for face in slim["card_faces"]
-            ]
-        return slim
+        return slim_catalog_card(card)
 
     async def _read_card_from_l2(self, name: str, fuzzy: bool = True) -> Optional[Dict]:
         if self.db is None or not hasattr(self.db, "scryfall_cards"):
@@ -216,11 +214,15 @@ class ScryfallService:
         card, _source = await self._search_card_with_source(name, fuzzy=fuzzy)
         return card
 
-    async def _search_card_with_source(self, name: str, fuzzy: bool = True) -> tuple[Optional[Dict], str]:
+    async def _search_card_cache_only(
+        self,
+        name: str,
+        fuzzy: bool = True,
+    ) -> tuple[Optional[Dict], str]:
         lookup_key = self._normalize_key(name)
         mode = "fuzzy" if fuzzy else "exact"
         cache_key = f"card:{mode}:{lookup_key}"
-        
+
         if self._is_cache_valid(cache_key):
             self._record_cache_stat("card_l1_hits")
             logger.info("Scryfall cache hit tier=L1 kind=card key=%s", lookup_key)
@@ -232,6 +234,17 @@ class ScryfallService:
             logger.info("Scryfall cache hit tier=L2 kind=card key=%s", lookup_key)
             self._store_l1(cache_key, l2_card)
             return l2_card, "l2"
+
+        return None, "missing"
+
+    async def _search_card_with_source(self, name: str, fuzzy: bool = True) -> tuple[Optional[Dict], str]:
+        lookup_key = self._normalize_key(name)
+        mode = "fuzzy" if fuzzy else "exact"
+        cache_key = f"card:{mode}:{lookup_key}"
+
+        cached_card, cache_source = await self._search_card_cache_only(name, fuzzy=fuzzy)
+        if cached_card is not None:
+            return cached_card, cache_source
         
         try:
             session = await self.get_session()
@@ -264,15 +277,124 @@ class ScryfallService:
             self._record_cache_stat("card_errors")
             logger.error(f"Error fetching card {name}: {str(e)}")
             return None, "error"
-    
+
+    async def _fetch_collection_batch(self, names: List[str]) -> Dict[str, Dict]:
+        """Resolve exact card names in one Scryfall collection request."""
+        if not names:
+            return {}
+
+        session = await self.get_session()
+        payload = {"identifiers": [{"name": name} for name in names]}
+
+        for attempt in range(3):
+            try:
+                async with session.post(
+                    f"{self.BASE_URL}/cards/collection",
+                    json=payload,
+                    timeout=self.request_timeout,
+                ) as response:
+                    if response.status == 200:
+                        body = await response.json()
+                        raw_cards = list(body.get("data") or [])
+                        missing_keys = {
+                            self._normalize_key(identifier.get("name", ""))
+                            for identifier in body.get("not_found") or []
+                            if isinstance(identifier, dict)
+                        }
+                        raw_iter = iter(raw_cards)
+                        resolved = {}
+
+                        # Scryfall returns collection results in identifier order and
+                        # reports unresolved identifiers separately. Reconstructing the
+                        # mapping this way also handles split cards whose canonical name
+                        # differs from the submitted front-face name.
+                        for name in names:
+                            key = self._normalize_key(name)
+                            if key in missing_keys:
+                                continue
+                            try:
+                                resolved[key] = self._slim_card(next(raw_iter))
+                            except StopIteration:
+                                logger.warning(
+                                    "Scryfall collection response omitted an unreported identifier"
+                                )
+                                break
+
+                        self._record_cache_stat("collection_network_requests")
+                        self.cache_stats["collection_cards_resolved"] += len(resolved)
+                        return resolved
+
+                    if response.status in {429, 500, 502, 503, 504} and attempt < 2:
+                        wait_time = self._retry_after_seconds(response, 0.5 * (attempt + 1))
+                        logger.warning(
+                            "Scryfall collection retry %s: %s",
+                            attempt + 1,
+                            response.status,
+                        )
+                        await asyncio.sleep(wait_time)
+                        continue
+
+                    self._record_cache_stat("collection_errors")
+                    logger.error("Scryfall collection error: %s", response.status)
+                    return {}
+            except Exception as exc:
+                if attempt < 2:
+                    await asyncio.sleep(0.5 * (attempt + 1))
+                    continue
+                self._record_cache_stat("collection_errors")
+                logger.error("Error fetching Scryfall collection: %s", exc)
+                return {}
+
+        return {}
+
     async def get_card_bulk(self, names: List[str]) -> List[Optional[Dict]]:
-        """Fetch multiple cards with rate limiting"""
-        results = []
-        for name in names:
-            card, source = await self._search_card_with_source(name)
-            results.append(card)
+        """Fetch many cards through cache, collection batches, then fuzzy fallback."""
+        results: List[Optional[Dict]] = [None] * len(names)
+        unresolved: Dict[str, Dict] = {}
+
+        for index, name in enumerate(names):
+            card, _source = await self._search_card_cache_only(name)
+            if card is not None:
+                results[index] = card
+                continue
+
+            key = self._normalize_key(name)
+            if not key:
+                continue
+            entry = unresolved.setdefault(key, {"name": name, "indices": []})
+            entry["indices"].append(index)
+
+        unresolved_entries = list(unresolved.values())
+        for start in range(0, len(unresolved_entries), self.COLLECTION_BATCH_SIZE):
+            batch = unresolved_entries[start:start + self.COLLECTION_BATCH_SIZE]
+            batch_names = [entry["name"] for entry in batch]
+            batch_cards = await self._fetch_collection_batch(batch_names)
+
+            for entry in batch:
+                key = self._normalize_key(entry["name"])
+                card = batch_cards.get(key)
+                if card is None:
+                    continue
+
+                await self._write_card_to_l2(card, lookup_key=key)
+                self._store_l1(f"card:fuzzy:{key}", card)
+                for index in entry["indices"]:
+                    results[index] = card
+
+            if start + self.COLLECTION_BATCH_SIZE < len(unresolved_entries):
+                await asyncio.sleep(self.collection_request_interval)
+
+        # Collection lookups use exact names. Preserve the previous fuzzy behavior
+        # for typos, aliases, and any partial collection response.
+        for entry in unresolved_entries:
+            if all(results[index] is not None for index in entry["indices"]):
+                continue
+            card, source = await self._search_card_with_source(entry["name"])
+            for index in entry["indices"]:
+                results[index] = card
             if source == "network":
-                await asyncio.sleep(0.12)  # Keep text imports below Scryfall's burst limits
+                await asyncio.sleep(0.12)
+
         return results
     
     async def search_cards_by_criteria(self, query: str, limit: int = 20) -> List[Dict]:

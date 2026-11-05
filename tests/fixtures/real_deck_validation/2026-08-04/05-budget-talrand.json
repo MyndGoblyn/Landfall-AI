@@ -1,0 +1,1219 @@
+{
+  "cards": [
+    {
+      "cmc": 3,
+      "collector_number": "96",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Frantic Search",
+      "oracle_text": "Draw two cards, then discard two cards. Untap up to three lands.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "115",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Spy Network",
+      "oracle_text": "Look at target player's hand, the top card of that player's library, and any face-down creatures they control. Look at the top four cards of your library, then put them back in any order.",
+      "qty": 1,
+      "set_code": "ons",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "61",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Brainstorm",
+      "oracle_text": "Draw three cards, then put two cards from your hand on top of your library in any order.",
+      "qty": 1,
+      "set_code": "ice",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "69",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Counterspell",
+      "oracle_text": "Counter target spell.",
+      "qty": 1,
+      "set_code": "mmq",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "68",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Ponder",
+      "oracle_text": "Look at the top three cards of your library, then put them back in any order. You may shuffle.\nDraw a card.",
+      "qty": 1,
+      "set_code": "m10",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "118",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Murmuring Mystic",
+      "oracle_text": "Whenever you cast an instant or sorcery spell, create a 1/1 blue Bird Illusion creature token with flying.",
+      "qty": 1,
+      "set_code": "c20",
+      "tags": [
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Creature - Human Wizard"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "56",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Impulse",
+      "oracle_text": "Look at the top four cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "37p",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Archmage Emeritus",
+      "oracle_text": "Magecraft — Whenever you cast or copy an instant or sorcery spell, draw a card.",
+      "qty": 1,
+      "set_code": "pstx",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature - Human Wizard"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "68",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Reality Shift",
+      "oracle_text": "Exile target creature. Its controller manifests the top card of their library. (That player puts the top card of their library onto the battlefield face down as a 2/2 creature. If it's a creature card, it can be turned face up any time for its mana cost.)",
+      "qty": 1,
+      "set_code": "ecc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "162",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Rapid Hybridization",
+      "oracle_text": "Destroy target creature. It can't be regenerated. That creature's controller creates a 3/3 green Frog Lizard creature token.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "80",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Wavebreak Hippocamp",
+      "oracle_text": "Whenever you cast your first spell during each opponent's turn, draw a card.",
+      "qty": 1,
+      "set_code": "thb",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature Enchantment - Fish Horse"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "44",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Consider",
+      "oracle_text": "Surveil 1. (Look at the top card of your library. You may put it into your graveyard.)\nDraw a card.",
+      "qty": 1,
+      "set_code": "mid",
+      "tags": [
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "142",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Aetherize",
+      "oracle_text": "Return all attacking creatures to their owner's hand.",
+      "qty": 1,
+      "set_code": "lcc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "61",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Telling Time",
+      "oracle_text": "Look at the top three cards of your library. Put one of those cards into your hand, one on top of your library, and one on the bottom of your library.",
+      "qty": 1,
+      "set_code": "mm2",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "160",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "An Offer You Can't Refuse",
+      "oracle_text": "Counter target noncreature spell. Its controller creates two Treasure tokens. (They're artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "fdn",
+      "tags": [
+        "stax",
+        "treasure",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "165",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Think Twice",
+      "oracle_text": "Draw a card.\nFlashback {2}{U} (You may cast this card from your graveyard for its flashback cost. Then exile it.)",
+      "qty": 1,
+      "set_code": "fdn",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "80",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Silundi Vision // Silundi Isle",
+      "oracle_text": "",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "110",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mission Briefing",
+      "oracle_text": "Surveil 2, then choose an instant or sorcery card in your graveyard. You may cast it this turn. If that spell would be put into your graveyard, exile it instead. (To surveil 2, look at the top two cards of your library, then put any number of them into your graveyard and the rest on top of your library in any order.)",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "35",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Gitaxian Probe",
+      "oracle_text": "({U/P} can be paid with either {U} or 2 life.)\nLook at target player's hand.\nDraw a card.",
+      "qty": 1,
+      "set_code": "nph",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "179",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Curse of the Swine",
+      "oracle_text": "Exile X target creatures. For each creature exiled this way, its controller creates a 2/2 green Boar creature token.",
+      "qty": 1,
+      "set_code": "m3c",
+      "tags": [
+        "blink",
+        "token"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "349",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sapphire Medallion",
+      "oracle_text": "Blue spells you cast cost {1} less to cast.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "162",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Bident of Thassa",
+      "oracle_text": "Whenever a creature you control deals combat damage to a player, you may draw a card.\n{1}{U}, {T}: Creatures your opponents control attack this turn if able.",
+      "qty": 1,
+      "set_code": "blc",
+      "tags": [],
+      "type_line": "Legendary Artifact Enchantment"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "45",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Case of the Ransacked Lab",
+      "oracle_text": "Instant and sorcery spells you cast cost {1} less to cast.\nTo solve — You've cast four or more instant and sorcery spells this turn. (If unsolved, solve at the beginning of your end step.)\nSolved — Whenever you cast an instant or sorcery spell, draw a card.",
+      "qty": 1,
+      "set_code": "mkm",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Enchantment - Case"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "106",
+      "color_identity": [],
+      "colors": [],
+      "name": "Arcane Signet",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "znc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "72",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Unwind",
+      "oracle_text": "Counter target noncreature spell. Untap up to three lands.",
+      "qty": 1,
+      "set_code": "dom",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "59",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Opt",
+      "oracle_text": "Scry 1. (Look at the top card of your library. You may put that card on the bottom.)\nDraw a card.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "245",
+      "color_identity": [],
+      "colors": [],
+      "name": "Thought Vessel",
+      "oracle_text": "You have no maximum hand size.\n{T}: Add {C}.",
+      "qty": 1,
+      "set_code": "mkc",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "38",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Flood of Recollection",
+      "oracle_text": "Return target instant or sorcery card from your graveyard to your hand. Exile Flood of Recollection.",
+      "qty": 1,
+      "set_code": "rix",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "51",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Favorable Winds",
+      "oracle_text": "Creatures you control with flying get +1/+1.",
+      "qty": 1,
+      "set_code": "avr",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "160",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Pongify",
+      "oracle_text": "Destroy target creature. It can't be regenerated. Its controller creates a 3/3 green Ape creature token.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "165",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Curiosity Crafter",
+      "oracle_text": "Flying\nYou have no maximum hand size.\nWhenever a creature token you control deals combat damage to a player, draw a card.",
+      "qty": 1,
+      "set_code": "blc",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature - Wizard Bird"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "76",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Dispel",
+      "oracle_text": "Counter target instant spell.",
+      "qty": 1,
+      "set_code": "bfz",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "129",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Serum Visions",
+      "oracle_text": "Draw a card. Scry 2.",
+      "qty": 1,
+      "set_code": "c21",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "51",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Resculpt",
+      "oracle_text": "Exile target artifact or creature. Its controller creates a 4/4 blue and red Elemental creature token.",
+      "qty": 1,
+      "set_code": "stx",
+      "tags": [
+        "blink",
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "31",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Abjure",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a blue permanent.\nCounter target spell.",
+      "qty": 1,
+      "set_code": "wth",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "66",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Snap",
+      "oracle_text": "Return target creature to its owner's hand. Untap up to two lands.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "276",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sol Ring",
+      "oracle_text": "{T}: Add {C}{C}.",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "386",
+      "color_identity": [],
+      "colors": [],
+      "name": "Reliquary Tower",
+      "oracle_text": "You have no maximum hand size.\n{T}: Add {C}.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "45",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Anticipate",
+      "oracle_text": "Look at the top three cards of your library. Put one of them into your hand and the rest on the bottom of your library in any order.",
+      "qty": 1,
+      "set_code": "dtk",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "286",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "High Tide",
+      "oracle_text": "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "91",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Peek",
+      "oracle_text": "Look at target player's hand.\nDraw a card.",
+      "qty": 1,
+      "set_code": "ody",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 5,
+      "collector_number": "450",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Archmage of Runes",
+      "oracle_text": "Instant and sorcery spells you cast cost {1} less to cast.\nWhenever you cast an instant or sorcery spell, draw a card.",
+      "qty": 1,
+      "set_code": "fdn",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature - Wizard Giant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "280",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mind Stone",
+      "oracle_text": "{T}: Add {C}.\n{1}, {T}, Sacrifice this artifact: Draw a card.",
+      "qty": 1,
+      "set_code": "blc",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "90",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Portent",
+      "oracle_text": "Look at the top three cards of target player's library, then put them back in any order. You may have that player shuffle.\nDraw a card at the beginning of the next turn's upkeep.",
+      "qty": 1,
+      "set_code": "ice",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "93",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Rewind",
+      "oracle_text": "Counter target spell. Untap up to four lands.",
+      "qty": 1,
+      "set_code": "usg",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "87",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Wash Out",
+      "oracle_text": "Return all permanents of the color of your choice to their owners' hands.",
+      "qty": 1,
+      "set_code": "inv",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "94",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Predict",
+      "oracle_text": "Choose a card name, then target player mills a card. If a card with the chosen name was milled this way, you draw two cards. Otherwise, you draw a card.",
+      "qty": 1,
+      "set_code": "ody",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "52",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Haughty Djinn",
+      "oracle_text": "Flying\nHaughty Djinn's power is equal to the number of instant and sorcery cards in your graveyard.\nInstant and sorcery spells you cast cost {1} less to cast.",
+      "qty": 1,
+      "set_code": "dmu",
+      "tags": [
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature - Djinn"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "65",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Reconnaissance Mission",
+      "oracle_text": "Whenever a creature you control deals combat damage to a player, you may draw a card.\nCycling {2} ({2}, Discard this card: Draw a card.)",
+      "qty": 1,
+      "set_code": "iko",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 7,
+      "collector_number": "357",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Hullbreaker Horror",
+      "oracle_text": "Flash\nThis spell can't be countered.\nWhenever you cast a spell, choose up to one —\n• Return target spell you don't control to its owner's hand.\n• Return target nonland permanent to its owner's hand.",
+      "qty": 1,
+      "set_code": "inr",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature - Horror Kraken"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "57",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Quicken",
+      "oracle_text": "The next sorcery spell you cast this turn can be cast as though it had flash. (It can be cast any time you could cast an instant.)\nDraw a card.",
+      "qty": 1,
+      "set_code": "rvr",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 10,
+      "collector_number": "103",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Octavia, Living Thesis",
+      "oracle_text": "This spell costs {8} less to cast if you have eight or more instant and/or sorcery cards in your graveyard.\nWard {8}\nMagecraft — Whenever you cast or copy an instant or sorcery spell, target creature has base power and toughness 8/8 until end of turn.",
+      "qty": 1,
+      "set_code": "otc",
+      "tags": [
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Legendary Creature - Elemental Octopus"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "65",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Winged Words",
+      "oracle_text": "This spell costs {1} less to cast if you control a creature with flying.\nDraw two cards.",
+      "qty": 1,
+      "set_code": "scd",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "45",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Archaeomancer",
+      "oracle_text": "When this creature enters, return target instant or sorcery card from your graveyard to your hand.",
+      "qty": 1,
+      "set_code": "uma",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature - Human Wizard"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "40",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Negate",
+      "oracle_text": "Counter target noncreature spell.",
+      "qty": 1,
+      "set_code": "aer",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "222",
+      "color_identity": [],
+      "colors": [],
+      "name": "Heraldic Banner",
+      "oracle_text": "As this artifact enters, choose a color.\nCreatures you control of the chosen color get +1/+0.\n{T}: Add one mana of the chosen color.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "22b",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Arcane Denial",
+      "oracle_text": "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.",
+      "qty": 1,
+      "set_code": "all",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4,
+      "collector_number": "9",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Alandra, Sky Dreamer",
+      "oracle_text": "Whenever you draw your second card each turn, create a 2/2 blue Drake creature token with flying.\nWhenever you draw your fifth card each turn, Alandra and Drakes you control each get +X/+X until end of turn, where X is the number of cards in your hand.",
+      "qty": 1,
+      "set_code": "j22",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Legendary Creature - Wizard Merfolk"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "40",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Archmage's Charm",
+      "oracle_text": "Choose one —\n• Counter target spell.\n• Target player draws two cards.\n• Gain control of target nonland permanent with mana value 1 or less.",
+      "qty": 1,
+      "set_code": "mh1",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "247",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Mystic Sanctuary",
+      "oracle_text": "({T}: Add {U}.)\nThis land enters tapped unless you control three or more other Islands.\nWhen this land enters untapped, you may put target instant or sorcery card from your graveyard on top of your library.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Land - Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "166",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Lonely Sandbar",
+      "oracle_text": "This land enters tapped.\n{T}: Add {U}.\nCycling {U} ({U}, Discard this card: Draw a card.)",
+      "qty": 1,
+      "set_code": "eoc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "303",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Riptide Laboratory",
+      "oracle_text": "{T}: Add {C}.\n{1}{U}, {T}: Return target Wizard you control to its owner's hand.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "324",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Remote Isle",
+      "oracle_text": "This land enters tapped.\n{T}: Add {U}.\nCycling {2} ({2}, Discard this card: Draw a card.)",
+      "qty": 1,
+      "set_code": "usg",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "44",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Dramatic Reversal",
+      "oracle_text": "Untap all nonland permanents you control.",
+      "qty": 1,
+      "set_code": "kld",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1,
+      "collector_number": "70",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Preordain",
+      "oracle_text": "Scry 2, then draw a card. (To scry 2, look at the top two cards of your library, then put any number of them on the bottom and the rest on top in any order.)",
+      "qty": 1,
+      "set_code": "m11",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "65",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Quick Study",
+      "oracle_text": "Draw two cards.",
+      "qty": 1,
+      "set_code": "woe",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2,
+      "collector_number": "56",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Deliberate",
+      "oracle_text": "Scry 2, then draw a card.",
+      "qty": 1,
+      "set_code": "znr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "236",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [],
+      "name": "Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "qty": 30,
+      "set_code": "m13",
+      "tags": [],
+      "type_line": "Basic Land - Island"
+    },
+    {
+      "cmc": 3,
+      "collector_number": "255",
+      "color_identity": [],
+      "colors": [],
+      "name": "Bender's Waterskin",
+      "oracle_text": "Untap this artifact during each other player's untap step.\n{T}: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "tla",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 9,
+      "collector_number": "51",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "The Magic Mirror",
+      "oracle_text": "This spell costs {1} less to cast for each instant and sorcery card in your graveyard.\nYou have no maximum hand size.\nAt the beginning of your upkeep, put a knowledge counter on The Magic Mirror, then draw a card for each knowledge counter on The Magic Mirror.",
+      "qty": 1,
+      "set_code": "eld",
+      "tags": [
+        "counters",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Legendary Artifact"
+    }
+  ],
+  "case_id": "05",
+  "color_identity": [
+    "U"
+  ],
+  "commander": "Talrand, Sky Summoner",
+  "commander_card": {
+    "cmc": 4.0,
+    "collector_number": "116",
+    "color_identity": [
+      "U"
+    ],
+    "colors": [
+      "U"
+    ],
+    "edhrec_rank": 766,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/1/b/1be3ed47-072e-481a-b3d9-dc232ac4b24f.jpg?1783911937",
+      "normal": "https://cards.scryfall.io/normal/front/1/b/1be3ed47-072e-481a-b3d9-dc232ac4b24f.jpg?1783911937",
+      "small": "https://cards.scryfall.io/small/front/1/b/1be3ed47-072e-481a-b3d9-dc232ac4b24f.jpg?1783911937"
+    },
+    "keywords": [],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{2}{U}{U}",
+    "name": "Talrand, Sky Summoner",
+    "oracle_id": "ea1eb902-a23c-44ff-9169-19baf71de238",
+    "oracle_text": "Whenever you cast an instant or sorcery spell, create a 2/2 blue Drake creature token with flying.",
+    "power": "2",
+    "prices": {
+      "usd": "1.17"
+    },
+    "scryfall_uri": "https://scryfall.com/card/otc/116/talrand-sky-summoner?utm_source=api",
+    "set": "otc",
+    "toughness": "2",
+    "type_line": "Legendary Creature — Merfolk Wizard"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "budget-talrand",
+  "source_platform": "archidekt",
+  "source_url": "https://archidekt.com/decks/13291295/talrand_sky_summoner"
+}

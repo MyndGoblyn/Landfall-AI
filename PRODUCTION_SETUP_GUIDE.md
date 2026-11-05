@@ -1,9 +1,10 @@
 # LandFall AI Production Setup Guide
 
-Use this guide when launching the app on Render. The project has two Render services:
+LandFall AI uses a split production architecture:
 
-- Backend: Python FastAPI web service from `backend`
-- Frontend: React static site from `frontend`
+- Backend: Python FastAPI on Render from `backend`
+- Frontend: React on Cloudflare Workers Static Assets from `frontend`
+- Data: MongoDB Atlas
 
 The primary public URL for the app is:
 
@@ -76,14 +77,8 @@ Generate `JWT_SECRET` with PowerShell:
 [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Max 256 }))
 ```
 
-If you do not have the custom domain connected yet, temporarily use your frontend Render URL:
-
-```text
-CORS_ORIGINS=https://<your-frontend-service>.onrender.com
-APP_PUBLIC_URL=https://<your-frontend-service>.onrender.com
-```
-
-Update both to `https://landfallai.live` after the custom domain is verified.
+For a temporary Cloudflare preview hostname, add only that exact origin while
+testing and remove it after the custom domains are active.
 
 ## 3. Create Cloudflare Turnstile CAPTCHA
 
@@ -110,7 +105,7 @@ CAPTCHA_REQUIRED=true
 TURNSTILE_SECRET_KEY=<secret key from Cloudflare>
 ```
 
-Frontend Render variables:
+Frontend build variable:
 
 ```text
 REACT_APP_TURNSTILE_SITE_KEY=<site key from Cloudflare>
@@ -157,35 +152,13 @@ EMAIL_FROM_NAME=LandFall AI
 
 Keep the SMTP variables in place if you want, but when `EMAIL_PROVIDER=brevo_api`, the app sends verification and reset emails through Brevo's HTTPS API instead of SMTP.
 
-## 5. Create Render Frontend Static Site
+## 5. Deploy the Cloudflare Frontend
 
-1. In Render, create a new Static Site.
-2. Connect the same GitHub repo.
-3. Use these settings:
+Follow [CLOUDFLARE_DEPLOYMENT_GUIDE.md](CLOUDFLARE_DEPLOYMENT_GUIDE.md).
+The checked-in build helper pins the production API origin, and Wrangler's
+`single-page-application` handling provides the React Router fallback.
 
-```text
-Root Directory: frontend
-Build Command: npm install && npm run build
-Publish Directory: build
-```
-
-4. Add frontend variables:
-
-```text
-REACT_APP_API_URL=https://api.landfallai.live
-REACT_APP_BACKEND_URL=https://api.landfallai.live
-REACT_APP_TURNSTILE_SITE_KEY=<site key from Cloudflare>
-```
-
-5. Add a rewrite rule for React Router:
-
-```text
-Source Path: /*
-Destination Path: /index.html
-Action: Rewrite
-```
-
-## 6. Update Backend URLs After Frontend Exists
+## 6. Update Backend URLs After the Frontend Exists
 
 Once the frontend custom domain is verified, go back to the backend service and update:
 
@@ -196,37 +169,14 @@ APP_PUBLIC_URL=https://landfallai.live
 
 Then redeploy the backend.
 
-## 6.5. Configure Custom Domains
+## 6.5. Custom Domains
 
-In Render, add custom domains to both services.
+Cloudflare Worker custom domains own `landfallai.live` and
+`www.landfallai.live`. Keep `api.landfallai.live` as a DNS-only record pointing
+to the Render backend. Do not proxy or cache authenticated API responses at the
+edge.
 
-Frontend static site custom domain:
-
-```text
-landfallai.live
-```
-
-Render automatically adds the corresponding `www.landfallai.live` domain and redirects it to the root domain when you add `landfallai.live`.
-
-Backend web service custom domain:
-
-```text
-api.landfallai.live
-```
-
-At your DNS provider, create the DNS records Render asks for. Render will show the exact target values in each service's Custom Domains tab. Render also creates TLS certificates for verified custom domains and redirects HTTP traffic to HTTPS.
-
-Typical DNS shape:
-
-```text
-landfallai.live      ALIAS/ANAME/CNAME flattening -> frontend Render target
-www.landfallai.live  CNAME                         -> frontend Render target
-api.landfallai.live  CNAME                         -> backend Render target
-```
-
-If your DNS provider does not support ALIAS, ANAME, or CNAME flattening for the root domain, use `www.landfallai.live` as the DNS target and set up a registrar-level redirect from `landfallai.live` to `www.landfallai.live`, or move DNS to a provider that supports apex flattening.
-
-After Render verifies the custom domains and issues certificates, use:
+Production URLs:
 
 ```text
 Primary app URL: https://landfallai.live
@@ -298,9 +248,9 @@ AUTH_ACTION_WINDOW_MINUTES=15
 
 Do not manually set `PORT`; Render provides it.
 
-## 10. Final Frontend Env Var Checklist
+## 10. Final Frontend Build Checklist
 
-Your frontend Render static site should have:
+The Cloudflare build must resolve these values:
 
 ```text
 REACT_APP_API_URL=https://api.landfallai.live
@@ -332,13 +282,8 @@ If login fails after verification, check:
 - `AUTH_COOKIE_SAMESITE=lax`
 - `AUTH_COOKIE_DOMAIN=.landfallai.live`
 
-If email verification links show `Not Found`, add this Render static site rewrite:
-
-```text
-Source Path: /*
-Destination Path: /index.html
-Action: Rewrite
-```
+If email verification links show `Not Found`, confirm Wrangler still sets
+`assets.not_found_handling` to `single-page-application`.
 
 The app also sends verification and reset links through the root URL as a fallback:
 

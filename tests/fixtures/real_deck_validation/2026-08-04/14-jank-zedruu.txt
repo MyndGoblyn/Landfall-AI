@@ -1,0 +1,86 @@
+# LandfallAI real-deck validation snapshot 14
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://archidekt.com/decks/330081/extreme_jank_bad_santa_zedruu
+
+# Commander
+1 Zedruu the Greathearted *CMDR*
+
+# Mainboard
+1 Leave // Chance
+1 Disallow
+1 Crown of Doom
+7 Mountain
+1 Aggressive Mining
+1 Stifle
+1 Perplexing Chimera
+10 Island
+1 Wear // Tear
+1 Vedalken Plotter
+1 Torpor Orb
+1 Lightmine Field
+1 Bazaar Trader
+1 Scepter of Dominance
+1 Mindlock Orb
+1 Clout of the Dominus
+1 Puca's Mischief
+1 Trickbind
+7 Plains
+1 Sky Swallower
+1 Shivan Reef
+1 Summoner's Egg
+1 Mystic Monastery
+1 Exotic Orchard
+1 Command Tower
+1 Mirrormade
+1 Fires of Invention
+1 Sol Ring
+1 Eater of Days
+1 Laboratory Maniac
+1 Fragmentize
+1 Akroan Horse
+1 Icy Manipulator
+1 Humble Defector
+1 Hanna, Ship's Navigator
+1 Trove of Temptation
+1 Fractured Identity
+1 Abrade
+1 Homeward Path
+1 Harmless Offering
+1 Paradox Haze
+1 Grid Monitor
+1 Leveler
+1 Rust Elemental
+1 Thought Devourer
+1 Alexi's Cloak
+1 Embargo
+1 Statecraft
+1 Donate
+1 Cinder Giant
+1 Thought Lash
+1 Illusions of Grandeur
+1 Despotic Scepter
+1 Glacial Chasm
+1 Rainbow Vale
+1 Sorrow's Path
+1 Orim's Thunder
+1 Sulfur Falls
+1 Time Wipe
+1 Role Reversal
+1 Rest in Peace
+1 Generous Gift
+1 Talisman of Creativity
+1 Tale's End
+1 Sudden Substitution
+1 Pendant of Prosperity
+1 Zur's Weirding
+1 Howling Mine
+1 Swiftfoot Boots
+1 Reliquary Tower
+1 Jinxed Idol
+1 Avarice Totem
+1 Wrong Turn
+1 Contested War Zone
+1 Moderation
+1 Defabricate
+1 Fractured Powerstone
+1 Steel Golem

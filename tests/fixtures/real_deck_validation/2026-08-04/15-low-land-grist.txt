@@ -1,0 +1,91 @@
+# LandfallAI real-deck validation snapshot 15
+# Frozen at 2026-08-05T01:29:18.125992+00:00
+# Source: https://moxfield.com/decks/KACfZpvjC0SxiosNzIdIcQ
+
+# Commander
+1 Grist, the Hunger Tide *CMDR*
+
+# Mainboard
+1 Fen Hauler
+1 Kraul Foragers
+1 Rotfeaster Maggot
+1 Carrion Grub
+1 Nantuko Calmer
+1 Rust Scarab
+1 Spire Mangler
+1 Kraul Raider
+1 Kraul Swarm
+1 Kraul Harpooner
+1 Spinal Centipede
+1 Quarry Beetle
+1 Nantuko Shaman
+1 Rust Tick
+1 Scavenging Scarab
+1 Giant Cockroach
+1 Nantuko Disciple
+1 Pincher Beetles
+1 Kraul Stinger
+1 Colossapede
+1 Decimator Beetle
+1 Dune Beetle
+1 Ambush Krotiq
+1 Perilous Shadow
+1 Zanikev Locust
+1 Pestilent Souleater
+1 Blister Beetle
+1 Nessian Hornbeetle
+1 Adaptive Shimmerer
+1 Durable Coilbug
+1 Mortipede
+1 Jagwasp Swarm
+1 Nantuko Husk
+1 Segmented Krotiq
+1 Loam Larva
+1 Prakhata Pillar-Bug
+1 Skittering Heartstopper
+1 Bond Beetle
+1 Brain Weevil
+1 Heartstabber Mosquito
+1 Twigwalker
+1 Kazandu Nectarpot
+1 Deadly Grub
+1 Halo Scarab
+1 Battlefly Swarm
+1 Carrion Locust
+1 Giant Ladybug
+1 Devouring Swarm
+1 Ironshell Beetle
+1 Kraul Warrior
+1 Atraxa's Skitterfang
+1 Pestilent Syphoner
+1 Necrosquito
+1 Lattice-Blade Mantis
+1 Giant Caterpillar
+1 Stinging Cave Crawler
+1 Primordial Gnawer
+1 Drudge Beetle
+1 Kraul Whipcracker
+1 Rot Farm Mortipede
+1 Broodhatch Nantuko
+1 Nantuko Vigilante
+1 Ambush Gigapede
+1 Nantuko Cultivator
+1 Altanak, the Thrice-Called
+1 Spineseeker Centipede
+1 Anthropede
+1 Flesh Burrower
+1 Dross Hopper
+1 It of the Horrid Swarm
+1 Moldgraf Millipede
+1 Chitin Gravestalker
+1 Krotiq Nestguard
+1 Delta Bloodflies
+1 Seedship Broodtender
+1 Blade of the Swarm
+1 Eumidian Terrabotanist
+1 Thawbringer
+1 Comet Crawler
+1 Swarm Culler
+1 Skystinger
+9 Forest
+9 Swamp

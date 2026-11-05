@@ -1,0 +1,1779 @@
+{
+  "cards": [
+    {
+      "cmc": 3.0,
+      "collector_number": "233",
+      "color_identity": [
+        "G",
+        "W"
+      ],
+      "colors": [
+        "G",
+        "W"
+      ],
+      "name": "Aura Shards",
+      "oracle_text": "Whenever a creature you control enters, you may destroy target artifact or enchantment.",
+      "qty": 1,
+      "set_code": "inv",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "159",
+      "color_identity": [
+        "R",
+        "W"
+      ],
+      "colors": [
+        "R",
+        "W"
+      ],
+      "name": "Chance for Glory",
+      "oracle_text": "Creatures you control gain indestructible. Take an extra turn after this one. At the beginning of that turn's end step, you lose the game.",
+      "qty": 1,
+      "set_code": "grn",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "164",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Summoner's Pact",
+      "oracle_text": "Search your library for a green creature card, reveal it, put it into your hand, then shuffle.\nAt the beginning of your next upkeep, pay {2}{G}{G}. If you don't, you lose the game.",
+      "qty": 1,
+      "set_code": "mma",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "3",
+      "color_identity": [
+        "G",
+        "U",
+        "W"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Noble Hierarch",
+      "oracle_text": "Exalted (Whenever a creature you control attacks alone, that creature gets +1/+1 until end of turn.)\n{T}: Add {G}, {W}, or {U}.",
+      "qty": 1,
+      "set_code": "j12",
+      "tags": [],
+      "type_line": "Creature — Human Druid"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "10",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mox Diamond",
+      "oracle_text": "If this artifact would enter, you may discard a land card instead. If you do, put this artifact onto the battlefield. If you don't, put it into its owner's graveyard.\n{T}: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "v10",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "106",
+      "color_identity": [
+        "G",
+        "W"
+      ],
+      "colors": [
+        "G",
+        "W"
+      ],
+      "name": "Eladamri's Call",
+      "oracle_text": "Search your library for a creature card, reveal that card, put it into your hand, then shuffle.",
+      "qty": 1,
+      "set_code": "pls",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "3",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [],
+      "name": "Gaea's Cradle",
+      "oracle_text": "{T}: Add {G} for each creature you control.",
+      "qty": 1,
+      "set_code": "jgp",
+      "tags": [],
+      "type_line": "Legendary Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "187",
+      "color_identity": [
+        "G",
+        "U"
+      ],
+      "colors": [
+        "G",
+        "U"
+      ],
+      "name": "Edric, Spymaster of Trest",
+      "oracle_text": "Whenever a creature deals combat damage to one of your opponents, its controller may draw a card.",
+      "qty": 1,
+      "set_code": "cns",
+      "tags": [],
+      "type_line": "Legendary Creature — Elf Rogue"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "165★",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Birds of Paradise",
+      "oracle_text": "Flying\n{T}: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "pm11",
+      "tags": [],
+      "type_line": "Creature — Bird"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "156",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Champion of Lambholt",
+      "oracle_text": "Creatures with power less than this creature's power can't block creatures you control.\nWhenever another creature you control enters, put a +1/+1 counter on this creature.",
+      "qty": 1,
+      "set_code": "2xm",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Human Warrior"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "9",
+      "color_identity": [],
+      "colors": [],
+      "name": "Chrome Mox",
+      "oracle_text": "Imprint — When this artifact enters, you may exile a nonartifact, nonland card from your hand.\n{T}: Add one mana of any of the exiled card's colors.",
+      "qty": 1,
+      "set_code": "mps",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "15",
+      "color_identity": [],
+      "colors": [],
+      "name": "Lotus Petal",
+      "oracle_text": "{T}, Sacrifice this artifact: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "mps",
+      "tags": [
+        "stax",
+        "aristocrats"
+      ],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "17",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mana Vault",
+      "oracle_text": "This artifact doesn't untap during your untap step.\nAt the beginning of your upkeep, you may pay {4}. If you do, untap this artifact.\nAt the beginning of your draw step, if this artifact is tapped, it deals 1 damage to you.\n{T}: Add {C}{C}{C}.",
+      "qty": 1,
+      "set_code": "mps",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "24",
+      "color_identity": [],
+      "colors": [],
+      "name": "Sol Ring",
+      "oracle_text": "{T}: Add {C}{C}.",
+      "qty": 1,
+      "set_code": "mps",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "7",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Rhystic Study",
+      "oracle_text": "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.",
+      "qty": 1,
+      "set_code": "j18",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "122",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Simian Spirit Guide",
+      "oracle_text": "Exile this card from your hand: Add {R}.",
+      "qty": 1,
+      "set_code": "plc",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Creature — Ape Spirit"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "271",
+      "color_identity": [
+        "B",
+        "R"
+      ],
+      "colors": [
+        "B",
+        "R"
+      ],
+      "name": "Fire Covenant",
+      "oracle_text": "As an additional cost to cast this spell, pay X life.\nFire Covenant deals X damage divided as you choose among any number of target creatures.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "328",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Esper Sentinel",
+      "oracle_text": "Whenever an opponent casts their first noncreature spell each turn, draw a card unless that player pays {X}, where X is this creature's power.",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Artifact Creature — Human Soldier"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "315",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Ragavan, Nimble Pilferer",
+      "oracle_text": "Whenever Ragavan deals combat damage to a player, create a Treasure token and exile the top card of that player's library. Until end of turn, you may cast that card.\nDash {1}{R} (You may cast this spell for its dash cost. If you do, it gains haste, and it's returned from the battlefield to its owner's hand at the beginning of the next end step.)",
+      "qty": 1,
+      "set_code": "mh2",
+      "tags": [
+        "blink",
+        "treasure",
+        "spellslinger",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Legendary Creature — Monkey Pirate"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "423",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Elvish Spirit Guide",
+      "oracle_text": "Exile this creature from your hand: Add {G}.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Creature — Elf Spirit"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "1012a",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mana Confluence",
+      "oracle_text": "{T}, Pay 1 life: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "406",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mystic Remora",
+      "oracle_text": "Cumulative upkeep {1} (At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.)\nWhenever an opponent casts a noncreature spell, you may draw a card unless that player pays {4}.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [
+        "counters",
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "2012",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [
+        "B",
+        "G"
+      ],
+      "name": "Deathrite Shaman",
+      "oracle_text": "{T}: Exile target land card from a graveyard. Add one mana of any color.\n{B}, {T}: Exile target instant or sorcery card from a graveyard. Each opponent loses 2 life.\n{G}, {T}: Exile target creature card from a graveyard. You gain 2 life.",
+      "qty": 1,
+      "set_code": "slc",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Elf Shaman"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "35",
+      "color_identity": [],
+      "colors": [],
+      "name": "Mox Amber",
+      "oracle_text": "{T}: Add one mana of any color among legendary creatures and planeswalkers you control.",
+      "qty": 1,
+      "set_code": "brr",
+      "tags": [],
+      "type_line": "Legendary Artifact"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "1179",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mental Misstep",
+      "oracle_text": "({U/P} can be paid with either {U} or 2 life.)\nCounter target spell with mana value 1.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "442",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Worldly Tutor",
+      "oracle_text": "Search your library for a creature card, reveal it, then shuffle and put the card on top.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "314",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Vampiric Tutor",
+      "oracle_text": "Search your library for a card, then shuffle and put that card on top. You lose 2 life.",
+      "qty": 1,
+      "set_code": "dmr",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "5",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Eldritch Evolution",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature.\nSearch your library for a creature card with mana value X or less, where X is 2 plus the sacrificed creature's mana value. Put that card onto the battlefield, then shuffle. Exile Eldritch Evolution.",
+      "qty": 1,
+      "set_code": "slp",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "327★",
+      "color_identity": [],
+      "colors": [],
+      "name": "City of Brass",
+      "oracle_text": "Whenever this land becomes tapped, it deals 1 damage to you.\n{T}: Add one mana of any color.",
+      "qty": 1,
+      "set_code": "7ed",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "180",
+      "color_identity": [
+        "G",
+        "R"
+      ],
+      "colors": [
+        "G",
+        "R"
+      ],
+      "name": "Samut, Vizier of Naktamun",
+      "oracle_text": "First strike, vigilance, haste\nWhenever a creature you control deals combat damage to a player, if that creature entered this turn, draw a card.",
+      "qty": 1,
+      "set_code": "mat",
+      "tags": [],
+      "type_line": "Legendary Creature — Human Warrior Cleric"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "1155",
+      "color_identity": [
+        "B",
+        "G",
+        "R",
+        "U",
+        "W"
+      ],
+      "colors": [],
+      "name": "Esika, God of the Tree // The Prismatic Bridge",
+      "oracle_text": "Vigilance\n{T}: Add one mana of any color.\nOther legendary creatures you control have vigilance and \"{T}: Add one mana of any color.\" // At the beginning of your upkeep, reveal cards from the top of your library until you reveal a creature or planeswalker card. Put that card onto the battlefield and the rest on the bottom of your library in a random order.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Creature — God // Legendary Enchantment"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "357",
+      "color_identity": [],
+      "colors": [],
+      "name": "Ancient Tomb",
+      "oracle_text": "{T}: Add {C}{C}. This land deals 2 damage to you.",
+      "qty": 1,
+      "set_code": "ltc",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "394",
+      "color_identity": [],
+      "colors": [],
+      "name": "Gemstone Caverns",
+      "oracle_text": "If this card is in your opening hand and you're not the starting player, you may begin the game with Gemstone Caverns on the battlefield with a luck counter on it. If you do, exile a card from your hand.\n{T}: Add {C}. If Gemstone Caverns has a luck counter on it, instead add one mana of any color.",
+      "qty": 1,
+      "set_code": "ltc",
+      "tags": [
+        "counters",
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Land"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "657",
+      "color_identity": [],
+      "colors": [],
+      "name": "Fellwar Stone",
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "700",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Finale of Devastation",
+      "oracle_text": "Search your library and/or graveyard for a creature card with mana value X or less and put it onto the battlefield. If you search your library this way, shuffle. If X is 10 or more, creatures you control get +X/+X and gain haste until end of turn.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "696",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Demonic Tutor",
+      "oracle_text": "Search your library for a card, put that card into your hand, then shuffle.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "698",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Deflecting Swat",
+      "oracle_text": "If you control a commander, you may cast this spell without paying its mana cost.\nYou may choose new targets for target spell or ability.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "677",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Grenzo, Havoc Raiser",
+      "oracle_text": "Whenever a creature you control deals combat damage to a player, choose one —\n• Goad target creature that player controls.\n• Exile the top card of that player's library. Until end of turn, you may cast that card and you may spend mana as though it were mana of any color to cast that spell.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "blink",
+        "spellslinger"
+      ],
+      "type_line": "Legendary Creature — Goblin Rogue"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "694",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Fierce Guardianship",
+      "oracle_text": "If you control a commander, you may cast this spell without paying its mana cost.\nCounter target noncreature spell.",
+      "qty": 1,
+      "set_code": "cmm",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "526",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Diabolic Intent",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature.\nSearch your library for a card, put that card into your hand, then shuffle.",
+      "qty": 1,
+      "set_code": "ltc",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "aristocrats"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "544",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Galadriel's Dismissal",
+      "oracle_text": "Kicker {2}{W} (You may pay an additional {2}{W} as you cast this spell.)\nTarget creature phases out. If this spell was kicked, each creature target player controls phases out instead. (Treat phased-out creatures and anything attached to them as though they don't exist until their controller's next turn.)",
+      "qty": 1,
+      "set_code": "ltc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "537",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Legolas's Quick Reflexes",
+      "oracle_text": "Split second (As long as this spell is on the stack, players can't cast spells or activate abilities that aren't mana abilities.)\nUntap target creature. Until end of turn, it gains hexproof, reach, and \"Whenever this creature becomes tapped, it deals damage equal to its power to up to one target creature.\"",
+      "qty": 1,
+      "set_code": "ltc",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "1445",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Silence",
+      "oracle_text": "Your opponents can't cast spells this turn.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [
+        "stax",
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "774",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Delighted Halfling",
+      "oracle_text": "{T}: Add {C}.\n{T}: Add one mana of any color. Spend this mana only to cast a legendary spell, and that spell can't be countered.",
+      "qty": 1,
+      "set_code": "ltr",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Creature — Halfling Citizen"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "781",
+      "color_identity": [
+        "B",
+        "W"
+      ],
+      "colors": [
+        "B",
+        "W"
+      ],
+      "name": "Lotho, Corrupt Shirriff",
+      "oracle_text": "Whenever a player casts their second spell each turn, you lose 1 life and create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "ltr",
+      "tags": [
+        "treasure",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Legendary Creature — Halfling Rogue"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "1084",
+      "color_identity": [],
+      "colors": [],
+      "name": "Exotic Orchard",
+      "oracle_text": "{T}: Add one mana of any color that a land an opponent controls could produce.",
+      "qty": 1,
+      "set_code": "who",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "344",
+      "color_identity": [],
+      "colors": [],
+      "name": "Roaming Throne",
+      "oracle_text": "Ward {2}\nAs this creature enters, choose a creature type.\nThis creature is the chosen type in addition to its other types.\nIf a triggered ability of another creature you control of the chosen type triggers, it triggers an additional time.",
+      "qty": 1,
+      "set_code": "lci",
+      "tags": [],
+      "type_line": "Artifact Creature — Golem"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "315",
+      "color_identity": [
+        "R",
+        "W"
+      ],
+      "colors": [
+        "R",
+        "W"
+      ],
+      "name": "Warleader's Call",
+      "oracle_text": "Creatures you control get +1/+1.\nWhenever a creature you control enters, this enchantment deals 1 damage to each opponent.",
+      "qty": 1,
+      "set_code": "mkm",
+      "tags": [],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "1509",
+      "color_identity": [
+        "G",
+        "R",
+        "W"
+      ],
+      "colors": [],
+      "name": "Jetmir, Nexus of Revels",
+      "oracle_text": "Creatures you control get +1/+0 and have vigilance as long as you control three or more creatures.\nCreatures you control also get +1/+0 and have trample as long as you control six or more creatures.\nCreatures you control also get +1/+0 and have double strike as long as you control nine or more creatures. // Creatures you control get +1/+0 and have vigilance as long as you control three or more creatures.\nCreatures you control also get +1/+0 and have trample as long as you control six or more creatures.\nCreatures you control also get +1/+0 and have double strike as long as you control nine or more creatures.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [],
+      "type_line": "Legendary Creature — Cat Demon // Legendary Creature — Cat Demon"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "468",
+      "color_identity": [
+        "R",
+        "W"
+      ],
+      "colors": [],
+      "name": "Ajani, Nacatl Pariah // Ajani, Nacatl Avenger",
+      "oracle_text": "When Ajani enters, create a 2/1 white Cat Warrior creature token.\nWhenever one or more other Cats you control die, you may exile Ajani, then return him to the battlefield transformed under his owner's control. // +2: Put a +1/+1 counter on each Cat you control.\n0: Create a 2/1 white Cat Warrior creature token. When you do, if you control a red permanent other than Ajani, he deals damage equal to the number of creatures you control to any target.\n−4: Each opponent chooses an artifact, a creature, an enchantment, and a planeswalker from among the nonland permanents they control, then sacrifices the rest.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "counters",
+        "reanimator",
+        "token"
+      ],
+      "type_line": "Legendary Creature — Cat Warrior // Legendary Planeswalker — Ajani"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "352",
+      "color_identity": [],
+      "colors": [],
+      "name": "Bloodstained Mire",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Swamp or Mountain card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "353",
+      "color_identity": [],
+      "colors": [],
+      "name": "Flooded Strand",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Island card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "356",
+      "color_identity": [],
+      "colors": [],
+      "name": "Polluted Delta",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Swamp card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "360",
+      "color_identity": [],
+      "colors": [],
+      "name": "Windswept Heath",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Plains card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "361",
+      "color_identity": [],
+      "colors": [],
+      "name": "Wooded Foothills",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Mountain or Forest card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "906",
+      "color_identity": [
+        "B",
+        "G",
+        "R"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Ignoble Hierarch",
+      "oracle_text": "Exalted (Whenever a creature you control attacks alone, that creature gets +1/+1 until end of turn.)\n{T}: Add {B}, {R}, or {G}.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [],
+      "type_line": "Creature — Goblin Shaman"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "1706",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Professional Face-Breaker",
+      "oracle_text": "Menace\nWhenever one or more creatures you control deal combat damage to a player, create a Treasure token.\nSacrifice a Treasure: Exile the top card of your library. You may play that card this turn.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [
+        "blink",
+        "treasure",
+        "aristocrats",
+        "stax",
+        "token"
+      ],
+      "type_line": "Creature — Human Warrior"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "496",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Flusterstorm",
+      "oracle_text": "Counter target instant or sorcery spell unless its controller pays {1}.\nStorm (When you cast this spell, copy it for each spell cast before it this turn. You may choose new targets for the copies.)",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "332",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Warren Soultrader",
+      "oracle_text": "Pay 1 life, Sacrifice another creature: Create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "mh3",
+      "tags": [
+        "stax",
+        "treasure",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Zombie Goblin Wizard"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "305",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Mockingbird",
+      "oracle_text": "Flying\nYou may have this creature enter as a copy of any creature on the battlefield with mana value less than or equal to the amount of mana spent to cast this creature, except it's a Bird in addition to its other types and it has flying.",
+      "qty": 1,
+      "set_code": "blb",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Creature — Bird Bard"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "87",
+      "color_identity": [
+        "G",
+        "U",
+        "W"
+      ],
+      "colors": [
+        "G",
+        "U",
+        "W"
+      ],
+      "name": "Derevi, Empyrial Tactician",
+      "oracle_text": "Flying\nWhen Derevi enters and whenever a creature you control deals combat damage to a player, you may tap or untap target permanent.\n{1}{G}{W}{U}: Put Derevi onto the battlefield from the command zone.",
+      "qty": 1,
+      "set_code": "blc",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Legendary Creature — Bird Wizard"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "169",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Pact of Negation",
+      "oracle_text": "Counter target spell.\nAt the beginning of your next upkeep, pay {3}{U}{U}. If you don't, you lose the game.",
+      "qty": 1,
+      "set_code": "mb2",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "254",
+      "color_identity": [],
+      "colors": [],
+      "name": "Arcane Signet",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "mb2",
+      "tags": [],
+      "type_line": "Artifact"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "256",
+      "color_identity": [],
+      "colors": [],
+      "name": "Command Tower",
+      "oracle_text": "{T}: Add one mana of any color in your commander's color identity.",
+      "qty": 1,
+      "set_code": "mb2",
+      "tags": [],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "190",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Final Fortune",
+      "oracle_text": "Take an extra turn after this one. At the beginning of that turn's end step, you lose the game.",
+      "qty": 1,
+      "set_code": "mb2",
+      "tags": [],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "1591",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Swan Song",
+      "oracle_text": "Counter target enchantment, instant, or sorcery spell. Its controller creates a 2/2 blue Bird creature token with flying.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "331",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Voice of Victory",
+      "oracle_text": "Mobilize 2 (Whenever this creature attacks, create two tapped and attacking 1/1 red Warrior creature tokens. Sacrifice them at the beginning of the next end step.)\nYour opponents can't cast spells during your turn.",
+      "qty": 1,
+      "set_code": "tdm",
+      "tags": [
+        "stax",
+        "spellslinger",
+        "token",
+        "aristocrats"
+      ],
+      "type_line": "Creature — Human Bard"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "110",
+      "color_identity": [],
+      "colors": [],
+      "name": "Marsh Flats",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Plains or Swamp card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "spg",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "109",
+      "color_identity": [],
+      "colors": [],
+      "name": "Arid Mesa",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Mountain or Plains card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "spg",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "111",
+      "color_identity": [],
+      "colors": [],
+      "name": "Misty Rainforest",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Island card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "spg",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "112",
+      "color_identity": [],
+      "colors": [],
+      "name": "Scalding Tarn",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or Mountain card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "spg",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "113",
+      "color_identity": [],
+      "colors": [],
+      "name": "Verdant Catacombs",
+      "oracle_text": "{T}, Pay 1 life, Sacrifice this land: Search your library for a Swamp or Forest card, put it onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "spg",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Land"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "349",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Nature's Rhythm",
+      "oracle_text": "Search your library for a creature card with mana value X or less, put it onto the battlefield, then shuffle.\nHarmonize {X}{G}{G}{G}{G} (You may cast this card from your graveyard for its harmonize cost. You may tap a creature you control to reduce that cost by an amount of generic mana equal to its power. Then exile this spell.)",
+      "qty": 1,
+      "set_code": "tdm",
+      "tags": [
+        "blink",
+        "reanimator",
+        "spellslinger"
+      ],
+      "type_line": "Sorcery"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "153",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Gogo, Mysterious Mime",
+      "oracle_text": "At the beginning of combat on your turn, you may have Gogo become a copy of another target creature you control until end of turn, except its name is Gogo, Mysterious Mime. If you do, Gogo and that creature each get +2/+0 and gain haste until end of turn and attack this turn if able.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [],
+      "type_line": "Legendary Creature — Wizard"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "11",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Rograkh, Son of Rohgahh",
+      "oracle_text": "First strike, menace, trample\nPartner (You can have two commanders if both have partner.)",
+      "qty": 1,
+      "set_code": "pf25",
+      "tags": [],
+      "type_line": "Legendary Creature — Kobold Warrior"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "12",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Swords to Plowshares",
+      "oracle_text": "Exile target creature. Its controller gains life equal to its power.",
+      "qty": 1,
+      "set_code": "pf25",
+      "tags": [
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "2082",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Knuckles the Echidna",
+      "oracle_text": "Double strike, trample, haste\nWhenever one or more creatures you control deal combat damage to a player, create a Treasure token.\nTreasure Hunter — At the beginning of your upkeep, if you control thirty or more artifacts, you win the game.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [
+        "treasure",
+        "token"
+      ],
+      "type_line": "Legendary Creature — Echidna Warrior"
+    },
+    {
+      "cmc": 5.0,
+      "collector_number": "384",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Exalted Sunborn",
+      "oracle_text": "Flying, lifelink\nIf one or more tokens would be created under your control, twice that many of those tokens are created instead.\nWarp {1}{W} (You may cast this card from your hand for its warp cost. Exile this creature at the beginning of the next end step, then you may cast it from exile on a later turn.)",
+      "qty": 1,
+      "set_code": "eoe",
+      "tags": [
+        "blink",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Creature — Angel Wizard"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "120",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Deafening Silence",
+      "oracle_text": "Each player can't cast more than one noncreature spell each turn.",
+      "qty": 1,
+      "set_code": "spg",
+      "tags": [
+        "spellslinger"
+      ],
+      "type_line": "Enchantment"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "4",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Path to Exile",
+      "oracle_text": "Exile target creature. Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle.",
+      "qty": 1,
+      "set_code": "mar",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "466",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Tataru Taru",
+      "oracle_text": "When Tataru Taru enters, you draw a card and target opponent may draw a card.\nScions' Secretary — Whenever an opponent draws a card, if it isn't that player's turn, create a tapped Treasure token. This ability triggers only once each turn.",
+      "qty": 1,
+      "set_code": "fic",
+      "tags": [
+        "treasure",
+        "token"
+      ],
+      "type_line": "Legendary Creature — Dwarf Advisor"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "30",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Crop Rotation",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a land.\nSearch your library for a land card, put that card onto the battlefield, then shuffle.",
+      "qty": 1,
+      "set_code": "slc",
+      "tags": [
+        "blink",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "reanimator"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "47",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Ocelot Pride",
+      "oracle_text": "First strike, lifelink\nAscend (If you control ten or more permanents, you get the city's blessing for the rest of the game.)\nAt the beginning of your end step, if you gained life this turn, create a 1/1 white Cat creature token. Then if you have the city's blessing, for each token you control that entered this turn, create a token that's a copy of it.",
+      "qty": 1,
+      "set_code": "sch",
+      "tags": [
+        "token"
+      ],
+      "type_line": "Creature — Cat"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "300",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Kinscaer Sentry",
+      "oracle_text": "First strike, lifelink\nWhenever this creature attacks, you may put a creature card with mana value X or less from your hand onto the battlefield tapped and attacking, where X is the number of attacking creatures you control.",
+      "qty": 1,
+      "set_code": "ecl",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Creature — Kithkin Soldier"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "2493",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Grim Hireling",
+      "oracle_text": "Whenever one or more creatures you control deal combat damage to a player, create two Treasure tokens.\n{B}, Sacrifice X Treasures: Target creature gets -X/-X until end of turn. Activate only as a sorcery.",
+      "qty": 1,
+      "set_code": "sld",
+      "tags": [
+        "treasure",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Creature — Tiefling Rogue"
+    },
+    {
+      "cmc": 2.0,
+      "collector_number": "11",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Bramblewood Paragon",
+      "oracle_text": "Each other Warrior creature you control enters with an additional +1/+1 counter on it.\nEach creature you control with a +1/+1 counter on it has trample.",
+      "qty": 1,
+      "set_code": "pcmp",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Creature — Elf Warrior"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "282",
+      "color_identity": [
+        "B",
+        "R"
+      ],
+      "colors": [],
+      "name": "Badlands",
+      "oracle_text": "({T}: Add {B} or {R}.)",
+      "qty": 1,
+      "set_code": "3ed",
+      "tags": [],
+      "type_line": "Land — Swamp Mountain"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "283",
+      "color_identity": [
+        "B",
+        "G"
+      ],
+      "colors": [],
+      "name": "Bayou",
+      "oracle_text": "({T}: Add {B} or {G}.)",
+      "qty": 1,
+      "set_code": "3ed",
+      "tags": [],
+      "type_line": "Land — Swamp Forest"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "284",
+      "color_identity": [
+        "R",
+        "W"
+      ],
+      "colors": [],
+      "name": "Plateau",
+      "oracle_text": "({T}: Add {R} or {W}.)",
+      "qty": 1,
+      "set_code": "3ed",
+      "tags": [],
+      "type_line": "Land — Mountain Plains"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "285",
+      "color_identity": [
+        "G",
+        "W"
+      ],
+      "colors": [],
+      "name": "Savannah",
+      "oracle_text": "({T}: Add {G} or {W}.)",
+      "qty": 1,
+      "set_code": "3ed",
+      "tags": [],
+      "type_line": "Land — Forest Plains"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "288",
+      "color_identity": [
+        "G",
+        "U"
+      ],
+      "colors": [],
+      "name": "Tropical Island",
+      "oracle_text": "({T}: Add {G} or {U}.)",
+      "qty": 1,
+      "set_code": "3ed",
+      "tags": [],
+      "type_line": "Land — Forest Island"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "287",
+      "color_identity": [
+        "G",
+        "R"
+      ],
+      "colors": [],
+      "name": "Taiga",
+      "oracle_text": "({T}: Add {R} or {G}.)",
+      "qty": 1,
+      "set_code": "3ed",
+      "tags": [],
+      "type_line": "Land — Mountain Forest"
+    },
+    {
+      "cmc": 0,
+      "collector_number": "291",
+      "color_identity": [
+        "R",
+        "U"
+      ],
+      "colors": [],
+      "name": "Volcanic Island",
+      "oracle_text": "({T}: Add {U} or {R}.)",
+      "qty": 1,
+      "set_code": "3ed",
+      "tags": [],
+      "type_line": "Land — Island Mountain"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "156",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Chain of Vapor",
+      "oracle_text": "Return target nonland permanent to its owner's hand. Then that permanent's controller may sacrifice a land of their choice. If the player does, they may copy this spell and may choose a new target for that copy.",
+      "qty": 1,
+      "set_code": "mb2",
+      "tags": [
+        "stax",
+        "reanimator",
+        "aristocrats",
+        "blink"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 4.0,
+      "collector_number": "45",
+      "color_identity": [
+        "B"
+      ],
+      "colors": [
+        "B"
+      ],
+      "name": "Rev, Tithe Extractor",
+      "oracle_text": "Whenever you attack, target creature gains deathtouch until end of turn.\nWhenever one or more creatures you control deal combat damage to a player, create a Treasure token, then look at the top card of that player's library and exile it face down. You may cast that card for as long as it remains exiled. (A Treasure token is an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "qty": 1,
+      "set_code": "j25",
+      "tags": [
+        "blink",
+        "treasure",
+        "aristocrats",
+        "stax",
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Legendary Creature — Human Rogue"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "49",
+      "color_identity": [
+        "R"
+      ],
+      "colors": [
+        "R"
+      ],
+      "name": "Gornog, the Red Reaper",
+      "oracle_text": "Haste\nCowards can't block Warriors.\nWhenever one or more Warriors you control attack a player, target creature that player controls becomes a Coward.\nAttacking Warriors you control get +X/+0, where X is the number of Cowards your opponents control.",
+      "qty": 1,
+      "set_code": "j25",
+      "tags": [],
+      "type_line": "Legendary Creature — Minotaur Warrior"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "57",
+      "color_identity": [
+        "W"
+      ],
+      "colors": [
+        "W"
+      ],
+      "name": "Will of the Mardu",
+      "oracle_text": "Choose one. If you control a commander as you cast this spell, you may choose both instead.\n• Create a number of 1/1 red Warrior creature tokens equal to the number of creatures target player controls.\n• Will of the Mardu deals damage to target creature equal to the number of creatures you control.",
+      "qty": 1,
+      "set_code": "tdc",
+      "tags": [
+        "spellslinger",
+        "token"
+      ],
+      "type_line": "Instant"
+    },
+    {
+      "cmc": 3.0,
+      "collector_number": "12",
+      "color_identity": [
+        "U"
+      ],
+      "colors": [
+        "U"
+      ],
+      "name": "Irma, Part-Time Mutant",
+      "oracle_text": "At the beginning of combat on your turn, Irma becomes a copy of up to one other target creature you control, except her name is Irma, Part-Time Mutant and she has this ability. Then put a +1/+1 counter on her.",
+      "qty": 1,
+      "set_code": "tmc",
+      "tags": [
+        "counters"
+      ],
+      "type_line": "Legendary Creature — Human Mutant Shapeshifter"
+    },
+    {
+      "cmc": 1.0,
+      "collector_number": "461",
+      "color_identity": [
+        "G"
+      ],
+      "colors": [
+        "G"
+      ],
+      "name": "Green Sun's Zenith",
+      "oracle_text": "Search your library for a green creature card with mana value X or less, put it onto the battlefield, then shuffle. Shuffle Green Sun's Zenith into its owner's library.",
+      "qty": 1,
+      "set_code": "2x2",
+      "tags": [
+        "blink",
+        "reanimator"
+      ],
+      "type_line": "Sorcery"
+    }
+  ],
+  "case_id": "13",
+  "color_identity": [
+    "B",
+    "G",
+    "R",
+    "U",
+    "W"
+  ],
+  "commander": "Najeela, the Blade-Blossom",
+  "commander_card": {
+    "cmc": 3.0,
+    "collector_number": "62",
+    "color_identity": [
+      "B",
+      "G",
+      "R",
+      "U",
+      "W"
+    ],
+    "colors": [
+      "R"
+    ],
+    "edhrec_rank": 5431,
+    "image_uris": {
+      "large": "https://cards.scryfall.io/large/front/2/c/2cb1d1da-6077-46b5-8c63-39882b8016f2.jpg?1783934856",
+      "normal": "https://cards.scryfall.io/normal/front/2/c/2cb1d1da-6077-46b5-8c63-39882b8016f2.jpg?1783934856",
+      "small": "https://cards.scryfall.io/small/front/2/c/2cb1d1da-6077-46b5-8c63-39882b8016f2.jpg?1783934856"
+    },
+    "keywords": [],
+    "legalities": {
+      "commander": "legal"
+    },
+    "mana_cost": "{2}{R}",
+    "name": "Najeela, the Blade-Blossom",
+    "oracle_id": "09619943-6aec-4080-ace5-a0c6ebb23f1c",
+    "oracle_text": "Whenever a Warrior attacks, you may have its controller create a 1/1 white Warrior creature token that's tapped and attacking.\n{W}{U}{B}{R}{G}: Untap all attacking creatures. They gain trample, lifelink, and haste until end of turn. After this phase, there is an additional combat phase. Activate only during combat.",
+    "power": "3",
+    "prices": {
+      "usd": "7.05",
+      "usd_foil": "35.64"
+    },
+    "scryfall_uri": "https://scryfall.com/card/bbd/62/najeela-the-blade-blossom?utm_source=api",
+    "set": "bbd",
+    "toughness": "2",
+    "type_line": "Legendary Creature — Human Warrior"
+  },
+  "fetched_at": "2026-08-05T01:29:18.125992+00:00",
+  "schema_version": 1,
+  "slug": "cedh-najeela",
+  "source_platform": "moxfield",
+  "source_url": "https://moxfield.com/decks/0NhQNtlEWkGJJWY3Jo_wJw"
+}
