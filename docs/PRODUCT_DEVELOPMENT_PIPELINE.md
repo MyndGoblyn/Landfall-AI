@@ -330,4 +330,3 @@ ranking, and planning systems instead of creating a second recommendation
 stack. The remaining uncertainty is concentrated in full-deck construction,
 which is intentionally isolated behind its own validation suite, runtime mode,
 and promotion gate.
-
