@@ -110,8 +110,11 @@ export default function CommanderProfile() {
     navigate(`/random-commander?${params.toString()}`);
   };
   const startDeck = () => {
-    const params = new URLSearchParams({ newDeck: '1', commander: commander.name });
-    navigate(`/dashboard?${params.toString()}`);
+    const params = new URLSearchParams({
+      commander: commander.name,
+      oracle_id: commander.oracle_id || catalog.oracle_id,
+    });
+    navigate(`/build?${params.toString()}`);
   };
 
   return (

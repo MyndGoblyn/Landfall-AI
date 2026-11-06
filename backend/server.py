@@ -38,6 +38,11 @@ from services.deck_input_assessment import (
     blocking_message,
 )
 from services.deck_intent import DeckIntentProfile, normalize_intent_profile
+from services.build_intent import (
+    BuildIntent,
+    migrate_legacy_deck_intent,
+    normalize_build_intent,
+)
 from services.enhanced_suggestion_engine import EnhancedSuggestionEngine
 from services.in_memory_db import InMemoryClient, InMemoryDB
 
@@ -384,13 +389,16 @@ class Deck(BaseModel):
     color_identity: List[str] = []
     imported_from: Optional[str] = None
     input_assessment: Dict[str, Any] = {}
+    build_intent: Optional[BuildIntent] = None
     intent_profile: DeckIntentProfile = Field(default_factory=DeckIntentProfile)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class DeckCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=120)
     commander: Optional[str] = None
     commanders: List[str] = Field(default_factory=list)
+    format: str = "commander"
+    build_intent: Optional[BuildIntent] = None
 
 class DeckImport(BaseModel):
     source_type: str  # "url" or "text"
@@ -1110,16 +1118,52 @@ async def get_decks(current_user: Dict = Depends(get_current_user)):
 
 @api_router.post("/decks", response_model=Deck)
 async def create_deck(deck_data: DeckCreate, current_user: Dict = Depends(get_current_user)):
+    normalized_build = (
+        normalize_build_intent(deck_data.build_intent)
+        if deck_data.build_intent is not None
+        else None
+    )
+    if normalized_build:
+        build_value = normalized_build["intent"]
+        if " ".join(deck_data.name.split()) != build_value["deck_name"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Deck name must match the confirmed build intent",
+            )
+        requested_commanders = [
+            name for name in (
+                build_value.get("commander_name"),
+                build_value.get("partner_name"),
+            )
+            if name
+        ]
+        supplied_commanders = deck_data.commanders or (
+            [deck_data.commander] if deck_data.commander else []
+        )
+        if supplied_commanders and supplied_commanders != requested_commanders:
+            raise HTTPException(
+                status_code=400,
+                detail="Commander selection must match the confirmed build intent",
+            )
+    else:
+        build_value = None
+        requested_commanders = deck_data.commanders or (
+            [deck_data.commander] if deck_data.commander else []
+        )
+
     deck = Deck(
         user_id=current_user['id'],
-        name=deck_data.name,
+        name=build_value["deck_name"] if build_value else deck_data.name,
         commander=(
-            deck_data.commander
-            or (deck_data.commanders[0] if deck_data.commanders else None)
+            requested_commanders[0] if requested_commanders else None
         ),
-        commanders=(
-            deck_data.commanders
-            or ([deck_data.commander] if deck_data.commander else [])
+        commanders=requested_commanders,
+        format=build_value["format"] if build_value else deck_data.format,
+        build_intent=build_value,
+        intent_profile=(
+            normalized_build["deck_intent_profile"]
+            if normalized_build
+            else DeckIntentProfile()
         ),
     )
     deck_dict = deck.model_dump()
@@ -1133,6 +1177,92 @@ async def get_deck(deck_id: str, current_user: Dict = Depends(get_current_user))
     deck = await db.decks.find_one({"id": deck_id, "user_id": current_user['id']}, {"_id": 0})
     if not deck:
         raise HTTPException(status_code=404, detail="Deck not found")
+    if isinstance(deck.get('created_at'), str):
+        deck['created_at'] = datetime.fromisoformat(deck['created_at'])
+    return deck
+
+
+@api_router.post("/build-intents/normalize")
+async def preview_build_intent(
+    build_intent: BuildIntent,
+    current_user: Dict = Depends(get_current_user),
+):
+    """Expose every deterministic mapping before the user saves the intent."""
+    del current_user
+    return normalize_build_intent(build_intent)
+
+
+@api_router.get("/decks/{deck_id}/build-intent")
+async def get_deck_build_intent(
+    deck_id: str,
+    current_user: Dict = Depends(get_current_user),
+):
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    )
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    if deck.get("build_intent"):
+        return {
+            "source": "saved_build_intent",
+            **normalize_build_intent(deck["build_intent"]),
+        }
+    return {
+        "source": "migrated_deck_intent_v1",
+        **migrate_legacy_deck_intent(
+            deck.get("intent_profile"),
+            deck_name=deck.get("name") or "Commander deck",
+            commander_name=deck.get("commander"),
+            existing_deck_id=deck_id,
+        ),
+    }
+
+
+@api_router.put("/decks/{deck_id}/build-intent", response_model=Deck)
+async def update_deck_build_intent(
+    deck_id: str,
+    build_intent: BuildIntent,
+    current_user: Dict = Depends(get_current_user),
+):
+    existing = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    )
+    if not existing:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    normalized = normalize_build_intent(build_intent)
+    canonical = normalized["intent"]
+    if (
+        canonical["starting_point"] == "existing_deck"
+        and canonical.get("existing_deck_id") != deck_id
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Build intent references a different existing deck",
+        )
+    commanders = [
+        name for name in (
+            canonical.get("commander_name"),
+            canonical.get("partner_name"),
+        )
+        if name
+    ]
+    await db.decks.update_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"$set": {
+            "name": canonical["deck_name"],
+            "commander": commanders[0] if commanders else None,
+            "commanders": commanders,
+            "format": canonical["format"],
+            "build_intent": canonical,
+            "intent_profile": normalized["deck_intent_profile"],
+        }},
+    )
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    )
     if isinstance(deck.get('created_at'), str):
         deck['created_at'] = datetime.fromisoformat(deck['created_at'])
     return deck

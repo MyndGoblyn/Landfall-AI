@@ -197,7 +197,7 @@ def _resolve_structured_intent(profile: Dict) -> Dict:
             if not any(
                 marker in prefix
                 for marker in (
-                    "avoid ", "avoiding ", "do not ", "don't ", "not ",
+                    "avoid ", "avoiding ", "do not ", "don't ", "no ", "not ",
                     "rather than ", "without ",
                 )
             ):

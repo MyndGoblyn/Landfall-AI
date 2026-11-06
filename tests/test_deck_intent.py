@@ -51,6 +51,17 @@ def test_default_intent_is_conservative_and_unconfirmed():
     )
 
 
+def test_explicit_no_does_not_infer_the_negated_strategy():
+    profile = normalize_intent_profile({
+        "confirmed": True,
+        "primary_strategy": "Budget recursion",
+        "desired_experience": "Keep recursion, with no compact combo finish.",
+    })
+
+    assert "graveyard_recursion" in profile["strategy_priorities"]
+    assert "compact_wins" not in profile["strategy_priorities"]
+
+
 def test_intent_validates_power_budget_and_card_list_conflicts():
     with pytest.raises(ValidationError):
         DeckIntentProfile(power_level_min=8, power_level_max=6)

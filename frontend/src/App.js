@@ -12,6 +12,7 @@ import RandomCommander from './pages/RandomCommander';
 import TrackList from './pages/TrackList';
 import CommanderAtlas from './pages/CommanderAtlas';
 import CommanderProfile from './pages/CommanderProfile';
+import GuidedBuild from './pages/GuidedBuild';
 import HowItWorks from './pages/HowItWorks';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyEmailSent from './pages/VerifyEmailSent';
@@ -98,6 +99,11 @@ function App() {
           <Route path="/commanders/:oracleId" element={
             <ProtectedRoute>
               <CommanderProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/build" element={
+            <ProtectedRoute>
+              <GuidedBuild />
             </ProtectedRoute>
           } />
           <Route path="/how-it-works" element={

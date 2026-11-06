@@ -192,6 +192,13 @@ export default function TrackList() {
                       <button
                         type="button"
                         className="btn-secondary"
+                        onClick={() => navigate(`/build?commander=${encodeURIComponent(item.name)}&oracle_id=${encodeURIComponent(item.commander_oracle_id)}`)}
+                      >
+                        Plan a build
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
                         disabled={!noteChanged || savingNote === item.commander_oracle_id}
                         onClick={() => saveNote(item)}
                       >

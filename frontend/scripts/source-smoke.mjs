@@ -19,6 +19,7 @@ const checks = [
       'path="/track-list"',
       'path="/commanders"',
       'path="/commanders/:oracleId"',
+      'path="/build"',
       'path="/deck/:deckId/import"',
       'path="/analysis/:analysisId"',
       'path="/how-it-works"',
@@ -61,6 +62,18 @@ const checks = [
     ],
   },
   {
+    name: 'Guided Build keeps intent mappings inspectable and construction disabled',
+    file: 'src/pages/GuidedBuild.js',
+    tokens: [
+      '/build-intents/normalize',
+      'data-testid="build-step-foundation"',
+      'data-testid="build-step-review"',
+      'Versioned intent contract',
+      'Construction remains disabled',
+      'Save and open manual deck',
+    ],
+  },
+  {
     name: 'Track List controls and page remain connected',
     file: 'src/pages/TrackList.js',
     tokens: [
@@ -68,6 +81,7 @@ const checks = [
       '/tracked-commanders',
       'Open current analysis',
       'commander-lookup?commander=',
+      'Plan a build',
     ],
   },
   {
@@ -79,6 +93,7 @@ const checks = [
       'analysis-progress-banner',
       'intent_profile: intentProfile',
       'newDeckCommander',
+      "navigate('/build')",
     ],
   },
   {

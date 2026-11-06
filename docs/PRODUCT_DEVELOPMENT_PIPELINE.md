@@ -223,6 +223,17 @@ ready.
 **Delivery confidence: 94%.** The current `DeckIntentProfile`, invariant
 system, and strategy profile already cover much of the required contract.
 
+**Implementation status — November 6, 2026:** release-validated. Guided Build
+now provides a five-stage, authenticated intent workspace with a versioned
+`BuildIntent` v1 contract, stable normalization, explicit mappings for
+playstyle, power policy, budget, build scope, and collection behavior, and
+safe migration from saved `DeckIntentProfile` v1 records. Commander Atlas,
+Commander Lab, Track List, and the deck dashboard can seed or reopen the same
+contract. Contradictions are rejected, user-preserved constraints remain
+visible, and complete construction is explicitly disabled until Phase 4.
+Validation passed 250 backend tests, 14 frontend source-smoke groups, the
+optimized production build, and desktop/mobile end-to-end workflow review.
+
 ## Phase 4 - Deterministic deck constructor
 
 **Goal:** produce the highest-value legal portfolio for a confirmed build

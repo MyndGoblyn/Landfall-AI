@@ -143,14 +143,19 @@ export default function Dashboard() {
             <h2 data-testid="dashboard-title" className="text-4xl font-bold mb-2 page-title">What are you working on?</h2>
             <p className="page-copy">Continue a deck, investigate a commander, or start with a fresh direction.</p>
           </div>
-          <button
-            data-testid="create-deck-btn"
-            onClick={() => setShowCreateModal(true)}
-            className="btn-primary"
-          >
-            <Plus className="w-5 h-5 inline mr-2" />
-            New Deck
-          </button>
+          <div className="workspace-heading-actions">
+            <button
+              data-testid="create-deck-btn"
+              onClick={() => setShowCreateModal(true)}
+              className="btn-secondary"
+            >
+              <Plus className="w-5 h-5 inline mr-2" />
+              Quick deck
+            </button>
+            <button className="btn-primary" onClick={() => navigate('/build')}>
+              Plan a build
+            </button>
+          </div>
         </div>
 
         <section className="workspace-tool-strip mb-12" aria-label="Commander tools">
@@ -232,13 +237,21 @@ export default function Dashboard() {
 
                 <div className="flex flex-col gap-2">
                   {(!deck.cards || deck.cards.length === 0) ? (
-                    <button
-                      data-testid={`import-deck-${deck.id}`}
-                      onClick={() => navigate(`/deck/${deck.id}/import`)}
-                      className="btn-primary py-2 text-sm"
-                    >
-                      Import Cards
-                    </button>
+                    <>
+                      <button
+                        data-testid={`import-deck-${deck.id}`}
+                        onClick={() => navigate(`/deck/${deck.id}/import`)}
+                        className="btn-primary py-2 text-sm"
+                      >
+                        Import Cards
+                      </button>
+                      <button
+                        onClick={() => navigate(`/build?deck=${encodeURIComponent(deck.id)}`)}
+                        className="btn-secondary py-2 text-sm"
+                      >
+                        Edit build plan
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
@@ -264,6 +277,12 @@ export default function Dashboard() {
                           Replace Import
                         </button>
                       </div>
+                      <button
+                        onClick={() => navigate(`/build?deck=${encodeURIComponent(deck.id)}`)}
+                        className="btn-secondary py-2 text-sm"
+                      >
+                        Edit build plan
+                      </button>
                     </>
                   )}
                 </div>
