@@ -43,6 +43,11 @@ from services.build_intent import (
     migrate_legacy_deck_intent,
     normalize_build_intent,
 )
+from services.deck_constructor import (
+    ConstructorUnavailable,
+    DeckConstructor,
+    build_revision_diff,
+)
 from services.enhanced_suggestion_engine import EnhancedSuggestionEngine
 from services.in_memory_db import InMemoryClient, InMemoryDB
 
@@ -111,6 +116,7 @@ RESET_ACCOUNT_COLLECTIONS = [
     "decks",
     "analysis_runs",
     "tracked_commanders",
+    "build_drafts",
     "auth_tokens",
     "rate_limits",
 ]
@@ -136,6 +142,13 @@ async def prepare_database():
             )
             await db.tracked_commanders.create_index(
                 [('user_id', 1), ('updated_at', -1)]
+            )
+            await db.build_drafts.create_index(
+                [('user_id', 1), ('deck_id', 1), ('revision', 1)],
+                unique=True,
+            )
+            await db.build_drafts.create_index(
+                [('user_id', 1), ('deck_id', 1), ('created_at', -1)]
             )
             await db.auth_tokens.create_index('token_hash', unique=True)
             await db.auth_tokens.create_index('expires_at')
@@ -282,6 +295,12 @@ suggestion_engine = EnhancedSuggestionEngine(
         'v3' if ENVIRONMENT == 'production' else 'shadow',
     ),
 )
+deck_constructor = DeckConstructor(
+    suggestion_engine,
+    scryfall_service,
+    mode=os.environ.get('BUILD_CONSTRUCTOR_MODE', 'scaffold').lower(),
+    max_scaffold_slots=int(os.environ.get('BUILD_CONSTRUCTOR_MAX_SLOTS', '40')),
+)
 commander_atlas = CommanderAtlas(candidate_provider, suggestion_engine)
 
 # ==================== MODELS ====================
@@ -389,6 +408,8 @@ class Deck(BaseModel):
     color_identity: List[str] = []
     imported_from: Optional[str] = None
     input_assessment: Dict[str, Any] = {}
+    last_build_draft_id: Optional[str] = None
+    build_draft_revision: Optional[int] = None
     build_intent: Optional[BuildIntent] = None
     intent_profile: DeckIntentProfile = Field(default_factory=DeckIntentProfile)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -403,6 +424,32 @@ class DeckCreate(BaseModel):
 class DeckImport(BaseModel):
     source_type: str  # "url" or "text"
     source_data: str  # URL or decklist text
+
+
+class BuildDraft(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    deck_id: str
+    revision: int = Field(ge=1)
+    constructor_version: str
+    status: str
+    source_fingerprint: str
+    result: Dict[str, Any]
+    change_summary: Dict[str, Any] = Field(default_factory=dict)
+    applied_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class BuildDraftApplyRequest(BaseModel):
+    confirmed: bool
+
+    @field_validator("confirmed")
+    @classmethod
+    def require_confirmation(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError("Applying a scaffold requires explicit confirmation")
+        return value
 
 
 def _clean_tracked_note(value: Optional[str]) -> Optional[str]:
@@ -1268,6 +1315,155 @@ async def update_deck_build_intent(
     return deck
 
 
+def _build_draft_from_document(document: Dict[str, Any]) -> BuildDraft:
+    payload = dict(document)
+    payload.pop("_id", None)
+    for field_name in ("created_at", "applied_at"):
+        if payload.get(field_name) is not None:
+            payload[field_name] = parse_stored_datetime(payload[field_name])
+    return BuildDraft.model_validate(payload)
+
+
+@api_router.get("/decks/{deck_id}/build-drafts", response_model=List[BuildDraft])
+async def get_build_drafts(
+    deck_id: str,
+    current_user: Dict = Depends(get_current_user),
+):
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    )
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    documents = await db.build_drafts.find(
+        {"deck_id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    ).sort("revision", -1).to_list(20)
+    return [_build_draft_from_document(document) for document in documents]
+
+
+@api_router.post("/decks/{deck_id}/build-drafts", response_model=BuildDraft)
+async def create_build_draft(
+    deck_id: str,
+    current_user: Dict = Depends(get_current_user),
+):
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    )
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    if not deck.get("build_intent"):
+        raise HTTPException(
+            status_code=409,
+            detail="Save a confirmed Guided Build plan before generating a scaffold",
+        )
+    normalized = normalize_build_intent(deck["build_intent"])
+    try:
+        result = await deck_constructor.construct(deck, normalized)
+    except ConstructorUnavailable as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    previous_documents = await db.build_drafts.find(
+        {"deck_id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    ).sort("revision", -1).to_list(1)
+    previous = previous_documents[0] if previous_documents else None
+    revision = int(previous.get("revision", 0)) + 1 if previous else 1
+    now = datetime.now(timezone.utc)
+    draft = BuildDraft(
+        user_id=current_user['id'],
+        deck_id=deck_id,
+        revision=revision,
+        constructor_version=result["constructor_version"],
+        status=result["status"],
+        source_fingerprint=result["source_fingerprint"],
+        result=result,
+        change_summary=build_revision_diff(
+            previous.get("result") if previous else None,
+            result,
+        ),
+        created_at=now,
+    )
+    document = draft.model_dump()
+    document["created_at"] = now.isoformat()
+    await db.build_drafts.insert_one(document)
+    return draft
+
+
+@api_router.post(
+    "/decks/{deck_id}/build-drafts/{draft_id}/apply",
+    response_model=Deck,
+)
+async def apply_build_draft(
+    deck_id: str,
+    draft_id: str,
+    request_data: BuildDraftApplyRequest,
+    current_user: Dict = Depends(get_current_user),
+):
+    del request_data
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    )
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    draft = await db.build_drafts.find_one(
+        {
+            "id": draft_id,
+            "deck_id": deck_id,
+            "user_id": current_user['id'],
+        },
+        {"_id": 0},
+    )
+    if not draft:
+        raise HTTPException(status_code=404, detail="Build draft not found")
+    result = draft.get("result") or {}
+    validation = result.get("validation") or {}
+    if not validation.get("passed") or result.get("status") == "blocked":
+        raise HTTPException(
+            status_code=409,
+            detail="Resolve the scaffold validation errors before applying it",
+        )
+    if not deck.get("build_intent"):
+        raise HTTPException(status_code=409, detail="The saved build intent is unavailable")
+    normalized = normalize_build_intent(deck["build_intent"])
+    current_fingerprint = deck_constructor.source_fingerprint(deck, normalized)
+    if current_fingerprint != draft.get("source_fingerprint"):
+        raise HTTPException(
+            status_code=409,
+            detail="The deck or build intent changed; regenerate the scaffold before applying it",
+        )
+
+    proposed_cards = result.get("proposed_main_deck") or []
+    update_data = {
+        "cards": proposed_cards,
+        "color_identity": (result.get("commander") or {}).get("color_identity") or [],
+        "last_build_draft_id": draft_id,
+        "build_draft_revision": draft.get("revision"),
+    }
+    update_data["input_assessment"] = assess_deck_input({
+        **deck,
+        **update_data,
+    })
+    await db.decks.update_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"$set": update_data},
+    )
+    applied_at = datetime.now(timezone.utc)
+    await db.build_drafts.update_one(
+        {"id": draft_id, "user_id": current_user['id']},
+        {"$set": {"applied_at": applied_at.isoformat()}},
+    )
+    updated = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user['id']},
+        {"_id": 0},
+    )
+    if isinstance(updated.get('created_at'), str):
+        updated['created_at'] = datetime.fromisoformat(updated['created_at'])
+    return updated
+
+
 @api_router.put("/decks/{deck_id}/intent", response_model=Deck)
 async def update_deck_intent(
     deck_id: str,
@@ -1371,6 +1567,10 @@ async def delete_deck(deck_id: str, current_user: Dict = Depends(get_current_use
     result = await db.decks.delete_one({"id": deck_id, "user_id": current_user['id']})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Deck not found")
+    await db.build_drafts.delete_many({
+        "deck_id": deck_id,
+        "user_id": current_user['id'],
+    })
     return {"message": "Deck deleted"}
 
 
@@ -1962,6 +2162,7 @@ async def root():
             "query_planner_version": planner_status["query_planner_version"],
             "portfolio_version": planner_status["portfolio_version"],
         },
+        "deck_constructor": deck_constructor.get_status(),
     }
 
 logging.basicConfig(

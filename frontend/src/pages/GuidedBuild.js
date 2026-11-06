@@ -303,7 +303,11 @@ export default function GuidedBuild() {
           { headers: getAuthHeaders() }
         );
         toast.success('Build plan saved to your deck.');
-        navigate('/dashboard');
+        navigate(
+          normalized.intent.build_mode === 'guided_scaffold'
+            ? `/deck/${existingDeckId}/build`
+            : '/dashboard'
+        );
         return;
       }
       const commanders = [
@@ -321,8 +325,13 @@ export default function GuidedBuild() {
         },
         { headers: getAuthHeaders() }
       );
-      toast.success('Build plan saved. Add cards when you are ready.');
-      navigate(`/deck/${response.data.id}/import`);
+      const scaffoldEnabled = normalized.intent.build_mode === 'guided_scaffold';
+      toast.success(scaffoldEnabled
+        ? 'Build plan saved. Review the deterministic scaffold before applying it.'
+        : 'Build plan saved. Add cards when you are ready.');
+      navigate(scaffoldEnabled
+        ? `/deck/${response.data.id}/build`
+        : `/deck/${response.data.id}/import`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Could not save this build plan');
     } finally {
@@ -351,7 +360,7 @@ export default function GuidedBuild() {
             <p className="page-eyebrow">Guided Build</p>
             <h1>Define the deck before choosing the cards.</h1>
             <p>
-              Every choice becomes a visible engine constraint. This phase saves the plan and opens a manual deck; it does not generate a list.
+              Every choice becomes a visible engine constraint. Manual plans open a deck; Guided scaffold plans open a bounded, reviewable construction workspace.
             </p>
           </div>
           <div className="guided-build-contract">
@@ -565,13 +574,13 @@ export default function GuidedBuild() {
                   />
                   <ChoiceCard
                     title="Guided scaffold"
-                    copy="Save role and package boundaries for the next construction phase."
+                    copy="Generate a bounded evidence portfolio while leaving unsupported slots open."
                     active={intent.build_mode === 'guided_scaffold'}
                     onClick={() => updateIntent('build_mode', 'guided_scaffold')}
                   />
                   <ChoiceCard
-                    title="Complete draft · Phase 4"
-                    copy="Disabled until portfolio and mana-base validation is complete."
+                    title="Complete draft · Phase 5"
+                    copy="Disabled until the full portfolio and mana-base validation suite is promoted."
                     disabled
                     active={false}
                   />
@@ -811,8 +820,13 @@ export default function GuidedBuild() {
                 <div className="build-phase-boundary">
                   <ShieldCheck aria-hidden="true" />
                   <div>
-                    <strong>Construction remains disabled.</strong>
-                    <p>Saving opens a manual deck. Complete-list generation cannot run until Phase 4 and its separate portfolio validation pass.</p>
+                    <strong>{mapping.construction.enabled ? 'Bounded scaffold construction is enabled.' : 'Manual construction stays in control.'}</strong>
+                    <p>
+                      {mapping.construction.enabled
+                        ? 'Phase 4 can propose a validated partial portfolio and basic-land baseline. Unsupported slots remain open.'
+                        : 'Saving opens a manual deck without selecting cards.'}
+                      {' '}Complete-list generation remains disabled until Phase 5 promotion.
+                    </p>
                   </div>
                 </div>
 
@@ -877,7 +891,11 @@ export default function GuidedBuild() {
               disabled={!reviewConfirmed || saving}
               data-testid="build-save-button"
             >
-              {saving ? 'Saving plan...' : existingDeckId ? 'Save deck plan' : 'Save and open manual deck'}
+              {saving
+                ? 'Saving plan...'
+                : intent.build_mode === 'guided_scaffold'
+                  ? existingDeckId ? 'Save and rebuild scaffold' : 'Save and build scaffold'
+                  : existingDeckId ? 'Save deck plan' : 'Save and open manual deck'}
               {!saving && <ArrowRight aria-hidden="true" />}
             </button>
           )}

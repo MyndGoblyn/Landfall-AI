@@ -101,14 +101,25 @@ def test_build_intent_rejects_contradictory_choices(updates):
         BuildIntent.model_validate(base_intent(**updates))
 
 
-def test_complete_draft_is_recorded_but_cannot_construct_before_phase_four():
+def test_complete_draft_is_recorded_but_cannot_construct_before_phase_five():
     normalized = normalize_build_intent(base_intent(build_mode="complete_draft"))
 
     assert normalized["intent"]["build_mode"] == "complete_draft"
     assert not normalized["mapping"]["construction"]["enabled"]
     assert normalized["mapping"]["construction"]["availability"] == (
-        "phase_4_validation_required"
+        "phase_5_validation_required"
     )
+
+
+def test_guided_scaffold_enables_only_the_phase_four_bounded_constructor():
+    normalized = normalize_build_intent(base_intent(build_mode="guided_scaffold"))
+
+    construction = normalized["mapping"]["construction"]
+    assert construction["enabled"] is True
+    assert construction["requested_mode"] == "guided_scaffold"
+    assert construction["availability"] == "phase_4_scaffold"
+    assert construction["next_action"] == "save_intent_and_build_scaffold"
+    assert normalized["mapping"]["build_shape"]["maximum_requested_slots"] == 40
 
 
 def test_legacy_deck_intent_migrates_without_losing_strict_card_cap():

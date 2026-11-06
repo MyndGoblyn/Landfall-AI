@@ -13,6 +13,7 @@ import TrackList from './pages/TrackList';
 import CommanderAtlas from './pages/CommanderAtlas';
 import CommanderProfile from './pages/CommanderProfile';
 import GuidedBuild from './pages/GuidedBuild';
+import BuildWorkspace from './pages/BuildWorkspace';
 import HowItWorks from './pages/HowItWorks';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyEmailSent from './pages/VerifyEmailSent';
@@ -104,6 +105,11 @@ function App() {
           <Route path="/build" element={
             <ProtectedRoute>
               <GuidedBuild />
+            </ProtectedRoute>
+          } />
+          <Route path="/deck/:deckId/build" element={
+            <ProtectedRoute>
+              <BuildWorkspace />
             </ProtectedRoute>
           } />
           <Route path="/how-it-works" element={

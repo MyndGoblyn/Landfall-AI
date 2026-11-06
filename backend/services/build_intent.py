@@ -408,6 +408,23 @@ def normalize_build_intent(value: Mapping | BuildIntent) -> Dict:
     canonical = intent.model_dump(mode="json")
     canonical["power_level_min"] = power_min
     canonical["power_level_max"] = power_max
+    construction = {
+        "manual": {
+            "enabled": False,
+            "availability": "manual_only",
+            "next_action": "save_intent_and_open_manual_deck",
+        },
+        "guided_scaffold": {
+            "enabled": True,
+            "availability": "phase_4_scaffold",
+            "next_action": "save_intent_and_build_scaffold",
+        },
+        "complete_draft": {
+            "enabled": False,
+            "availability": "phase_5_validation_required",
+            "next_action": "save_intent_and_wait_for_complete_draft_validation",
+        },
+    }[intent.build_mode]
     return {
         "schema_version": 1,
         "intent": canonical,
@@ -443,9 +460,7 @@ def normalize_build_intent(value: Mapping | BuildIntent) -> Dict:
             },
             "construction": {
                 "requested_mode": intent.build_mode,
-                "enabled": False,
-                "availability": "phase_4_validation_required",
-                "next_action": "save_intent_and_open_manual_deck",
+                **construction,
             },
         },
     }

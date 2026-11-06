@@ -238,10 +238,19 @@ export default function Dashboard() {
                 <div className="flex flex-col gap-2">
                   {(!deck.cards || deck.cards.length === 0) ? (
                     <>
+                      {deck.build_intent?.build_mode === 'guided_scaffold' && (
+                        <button
+                          data-testid={`build-scaffold-${deck.id}`}
+                          onClick={() => navigate(`/deck/${deck.id}/build`)}
+                          className="btn-primary py-2 text-sm"
+                        >
+                          Build scaffold
+                        </button>
+                      )}
                       <button
                         data-testid={`import-deck-${deck.id}`}
                         onClick={() => navigate(`/deck/${deck.id}/import`)}
-                        className="btn-primary py-2 text-sm"
+                        className={`${deck.build_intent?.build_mode === 'guided_scaffold' ? 'btn-secondary' : 'btn-primary'} py-2 text-sm`}
                       >
                         Import Cards
                       </button>
@@ -283,6 +292,15 @@ export default function Dashboard() {
                       >
                         Edit build plan
                       </button>
+                      {deck.build_intent?.build_mode === 'guided_scaffold' && (
+                        <button
+                          data-testid={`open-scaffold-${deck.id}`}
+                          onClick={() => navigate(`/deck/${deck.id}/build`)}
+                          className="btn-secondary py-2 text-sm"
+                        >
+                          Open scaffold workspace
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

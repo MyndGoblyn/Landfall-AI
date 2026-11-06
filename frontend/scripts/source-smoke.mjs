@@ -20,6 +20,7 @@ const checks = [
       'path="/commanders"',
       'path="/commanders/:oracleId"',
       'path="/build"',
+      'path="/deck/:deckId/build"',
       'path="/deck/:deckId/import"',
       'path="/analysis/:analysisId"',
       'path="/how-it-works"',
@@ -62,15 +63,28 @@ const checks = [
     ],
   },
   {
-    name: 'Guided Build keeps intent mappings inspectable and construction disabled',
+    name: 'Guided Build keeps intent mappings inspectable and Phase 4 bounded',
     file: 'src/pages/GuidedBuild.js',
     tokens: [
       '/build-intents/normalize',
       'data-testid="build-step-foundation"',
       'data-testid="build-step-review"',
       'Versioned intent contract',
-      'Construction remains disabled',
+      'Bounded scaffold construction is enabled',
+      'Complete-list generation remains disabled until Phase 5 promotion',
       'Save and open manual deck',
+    ],
+  },
+  {
+    name: 'Phase 4 workspace exposes validation, abstention, and explicit apply controls',
+    file: 'src/pages/BuildWorkspace.js',
+    tokens: [
+      '/build-drafts',
+      'data-testid="generate-scaffold-button"',
+      'Hard-gate review',
+      'Abstention ledger',
+      'Complete-draft generation remains disabled',
+      'Apply reviewed scaffold',
     ],
   },
   {
@@ -94,6 +108,8 @@ const checks = [
       'intent_profile: intentProfile',
       'newDeckCommander',
       "navigate('/build')",
+      'data-testid={`build-scaffold-${deck.id}`}',
+      'navigate(`/deck/${deck.id}/build`)',
     ],
   },
   {

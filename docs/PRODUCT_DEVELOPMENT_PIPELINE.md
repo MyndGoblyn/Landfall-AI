@@ -230,7 +230,8 @@ playstyle, power policy, budget, build scope, and collection behavior, and
 safe migration from saved `DeckIntentProfile` v1 records. Commander Atlas,
 Commander Lab, Track List, and the deck dashboard can seed or reopen the same
 contract. Contradictions are rejected, user-preserved constraints remain
-visible, and complete construction is explicitly disabled until Phase 4.
+visible. Phase 4 may serve only a bounded scaffold; complete construction
+remains explicitly disabled until Phase 5 promotion.
 Validation passed 250 backend tests, 14 frontend source-smoke groups, the
 optimized production build, and desktop/mobile end-to-end workflow review.
 
@@ -273,6 +274,35 @@ intent, with an explanation and a safe abstention path.
 **Delivery confidence before builder validation: 84%.** The ranking foundation
 is strong, but full-deck construction introduces package, mana-base, and
 global-composition interactions that recommendation tests do not yet cover.
+
+**Implementation status — November 6, 2026:** release-validated bounded
+scaffold. The constructor reuses served Planner V3 output, preserves imported
+cards and protected packages as fixed inputs, re-resolves every proposed card,
+and independently enforces commander eligibility, partner/background pairing,
+color identity, singleton, strict budget, exclusions, and owned-only rules.
+For full-deck and mana-focused shapes it may add a conservative basic-land
+baseline from measured mana-symbol demand. It never lowers evidence thresholds
+to fill the list: unresolved in-scope and deferred slots stay visible in an
+abstention ledger.
+
+Authenticated draft persistence now records deterministic revisions, source
+fingerprints, selected-card diffs, validation results, and explicit apply
+state. Applying a stale or blocked draft is rejected. The dedicated build
+workspace shows role allocation, hard-gate results, per-card reasoning,
+evidence confidence, verified budget subtotal, revision history, and the Phase
+5 boundary. Production remains capped at 40 proposed slots and protected by
+`BUILD_CONSTRUCTOR_MODE`; complete-draft mode is not promoted.
+
+Validation passed 257 backend tests, 15 frontend source-smoke groups, the
+optimized production build, and a fresh browser run using a real Meren intent.
+That run preserved the protected card, accepted nine independently verified
+Planner V3 additions, passed all six hard gates, and left 89 main-deck slots
+open rather than inserting filler. Desktop and 390px mobile layouts passed
+visual and horizontal-overflow review.
+
+**Current delivery confidence: 94% for bounded scaffolds.** Confidence for
+complete 100-card drafts remains 84% until the separate Phase 5 golden suite
+and promotion gates pass.
 
 ## Phase 5 - Builder validation and promotion
 

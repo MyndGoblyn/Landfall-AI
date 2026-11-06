@@ -100,6 +100,7 @@ class InMemoryDB:
         self.decks = InMemoryCollection()
         self.analysis_runs = InMemoryCollection()
         self.tracked_commanders = InMemoryCollection()
+        self.build_drafts = InMemoryCollection()
         self.auth_tokens = InMemoryCollection()
         self.rate_limits = InMemoryCollection()
         self.scryfall_cards = InMemoryCollection()
