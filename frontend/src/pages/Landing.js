@@ -43,9 +43,14 @@ export default function Landing() {
     <div className="app-shell landing-shell">
       <header className="landing-topbar">
         <div className="container mx-auto px-6 landing-topbar-layout">
-          <button type="button" className="topbar-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <BrandEmblem className="topbar-brand-mark" />
-            <span className="brand-title">LandFall AI</span>
+          <button type="button" className="topbar-brand landing-brand-lockup" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <span className="landing-brand-mark-shell" aria-hidden="true">
+              <BrandEmblem className="topbar-brand-mark" />
+            </span>
+            <span className="landing-brand-copy">
+              <span className="brand-title">LandFall AI</span>
+              <small>Commander intelligence</small>
+            </span>
           </button>
           <div className="landing-header-actions">
             <button

@@ -3,7 +3,7 @@ import AppTopbar from '../components/AppTopbar';
 const principles = [
   {
     title: 'Deterministic Analysis',
-    copy: 'LandFall AI does not generate strategy through an LLM. It uses rule-based detection, card text parsing, commander legality checks, Scryfall search syntax, and scoring layers that produce repeatable results from the same inputs.'
+    copy: 'LandFall AI uses rule-based detection, card text parsing, commander legality checks, Scryfall search syntax, and scoring layers to produce repeatable results from the same inputs.'
   },
   {
     title: 'Scryfall Grounding',
