@@ -25,6 +25,11 @@ from contextlib import asynccontextmanager
 from services.scryfall_service import ScryfallService
 from services.candidate_provider import build_candidate_provider
 from services.catalog_distribution import build_catalog_distribution_from_env
+from services.commander_atlas import (
+    ARCHETYPE_FILTERS,
+    PLAYSTYLE_FILTERS,
+    CommanderAtlas,
+)
 from services.semantic_distribution import build_semantic_distribution_from_env
 from services.deck_parser import DeckParser
 from services.deck_input_assessment import (
@@ -213,6 +218,7 @@ async def prepare_semantic_bundle():
             "mechanics_registry": status["mechanics"],
             "archetype_registry": status["archetypes"],
             "competitive_registry": status["competitive_cards"],
+            "commander_profile_registry": status["commander_profiles"],
         }
         if expected and expected != actual:
             raise RuntimeError(
@@ -271,6 +277,7 @@ suggestion_engine = EnhancedSuggestionEngine(
         'v3' if ENVIRONMENT == 'production' else 'shadow',
     ),
 )
+commander_atlas = CommanderAtlas(candidate_provider, suggestion_engine)
 
 # ==================== MODELS ====================
 
@@ -401,7 +408,7 @@ class TrackCommanderCreate(BaseModel):
     commander_name: str = Field(min_length=1, max_length=200)
     source: str = Field(
         default="commander_lab",
-        pattern="^(commander_lab|discover)$",
+        pattern="^(commander_lab|commander_atlas|discover)$",
     )
     note: Optional[str] = Field(default=None, max_length=400)
 
@@ -434,7 +441,7 @@ class TrackedCommander(BaseModel):
     image_url: Optional[str] = None
     color_identity: List[str] = Field(default_factory=list)
     type_line: Optional[str] = None
-    source: str = Field(pattern="^(commander_lab|discover)$")
+    source: str = Field(pattern="^(commander_lab|commander_atlas|discover)$")
     note: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -1593,6 +1600,70 @@ class RandomCommanderRequest(BaseModel):
     keywords: Optional[List[str]] = None
     search_text: Optional[str] = None
     max_cmc: Optional[int] = None
+
+
+@api_router.get("/commander-atlas")
+async def browse_commander_atlas(
+    query: str = Query(default="", max_length=80),
+    colors: str = Query(default="", max_length=6),
+    color_mode: str = Query(default="exact", pattern="^(exact|inclusive)$"),
+    max_cmc: Optional[int] = Query(default=None, ge=0, le=20),
+    archetype: str = Query(default="", max_length=40),
+    playstyle: str = Query(default="", max_length=20),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=24, ge=1, le=48),
+    current_user: Dict = Depends(get_current_user),
+):
+    del current_user
+    normalized_colors = "".join(dict.fromkeys(colors.upper()))
+    if any(color not in "WUBRGC" for color in normalized_colors):
+        raise HTTPException(status_code=400, detail="Invalid color identity filter")
+    if "C" in normalized_colors and len(normalized_colors) > 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Colorless cannot be combined with colored identities",
+        )
+    normalized_archetype = archetype.casefold().strip()
+    if normalized_archetype and normalized_archetype not in ARCHETYPE_FILTERS:
+        raise HTTPException(status_code=400, detail="Unsupported archetype filter")
+    normalized_playstyle = playstyle.casefold().strip()
+    if normalized_playstyle and normalized_playstyle not in PLAYSTYLE_FILTERS:
+        raise HTTPException(status_code=400, detail="Unsupported playstyle filter")
+    return await commander_atlas.search(
+        query=query,
+        colors=normalized_colors,
+        color_mode=color_mode,
+        max_cmc=max_cmc,
+        archetype=normalized_archetype,
+        playstyle=normalized_playstyle,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@api_router.get("/commander-atlas/{commander_oracle_id}/profile")
+async def get_commander_atlas_profile(
+    commander_oracle_id: str,
+    current_user: Dict = Depends(get_current_user),
+):
+    del current_user
+    match = await commander_atlas.get(commander_oracle_id)
+    if not match:
+        raise HTTPException(status_code=404, detail="Commander profile not found")
+    analysis = await suggestion_engine.analyze_commander(match["card"])
+    status = commander_atlas.get_status()
+    return {
+        "catalog_entry": match["catalog_entry"],
+        "analysis": analysis,
+        "reviewed_profile": analysis.get("reviewed_profile"),
+        "data_freshness": {
+            "catalog_version": status.get("catalog_version"),
+            "source_updated_at": status.get("source_updated_at"),
+            "semantic_version": suggestion_engine.get_semantic_bundle_status().get(
+                "semantic_version"
+            ),
+        },
+    }
 
 def _commander_candidate_payload(card: Dict) -> Dict:
     images = suggestion_engine._get_card_images(card)

@@ -19,15 +19,28 @@ const COLOR_OPTIONS = [
   { id: 'G', label: 'Green', color: '#00733e' }
 ];
 
+const initialDiscoverFilters = () => {
+  const params = new URLSearchParams(window.location.search);
+  const requestedColors = (params.get('colors') || '').toUpperCase();
+  const colors = requestedColors.includes('C')
+    ? ['C']
+    : COLOR_OPTIONS.map((color) => color.id)
+      .filter((color) => color !== 'C' && requestedColors.includes(color));
+  const requestedCmc = Number.parseInt(params.get('max_cmc') || '', 10);
+  return {
+    colors,
+    search_text: params.get('search_text') || '',
+    max_cmc: Number.isFinite(requestedCmc) && requestedCmc >= 0 && requestedCmc <= 20
+      ? requestedCmc
+      : null,
+  };
+};
+
 export default function RandomCommander() {
   const [loading, setLoading] = useState(false);
   const [moreLoading, setMoreLoading] = useState(false);
   const [commanderData, setCommanderData] = useState(null);
-  const [filters, setFilters] = useState({
-    colors: [],
-    search_text: '',
-    max_cmc: null
-  });
+  const [filters, setFilters] = useState(initialDiscoverFilters);
   const { getAuthHeaders } = useAuth();
   const suggestedCards = commanderData?.suggested_cards || [];
   const combos = commanderData?.combos || [];

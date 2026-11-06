@@ -17,6 +17,7 @@ from services.card_function_profile import (
     strategic_cut_block_reason,
 )
 from services.competitive_registry import CompetitiveCardRegistry
+from services.commander_profile_registry import CommanderProfileRegistry
 from services.confidence_policy import EvidenceConfidencePolicy
 from services.deck_intent import (
     apply_intent_to_cuts,
@@ -106,6 +107,7 @@ class EnhancedSuggestionEngine:
         }
         self._planner_recent_changes = []
         self.competitive_registry = CompetitiveCardRegistry.load_default()
+        self.commander_profile_registry = CommanderProfileRegistry.load_default()
         self._semantic_bundle_status = {
             'source': 'bundled',
             'semantic_version': None,
@@ -113,6 +115,7 @@ class EnhancedSuggestionEngine:
             'archetypes': self.archetype_registry.count(),
             'competitive_registry': self.competitive_registry.version,
             'competitive_cards': self.competitive_registry.count(),
+            'commander_profiles': self.commander_profile_registry.count(),
         }
         self._ranker_stats = {
             "comparisons": 0,
@@ -244,11 +247,15 @@ class EnhancedSuggestionEngine:
         mechanics = MechanicsRegistry(resources['mechanics_registry'])
         archetypes = ArchetypeRegistry(resources['archetype_registry'])
         competitive = CompetitiveCardRegistry(resources['competitive_registry'])
+        commander_profiles = CommanderProfileRegistry(
+            resources['commander_profile_registry']
+        )
 
         # Construct every registry before swapping any shared engine state.
         self.mechanics_registry = mechanics
         self.archetype_registry = archetypes
         self.competitive_registry = competitive
+        self.commander_profile_registry = commander_profiles
         self._semantic_cache.clear()
         self._commander_analysis_cache.clear()
         self._semantic_bundle_status = {
@@ -258,6 +265,7 @@ class EnhancedSuggestionEngine:
             'archetypes': archetypes.count(),
             'competitive_registry': competitive.version,
             'competitive_cards': competitive.count(),
+            'commander_profiles': commander_profiles.count(),
         }
         return dict(self._semantic_bundle_status)
 
@@ -1542,6 +1550,54 @@ class EnhancedSuggestionEngine:
             for match in self.archetype_registry.detect_archetypes(signals, limit=limit)
         ]
         return self._semantic_cache_set(cache_key, archetypes)
+
+    def _merge_reviewed_commander_profile(
+        self,
+        commander_card: Dict,
+        synergies: List[str],
+        archetypes: List[Dict],
+    ) -> tuple[List[str], List[Dict], Optional[Dict]]:
+        """Add exact-identity reviewed evidence without replacing detected evidence."""
+        profile = self.commander_profile_registry.match(commander_card)
+        if not profile:
+            return synergies, archetypes, None
+
+        merged_synergies = list(dict.fromkeys([
+            *synergies,
+            *profile.get("supported_synergies", []),
+        ]))
+        merged_archetypes = copy.deepcopy(archetypes)
+        existing_ids = {
+            archetype.get("id") for archetype in merged_archetypes
+        }
+        for archetype_id in profile.get("archetype_ids", []):
+            if archetype_id in existing_ids:
+                for archetype in merged_archetypes:
+                    if archetype.get("id") == archetype_id:
+                        archetype["evidence_sources"] = list(dict.fromkeys([
+                            *archetype.get("evidence_sources", []),
+                            "reviewed_commander_profile",
+                        ]))
+                continue
+            definition = self.archetype_registry.get(archetype_id)
+            if not definition:
+                continue
+            reviewed = {
+                key: copy.deepcopy(value)
+                for key, value in definition.items()
+                if key not in {"example_commanders", "example_support_cards"}
+            }
+            reviewed.update({
+                "confidence": "core",
+                "score": 20,
+                "matched_required": ["reviewed_commander_profile"],
+                "matched_supporting": [],
+                "matched_rejects": [],
+                "evidence_sources": ["reviewed_commander_profile"],
+            })
+            merged_archetypes.append(reviewed)
+            existing_ids.add(archetype_id)
+        return merged_synergies, merged_archetypes, profile
 
     def _archetype_synergies(self, archetypes: List[Dict]) -> List[str]:
         """Map composite archetypes back to stable search/recommendation lanes."""
@@ -9038,7 +9094,24 @@ class EnhancedSuggestionEngine:
         color_identity = extracted['color_identity']
         commander_constraints = self._get_commander_constraints(commander_card)
         commander_archetypes = self._detect_commander_archetypes(commander_card)
+        synergies, commander_archetypes, reviewed_profile = (
+            self._merge_reviewed_commander_profile(
+                commander_card,
+                synergies,
+                commander_archetypes,
+            )
+        )
         coverage = self._commander_coverage_payload(commander_card, synergies, commander_archetypes)
+        if reviewed_profile:
+            coverage = dict(coverage)
+            coverage["coverage_signals"] = [
+                *coverage.get("coverage_signals", []),
+                {
+                    "type": "reviewed_profile",
+                    "label": "Reviewed commander profile",
+                    "strength": reviewed_profile.get("confidence", "high"),
+                },
+            ]
         strategy_profile = build_strategy_profile(
             commander_names=[extracted['name']],
             commander_synergies=synergies,
@@ -9176,7 +9249,8 @@ class EnhancedSuggestionEngine:
             'strategy_profile': strategy_profile.as_dict(),
             'recommendation_planner': commander_planner,
             'combos': combos,
-            'analysis_depth': 'deep' if deep else 'fast'
+            'analysis_depth': 'deep' if deep else 'fast',
+            'reviewed_profile': reviewed_profile,
         }
         return self._commander_analysis_cache_set(cache_key, result)
 

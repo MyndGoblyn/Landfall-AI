@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 
 const primaryNavigation = [
   { to: '/dashboard', label: 'Decks' },
+  { to: '/commanders', label: 'Commanders' },
   { to: '/commander-lookup', label: 'Commander Lab' },
-  { to: '/random-commander', label: 'Discover' },
   { to: '/track-list', label: 'Track List' },
 ];
 

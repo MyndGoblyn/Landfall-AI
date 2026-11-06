@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { Plus, Trash2 } from 'lucide-react';
@@ -24,14 +24,24 @@ export default function Dashboard() {
   const [showAnalyzeModal, setShowAnalyzeModal] = useState(false);
   const [selectedDeck, setSelectedDeck] = useState(null);
   const [newDeckName, setNewDeckName] = useState('');
+  const [newDeckCommander, setNewDeckCommander] = useState(null);
   const [analysisLoadingMode, setAnalysisLoadingMode] = useState(null);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const analysisStatus = useRotatingStatus(Boolean(analysisLoadingMode), ANALYSIS_STATUS_MESSAGES);
 
   useEffect(() => {
     fetchDecks();
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get('newDeck') !== '1') return;
+    const commander = searchParams.get('commander')?.trim() || null;
+    setNewDeckCommander(commander);
+    setNewDeckName(commander ? `${commander} deck` : '');
+    setShowCreateModal(true);
+  }, [searchParams]);
 
   const fetchDecks = async () => {
     try {
@@ -53,13 +63,14 @@ export default function Dashboard() {
     try {
       const response = await axios.post(
         `${API}/decks`,
-        { name: newDeckName, commander: null },
+        { name: newDeckName, commander: newDeckCommander },
         { headers: getAuthHeaders() }
       );
       toast.success('Deck created!');
       setDecks([response.data, ...decks]);
       setShowCreateModal(false);
       setNewDeckName('');
+      setNewDeckCommander(null);
       navigate(`/deck/${response.data.id}/import`);
     } catch (error) {
       toast.error('Failed to create deck');
@@ -143,6 +154,11 @@ export default function Dashboard() {
         </div>
 
         <section className="workspace-tool-strip mb-12" aria-label="Commander tools">
+          <button type="button" className="workspace-tool workspace-tool-amber" onClick={() => navigate('/commanders')}>
+            <span>Commander Atlas</span>
+            <strong>Browse the command zone</strong>
+            <small>Filter legal commanders by identity, archetype, playstyle, and reviewed plan evidence.</small>
+          </button>
           <button type="button" className="workspace-tool workspace-tool-blue" onClick={() => navigate('/commander-lookup')}>
             <span>Commander Lab</span>
             <strong>Study a game plan</strong>
@@ -284,6 +300,10 @@ export default function Dashboard() {
                   onClick={() => {
                     setShowCreateModal(false);
                     setNewDeckName('');
+                    setNewDeckCommander(null);
+                    if (searchParams.get('newDeck') === '1') {
+                      setSearchParams(new URLSearchParams(), { replace: true });
+                    }
                   }}
                   className="btn-secondary flex-1"
                 >

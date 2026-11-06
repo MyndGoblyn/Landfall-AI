@@ -8,11 +8,12 @@ from pathlib import Path
 from typing import Dict, Mapping
 
 
-SEMANTIC_BUNDLE_SCHEMA_VERSION = 1
+SEMANTIC_BUNDLE_SCHEMA_VERSION = 2
 RESOURCE_FILES = {
     "mechanics_registry": "mechanics_registry.json",
     "archetype_registry": "archetype_signal_registry.json",
     "competitive_registry": "competitive_card_labels.json",
+    "commander_profile_registry": "commander_profiles.json",
 }
 
 
@@ -41,7 +42,11 @@ def validate_semantic_bundle(payload: Mapping) -> Dict:
     normalized_resources = {}
     for name in RESOURCE_FILES:
         resource = resources.get(name)
-        if name in {"mechanics_registry", "archetype_registry"}:
+        if name in {
+            "mechanics_registry",
+            "archetype_registry",
+            "commander_profile_registry",
+        }:
             if not isinstance(resource, list):
                 raise ValueError(f"Semantic resource {name} must be an array")
         elif not isinstance(resource, Mapping):

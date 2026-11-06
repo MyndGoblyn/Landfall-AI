@@ -17,6 +17,8 @@ const checks = [
       'path="/commander-lookup"',
       'path="/random-commander"',
       'path="/track-list"',
+      'path="/commanders"',
+      'path="/commanders/:oracleId"',
       'path="/deck/:deckId/import"',
       'path="/analysis/:analysisId"',
       'path="/how-it-works"',
@@ -27,10 +29,35 @@ const checks = [
     file: 'src/components/AppTopbar.js',
     tokens: [
       "to: '/dashboard'",
+      "to: '/commanders'",
       "to: '/commander-lookup'",
-      "to: '/random-commander'",
       "to: '/track-list'",
       "'topbar-dashboard-tab'",
+    ],
+  },
+  {
+    name: 'Commander Atlas browse and profile surfaces remain connected',
+    file: 'src/pages/CommanderAtlas.js',
+    tokens: [
+      '/commander-atlas',
+      'data-testid="atlas-search-input"',
+      'Results rank for your filters',
+      '/commanders/${commander.oracle_id}',
+      'useSearchParams',
+      'atlasSearchParams',
+    ],
+  },
+  {
+    name: 'Commander profiles retain reviewed evidence and current recommendations',
+    file: 'src/pages/CommanderProfile.js',
+    tokens: [
+      '/profile',
+      'Reviewed plan evidence',
+      'RecommendedCardsPager',
+      'TrackCommanderButton',
+      'Fit before popularity',
+      'Discover similar',
+      'Start a deck',
     ],
   },
   {
@@ -51,6 +78,7 @@ const checks = [
       'data-testid={`analyze-deck-${deck.id}`}',
       'analysis-progress-banner',
       'intent_profile: intentProfile',
+      'newDeckCommander',
     ],
   },
   {
@@ -91,6 +119,7 @@ const checks = [
       "id: 'C'",
       'data-testid="strategy-search-input"',
       'data-testid="randomize-btn"',
+      'initialDiscoverFilters',
     ],
   },
   {

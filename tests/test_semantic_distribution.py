@@ -55,6 +55,26 @@ def _write_resources(path: Path, suffix: str = "") -> None:
         }),
         encoding="utf-8",
     )
+    (path / "commander_profiles.json").write_text(
+        json.dumps([{
+            "oracle_id": "test-oracle",
+            "name": "Test Commander",
+            "review_status": "reviewed",
+            "reviewed_at": "2026-11-06",
+            "confidence": "high",
+            "game_plan": "Test a deterministic commander plan.",
+            "archetype_ids": [],
+            "supported_synergies": [],
+            "playstyles": ["value"],
+            "win_paths": ["Test path"],
+            "support_needs": ["Test support"],
+            "common_failure_modes": ["Test failure"],
+            "anti_synergies": ["Test anti-synergy"],
+            "evidence_sources": ["test"],
+            "packages": [],
+        }]),
+        encoding="utf-8",
+    )
 
 
 def _remote(package: dict):
@@ -96,6 +116,7 @@ def test_semantic_bundle_is_verified_distributed_and_atomically_loaded(tmp_path)
     assert status["mechanics"] == 1
     assert status["archetypes"] == 1
     assert status["competitive_cards"] == 1
+    assert status["commander_profiles"] == 1
 
 
 def _materialize_release(package: dict, output: Path) -> Path:
