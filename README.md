@@ -27,4 +27,5 @@ python -m pip install -r backend\requirements-dev.txt
 - [Candidate catalog](docs/CANDIDATE_CATALOG.md)
 - [Pipeline optimization record](docs/PIPELINE_OPTIMIZATION.md)
 - [Recommendation Planner V3](docs/RECOMMENDATION_PLANNER_V3.md)
+- [Product development pipeline](docs/PRODUCT_DEVELOPMENT_PIPELINE.md)
 - [V3 real-deck validation](docs/REAL_DECK_VALIDATION_REPORT_2026-11-05_V3.md)
