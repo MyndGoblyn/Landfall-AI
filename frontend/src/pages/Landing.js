@@ -4,7 +4,6 @@ import { ManaPipRow } from '../components/ManaSymbols';
 
 const entryPoints = [
   {
-    number: '01',
     tone: 'gold',
     eyebrow: 'I have a list',
     title: 'Analyze a deck',
@@ -12,7 +11,6 @@ const entryPoints = [
     action: 'Start with a deck',
   },
   {
-    number: '02',
     tone: 'blue',
     eyebrow: 'I have a commander',
     title: 'Study the game plan',
@@ -20,7 +18,6 @@ const entryPoints = [
     action: 'Open Commander Lab',
   },
   {
-    number: '03',
     tone: 'green',
     eyebrow: 'I need an idea',
     title: 'Discover a build',
@@ -28,6 +25,8 @@ const entryPoints = [
     action: 'Discover commanders',
   },
 ];
+
+const MEREN_ART_URL = 'https://cards.scryfall.io/art_crop/front/5/0/508b1442-bf2c-4ad6-9bcf-bd894e081ab6.jpg?1783907026';
 
 const workflow = [
   ['Import', 'Bring in a public list or paste one directly.'],
@@ -109,14 +108,19 @@ export default function Landing() {
                 <div><strong>$3</strong><span>card cap</span></div>
               </div>
               <div className="preview-board">
-                <div className="preview-card-stack" aria-hidden="true">
-                  <div className="preview-card preview-card-back"></div>
-                  <div className="preview-card preview-card-front">
-                    <span>ENGINE</span>
-                    <strong>Graveyard<br />value</strong>
-                    <small>12 supported signals</small>
-                  </div>
-                </div>
+                <figure className="preview-commander-card">
+                  <img
+                    src={MEREN_ART_URL}
+                    alt="Meren of Clan Nel Toth"
+                    loading="eager"
+                    referrerPolicy="no-referrer"
+                  />
+                  <figcaption>
+                    <span>Commander</span>
+                    <strong>Meren of Clan Nel Toth</strong>
+                    <small>Graveyard value engine</small>
+                  </figcaption>
+                </figure>
                 <div className="preview-recommendation">
                   <span className="preview-status">Best next change</span>
                   <h3>More repeatable sacrifice</h3>
@@ -146,12 +150,11 @@ export default function Landing() {
             <div className="landing-entry-grid">
               {entryPoints.map((entry) => (
                 <button
-                  key={entry.number}
+                  key={entry.title}
                   type="button"
                   className={`landing-entry-card entry-${entry.tone}`}
                   onClick={begin}
                 >
-                  <span className="landing-entry-number">{entry.number}</span>
                   <span className="landing-entry-eyebrow">{entry.eyebrow}</span>
                   <strong>{entry.title}</strong>
                   <span className="landing-entry-description">{entry.description}</span>
@@ -195,17 +198,14 @@ export default function Landing() {
               </p>
             </article>
             <article className="evidence-detail-card">
-              <span>01</span>
               <h3>Fit before popularity</h3>
               <p>Cards rank for the job and plan they support in this deck.</p>
             </article>
             <article className="evidence-detail-card">
-              <span>02</span>
               <h3>Constraints stay visible</h3>
               <p>Budget, pet cards, jank, politics, and protected packages shape the answer.</p>
             </article>
             <article className="evidence-detail-card">
-              <span>03</span>
               <h3>Uncertainty is honest</h3>
               <p>Limited lists and weak evidence lower confidence instead of inviting false precision.</p>
             </article>
