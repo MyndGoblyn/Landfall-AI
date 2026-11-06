@@ -9153,6 +9153,7 @@ class EnhancedSuggestionEngine:
         combos = self._generate_combo_suggestions(extracted['name'], synergies, [])
         
         result = {
+            'oracle_id': commander_card.get('oracle_id'),
             'name': extracted['name'],
             'type_line': extracted['type_line'],
             'oracle_text': extracted['oracle_text'],

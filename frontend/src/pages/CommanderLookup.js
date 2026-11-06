@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -8,6 +8,7 @@ import { ManaPipRow } from '../components/ManaSymbols';
 import { useAuth } from '../context/AuthContext';
 import { API } from '../lib/api';
 import { appendMoreRecommendedCards } from '../lib/recommendations';
+import TrackCommanderButton from '../components/TrackCommanderButton';
 
 export default function CommanderLookup() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,6 +42,14 @@ export default function CommanderLookup() {
       setDeepLoading(false);
     }
   };
+
+  useEffect(() => {
+    const commanderName = new URLSearchParams(window.location.search).get('commander')?.trim();
+    if (!commanderName) return;
+    setSearchQuery(commanderName);
+    lookupCommander(commanderName, false);
+    // A URL-driven lookup should run once when this page opens from Track List.
+  }, []);
 
   const fetchCommanderOptions = async (query) => {
     setOptionLoading(true);
@@ -234,7 +243,10 @@ export default function CommanderLookup() {
                 )}
                 <div className="flex-1">
                   <p className="page-eyebrow mb-2">Commander</p>
-                  <h3 className="text-3xl font-bold mb-3 text-amber-300">{commanderData.name}</h3>
+                  <div className="commander-result-heading mb-3">
+                    <h3 className="text-3xl font-bold text-amber-300">{commanderData.name}</h3>
+                    <TrackCommanderButton commander={commanderData} source="commander_lab" />
+                  </div>
                   <p className="text-gray-100 mb-4">{commanderData.type_line}</p>
                   <div className="tip-panel p-4 mb-4">
                     <p className="text-sm text-gray-100 whitespace-pre-line">{commanderData.oracle_text}</p>

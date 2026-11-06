@@ -100,6 +100,7 @@ RESET_ACCOUNT_COLLECTIONS = [
     "users",
     "decks",
     "analysis_runs",
+    "tracked_commanders",
     "auth_tokens",
     "rate_limits",
 ]
@@ -119,6 +120,13 @@ async def prepare_database():
     if hasattr(db.users, 'create_index'):
         try:
             await db.users.create_index('email', unique=True)
+            await db.tracked_commanders.create_index(
+                [('user_id', 1), ('commander_oracle_id', 1)],
+                unique=True,
+            )
+            await db.tracked_commanders.create_index(
+                [('user_id', 1), ('updated_at', -1)]
+            )
             await db.auth_tokens.create_index('token_hash', unique=True)
             await db.auth_tokens.create_index('expires_at')
             await db.rate_limits.create_index('key', unique=True)
@@ -380,6 +388,56 @@ class DeckCreate(BaseModel):
 class DeckImport(BaseModel):
     source_type: str  # "url" or "text"
     source_data: str  # URL or decklist text
+
+
+def _clean_tracked_note(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    cleaned = " ".join(value.split())
+    return cleaned or None
+
+
+class TrackCommanderCreate(BaseModel):
+    commander_name: str = Field(min_length=1, max_length=200)
+    source: str = Field(
+        default="commander_lab",
+        pattern="^(commander_lab|discover)$",
+    )
+    note: Optional[str] = Field(default=None, max_length=400)
+
+    @field_validator("commander_name")
+    @classmethod
+    def clean_commander_name(cls, value: str) -> str:
+        return " ".join(value.split())
+
+    @field_validator("note")
+    @classmethod
+    def clean_note(cls, value: Optional[str]) -> Optional[str]:
+        return _clean_tracked_note(value)
+
+
+class TrackCommanderNoteUpdate(BaseModel):
+    note: Optional[str] = Field(default=None, max_length=400)
+
+    @field_validator("note")
+    @classmethod
+    def clean_note(cls, value: Optional[str]) -> Optional[str]:
+        return _clean_tracked_note(value)
+
+
+class TrackedCommander(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    commander_oracle_id: str
+    name: str
+    image_url: Optional[str] = None
+    color_identity: List[str] = Field(default_factory=list)
+    type_line: Optional[str] = None
+    source: str = Field(pattern="^(commander_lab|discover)$")
+    note: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Suggestion(BaseModel):
     card_name: str
@@ -1178,6 +1236,149 @@ async def delete_deck(deck_id: str, current_user: Dict = Depends(get_current_use
         raise HTTPException(status_code=404, detail="Deck not found")
     return {"message": "Deck deleted"}
 
+
+# ==================== TRACKED COMMANDER ROUTES ====================
+
+def _tracked_commander_from_document(document: Dict[str, Any]) -> TrackedCommander:
+    payload = dict(document)
+    payload.pop("_id", None)
+    for field_name in ("created_at", "updated_at"):
+        if payload.get(field_name) is not None:
+            payload[field_name] = parse_stored_datetime(payload[field_name])
+    return TrackedCommander.model_validate(payload)
+
+
+@api_router.get("/tracked-commanders", response_model=List[TrackedCommander])
+async def get_tracked_commanders(
+    current_user: Dict = Depends(get_current_user),
+):
+    documents = await db.tracked_commanders.find(
+        {"user_id": current_user["id"]},
+        {"_id": 0},
+    ).sort("updated_at", -1).to_list(500)
+    return [_tracked_commander_from_document(document) for document in documents]
+
+
+@api_router.get(
+    "/tracked-commanders/{commander_oracle_id}",
+    response_model=TrackedCommander,
+)
+async def get_tracked_commander(
+    commander_oracle_id: str,
+    current_user: Dict = Depends(get_current_user),
+):
+    document = await db.tracked_commanders.find_one(
+        {
+            "user_id": current_user["id"],
+            "commander_oracle_id": commander_oracle_id,
+        },
+        {"_id": 0},
+    )
+    if not document:
+        raise HTTPException(status_code=404, detail="Commander is not tracked")
+    return _tracked_commander_from_document(document)
+
+
+@api_router.post("/tracked-commanders", response_model=TrackedCommander)
+async def track_commander(
+    request_data: TrackCommanderCreate,
+    current_user: Dict = Depends(get_current_user),
+):
+    commander_card = await scryfall_service.search_card(request_data.commander_name)
+    if not commander_card:
+        raise HTTPException(status_code=404, detail="Commander not found")
+    if not suggestion_engine._is_commander_eligible(commander_card):
+        raise HTTPException(status_code=400, detail="Card is not a legal commander")
+
+    commander_oracle_id = commander_card.get("oracle_id")
+    if not commander_oracle_id:
+        raise HTTPException(
+            status_code=502,
+            detail="Commander identity is unavailable; try again later",
+        )
+
+    now = datetime.now(timezone.utc)
+    query = {
+        "user_id": current_user["id"],
+        "commander_oracle_id": commander_oracle_id,
+    }
+    existing = await db.tracked_commanders.find_one(query, {"_id": 0})
+    images = suggestion_engine._get_card_images(commander_card)
+    presentation = {
+        "name": commander_card.get("name") or request_data.commander_name,
+        "image_url": images["front"],
+        "color_identity": commander_card.get("color_identity") or [],
+        "type_line": commander_card.get("type_line"),
+        "updated_at": now.isoformat(),
+    }
+
+    if existing:
+        if request_data.note is not None:
+            presentation["note"] = request_data.note
+        await db.tracked_commanders.update_one(query, {"$set": presentation})
+    else:
+        tracked = TrackedCommander(
+            user_id=current_user["id"],
+            commander_oracle_id=commander_oracle_id,
+            name=presentation["name"],
+            image_url=presentation["image_url"],
+            color_identity=presentation["color_identity"],
+            type_line=presentation["type_line"],
+            source=request_data.source,
+            note=request_data.note,
+            created_at=now,
+            updated_at=now,
+        )
+        document = tracked.model_dump()
+        document["created_at"] = tracked.created_at.isoformat()
+        document["updated_at"] = tracked.updated_at.isoformat()
+        await db.tracked_commanders.insert_one(document)
+
+    stored = await db.tracked_commanders.find_one(query, {"_id": 0})
+    return _tracked_commander_from_document(stored)
+
+
+@api_router.patch(
+    "/tracked-commanders/{commander_oracle_id}",
+    response_model=TrackedCommander,
+)
+async def update_tracked_commander_note(
+    commander_oracle_id: str,
+    request_data: TrackCommanderNoteUpdate,
+    current_user: Dict = Depends(get_current_user),
+):
+    query = {
+        "user_id": current_user["id"],
+        "commander_oracle_id": commander_oracle_id,
+    }
+    existing = await db.tracked_commanders.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Commander is not tracked")
+
+    await db.tracked_commanders.update_one(
+        query,
+        {"$set": {
+            "note": request_data.note,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+    stored = await db.tracked_commanders.find_one(query, {"_id": 0})
+    return _tracked_commander_from_document(stored)
+
+
+@api_router.delete("/tracked-commanders/{commander_oracle_id}")
+async def untrack_commander(
+    commander_oracle_id: str,
+    current_user: Dict = Depends(get_current_user),
+):
+    result = await db.tracked_commanders.delete_one({
+        "user_id": current_user["id"],
+        "commander_oracle_id": commander_oracle_id,
+    })
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Commander is not tracked")
+    return {"message": "Commander removed from Track List"}
+
 # ==================== ANALYSIS ROUTES ====================
 
 class AnalysisRequest(BaseModel):
@@ -1396,6 +1597,7 @@ class RandomCommanderRequest(BaseModel):
 def _commander_candidate_payload(card: Dict) -> Dict:
     images = suggestion_engine._get_card_images(card)
     return {
+        "oracle_id": card.get("oracle_id"),
         "name": card.get("name"),
         "type_line": card.get("type_line"),
         "oracle_text": card.get("oracle_text", ""),

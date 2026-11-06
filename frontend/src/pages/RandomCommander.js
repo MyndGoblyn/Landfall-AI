@@ -8,6 +8,7 @@ import { ManaPipRow } from '../components/ManaSymbols';
 import { useAuth } from '../context/AuthContext';
 import { API } from '../lib/api';
 import { appendMoreRecommendedCards } from '../lib/recommendations';
+import TrackCommanderButton from '../components/TrackCommanderButton';
 
 const COLOR_OPTIONS = [
   { id: 'C', label: 'Colorless', color: '#898577' },
@@ -200,7 +201,10 @@ export default function RandomCommander() {
                 )}
                 <div className="flex-1">
                   <p className="page-eyebrow mb-2">Commander</p>
-                  <h3 className="text-3xl font-bold mb-3 text-amber-300">{commanderData.name}</h3>
+                  <div className="commander-result-heading mb-3">
+                    <h3 className="text-3xl font-bold text-amber-300">{commanderData.name}</h3>
+                    <TrackCommanderButton commander={commanderData} source="discover" />
+                  </div>
                   <p className="text-gray-100 mb-4">{commanderData.type_line}</p>
                   <div className="tip-panel p-4 mb-4">
                     <p className="text-sm text-gray-100 whitespace-pre-line">{commanderData.oracle_text}</p>

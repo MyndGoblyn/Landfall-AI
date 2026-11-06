@@ -16,6 +16,7 @@ const checks = [
       'path="/dashboard"',
       'path="/commander-lookup"',
       'path="/random-commander"',
+      'path="/track-list"',
       'path="/deck/:deckId/import"',
       'path="/analysis/:analysisId"',
       'path="/how-it-works"',
@@ -28,8 +29,18 @@ const checks = [
       "to: '/dashboard'",
       "to: '/commander-lookup'",
       "to: '/random-commander'",
-      "to: '/how-it-works'",
+      "to: '/track-list'",
       "'topbar-dashboard-tab'",
+    ],
+  },
+  {
+    name: 'Track List controls and page remain connected',
+    file: 'src/pages/TrackList.js',
+    tokens: [
+      'data-testid',
+      '/tracked-commanders',
+      'Open current analysis',
+      'commander-lookup?commander=',
     ],
   },
   {

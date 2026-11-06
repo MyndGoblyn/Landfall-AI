@@ -3454,6 +3454,338 @@ body {
   gap: 10px;
 }
 
+/* Tracked commander continuity */
+.commander-result-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.track-commander-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--lf-border-strong);
+  border-radius: 5px;
+  background: rgba(215, 177, 91, 0.05);
+  color: #e7e0d4;
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.track-commander-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.track-commander-button:hover:not(:disabled),
+.track-commander-button.is-tracked {
+  border-color: rgba(74, 222, 128, 0.48);
+  background: rgba(22, 163, 74, 0.1);
+  color: #86efac;
+}
+
+.track-commander-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.track-list-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 36px;
+  align-items: end;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--lf-border);
+}
+
+.track-list-hero .page-copy {
+  max-width: 760px;
+}
+
+.track-list-count {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 10px;
+  align-items: center;
+  min-width: 150px;
+  padding: 16px 18px;
+  border: 1px solid var(--lf-border);
+  border-top: 2px solid rgba(74, 222, 128, 0.52);
+  background: var(--lf-surface);
+}
+
+.track-list-count svg {
+  grid-row: 1 / 3;
+  width: 24px;
+  height: 24px;
+  color: #86efac;
+}
+
+.track-list-count strong {
+  color: #fff8e8;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.track-list-count span {
+  color: var(--lf-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.track-list-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 300px;
+  color: var(--lf-muted);
+}
+
+.track-list-empty {
+  display: grid;
+  justify-items: center;
+  max-width: 760px;
+  margin: 60px auto 0;
+  padding: 60px 36px;
+  text-align: center;
+}
+
+.track-list-empty > svg {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 22px;
+  color: var(--lf-gold);
+}
+
+.track-list-empty h3 {
+  margin-bottom: 10px;
+  color: #fff8e8;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.45rem, 3vw, 2.1rem);
+}
+
+.track-list-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.track-list-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.tracked-commander-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  border: 1px solid var(--lf-border);
+  border-top: 3px solid rgba(74, 222, 128, 0.44);
+  background: rgba(16, 19, 19, 0.97);
+}
+
+.tracked-commander-card:hover {
+  border-color: var(--lf-border-strong);
+}
+
+.tracked-commander-art {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.55 / 1;
+  overflow: hidden;
+  border-bottom: 1px solid var(--lf-border);
+  background: #0b0e0d;
+}
+
+.tracked-commander-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 44%, rgba(5, 7, 7, 0.72));
+}
+
+.tracked-commander-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  transform: scale(1.03);
+  transition: transform 220ms ease;
+}
+
+.tracked-commander-art:hover img {
+  transform: scale(1.07);
+}
+
+.tracked-commander-art > span {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--lf-muted);
+}
+
+.tracked-commander-art > span svg {
+  width: 36px;
+  height: 36px;
+}
+
+.tracked-commander-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+
+.tracked-commander-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tracked-commander-heading .page-eyebrow {
+  margin-bottom: 5px;
+  font-size: 0.62rem;
+}
+
+.tracked-commander-heading h3 {
+  color: #fff8e8;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.tracked-commander-type {
+  min-height: 40px;
+  color: var(--lf-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.tracked-note-field {
+  display: grid;
+  gap: 7px;
+  margin-top: auto;
+}
+
+.tracked-note-field > span {
+  color: #d8d0c2;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tracked-note-field textarea {
+  min-height: 72px;
+  padding: 10px 11px;
+  resize: vertical;
+  border: 1px solid rgba(232, 222, 199, 0.16);
+  border-radius: 5px;
+  outline: none;
+  background: rgba(0, 0, 0, 0.22);
+  color: #f4efe3;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.tracked-note-field textarea:focus {
+  border-color: var(--lf-gold);
+}
+
+.tracked-commander-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(90px, 0.7fr) auto;
+  gap: 8px;
+}
+
+.tracked-commander-actions .btn-primary,
+.tracked-commander-actions .btn-secondary {
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+}
+
+.tracked-commander-actions .btn-secondary:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+.tracked-remove-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 5px;
+  color: #fca5a5;
+}
+
+.tracked-remove-button:hover {
+  border-color: rgba(248, 113, 113, 0.48);
+  background: rgba(127, 29, 29, 0.16);
+}
+
+.tracked-remove-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (max-width: 1050px) {
+  .track-list-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .commander-result-heading,
+  .track-list-hero {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .track-commander-button {
+    align-self: flex-start;
+  }
+
+  .track-list-count {
+    width: fit-content;
+  }
+
+  .track-list-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .track-list-empty {
+    padding: 44px 22px;
+  }
+
+  .tracked-commander-actions {
+    grid-template-columns: 1fr auto;
+  }
+
+  .tracked-commander-actions .btn-primary {
+    grid-column: 1 / -1;
+  }
+}
+
 .discovery-workbench .tool-workbench-panel > .mb-6 {
   margin-bottom: 22px;
 }
