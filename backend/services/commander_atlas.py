@@ -48,7 +48,13 @@ class CommanderAtlas:
         return status
 
     def get_status(self) -> Dict:
-        return self._catalog_status()
+        catalog = self._catalog_status()
+        return {
+            "index_state": "ready" if self._entries else "lazy",
+            "commander_count": len(self._entries) if self._entries else None,
+            "catalog_version": catalog.get("catalog_version"),
+            "source_updated_at": catalog.get("source_updated_at"),
+        }
 
     @staticmethod
     def _browse_synergies(card: Dict) -> List[str]:

@@ -178,5 +178,11 @@ def test_atlas_filters_and_ranks_without_popularity_order():
             if row["name"] == "Talrand, Sky Summoner"
         )
         assert talrand["playstyles"] == ["control", "value"]
+        assert atlas.get_status() == {
+            "index_state": "ready",
+            "commander_count": 4,
+            "catalog_version": "test-catalog",
+            "source_updated_at": "2026-11-06T00:00:00Z",
+        }
 
     asyncio.run(run())

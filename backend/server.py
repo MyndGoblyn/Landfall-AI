@@ -1826,6 +1826,7 @@ async def root():
             **suggestion_engine.get_semantic_bundle_status(),
             "distribution_state": semantic_status.get("state", "disabled"),
         },
+        "commander_atlas": commander_atlas.get_status(),
         "recommendation_planner": {
             "mode": planner_status["mode"],
             "query_planner_version": planner_status["query_planner_version"],
