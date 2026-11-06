@@ -165,6 +165,15 @@ mechanics/archetype detector with honest exploratory coverage.
 the score assumes a reviewed seed registry rather than auto-generated profiles
 being promoted as ground truth.
 
+**Implementation status — November 6, 2026:** deployed. Commander Atlas now
+uses the verified local catalog with shareable deterministic filters, reviewed
+and exploratory profile states, current Commander Lab analysis, Track List,
+Discover-similar, and commander-seeded deck creation. The semantic bundle
+contains 13 exact-identity reviewed profiles; every other legal commander keeps
+the explicit exploratory path. Release validation passed 235 backend tests,
+the frozen profile evidence benchmark, frontend source smoke and production
+builds, responsive workflow QA, and the Cloudflare deployment dry run.
+
 ## Phase 3 - Guided Build intent contract
 
 **Goal:** collect the missing facts that deterministic deck construction needs

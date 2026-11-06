@@ -38,3 +38,18 @@ reviewed top-five portfolios. Those changes were inspected and remained legal
 and plan-aligned, yet the snapshot is deliberately staged until its drift report
 is promoted as a separate quality decision. Catalog transport and catalog
 content therefore remain independently reversible.
+
+## Subsequent promotion — November 6, 2026
+
+The separate V3 reviewed real-deck run promoted the November 5 snapshot after
+all 18 fixtures passed, including the four negative controls, and the changed
+portfolios were accepted as legal and plan-aligned. The Phase 2 Commander Atlas
+release then passed 235 backend tests, the frozen commander-profile benchmark,
+frontend source smoke, production build, local desktop/mobile workflow QA, and
+the Cloudflare deployment dry run.
+
+The promoted immutable R2 release is
+`440459be36e614aa597f507b0d15918a53224ba2a61ea0232a4db1caeccdc6cf`.
+Its public manifest reports 39,287 cards and catalog version
+`oracle_cards:2026-11-05T10:02:05.865+00:00`. The earlier July release and its
+versioned manifest remain available for rollback.
