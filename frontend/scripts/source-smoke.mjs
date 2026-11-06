@@ -22,11 +22,20 @@ const checks = [
     ],
   },
   {
+    name: 'Primary tools remain visible in persistent navigation',
+    file: 'src/components/AppTopbar.js',
+    tokens: [
+      "to: '/dashboard'",
+      "to: '/commander-lookup'",
+      "to: '/random-commander'",
+      "to: '/how-it-works'",
+      "'topbar-dashboard-tab'",
+    ],
+  },
+  {
     name: 'Dashboard primary controls are testable',
     file: 'src/pages/Dashboard.js',
     tokens: [
-      'data-testid="commander-lookup-btn"',
-      'data-testid="random-commander-btn"',
       'data-testid="create-deck-btn"',
       'data-testid={`analyze-deck-${deck.id}`}',
       'analysis-progress-banner',
@@ -43,6 +52,7 @@ const checks = [
       'data-testid="max-card-price-input"',
       'data-testid="protected-cards-input"',
       'data-testid="excluded-cards-input"',
+      'Advanced deck preferences',
       'Protected packages',
       'intentional_constraints',
       'strategy_priorities',

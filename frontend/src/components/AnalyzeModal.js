@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Sparkles, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, X } from 'lucide-react';
 
 const ANALYSIS_CATEGORIES = [
   { id: 'ramp', label: 'Ramp', description: 'Mana acceleration' },
@@ -320,7 +320,16 @@ export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
             />
           </label>
 
-          <div className="mt-4">
+          <details className="intent-advanced mt-5">
+            <summary>
+              <span>
+                <strong>Advanced deck preferences</strong>
+                <small>Protect packages, shape strategy priorities, and enforce special constraints.</small>
+              </span>
+              <span className="intent-advanced-status">Optional</span>
+            </summary>
+            <div className="intent-advanced-body">
+          <div>
             <span className="block text-sm font-medium mb-2">Enforced strategy priorities</span>
             <div className="intent-constraint-grid">
               {STRATEGY_PRIORITIES.map(([id, label]) => (
@@ -487,6 +496,8 @@ export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
               ))}
             </div>
           </div>
+            </div>
+          </details>
           {intentError && <p className="intent-error mt-3">{intentError}</p>}
         </div>
 
@@ -517,12 +528,11 @@ export default function AnalyzeModal({ deck, onClose, onAnalyze, isOpen }) {
             onClick={() => handleAnalyze(true)}
             className="btn-secondary flex-1"
           >
-            <Sparkles className="w-4 h-4 inline mr-2" />
-            Deep Analysis
+            Expanded Analysis
           </button>
         </div>
         <p className="page-copy text-xs mt-4 text-center">
-          Deep Analysis runs broader deterministic checks and can take longer than a fast pass.
+          Expanded Analysis runs broader deterministic checks and can take longer than a standard pass.
         </p>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Info, Sparkles } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 function useActiveSection(sections) {
   const [activeId, setActiveId] = useState(sections[0]?.id || '');
@@ -58,8 +58,8 @@ export function StrategyPager({ commanderData }) {
       <SectionTabs sections={sections} activeId={activeId} onChange={setActiveId} />
       <div className="space-y-3">
         {activeSection.tips.map((tip, idx) => (
-          <div key={`${activeSection.id}-${idx}`} className="flex gap-3">
-            <Sparkles className="w-5 h-5 text-amber-300 flex-shrink-0 mt-1" />
+          <div key={`${activeSection.id}-${idx}`} className="strategy-note">
+            <span className="strategy-note-index">{String(idx + 1).padStart(2, '0')}</span>
             <p className="text-gray-100">{tip}</p>
           </div>
         ))}

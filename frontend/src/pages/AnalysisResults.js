@@ -3,18 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
-  BarChart3,
   AlertTriangle,
   Download,
   ExternalLink,
-  MinusCircle,
-  PlusCircle,
   Shield,
-  Sparkles,
-  Swords,
-  TrendingDown,
-  TrendingUp,
-  Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -25,16 +17,16 @@ import { API } from '../lib/api';
 import useRotatingStatus from '../hooks/useRotatingStatus';
 
 const roleMeta = {
-  counters: { label: 'Counters', className: 'role-counters', Icon: Sparkles },
-  draw: { label: 'Card Draw', className: 'role-draw', Icon: BarChart3 },
-  ramp: { label: 'Ramp', className: 'role-ramp', Icon: Zap },
-  removal: { label: 'Removal', className: 'role-removal', Icon: Swords },
-  sweeper: { label: 'Sweeper', className: 'role-sweeper', Icon: Swords },
-  protection: { label: 'Protection', className: 'role-protection', Icon: Shield },
-  interaction: { label: 'Interaction', className: 'role-interaction', Icon: Shield },
-  synergy_optimization: { label: 'Theme Fit', className: 'role-theme', Icon: Sparkles },
-  curve_optimization: { label: 'Curve', className: 'role-curve', Icon: TrendingDown },
-  mana_base_optimization: { label: 'Mana Base', className: 'role-ramp', Icon: Zap }
+  counters: { label: 'Counters', className: 'role-counters' },
+  draw: { label: 'Card Draw', className: 'role-draw' },
+  ramp: { label: 'Ramp', className: 'role-ramp' },
+  removal: { label: 'Removal', className: 'role-removal' },
+  sweeper: { label: 'Sweeper', className: 'role-sweeper' },
+  protection: { label: 'Protection', className: 'role-protection' },
+  interaction: { label: 'Interaction', className: 'role-interaction' },
+  synergy_optimization: { label: 'Theme Fit', className: 'role-theme' },
+  curve_optimization: { label: 'Curve', className: 'role-curve' },
+  mana_base_optimization: { label: 'Mana Base', className: 'role-ramp' }
 };
 
 const roleTargets = {
@@ -53,7 +45,7 @@ function titleCase(value = '') {
 }
 
 function getRoleMeta(role = '') {
-  return roleMeta[role] || { label: titleCase(role || 'Role'), className: 'role-theme', Icon: Sparkles };
+  return roleMeta[role] || { label: titleCase(role || 'Role'), className: 'role-theme' };
 }
 
 function ManaPips({ colors = [] }) {
@@ -78,11 +70,9 @@ const cleanCommanderName = (name) => (
 
 function RoleBadge({ role, tone = 'add' }) {
   const meta = getRoleMeta(role);
-  const Icon = meta.Icon;
 
   return (
     <span className={`role-chip ${meta.className} ${tone === 'cut' ? 'role-cut' : ''}`}>
-      <Icon className="w-3.5 h-3.5" />
       {meta.label}
     </span>
   );
@@ -286,10 +276,9 @@ function RecommendationCard({ suggestion, type = 'add', index }) {
           {suggestion.suggested_quantity && (
             <span>{suggestion.suggested_quantity} slots</span>
           )}
-          {suggestion.score && <span>Score {suggestion.score}</span>}
           {suggestion.price && <span>${suggestion.price.toFixed(2)}</span>}
-          {suggestion.confidence && (
-            <span>{Math.round(suggestion.confidence * 100)}% {isAdd ? 'match' : 'confidence'}</span>
+          {suggestion.confidence_band && (
+            <span>{titleCase(suggestion.confidence_band)} evidence</span>
           )}
         </div>
         <div className="recommendation-title-row">
@@ -346,7 +335,6 @@ function SwapCard({ add, cut, index, rationale }) {
     <article className="swap-card">
       <div className="swap-column">
         <div className="swap-label add-label">
-          <PlusCircle className="w-4 h-4" />
           Upgrade in
         </div>
         {add ? (
@@ -364,7 +352,6 @@ function SwapCard({ add, cut, index, rationale }) {
       </div>
       <div className="swap-column">
         <div className="swap-label cut-label">
-          <MinusCircle className="w-4 h-4" />
           Consider cutting
         </div>
         {cut ? (
@@ -422,7 +409,7 @@ const pilotNoteSections = [
   { id: 'sequencing', label: 'Sequencing', prefixes: ['Sequencing -', 'Mulligan Guidance -'] },
   { id: 'risk', label: 'Risk Check', prefixes: ['Failure Point -', 'Table Safety -'] },
   { id: 'upgrade', label: 'Upgrade Direction', prefixes: ['Upgrade Direction -', 'Counter Strategy:', 'Token Strategy:', 'Aristocrats Strategy:', 'Enchantress Strategy:', 'Voltron Strategy:', 'Graveyard Strategy:'] },
-  { id: 'deep', label: 'Deep Analysis', prefixes: ['Deep Analysis -'] },
+  { id: 'deep', label: 'Expanded Analysis', prefixes: ['Deep Analysis -'] },
 ];
 
 const DEEP_STATUS_MESSAGES = [
@@ -595,10 +582,10 @@ export default function AnalysisResults() {
         {},
         { headers: getAuthHeaders() }
       );
-      toast.success('Deep analysis complete!');
+      toast.success('Expanded analysis complete!');
       navigate(`/analysis/${response.data.id}`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Deep analysis failed');
+      toast.error(error.response?.data?.detail || 'Expanded analysis failed');
     } finally {
       setDeepLoading(false);
     }
@@ -638,7 +625,7 @@ export default function AnalysisResults() {
     || commanderCard?.card_faces?.[0]?.image_uris?.normal
     || null;
   const commanderTypeLine = commanderCard?.type_line || commanderCard?.card_faces?.[0]?.type_line || 'Commander';
-  const analysisDepth = analysis?.analysis_depth === 'deep' ? 'Deep Analysis' : 'Fast Analysis';
+  const analysisDepth = analysis?.analysis_depth === 'deep' ? 'Expanded analysis' : 'Standard analysis';
 
   return (
     <div className="analysis-shell min-h-screen">
@@ -654,12 +641,11 @@ export default function AnalysisResults() {
               {deepLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-2"></div>
-                  Deep Analysis...
+                  Expanding analysis...
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 inline mr-2" />
-                  Deep Analysis
+                  Expanded Analysis
                 </>
               )}
             </button>
@@ -733,19 +719,15 @@ export default function AnalysisResults() {
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="analysis-tabs">
             <TabsTrigger data-testid="overview-tab" value="overview">
-              <BarChart3 className="w-4 h-4 mr-2" />
               Deck Tech
             </TabsTrigger>
             <TabsTrigger data-testid="adds-tab" value="adds">
-              <TrendingUp className="w-4 h-4 mr-2" />
               Upgrade Board ({adds.length})
             </TabsTrigger>
             <TabsTrigger data-testid="cuts-tab" value="cuts">
-              <TrendingDown className="w-4 h-4 mr-2" />
               Possible Cuts ({cuts.length})
             </TabsTrigger>
             <TabsTrigger data-testid="swaps-tab" value="swaps">
-              <Sparkles className="w-4 h-4 mr-2" />
               Swap Map
             </TabsTrigger>
           </TabsList>

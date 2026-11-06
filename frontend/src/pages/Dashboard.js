@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { Plus, FileText, Trash2, Play } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AppTopbar from '../components/AppTopbar';
 import AnalyzeModal from '../components/AnalyzeModal';
@@ -94,7 +94,7 @@ export default function Dashboard() {
 
     try {
       setAnalysisLoadingMode(deep ? 'deep' : 'fast');
-      toast.loading(deep ? 'Running deep deterministic analysis...' : 'Analyzing deck with deterministic engine...');
+      toast.loading(deep ? 'Running expanded deterministic analysis...' : 'Analyzing deck with deterministic engine...');
       const response = await axios.post(
         `${API}/decks/${selectedDeck.id}/analyze${deep ? '/deep' : ''}`,
         {
@@ -104,7 +104,7 @@ export default function Dashboard() {
         { headers: getAuthHeaders() }
       );
       toast.dismiss();
-      toast.success(deep ? 'Deep analysis complete!' : 'Analysis complete!');
+      toast.success(deep ? 'Expanded analysis complete!' : 'Analysis complete!');
       navigate(`/analysis/${response.data.id}`);
     } catch (error) {
       toast.dismiss();
@@ -119,52 +119,18 @@ export default function Dashboard() {
       <AppTopbar showLogout />
       {analysisLoadingMode && (
         <div className="analysis-progress-banner" role="status" aria-live="polite">
-          <strong>{analysisLoadingMode === 'deep' ? 'Deep Analysis' : 'Deck Analysis'}</strong>
+          <strong>{analysisLoadingMode === 'deep' ? 'Expanded Analysis' : 'Deck Analysis'}</strong>
           <span>{analysisStatus}</span>
         </div>
       )}
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12 max-w-7xl">
-        {/* Quick Tools */}
-        <div className="grid md:grid-cols-3 gap-4 mb-12">
-          <button
-            onClick={() => navigate('/commander-lookup')}
-            className="card tool-card zone-card transition-all"
-            data-zone="COMMAND"
-            data-testid="commander-lookup-btn"
-          >
-            <div className="zone-rune">C</div>
-            <h3 className="text-xl font-semibold mb-2">Commander Lookup</h3>
-            <p className="text-sm page-copy">Search any commander for strategy tips</p>
-          </button>
-          <button
-            onClick={() => navigate('/random-commander')}
-            className="card tool-card zone-card transition-all"
-            data-zone="DRAFT"
-            data-testid="random-commander-btn"
-          >
-            <div className="zone-rune">?</div>
-            <h3 className="text-xl font-semibold mb-2">Random Commander</h3>
-            <p className="text-sm page-copy">Generate a random commander to build</p>
-          </button>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="card tool-card zone-card transition-all"
-            data-zone="LIBRARY"
-            data-testid="create-deck-shortcut-btn"
-          >
-            <div className="zone-rune">99</div>
-            <h3 className="text-xl font-semibold mb-2 text-amber-300">Deck Analysis</h3>
-            <p className="text-sm page-copy">Build and analyze your decks</p>
-          </button>
-        </div>
-
-        <div className="flex justify-between items-center mb-8 page-hero">
+        <div className="workspace-heading mb-8">
           <div>
-            <p className="page-eyebrow mb-2">Library</p>
-            <h2 data-testid="dashboard-title" className="text-4xl font-bold mb-2 page-title">Your Decks</h2>
-            <p className="page-copy">Import and analyze your Commander decks</p>
+            <p className="page-eyebrow mb-2">Your Commander workspace</p>
+            <h2 data-testid="dashboard-title" className="text-4xl font-bold mb-2 page-title">What are you working on?</h2>
+            <p className="page-copy">Continue a deck, investigate a commander, or start with a fresh direction.</p>
           </div>
           <button
             data-testid="create-deck-btn"
@@ -176,15 +142,38 @@ export default function Dashboard() {
           </button>
         </div>
 
+        <section className="workspace-tool-strip mb-12" aria-label="Commander tools">
+          <button type="button" className="workspace-tool workspace-tool-blue" onClick={() => navigate('/commander-lookup')}>
+            <span>Commander Lab</span>
+            <strong>Study a game plan</strong>
+            <small>Strategy, synergy, pilot notes, and focused card fits.</small>
+          </button>
+          <button type="button" className="workspace-tool workspace-tool-green" onClick={() => navigate('/random-commander')}>
+            <span>Discover</span>
+            <strong>Find a build-around</strong>
+            <small>Filter by color, mana value, and the play pattern you want.</small>
+          </button>
+          <button type="button" className="workspace-tool workspace-tool-violet" onClick={() => navigate('/how-it-works')}>
+            <span>Guide</span>
+            <strong>Understand the evidence</strong>
+            <small>See how the engine ranks fits and communicates uncertainty.</small>
+          </button>
+        </section>
+
+        <div className="deck-library-heading">
+          <p className="page-eyebrow">Deck library</p>
+          <span>{decks.length} {decks.length === 1 ? 'deck' : 'decks'}</span>
+        </div>
+
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
           </div>
         ) : decks.length === 0 ? (
           <div data-testid="empty-state" className="text-center py-20 glass-panel">
-            <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-2xl font-semibold mb-2">No decks yet</h3>
-            <p className="page-copy mb-6">Create your first deck to get started</p>
+            <div className="empty-deck-mark" aria-hidden="true"><span>99</span></div>
+            <h3 className="text-2xl font-semibold mb-2">Start with a decklist</h3>
+            <p className="page-copy mb-6">Create a deck, then import from Archidekt, Moxfield, or pasted text.</p>
             <button onClick={() => setShowCreateModal(true)} className="btn-primary">
               Create Deck
             </button>
@@ -208,6 +197,7 @@ export default function Dashboard() {
                       deleteDeck(deck.id);
                     }}
                     className="text-red-400 hover:text-red-300 transition-colors"
+                    aria-label={`Delete ${deck.name}`}
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -236,27 +226,26 @@ export default function Dashboard() {
                   ) : (
                     <>
                       <button
-                        data-testid={`view-cards-${deck.id}`}
-                        onClick={() => navigate(`/deck/${deck.id}/view`)}
+                        data-testid={`analyze-deck-${deck.id}`}
+                        onClick={() => openAnalyzeModal(deck)}
                         className="btn-primary py-2 text-sm"
                       >
-                        View Cards
+                        Analyze Deck
                       </button>
                       <div className="flex gap-2">
+                        <button
+                          data-testid={`view-cards-${deck.id}`}
+                          onClick={() => navigate(`/deck/${deck.id}/view`)}
+                          className="btn-secondary flex-1 py-2 text-sm"
+                        >
+                          View List
+                        </button>
                         <button
                           data-testid={`reimport-deck-${deck.id}`}
                           onClick={() => navigate(`/deck/${deck.id}/import`)}
                           className="btn-secondary flex-1 py-2 text-sm"
                         >
-                          Re-import
-                        </button>
-                        <button
-                          data-testid={`analyze-deck-${deck.id}`}
-                          onClick={() => openAnalyzeModal(deck)}
-                          className="btn-primary flex-1 py-2 text-sm"
-                        >
-                          <Play className="w-4 h-4 inline mr-1" />
-                          Analyze
+                          Replace Import
                         </button>
                       </div>
                     </>

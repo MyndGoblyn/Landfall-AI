@@ -1,7 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { HelpCircle, LayoutDashboard, LogOut } from 'lucide-react';
 import BrandEmblem from './BrandEmblem';
 import { useAuth } from '../context/AuthContext';
+
+const primaryNavigation = [
+  { to: '/dashboard', label: 'Decks' },
+  { to: '/commander-lookup', label: 'Commander Lab' },
+  { to: '/random-commander', label: 'Discover' },
+  { to: '/how-it-works', label: 'Guide' },
+];
 
 export default function AppTopbar({ actions = null, meta = null, showLogout = false }) {
   const { user, logout } = useAuth();
@@ -18,7 +24,7 @@ export default function AppTopbar({ actions = null, meta = null, showLogout = fa
 
   return (
     <header className="app-topbar">
-      <div className="container mx-auto px-6 py-4 flex flex-col lg:flex-row gap-4 lg:justify-between lg:items-center">
+      <div className="container mx-auto px-6 py-3 app-topbar-layout">
         <button
           type="button"
           onClick={() => navigate('/dashboard')}
@@ -29,33 +35,43 @@ export default function AppTopbar({ actions = null, meta = null, showLogout = fa
           <span className="text-2xl font-bold brand-title">LandFall AI</span>
         </button>
 
-        <div className="topbar-actions">
-          <nav className="topbar-nav" aria-label="Primary">
-            <NavLink to="/dashboard" className={navLinkClass} data-testid="topbar-dashboard-tab">
-              <LayoutDashboard className="w-4 h-4" />
-              Dashboard
+        <nav className="topbar-nav" aria-label="Primary">
+          {primaryNavigation.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={navLinkClass}
+              data-testid={item.to === '/dashboard' ? 'topbar-dashboard-tab' : undefined}
+              end={item.to === '/dashboard'}
+            >
+              {item.label}
             </NavLink>
-            <NavLink to="/how-it-works" className={navLinkClass} data-testid="topbar-how-it-works-tab">
-              <HelpCircle className="w-4 h-4" />
-              How It Works
-            </NavLink>
-          </nav>
+          ))}
+        </nav>
 
-          {meta && <span className="topbar-meta">{meta}</span>}
-          {actions}
+        <div className="topbar-actions">
+          {(meta || actions) && (
+            <div className="topbar-context">
+              {meta && <span className="topbar-meta">{meta}</span>}
+              {actions}
+            </div>
+          )}
 
           {showLogout && (
-            <>
-              {user?.email && <span data-testid="user-email" className="topbar-meta max-w-[220px] truncate">{user.email}</span>}
+            <div className="topbar-account">
+              {user?.email && (
+                <span data-testid="user-email" className="topbar-meta max-w-[220px] truncate">
+                  {user.email}
+                </span>
+              )}
               <button
                 data-testid="logout-btn"
                 onClick={handleLogout}
-                className="btn-secondary py-2 px-4"
+                className="topbar-account-action"
               >
-                <LogOut className="w-4 h-4 inline mr-2" />
-                Logout
+                Sign out
               </button>
-            </>
+            </div>
           )}
         </div>
       </div>

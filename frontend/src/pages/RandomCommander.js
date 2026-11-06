@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Shuffle } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import AppTopbar from '../components/AppTopbar';
@@ -56,7 +56,7 @@ export default function RandomCommander() {
         { headers: getAuthHeaders() }
       );
       setCommanderData(response.data);
-      toast.success('Random commander generated!');
+      toast.success('Commander found!');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to generate commander');
     } finally {
@@ -105,15 +105,19 @@ export default function RandomCommander() {
       <AppTopbar />
 
       <main className="container mx-auto px-6 py-12 max-w-6xl">
-        <div className="page-hero text-center mb-12">
-          <ManaPipRow colors={['W', 'U', 'B', 'R', 'G']} className="hero-mana-row" />
-          <p className="page-eyebrow mb-2">Draft A Direction</p>
-          <h2 className="text-4xl font-bold mb-4 page-title">Random Commander Generator</h2>
-          <p className="page-copy text-lg">Set color, strategy, and mana value constraints, then find a commander to build around.</p>
-        </div>
+        <section className="tool-workbench-hero discovery-workbench mb-12">
+          <div className="tool-workbench-copy">
+            <p className="page-eyebrow mb-3">Discover</p>
+            <h2 className="page-title">Set the direction.<br /><span>Meet the commander.</span></h2>
+            <p className="page-copy">Choose the colors and play pattern you want. LandFall finds a legal build-around, then explains where its plan can go.</p>
+            <div className="tool-workbench-pips">
+              <ManaPipRow colors={filters.colors.length > 0 ? filters.colors : ['W', 'U', 'B', 'R', 'G']} compact />
+              <span>{filters.colors.length > 0 ? 'Your selected identity' : 'Any color identity'}</span>
+            </div>
+          </div>
 
-        <div className="glass-panel p-8 mb-8">
-          <h3 className="text-xl font-semibold mb-6 text-amber-300">Filters</h3>
+        <div className="tool-workbench-panel">
+          <span className="tool-workbench-label">Shape the search</span>
 
           <div className="mb-6">
             <label className="block text-sm font-medium mb-3">Color Identity</label>
@@ -176,12 +180,12 @@ export default function RandomCommander() {
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                <Shuffle className="w-6 h-6" />
-                Randomize Commander
+                Find a Commander
               </span>
             )}
           </button>
         </div>
+        </section>
 
         {commanderData && (
           <div className="space-y-8" data-testid="random-commander-results">

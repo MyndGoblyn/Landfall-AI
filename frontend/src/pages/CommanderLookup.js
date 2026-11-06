@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import AppTopbar from '../components/AppTopbar';
@@ -33,7 +33,7 @@ export default function CommanderLookup() {
       );
       setCommanderData(response.data);
       setCommanderOptions([]);
-      toast.success(deep ? 'Deep strategy complete!' : 'Commander found!');
+      toast.success(deep ? 'Expanded search complete!' : 'Commander found!');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Commander not found');
     } finally {
@@ -130,27 +130,34 @@ export default function CommanderLookup() {
       <AppTopbar />
 
       <main className="container mx-auto px-6 py-12 max-w-6xl">
-        <div className="page-hero text-center mb-12">
-          <ManaPipRow colors={['W', 'U', 'B', 'R', 'G']} className="hero-mana-row" />
-          <p className="page-eyebrow mb-2">Command Zone</p>
-          <h2 className="text-4xl font-bold mb-4 page-title">Commander Lookup</h2>
-          <p className="page-copy text-lg">Search any commander for strategy tips, synergy themes, and cards that fit the plan.</p>
-        </div>
+        <section className="tool-workbench-hero mb-12">
+          <div className="tool-workbench-copy">
+            <p className="page-eyebrow mb-3">Commander Lab</p>
+            <h2 className="page-title">Start with the commander.<br /><span>Find the actual plan.</span></h2>
+            <p className="page-copy">Search any legal commander for themes, pilot notes, role evidence, and cards ranked for how the deck wants to play.</p>
+            <div className="tool-workbench-pips">
+              <ManaPipRow colors={['W', 'U', 'B', 'R', 'G']} compact />
+              <span>All color identities supported</span>
+            </div>
+          </div>
 
-        <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-12">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <form onSubmit={handleSearch} className="tool-workbench-panel">
+            <label htmlFor="commander-search" className="tool-workbench-label">Commander name</label>
             <input
+              id="commander-search"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Enter commander name (e.g., Zur the Enchanter)"
-              className="input flex-1"
+              className="input"
               data-testid="commander-search-input"
             />
+            <p className="tool-workbench-help">A partial one-word search may offer several exact matches first.</p>
+            <div className="tool-workbench-actions">
             <button
               type="submit"
               disabled={loading || deepLoading || optionLoading}
-              className="btn-primary px-8"
+              className="btn-primary"
               data-testid="search-commander-btn"
             >
               {loading || optionLoading ? (
@@ -169,23 +176,23 @@ export default function CommanderLookup() {
               type="button"
               disabled={loading || deepLoading || optionLoading}
               onClick={(e) => handleSearch(e, true)}
-              className="btn-secondary px-8"
+              className="btn-secondary"
               data-testid="deep-search-commander-btn"
             >
               {deepLoading ? (
                 <span className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Deep Searching...
+                  Searching wider...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  Deep Strategy
+                  Expanded Search
                 </span>
               )}
             </button>
-          </div>
-        </form>
+            </div>
+          </form>
+        </section>
 
         {commanderOptions.length > 0 && (
           <div className="glass-panel p-6 mb-10" data-testid="commander-options">
