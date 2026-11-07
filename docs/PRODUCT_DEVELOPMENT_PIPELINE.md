@@ -384,6 +384,41 @@ with 120 construction-registry cards and 16 reviewed commander profiles. See
 privacy rules, and candidate-pool behavior that should not delay the core
 commander and builder experience.
 
+### Phase 6 implementation checkpoint — 2026-11-07
+
+Collection-aware construction and private recommendation feedback are now
+implemented behind the existing authenticated user boundary. Saved collections
+use canonical Oracle IDs and quantities, remain isolated per user, and are
+hydrated only when a build is previewed or generated. The saved intent keeps a
+collection reference rather than a stale card snapshot, so collection changes
+also invalidate an older draft fingerprint before it can be applied.
+
+`prefer_owned` remains an eight-point constructor ordering bias. `owned_only`
+remains a hard candidate gate and now also enforces the saved quantities of
+repeatable basic lands. Empty saved collections, missing protected copies, and
+insufficient basic-land copies produce explicit blocked or unresolved states;
+the constructor does not fill those slots from outside the collection.
+
+Recommendation accept/reject/keep/swap choices and applied build drafts are
+stored as private, provenance-bearing review history. There is deliberately no
+feedback-to-ranking code path. Aggregation is disabled and any future use must
+meet the documented minimum cohort sizes, offline review, versioned-release,
+provenance, and rollback requirements. Users can delete this history without
+changing decks or collection records, and account reset covers both Phase 6
+data stores.
+
+Release validation passes **278 backend tests** and **16 frontend source-smoke
+groups**, and the production frontend build compiles successfully. The fresh
+26-case builder matrix passes every case and counterfactual. A fresh run of the
+18-deck public V3 suite passes every integrity/input gate and exactly matches
+the promoted addition, cut, and swap ordering in all 18 cases. See
+`docs/PHASE6_COLLECTION_FEEDBACK_REPORT_2026-11-07.md` for the release evidence.
+
+**Current delivery confidence: 94%.** The remaining uncertainty is ordinary
+product adoption and collection-data quality, not a detected recommendation
+regression. Behavioral feedback remains non-influential until a separate,
+reviewed semantic release explicitly earns promotion.
+
 ## Recommended build order
 
 | Priority | Work | Why now | Promotion requirement |

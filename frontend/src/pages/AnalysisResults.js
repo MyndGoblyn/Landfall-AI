@@ -259,7 +259,7 @@ function CardImages({ suggestion, compact = false }) {
   );
 }
 
-function RecommendationCard({ suggestion, type = 'add', index }) {
+function RecommendationCard({ suggestion, type = 'add', index, feedbackAction, onFeedback }) {
   const isAdd = type === 'add';
 
   return (
@@ -325,12 +325,31 @@ function RecommendationCard({ suggestion, type = 'add', index }) {
             </p>
           )}
         </div>
+        <div className="recommendation-feedback" aria-label={`Private feedback for ${suggestion.card_name}`}>
+          <span>Was this useful?</span>
+          <button
+            type="button"
+            className={feedbackAction === (isAdd ? 'accept_add' : 'accept_cut') ? 'active' : ''}
+            aria-pressed={feedbackAction === (isAdd ? 'accept_add' : 'accept_cut')}
+            onClick={() => onFeedback(isAdd ? 'accept_add' : 'accept_cut', suggestion.card_name)}
+          >
+            {isAdd ? 'Fits the deck' : 'Cut makes sense'}
+          </button>
+          <button
+            type="button"
+            className={feedbackAction === (isAdd ? 'reject_add' : 'keep_cut') ? 'active' : ''}
+            aria-pressed={feedbackAction === (isAdd ? 'reject_add' : 'keep_cut')}
+            onClick={() => onFeedback(isAdd ? 'reject_add' : 'keep_cut', suggestion.card_name)}
+          >
+            {isAdd ? 'Not for this deck' : 'Keep this card'}
+          </button>
+        </div>
       </div>
     </article>
   );
 }
 
-function SwapCard({ add, cut, index, rationale }) {
+function SwapCard({ add, cut, index, rationale, feedbackAction, onFeedback }) {
   return (
     <article className="swap-card">
       <div className="swap-column">
@@ -365,6 +384,16 @@ function SwapCard({ add, cut, index, rationale }) {
         )}
       </div>
       {rationale && <p className="swap-rationale">{rationale}</p>}
+      {add && cut && (
+        <button
+          type="button"
+          className={`swap-feedback-button ${feedbackAction === 'accept_swap' ? 'active' : ''}`}
+          aria-pressed={feedbackAction === 'accept_swap'}
+          onClick={() => onFeedback('accept_swap', add.card_name, cut.card_name)}
+        >
+          {feedbackAction === 'accept_swap' ? 'Swap saved to private history' : 'This swap fits my plan'}
+        </button>
+      )}
     </article>
   );
 }
@@ -495,6 +524,7 @@ export default function AnalysisResults() {
   const [commanderCard, setCommanderCard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deepLoading, setDeepLoading] = useState(false);
+  const [feedbackByKey, setFeedbackByKey] = useState({});
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
   const deepStatus = useRotatingStatus(deepLoading, DEEP_STATUS_MESSAGES);
@@ -544,11 +574,53 @@ export default function AnalysisResults() {
         headers: getAuthHeaders()
       });
       setDeck(deckResponse.data);
+      try {
+        const feedbackResponse = await axios.get(`${API}/decks/${response.data.deck_id}/feedback`, {
+          headers: getAuthHeaders()
+        });
+        const currentFeedback = {};
+        for (const item of feedbackResponse.data) {
+          if (item.source_id !== analysisId) continue;
+          const group = item.action.includes('add')
+            ? 'add'
+            : item.action.includes('cut')
+              ? 'cut'
+              : 'swap';
+          currentFeedback[`${group}:${String(item.card_name || '').toLowerCase()}`] = item.action;
+        }
+        setFeedbackByKey(currentFeedback);
+      } catch (_error) {
+        setFeedbackByKey({});
+      }
     } catch (error) {
       toast.error('Failed to load analysis');
       navigate('/dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFeedback = async (action, cardName, pairedCardName = null) => {
+    if (!deck?.id) return;
+    try {
+      const response = await axios.post(
+        `${API}/decks/${deck.id}/feedback`,
+        {
+          analysis_id: analysisId,
+          action,
+          card_name: cardName,
+          paired_card_name: pairedCardName,
+        },
+        { headers: getAuthHeaders() }
+      );
+      const group = action.includes('add') ? 'add' : action.includes('cut') ? 'cut' : 'swap';
+      setFeedbackByKey((current) => ({
+        ...current,
+        [`${group}:${cardName.toLowerCase()}`]: response.data.action,
+      }));
+      toast.success('Saved privately. This does not automatically tune ranking.');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Could not save feedback');
     }
   };
 
@@ -742,7 +814,14 @@ export default function AnalysisResults() {
             </div>
             <div className="recommendation-list">
               {adds.map((suggestion, idx) => (
-                <RecommendationCard key={`${suggestion.card_name}-${idx}`} suggestion={suggestion} type="add" index={idx} />
+                <RecommendationCard
+                  key={`${suggestion.card_name}-${idx}`}
+                  suggestion={suggestion}
+                  type="add"
+                  index={idx}
+                  feedbackAction={feedbackByKey[`add:${suggestion.card_name.toLowerCase()}`]}
+                  onFeedback={handleFeedback}
+                />
               ))}
             </div>
           </TabsContent>
@@ -758,7 +837,14 @@ export default function AnalysisResults() {
             <div className="recommendation-list">
               {cuts.length > 0 ? (
                 cuts.map((suggestion, idx) => (
-                  <RecommendationCard key={`${suggestion.card_name}-${idx}`} suggestion={suggestion} type="cut" index={idx} />
+                  <RecommendationCard
+                    key={`${suggestion.card_name}-${idx}`}
+                    suggestion={suggestion}
+                    type="cut"
+                    index={idx}
+                    feedbackAction={feedbackByKey[`cut:${suggestion.card_name.toLowerCase()}`]}
+                    onFeedback={handleFeedback}
+                  />
                 ))
               ) : (
                 <div className="empty-zone">No obvious cuts found for this analysis.</div>
@@ -782,6 +868,8 @@ export default function AnalysisResults() {
                   cut={pair.cut}
                   index={index}
                   rationale={pair.reason}
+                  feedbackAction={pair.add ? feedbackByKey[`swap:${pair.add.card_name.toLowerCase()}`] : null}
+                  onFeedback={handleFeedback}
                 />
               ))}
             </div>

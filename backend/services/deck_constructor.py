@@ -591,11 +591,27 @@ class DeckConstructor:
             for value in intent.get("excluded_cards") or []
             if _name(value)
         }
-        owned = {
-            _name(value).casefold()
-            for value in intent.get("owned_card_names") or []
-            if _name(value)
-        }
+        owned_quantities: Counter = Counter()
+        for raw_name, raw_quantity in (intent.get("owned_card_quantities") or {}).items():
+            name = _name(raw_name)
+            if name:
+                owned_quantities[name.casefold()] = max(
+                    owned_quantities[name.casefold()],
+                    _quantity(raw_quantity),
+                )
+        for value in intent.get("owned_card_names") or []:
+            name = _name(value)
+            if name:
+                owned_quantities[name.casefold()] = max(
+                    owned_quantities[name.casefold()],
+                    1,
+                )
+        owned = set(owned_quantities)
+        if intent.get("collection_mode") == "owned_only" and not owned:
+            errors.append(_issue(
+                "owned_collection_empty",
+                "Owned-only construction requires at least one card in the selected collection source.",
+            ))
         if any(name.casefold() in excluded for name in commanders):
             errors.append(_issue(
                 "commander_excluded",
@@ -757,6 +773,16 @@ class DeckConstructor:
                 errors.append(_issue(
                     "protected_card_not_owned",
                     f"{protected_value['name']} is protected but absent from the owned-only pool.",
+                    card_name=protected_value["name"],
+                ))
+                continue
+            if (
+                intent.get("collection_mode") == "owned_only"
+                and owned_quantities.get(key, 0) <= fixed_names.get(key, 0)
+            ):
+                errors.append(_issue(
+                    "protected_card_quantity_unavailable",
+                    f"No unallocated owned copy of {protected_value['name']} remains for this protected slot.",
                     card_name=protected_value["name"],
                 ))
                 continue
@@ -1161,14 +1187,38 @@ class DeckConstructor:
                     intent.get("collection_mode") == "owned_only"
                     and basic_name.casefold() not in owned
                 ):
+                    mana_allocation[color] = 0
                     reject_once(
                         "owned_only_mana_rejection",
                         f"{basic_name} is outside the owned-only candidate pool, so {qty} mana slots remain unresolved.",
                         basic_name,
                     )
                     continue
+                if intent.get("collection_mode") == "owned_only":
+                    available_quantity = max(
+                        0,
+                        owned_quantities.get(basic_name.casefold(), 0)
+                        - fixed_names.get(basic_name.casefold(), 0),
+                    )
+                    if available_quantity <= 0:
+                        mana_allocation[color] = 0
+                        reject_once(
+                            "owned_only_mana_quantity_rejection",
+                            f"No unallocated owned copies of {basic_name} remain, so {qty} mana slots stay unresolved.",
+                            basic_name,
+                        )
+                        continue
+                    if available_quantity < qty:
+                        warnings.append(_issue(
+                            "owned_only_mana_quantity_limited",
+                            f"The collection contains {available_quantity} available copies of {basic_name}; {qty - available_quantity} requested mana slots remain open.",
+                            card_name=basic_name,
+                        ))
+                        qty = available_quantity
+                        mana_allocation[color] = qty
                 card = basic_cards.get(basic_name.casefold())
                 if not card:
+                    mana_allocation[color] = 0
                     warnings.append(_issue(
                         "basic_land_unresolved",
                         f"{basic_name} could not be verified, so {qty} mana slots remain unresolved.",
@@ -1176,6 +1226,7 @@ class DeckConstructor:
                     ))
                     continue
                 if not accept_price(card, qty):
+                    mana_allocation[color] = 0
                     continue
                 selected_records.append(self._record(
                     card,
@@ -1191,6 +1242,7 @@ class DeckConstructor:
                 ))
                 selected_facts.append({**card, "qty": qty})
 
+        actual_mana_slots = sum(mana_allocation.values())
         selected_slots = sum(record["qty"] for record in selected_records)
         proposed_slots = fixed_slots + selected_slots
         remaining_mainboard = max(0, target_mainboard - proposed_slots)
@@ -1215,11 +1267,11 @@ class DeckConstructor:
                     "collection, and portfolio gate."
                 ),
             })
-        if allow_mana and land_needed > mana_slots:
+        if allow_mana and land_needed > actual_mana_slots:
             unresolved_slots.append({
                 "lane": "mana base",
-                "count": land_needed - mana_slots,
-                "reason": "The bounded scaffold did not have enough slots for the full land baseline.",
+                "count": land_needed - actual_mana_slots,
+                "reason": "The bounded scaffold or owned collection did not cover the full land baseline.",
             })
 
         if total_budget is not None and intent.get("budget_mode") in {"target", "flexible"} and running_price > total_budget:
@@ -1288,7 +1340,9 @@ class DeckConstructor:
                 "target_lands": land_target,
                 "fixed_lands": fixed_land_count,
                 "basic_land_allocation": {
-                    BASIC_LANDS[color]: count for color, count in mana_allocation.items()
+                    BASIC_LANDS[color]: count
+                    for color, count in mana_allocation.items()
+                    if count > 0
                 },
             },
             "unresolved_slots": unresolved_slots,
@@ -1323,6 +1377,12 @@ class DeckConstructor:
                 "total_limit_usd": total_budget,
                 "per_card_limit_usd": max_card_price,
                 "unpriced_fixed_cards": unknown_fixed_prices,
+            },
+            "collection": {
+                "mode": intent.get("collection_mode"),
+                "source": intent.get("collection_source", "manual"),
+                "unique_owned_cards": len(owned),
+                "owned_copies": sum(owned_quantities.values()),
             },
             "evidence": {
                 "coverage_level": analysis.get("coverage_level"),

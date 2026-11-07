@@ -10,6 +10,7 @@ import AnalysisResults from './pages/AnalysisResults';
 import CommanderLookup from './pages/CommanderLookup';
 import RandomCommander from './pages/RandomCommander';
 import TrackList from './pages/TrackList';
+import Collection from './pages/Collection';
 import CommanderAtlas from './pages/CommanderAtlas';
 import CommanderProfile from './pages/CommanderProfile';
 import GuidedBuild from './pages/GuidedBuild';
@@ -90,6 +91,11 @@ function App() {
           <Route path="/track-list" element={
             <ProtectedRoute>
               <TrackList />
+            </ProtectedRoute>
+          } />
+          <Route path="/collection" element={
+            <ProtectedRoute>
+              <Collection />
             </ProtectedRoute>
           } />
           <Route path="/commanders" element={

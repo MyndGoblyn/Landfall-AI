@@ -101,13 +101,13 @@ def test_build_intent_rejects_contradictory_choices(updates):
         BuildIntent.model_validate(base_intent(**updates))
 
 
-def test_complete_draft_is_recorded_but_cannot_construct_before_phase_five():
+def test_complete_draft_discloses_the_promoted_phase_five_path():
     normalized = normalize_build_intent(base_intent(build_mode="complete_draft"))
 
     assert normalized["intent"]["build_mode"] == "complete_draft"
-    assert not normalized["mapping"]["construction"]["enabled"]
+    assert normalized["mapping"]["construction"]["enabled"]
     assert normalized["mapping"]["construction"]["availability"] == (
-        "phase_5_validation_required"
+        "phase_5_promoted"
     )
 
 

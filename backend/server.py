@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 from email.message import EmailMessage
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal, Mapping
 import uuid
 from datetime import datetime, timezone, timedelta
 import bcrypt
@@ -49,6 +49,7 @@ from services.deck_constructor import (
     build_revision_diff,
 )
 from services.enhanced_suggestion_engine import EnhancedSuggestionEngine
+from services.feedback_policy import feedback_policy_status
 from services.in_memory_db import InMemoryClient, InMemoryDB
 
 ROOT_DIR = Path(__file__).parent
@@ -117,6 +118,8 @@ RESET_ACCOUNT_COLLECTIONS = [
     "analysis_runs",
     "tracked_commanders",
     "build_drafts",
+    "card_collection",
+    "recommendation_feedback",
     "auth_tokens",
     "rate_limits",
 ]
@@ -148,6 +151,19 @@ async def prepare_database():
                 unique=True,
             )
             await db.build_drafts.create_index(
+                [('user_id', 1), ('deck_id', 1), ('created_at', -1)]
+            )
+            await db.card_collection.create_index(
+                [('user_id', 1), ('oracle_id', 1)],
+                unique=True,
+            )
+            await db.card_collection.create_index(
+                [('user_id', 1), ('name_key', 1)]
+            )
+            await db.recommendation_feedback.create_index(
+                'event_key', unique=True
+            )
+            await db.recommendation_feedback.create_index(
                 [('user_id', 1), ('deck_id', 1), ('created_at', -1)]
             )
             await db.auth_tokens.create_index('token_hash', unique=True)
@@ -498,6 +514,90 @@ class TrackedCommander(BaseModel):
     type_line: Optional[str] = None
     source: str = Field(pattern="^(commander_lab|commander_atlas|discover)$")
     note: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+def _clean_card_name(value: str) -> str:
+    cleaned = " ".join(value.split())
+    if not cleaned:
+        raise ValueError("Card name cannot be blank")
+    return cleaned
+
+
+class CollectionImportEntry(BaseModel):
+    card_name: str = Field(min_length=1, max_length=200)
+    quantity: int = Field(default=1, ge=1, le=999)
+
+    @field_validator("card_name")
+    @classmethod
+    def clean_card_name(cls, value: str) -> str:
+        return _clean_card_name(value)
+
+
+class CollectionImportRequest(BaseModel):
+    entries: List[CollectionImportEntry] = Field(min_length=1, max_length=5000)
+    mode: Literal["merge", "replace"] = "merge"
+
+
+class CollectionQuantityUpdate(BaseModel):
+    quantity: int = Field(ge=1, le=999)
+
+
+class CollectionCard(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    oracle_id: str
+    name: str
+    quantity: int = Field(ge=1, le=999)
+    image_url: Optional[str] = None
+    type_line: Optional[str] = None
+    color_identity: List[str] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+FeedbackAction = Literal[
+    "accept_add",
+    "reject_add",
+    "accept_cut",
+    "keep_cut",
+    "accept_swap",
+]
+
+
+class RecommendationFeedbackCreate(BaseModel):
+    analysis_id: str = Field(min_length=1, max_length=80)
+    action: FeedbackAction
+    card_name: str = Field(min_length=1, max_length=200)
+    paired_card_name: Optional[str] = Field(default=None, max_length=200)
+    reason_code: Optional[str] = Field(
+        default=None,
+        pattern="^(fit|budget|owned|power|strategy|duplicate|availability|other)$",
+    )
+
+    @field_validator("card_name")
+    @classmethod
+    def clean_feedback_card(cls, value: str) -> str:
+        return _clean_card_name(value)
+
+    @field_validator("paired_card_name")
+    @classmethod
+    def clean_feedback_pair(cls, value: Optional[str]) -> Optional[str]:
+        return _clean_card_name(value) if value else None
+
+
+class RecommendationFeedback(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    deck_id: str
+    source_type: Literal["analysis", "build_draft"]
+    source_id: str
+    action: str
+    card_name: Optional[str] = None
+    paired_card_name: Optional[str] = None
+    reason_code: Optional[str] = None
+    provenance: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -1235,8 +1335,11 @@ async def preview_build_intent(
     current_user: Dict = Depends(get_current_user),
 ):
     """Expose every deterministic mapping before the user saves the intent."""
-    del current_user
-    return normalize_build_intent(build_intent)
+    return await _normalize_build_intent_for_user(
+        build_intent,
+        current_user["id"],
+        preserve_collection_reference=True,
+    )
 
 
 @api_router.get("/decks/{deck_id}/build-intent")
@@ -1253,7 +1356,11 @@ async def get_deck_build_intent(
     if deck.get("build_intent"):
         return {
             "source": "saved_build_intent",
-            **normalize_build_intent(deck["build_intent"]),
+            **await _normalize_build_intent_for_user(
+                deck["build_intent"],
+                current_user["id"],
+                preserve_collection_reference=True,
+            ),
         }
     return {
         "source": "migrated_deck_intent_v1",
@@ -1358,7 +1465,11 @@ async def create_build_draft(
             status_code=409,
             detail="Save a confirmed Guided Build plan before generating a scaffold",
         )
-    normalized = normalize_build_intent(deck["build_intent"])
+    normalized = await _normalize_build_intent_for_user(
+        deck["build_intent"],
+        current_user["id"],
+        preserve_collection_reference=False,
+    )
     try:
         result = await deck_constructor.construct(deck, normalized)
     except ConstructorUnavailable as exc:
@@ -1427,7 +1538,11 @@ async def apply_build_draft(
         )
     if not deck.get("build_intent"):
         raise HTTPException(status_code=409, detail="The saved build intent is unavailable")
-    normalized = normalize_build_intent(deck["build_intent"])
+    normalized = await _normalize_build_intent_for_user(
+        deck["build_intent"],
+        current_user["id"],
+        preserve_collection_reference=False,
+    )
     current_fingerprint = deck_constructor.source_fingerprint(deck, normalized)
     if current_fingerprint != draft.get("source_fingerprint"):
         raise HTTPException(
@@ -1455,6 +1570,40 @@ async def apply_build_draft(
         {"id": draft_id, "user_id": current_user['id']},
         {"$set": {"applied_at": applied_at.isoformat()}},
     )
+    feedback_key = hashlib.sha256(
+        f"{current_user['id']}|{deck_id}|{draft_id}|applied_build_draft".encode()
+    ).hexdigest()
+    feedback_document = {
+        "id": str(uuid.uuid4()),
+        "event_key": feedback_key,
+        "user_id": current_user["id"],
+        "deck_id": deck_id,
+        "source_type": "build_draft",
+        "source_id": draft_id,
+        "action": "applied_build_draft",
+        "card_name": None,
+        "paired_card_name": None,
+        "reason_code": None,
+        "provenance": {
+            "feedback_policy": feedback_policy_status(),
+            "constructor_version": draft.get("constructor_version"),
+            "revision": draft.get("revision"),
+            "source_fingerprint": draft.get("source_fingerprint"),
+            "selected_cards": [
+                {
+                    "name": card.get("name"),
+                    "qty": card.get("qty", 1),
+                    "source": card.get("source"),
+                    "confidence": card.get("confidence"),
+                }
+                for card in result.get("selected_cards") or []
+            ],
+        },
+        "created_at": applied_at.isoformat(),
+        "updated_at": applied_at.isoformat(),
+    }
+    if not await db.recommendation_feedback.find_one({"event_key": feedback_key}):
+        await db.recommendation_feedback.insert_one(feedback_document)
     updated = await db.decks.find_one(
         {"id": deck_id, "user_id": current_user['id']},
         {"_id": 0},
@@ -1571,7 +1720,383 @@ async def delete_deck(deck_id: str, current_user: Dict = Depends(get_current_use
         "deck_id": deck_id,
         "user_id": current_user['id'],
     })
+    await db.recommendation_feedback.delete_many({
+        "deck_id": deck_id,
+        "user_id": current_user['id'],
+    })
     return {"message": "Deck deleted"}
+
+
+# ==================== CARD COLLECTION ROUTES ====================
+
+def _collection_card_from_document(document: Dict[str, Any]) -> CollectionCard:
+    payload = dict(document)
+    payload.pop("_id", None)
+    payload.pop("user_id", None)
+    payload.pop("name_key", None)
+    for field_name in ("created_at", "updated_at"):
+        if payload.get(field_name) is not None:
+            payload[field_name] = parse_stored_datetime(payload[field_name])
+    return CollectionCard.model_validate(payload)
+
+
+async def _collection_documents(user_id: str) -> List[Dict[str, Any]]:
+    return await db.card_collection.find(
+        {"user_id": user_id},
+        {"_id": 0},
+    ).sort("name_key", 1).to_list(5000)
+
+
+async def _saved_collection_quantities(user_id: str) -> Dict[str, int]:
+    documents = await _collection_documents(user_id)
+    return {
+        str(document.get("name")): int(document.get("quantity") or 0)
+        for document in documents
+        if document.get("name") and int(document.get("quantity") or 0) > 0
+    }
+
+
+async def _normalize_build_intent_for_user(
+    value: Mapping | BuildIntent,
+    user_id: str,
+    *,
+    preserve_collection_reference: bool,
+) -> Dict[str, Any]:
+    intent = value if isinstance(value, BuildIntent) else BuildIntent.model_validate(dict(value))
+    if intent.collection_source != "saved_collection" or intent.collection_mode == "all_cards":
+        return normalize_build_intent(intent)
+
+    quantities = await _saved_collection_quantities(user_id)
+    hydrated = intent.model_copy(update={
+        "owned_card_names": [],
+        "owned_card_quantities": quantities,
+    })
+    normalized = normalize_build_intent(hydrated)
+    normalized["mapping"]["collection"].update({
+        "source": "saved_collection",
+        "snapshot_copy_count": sum(quantities.values()),
+    })
+    if preserve_collection_reference:
+        normalized["intent"]["owned_card_names"] = list(intent.owned_card_names)
+        normalized["intent"]["owned_card_quantities"] = dict(intent.owned_card_quantities)
+    return normalized
+
+
+@api_router.get("/card-collection", response_model=List[CollectionCard])
+async def get_card_collection(
+    current_user: Dict = Depends(get_current_user),
+):
+    documents = await _collection_documents(current_user["id"])
+    return [_collection_card_from_document(document) for document in documents]
+
+
+@api_router.get("/card-collection/summary")
+async def get_card_collection_summary(
+    current_user: Dict = Depends(get_current_user),
+):
+    documents = await _collection_documents(current_user["id"])
+    quantities = [int(document.get("quantity") or 0) for document in documents]
+    latest = max(
+        (document.get("updated_at") for document in documents if document.get("updated_at")),
+        default=None,
+    )
+    return {
+        "unique_cards": len(documents),
+        "total_copies": sum(quantities),
+        "updated_at": latest,
+        "builder_behavior": {
+            "prefer_owned": "scoring_bias",
+            "owned_only": "hard_candidate_gate",
+            "ranking_training": False,
+        },
+    }
+
+
+@api_router.post("/card-collection/import", response_model=List[CollectionCard])
+async def import_card_collection(
+    request_data: CollectionImportRequest,
+    current_user: Dict = Depends(get_current_user),
+):
+    requested: Dict[str, Dict[str, Any]] = {}
+    for entry in request_data.entries:
+        key = entry.card_name.casefold()
+        if key in requested:
+            requested[key]["quantity"] = min(
+                999,
+                int(requested[key]["quantity"]) + entry.quantity,
+            )
+        else:
+            requested[key] = {
+                "name": entry.card_name,
+                "quantity": entry.quantity,
+            }
+
+    submitted = list(requested.values())
+    resolved = await scryfall_service.get_card_bulk([item["name"] for item in submitted])
+    missing = [
+        item["name"]
+        for item, card in zip(submitted, resolved)
+        if not card or not card.get("oracle_id")
+    ]
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail="Unrecognized collection cards: " + ", ".join(missing[:20]),
+        )
+
+    canonical: Dict[str, Dict[str, Any]] = {}
+    for item, card in zip(submitted, resolved):
+        oracle_id = str(card["oracle_id"])
+        existing = canonical.get(oracle_id)
+        quantity = item["quantity"] + (existing["quantity"] if existing else 0)
+        images = suggestion_engine._get_card_images(card)
+        canonical[oracle_id] = {
+            "oracle_id": oracle_id,
+            "name": str(card.get("name") or item["name"]),
+            "name_key": str(card.get("name") or item["name"]).casefold(),
+            "quantity": min(999, quantity),
+            "image_url": images["front"],
+            "type_line": card.get("type_line"),
+            "color_identity": card.get("color_identity") or [],
+        }
+
+    existing_documents = await _collection_documents(current_user["id"])
+    existing_by_oracle = {
+        document.get("oracle_id"): document
+        for document in existing_documents
+        if document.get("oracle_id")
+    }
+    if request_data.mode == "replace":
+        await db.card_collection.delete_many({"user_id": current_user["id"]})
+
+    now = datetime.now(timezone.utc).isoformat()
+    for oracle_id, card in canonical.items():
+        previous = existing_by_oracle.get(oracle_id)
+        document = {
+            **card,
+            "id": previous.get("id") if previous else str(uuid.uuid4()),
+            "user_id": current_user["id"],
+            "created_at": previous.get("created_at") if previous else now,
+            "updated_at": now,
+        }
+        query = {"user_id": current_user["id"], "oracle_id": oracle_id}
+        current = await db.card_collection.find_one(query, {"_id": 0})
+        if current:
+            await db.card_collection.update_one(query, {"$set": document})
+        else:
+            await db.card_collection.insert_one(document)
+
+    return await get_card_collection(current_user=current_user)
+
+
+@api_router.patch(
+    "/card-collection/{oracle_id}",
+    response_model=CollectionCard,
+)
+async def update_collection_quantity(
+    oracle_id: str,
+    request_data: CollectionQuantityUpdate,
+    current_user: Dict = Depends(get_current_user),
+):
+    query = {"user_id": current_user["id"], "oracle_id": oracle_id}
+    document = await db.card_collection.find_one(query, {"_id": 0})
+    if not document:
+        raise HTTPException(status_code=404, detail="Collection card not found")
+    await db.card_collection.update_one(query, {"$set": {
+        "quantity": request_data.quantity,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }})
+    stored = await db.card_collection.find_one(query, {"_id": 0})
+    return _collection_card_from_document(stored)
+
+
+@api_router.delete("/card-collection/{oracle_id}")
+async def delete_collection_card(
+    oracle_id: str,
+    current_user: Dict = Depends(get_current_user),
+):
+    result = await db.card_collection.delete_one({
+        "user_id": current_user["id"],
+        "oracle_id": oracle_id,
+    })
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Collection card not found")
+    return {"message": "Card removed from collection"}
+
+
+# ==================== PRIVATE FEEDBACK ROUTES ====================
+
+def _feedback_from_document(document: Dict[str, Any]) -> RecommendationFeedback:
+    payload = dict(document)
+    payload.pop("_id", None)
+    payload.pop("user_id", None)
+    payload.pop("event_key", None)
+    for field_name in ("created_at", "updated_at"):
+        if payload.get(field_name) is not None:
+            payload[field_name] = parse_stored_datetime(payload[field_name])
+    return RecommendationFeedback.model_validate(payload)
+
+
+def _find_suggestion(items: List[Dict[str, Any]], card_name: str) -> Optional[Dict[str, Any]]:
+    key = card_name.casefold()
+    return next(
+        (item for item in items if str(item.get("card_name") or "").casefold() == key),
+        None,
+    )
+
+
+@api_router.get("/feedback-policy")
+async def get_feedback_policy(
+    current_user: Dict = Depends(get_current_user),
+):
+    del current_user
+    return feedback_policy_status()
+
+
+@api_router.get("/decks/{deck_id}/feedback", response_model=List[RecommendationFeedback])
+async def get_deck_feedback(
+    deck_id: str,
+    current_user: Dict = Depends(get_current_user),
+):
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    )
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    documents = await db.recommendation_feedback.find(
+        {"deck_id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(500)
+    return [_feedback_from_document(document) for document in documents]
+
+
+@api_router.post(
+    "/decks/{deck_id}/feedback",
+    response_model=RecommendationFeedback,
+)
+async def record_recommendation_feedback(
+    deck_id: str,
+    request_data: RecommendationFeedbackCreate,
+    current_user: Dict = Depends(get_current_user),
+):
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    )
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    analysis = await db.analysis_runs.find_one({
+        "id": request_data.analysis_id,
+        "deck_id": deck_id,
+        "user_id": current_user["id"],
+    }, {"_id": 0})
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    suggestion = None
+    pair_snapshot = None
+    if request_data.action in {"accept_add", "reject_add"}:
+        suggestion = _find_suggestion(analysis.get("suggestions_add") or [], request_data.card_name)
+    elif request_data.action in {"accept_cut", "keep_cut"}:
+        suggestion = _find_suggestion(analysis.get("suggestions_cut") or [], request_data.card_name)
+    else:
+        add_key = request_data.card_name.casefold()
+        cut_key = str(request_data.paired_card_name or "").casefold()
+        pair_snapshot = next((
+            pair for pair in analysis.get("swap_pairs") or []
+            if str((pair.get("add") or {}).get("card_name") or "").casefold() == add_key
+            and str((pair.get("cut") or {}).get("card_name") or "").casefold() == cut_key
+        ), None)
+        suggestion = (pair_snapshot or {}).get("add")
+    if not suggestion:
+        raise HTTPException(
+            status_code=400,
+            detail="Feedback must reference a recommendation from this analysis",
+        )
+
+    action_group = (
+        "add" if request_data.action in {"accept_add", "reject_add"}
+        else "cut" if request_data.action in {"accept_cut", "keep_cut"}
+        else "swap"
+    )
+    event_source = "|".join([
+        current_user["id"],
+        deck_id,
+        request_data.analysis_id,
+        action_group,
+        request_data.card_name.casefold(),
+        str(request_data.paired_card_name or "").casefold(),
+    ])
+    event_key = hashlib.sha256(event_source.encode()).hexdigest()
+    now = datetime.now(timezone.utc).isoformat()
+    existing = await db.recommendation_feedback.find_one(
+        {"event_key": event_key},
+        {"_id": 0},
+    )
+    provenance = {
+        "feedback_policy": feedback_policy_status(),
+        "analysis_created_at": analysis.get("created_at"),
+        "analysis_depth": analysis.get("analysis_depth"),
+        "recommendation_planner": analysis.get("recommendation_planner") or {},
+        "semantic_version": suggestion_engine.get_semantic_bundle_status().get("semantic_version"),
+        "suggestion": {
+            key: suggestion.get(key)
+            for key in (
+                "card_name", "role_tag", "reason", "score", "confidence",
+                "evidence_confidence", "confidence_model", "portfolio_version",
+                "selection_position", "selection_reason",
+            )
+        },
+        "pair_reason": (pair_snapshot or {}).get("reason"),
+    }
+    document = {
+        "id": existing.get("id") if existing else str(uuid.uuid4()),
+        "event_key": event_key,
+        "user_id": current_user["id"],
+        "deck_id": deck_id,
+        "source_type": "analysis",
+        "source_id": request_data.analysis_id,
+        "action": request_data.action,
+        "card_name": request_data.card_name,
+        "paired_card_name": request_data.paired_card_name,
+        "reason_code": request_data.reason_code,
+        "provenance": provenance,
+        "created_at": existing.get("created_at") if existing else now,
+        "updated_at": now,
+    }
+    if existing:
+        await db.recommendation_feedback.update_one(
+            {"event_key": event_key},
+            {"$set": document},
+        )
+    else:
+        await db.recommendation_feedback.insert_one(document)
+    return _feedback_from_document(document)
+
+
+@api_router.get("/feedback-history", response_model=List[RecommendationFeedback])
+async def get_feedback_history(
+    current_user: Dict = Depends(get_current_user),
+):
+    documents = await db.recommendation_feedback.find(
+        {"user_id": current_user["id"]},
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(1000)
+    return [_feedback_from_document(document) for document in documents]
+
+
+@api_router.delete("/feedback-history")
+async def delete_feedback_history(
+    current_user: Dict = Depends(get_current_user),
+):
+    result = await db.recommendation_feedback.delete_many({
+        "user_id": current_user["id"],
+    })
+    return {
+        "message": "Private recommendation feedback history deleted",
+        "deleted": result.deleted_count,
+    }
 
 
 # ==================== TRACKED COMMANDER ROUTES ====================
@@ -2163,6 +2688,7 @@ async def root():
             "portfolio_version": planner_status["portfolio_version"],
         },
         "deck_constructor": deck_constructor.get_status(),
+        "feedback": feedback_policy_status(),
     }
 
 logging.basicConfig(

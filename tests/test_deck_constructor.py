@@ -303,6 +303,34 @@ def test_full_scaffold_allocates_basics_from_symbol_demand():
     assert result["scope"]["deferred_slots"] == 59
 
 
+def test_owned_only_mana_allocation_respects_saved_copy_quantities():
+    deck = {"commander": MEREN["name"], "commanders": [MEREN["name"]], "cards": []}
+    result = asyncio.run(constructor().construct(deck, intent(
+        build_shape="full_deck",
+        collection_mode="owned_only",
+        collection_source="saved_collection",
+        owned_card_quantities={
+            "Viscera Seer": 1,
+            "Victimize": 1,
+            "Swamp": 1,
+            "Forest": 2,
+        },
+    )))
+
+    basics = result["mana_base"]["basic_land_allocation"]
+    assert basics == {"Swamp": 1, "Forest": 2}
+    assert result["collection"] == {
+        "mode": "owned_only",
+        "source": "saved_collection",
+        "unique_owned_cards": 4,
+        "owned_copies": 5,
+    }
+    assert any(
+        warning["code"] == "owned_only_mana_quantity_limited"
+        for warning in result["validation"]["warnings"]
+    )
+
+
 def test_strict_budget_blocks_an_over_cap_fixed_card():
     deck = {
         "commander": MEREN["name"],

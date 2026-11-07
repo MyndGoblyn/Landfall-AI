@@ -156,7 +156,7 @@ export default function BuildWorkspace() {
         { headers: getAuthHeaders() }
       );
       setDrafts((current) => [response.data, ...current]);
-      toast.success('Deterministic scaffold generated. Review every unresolved slot before applying.');
+      toast.success('Deterministic draft generated. Review its evidence and every unresolved slot before applying.');
     } catch (error) {
       toast.error(errorMessage(error, 'The scaffold could not be generated'));
     } finally {
@@ -166,7 +166,7 @@ export default function BuildWorkspace() {
 
   const applyDraft = async () => {
     if (!latest || !result?.validation?.passed) return;
-    if (!window.confirm('Apply this reviewed partial scaffold to the deck? Existing cards stay fixed, and this reviewed revision becomes the current list.')) {
+    if (!window.confirm('Apply this reviewed deterministic draft to the deck? Existing cards stay fixed, and this reviewed revision becomes the current list.')) {
       return;
     }
     setApplying(true);
@@ -176,7 +176,7 @@ export default function BuildWorkspace() {
         { confirmed: true },
         { headers: getAuthHeaders() }
       );
-      toast.success('Scaffold applied. Open slots remain visible in the deck assessment.');
+      toast.success('Draft applied. Any open slots remain visible in the deck assessment.');
       navigate(`/deck/${deckId}/view`);
     } catch (error) {
       toast.error(errorMessage(error, 'The scaffold could not be applied'));
@@ -199,7 +199,9 @@ export default function BuildWorkspace() {
   }
 
   const intent = deck.build_intent;
-  const canGenerate = intent?.confirmed && intent?.build_mode === 'guided_scaffold';
+  const canGenerate = intent?.confirmed
+    && ['guided_scaffold', 'complete_draft'].includes(intent?.build_mode);
+  const completeMode = intent?.build_mode === 'complete_draft';
   const scope = result?.scope || {};
   const validation = result?.validation;
 
@@ -208,14 +210,14 @@ export default function BuildWorkspace() {
       <AppTopbar />
       {generating && (
         <div className="analysis-progress-banner" role="status" aria-live="polite">
-          <strong>Phase 4 scaffold</strong>
+          <strong>{completeMode ? 'Complete deterministic draft' : 'Guided deterministic scaffold'}</strong>
           <span>{buildStatus}</span>
         </div>
       )}
       <main className="container mx-auto px-6 py-10 max-w-7xl">
         <section className="scaffold-hero">
           <div>
-            <p className="page-eyebrow">Deterministic constructor · Phase 4</p>
+            <p className="page-eyebrow">Deterministic constructor · {completeMode ? 'Complete mode' : 'Guided mode'}</p>
             <h1>Build with evidence, not filler.</h1>
             <p>
               Fixed cards stay fixed. Planner V3 supplies only candidates that survive legality,
@@ -238,7 +240,7 @@ export default function BuildWorkspace() {
               data-testid="generate-scaffold-button"
             >
               <RefreshCw aria-hidden="true" />
-              {generating ? 'Building scaffold...' : latest ? 'Generate new revision' : 'Generate scaffold'}
+              {generating ? 'Building draft...' : latest ? 'Generate new revision' : completeMode ? 'Generate complete draft' : 'Generate scaffold'}
             </button>
           </div>
         </section>
@@ -247,8 +249,8 @@ export default function BuildWorkspace() {
           <section className="scaffold-boundary-note">
             <AlertTriangle aria-hidden="true" />
             <div>
-              <strong>This deck is not configured for a guided scaffold.</strong>
-              <p>Open the intent workspace, choose Guided scaffold, and confirm the visible engine mappings first.</p>
+              <strong>This deck is not configured for deterministic construction.</strong>
+              <p>Open the intent workspace, choose Guided scaffold or Complete draft, and confirm the visible engine mappings first.</p>
             </div>
           </section>
         )}
@@ -258,7 +260,7 @@ export default function BuildWorkspace() {
             <Layers3 aria-hidden="true" />
             <p className="page-eyebrow">No draft yet</p>
             <h2>The first revision will preserve the current list.</h2>
-            <p>LandFall will add only a bounded portfolio. It will not replace fixed cards or invent confidence to finish the deck.</p>
+            <p>LandFall will add only an evidence-qualified portfolio. It will not replace fixed cards or invent confidence to finish the deck.</p>
           </section>
         )}
 
@@ -266,7 +268,7 @@ export default function BuildWorkspace() {
           <>
             <section className="scaffold-summary-grid">
               <article><span>Revision</span><strong>{latest.revision}</strong><small>{labelize(result.status)}</small></article>
-              <article><span>Fixed</span><strong>{scope.fixed_slots || 0}</strong><small>user-owned slots</small></article>
+              <article><span>Fixed</span><strong>{scope.fixed_slots || 0}</strong><small>existing deck slots</small></article>
               <article><span>Selected</span><strong>{scope.selected_slots || 0}</strong><small>inside this pass</small></article>
               <article><span>Still open</span><strong>{scope.remaining_mainboard_slots || 0}</strong><small>never silently filled</small></article>
               <article><span>Verified subtotal</span><strong>${Number(result.budget?.verified_subtotal_usd || 0).toFixed(2)}</strong><small>{labelize(result.budget?.mode)}</small></article>
@@ -307,7 +309,7 @@ export default function BuildWorkspace() {
                 {scope.deferred_slots > 0 && (
                   <article>
                     <b>{scope.deferred_slots}</b>
-                    <div><strong>Deferred beyond this pass</strong><p>The production scaffold is capped at {scope.request_slot_limit} new slots until complete-draft validation is promoted.</p></div>
+                    <div><strong>Deferred beyond this pass</strong><p>This {completeMode ? 'build shape' : 'guided scaffold'} requested at most {scope.request_slot_limit} new slots in the current revision.</p></div>
                   </article>
                 )}
               </div>
@@ -354,7 +356,7 @@ export default function BuildWorkspace() {
                 <ArrowLeft aria-hidden="true" /> Back to decks
               </button>
               <div>
-                <p>Complete-draft generation remains disabled until Phase 5 portfolio validation.</p>
+                <p>{completeMode ? 'Complete mode remains evidence-bounded and may still abstain on unsupported slots.' : 'Guided mode intentionally limits the size of each proposed portfolio.'}</p>
                 <button
                   className="btn-primary"
                   onClick={applyDraft}
@@ -362,7 +364,7 @@ export default function BuildWorkspace() {
                   data-testid="apply-scaffold-button"
                 >
                   <Check aria-hidden="true" />
-                  {latest.applied_at ? 'Revision applied' : applying ? 'Applying...' : 'Apply reviewed scaffold'}
+                  {latest.applied_at ? 'Revision applied' : applying ? 'Applying...' : 'Apply reviewed draft'}
                 </button>
               </div>
             </section>

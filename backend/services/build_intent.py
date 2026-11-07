@@ -36,6 +36,7 @@ BuildPlaystyle = Literal[
 ]
 BuildShape = Literal["full_deck", "core_shell", "mana_base", "missing_slots"]
 CollectionMode = Literal["all_cards", "prefer_owned", "owned_only"]
+CollectionSource = Literal["manual", "saved_collection"]
 
 
 POWER_BANDS = {
@@ -145,7 +146,9 @@ class BuildIntent(BaseModel):
     max_card_price_usd: Optional[float] = Field(default=None, ge=0, le=100000)
     build_shape: BuildShape = "full_deck"
     collection_mode: CollectionMode = "all_cards"
+    collection_source: CollectionSource = "manual"
     owned_card_names: List[str] = Field(default_factory=list, max_length=500)
+    owned_card_quantities: Dict[str, int] = Field(default_factory=dict)
     protected_cards: List[str] = Field(default_factory=list, max_length=100)
     protected_packages: List[ProtectedPackage] = Field(
         default_factory=list,
@@ -191,6 +194,22 @@ class BuildIntent(BaseModel):
     @classmethod
     def clean_owned_cards(cls, value: List[str]) -> List[str]:
         return _clean_unique_strings(value, 500)
+
+    @field_validator("owned_card_quantities")
+    @classmethod
+    def clean_owned_quantities(cls, value: Dict[str, int]) -> Dict[str, int]:
+        cleaned: Dict[str, int] = {}
+        for raw_name, raw_quantity in value.items():
+            name = " ".join(str(raw_name or "").split())
+            if not name:
+                continue
+            quantity = int(raw_quantity)
+            if quantity < 1 or quantity > 999:
+                raise ValueError("Owned-card quantities must be between 1 and 999")
+            cleaned[name] = quantity
+            if len(cleaned) >= 5000:
+                break
+        return cleaned
 
     @field_validator("protected_cards", "excluded_cards")
     @classmethod
@@ -248,7 +267,12 @@ class BuildIntent(BaseModel):
             "imported_list",
         }:
             raise ValueError("Missing-slots mode requires an existing or imported list")
-        if self.collection_mode == "owned_only" and not self.owned_card_names:
+        if (
+            self.collection_mode == "owned_only"
+            and self.collection_source == "manual"
+            and not self.owned_card_names
+            and not self.owned_card_quantities
+        ):
             raise ValueError("Owned-only mode requires at least one owned card")
 
         protected = protected_card_names({
@@ -420,9 +444,9 @@ def normalize_build_intent(value: Mapping | BuildIntent) -> Dict:
             "next_action": "save_intent_and_build_scaffold",
         },
         "complete_draft": {
-            "enabled": False,
-            "availability": "phase_5_validation_required",
-            "next_action": "save_intent_and_wait_for_complete_draft_validation",
+            "enabled": True,
+            "availability": "phase_5_promoted",
+            "next_action": "save_intent_and_build_complete_draft",
         },
     }[intent.build_mode]
     return {
@@ -455,7 +479,14 @@ def normalize_build_intent(value: Mapping | BuildIntent) -> Dict:
             "build_shape": _shape_policy(intent.build_shape),
             "collection": {
                 "mode": intent.collection_mode,
-                "owned_card_count": len(intent.owned_card_names),
+                "source": intent.collection_source,
+                "owned_card_count": len({
+                    name.casefold()
+                    for name in [
+                        *intent.owned_card_names,
+                        *intent.owned_card_quantities.keys(),
+                    ]
+                }),
                 "hard_gate": intent.collection_mode == "owned_only",
             },
             "construction": {

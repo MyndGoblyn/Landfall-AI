@@ -47,7 +47,9 @@ const DEFAULT_INTENT = {
   max_card_price_usd: '',
   build_shape: 'full_deck',
   collection_mode: 'all_cards',
+  collection_source: 'manual',
   owned_card_names: [],
+  owned_card_quantities: {},
   protected_cards: [],
   protected_packages: [],
   excluded_cards: [],
@@ -161,6 +163,7 @@ export default function GuidedBuild() {
   const [excludedText, setExcludedText] = useState('');
   const [ownedText, setOwnedText] = useState('');
   const [packagesText, setPackagesText] = useState('');
+  const [collectionSummary, setCollectionSummary] = useState(null);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
 
@@ -188,6 +191,20 @@ export default function GuidedBuild() {
     };
     loadExisting();
   }, [existingDeckId]);
+
+  useEffect(() => {
+    const loadCollectionSummary = async () => {
+      try {
+        const response = await axios.get(`${API}/card-collection/summary`, {
+          headers: getAuthHeaders(),
+        });
+        setCollectionSummary(response.data);
+      } catch (_error) {
+        setCollectionSummary({ unique_cards: 0, total_copies: 0 });
+      }
+    };
+    loadCollectionSummary();
+  }, []);
 
   const updateIntent = (field, value) => {
     setIntent((current) => ({ ...current, [field]: value }));
@@ -229,7 +246,10 @@ export default function GuidedBuild() {
     concept: intent.concept || null,
     budget_limit_usd: intent.budget_limit_usd === '' ? null : Number(intent.budget_limit_usd),
     max_card_price_usd: intent.max_card_price_usd === '' ? null : Number(intent.max_card_price_usd),
-    owned_card_names: splitCardNames(ownedText),
+    owned_card_names: intent.collection_source === 'manual' ? splitCardNames(ownedText) : [],
+    owned_card_quantities: intent.collection_source === 'manual'
+      ? intent.owned_card_quantities || {}
+      : {},
     protected_cards: splitCardNames(protectedText),
     protected_packages: parsePackages(packagesText),
     excluded_cards: splitCardNames(excludedText),
@@ -261,8 +281,19 @@ export default function GuidedBuild() {
         && intent.budget_limit_usd === '') {
         return 'Add a total or per-card target.';
       }
-      if (intent.collection_mode === 'owned_only' && !splitCardNames(ownedText).length) {
+      if (
+        intent.collection_mode === 'owned_only'
+        && intent.collection_source === 'manual'
+        && !splitCardNames(ownedText).length
+      ) {
         return 'Owned-only mode needs at least one owned card.';
+      }
+      if (
+        intent.collection_mode === 'owned_only'
+        && intent.collection_source === 'saved_collection'
+        && !collectionSummary?.unique_cards
+      ) {
+        return 'Your saved collection is empty. Import cards or use a manual list.';
       }
     }
     return null;
@@ -304,7 +335,7 @@ export default function GuidedBuild() {
         );
         toast.success('Build plan saved to your deck.');
         navigate(
-          normalized.intent.build_mode === 'guided_scaffold'
+          ['guided_scaffold', 'complete_draft'].includes(normalized.intent.build_mode)
             ? `/deck/${existingDeckId}/build`
             : '/dashboard'
         );
@@ -325,11 +356,11 @@ export default function GuidedBuild() {
         },
         { headers: getAuthHeaders() }
       );
-      const scaffoldEnabled = normalized.intent.build_mode === 'guided_scaffold';
-      toast.success(scaffoldEnabled
-        ? 'Build plan saved. Review the deterministic scaffold before applying it.'
+      const constructorEnabled = ['guided_scaffold', 'complete_draft'].includes(normalized.intent.build_mode);
+      toast.success(constructorEnabled
+        ? 'Build plan saved. Review the deterministic draft before applying it.'
         : 'Build plan saved. Add cards when you are ready.');
-      navigate(scaffoldEnabled
+      navigate(constructorEnabled
         ? `/deck/${response.data.id}/build`
         : `/deck/${response.data.id}/import`);
     } catch (error) {
@@ -579,10 +610,10 @@ export default function GuidedBuild() {
                     onClick={() => updateIntent('build_mode', 'guided_scaffold')}
                   />
                   <ChoiceCard
-                    title="Complete draft · Phase 5"
-                    copy="Disabled until the full portfolio and mana-base validation suite is promoted."
-                    disabled
-                    active={false}
+                    title="Complete draft"
+                    copy="Build the full reviewed portfolio with the promoted Phase 5 constructor and visible hard gates."
+                    active={intent.build_mode === 'complete_draft'}
+                    onClick={() => updateIntent('build_mode', 'complete_draft')}
                   />
                 </div>
               </div>
@@ -678,16 +709,35 @@ export default function GuidedBuild() {
                   ))}
                 </div>
                 {intent.collection_mode !== 'all_cards' && (
-                  <label className="build-full-field mt-6">
-                    <span>Owned card names</span>
-                    <textarea
-                      className="input"
-                      rows={5}
-                      value={ownedText}
-                      placeholder="One card per line or comma-separated"
-                      onChange={(event) => updateTextConstraint(setOwnedText, event.target.value)}
-                    />
-                  </label>
+                  <>
+                    <div className="build-section-divider"><span>Collection source</span></div>
+                    <div className="build-choice-grid">
+                      <ChoiceCard
+                        title="Saved collection"
+                        copy={`${collectionSummary?.unique_cards || 0} unique cards · ${collectionSummary?.total_copies || 0} copies available now.`}
+                        active={intent.collection_source === 'saved_collection'}
+                        onClick={() => updateIntent('collection_source', 'saved_collection')}
+                      />
+                      <ChoiceCard
+                        title="Build-specific list"
+                        copy="Use a temporary list for this deck without changing your saved collection."
+                        active={intent.collection_source === 'manual'}
+                        onClick={() => updateIntent('collection_source', 'manual')}
+                      />
+                    </div>
+                    {intent.collection_source === 'manual' && (
+                      <label className="build-full-field mt-6">
+                        <span>Owned card names</span>
+                        <textarea
+                          className="input"
+                          rows={5}
+                          value={ownedText}
+                          placeholder="One card per line or comma-separated"
+                          onChange={(event) => updateTextConstraint(setOwnedText, event.target.value)}
+                        />
+                      </label>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -791,7 +841,8 @@ export default function GuidedBuild() {
                     <strong>{labelize(mapping.budget.mode)} · {labelize(mapping.collection.mode)}</strong>
                     <p>
                       {mapping.budget.hard_gate ? 'Price limits are hard gates.' : 'Price limits are preferences or targets.'}
-                      {' '}{mapping.collection.hard_gate ? 'Only supplied owned cards qualify.' : `${mapping.collection.owned_card_count} owned cards bias selection.`}
+                      {' '}{mapping.collection.hard_gate ? 'Only owned cards from this source qualify.' : `${mapping.collection.owned_card_count} owned cards bias selection.`}
+                      {' '}Source: {labelize(mapping.collection.source)}.
                     </p>
                   </article>
                   <article>
@@ -820,12 +871,13 @@ export default function GuidedBuild() {
                 <div className="build-phase-boundary">
                   <ShieldCheck aria-hidden="true" />
                   <div>
-                    <strong>{mapping.construction.enabled ? 'Bounded scaffold construction is enabled.' : 'Manual construction stays in control.'}</strong>
+                    <strong>{mapping.construction.enabled ? `${labelize(mapping.construction.requested_mode)} construction is enabled.` : 'Manual construction stays in control.'}</strong>
                     <p>
                       {mapping.construction.enabled
-                        ? 'Phase 4 can propose a validated partial portfolio and basic-land baseline. Unsupported slots remain open.'
+                        ? (mapping.construction.requested_mode === 'complete_draft'
+                          ? 'The promoted constructor can complete the deck only with cards that clear every evidence and hard-gate requirement.'
+                          : 'The bounded scaffold proposes a partial portfolio and basic-land baseline. Unsupported slots remain open.')
                         : 'Saving opens a manual deck without selecting cards.'}
-                      {' '}Complete-list generation remains disabled until Phase 5 promotion.
                     </p>
                   </div>
                 </div>

@@ -7,6 +7,7 @@ const primaryNavigation = [
   { to: '/commanders', label: 'Commanders' },
   { to: '/commander-lookup', label: 'Commander Lab' },
   { to: '/track-list', label: 'Track List' },
+  { to: '/collection', label: 'Collection' },
 ];
 
 export default function AppTopbar({ actions = null, meta = null, showLogout = false }) {
