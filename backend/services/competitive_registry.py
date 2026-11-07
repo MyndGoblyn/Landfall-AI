@@ -26,6 +26,22 @@ class CompetitiveCardRegistry:
             for row in payload.get("cards") or []
             if isinstance(row, Mapping) and row.get("name")
         }
+        configured_public_cards = payload.get("public_cards")
+        self._public_cards = (
+            {
+                str(name).strip().casefold()
+                for name in configured_public_cards
+                if str(name).strip()
+            }
+            if isinstance(configured_public_cards, list)
+            else set(self._cards)
+        )
+        unknown_public_cards = self._public_cards - set(self._cards)
+        if unknown_public_cards:
+            raise ValueError(
+                "Public competitive cards are missing registry rows: "
+                + ", ".join(sorted(unknown_public_cards))
+            )
         self._power_outliers = {
             str(name).strip().casefold()
             for name in payload.get("power_outliers") or []
@@ -44,20 +60,34 @@ class CompetitiveCardRegistry:
     def is_power_outlier(self, card_name: str) -> bool:
         return str(card_name or "").strip().casefold() in self._power_outliers
 
-    def candidate_names(self) -> Iterable[str]:
-        return tuple(row["name"] for row in self._cards.values())
+    def candidate_names(self, *, construction_context: bool = False) -> Iterable[str]:
+        return tuple(
+            row["name"]
+            for key, row in self._cards.items()
+            if construction_context or key in self._public_cards
+        )
 
     def count(self) -> int:
         return len(self._cards)
+
+    def public_count(self) -> int:
+        return len(self._public_cards)
 
     def evidence(
         self,
         card_name: str,
         current_card_names: set[str],
         strategy_priorities: set[str],
+        *,
+        construction_context: bool = False,
     ) -> Optional[Dict]:
         row = self.row(card_name)
         if not row:
+            return None
+        if (
+            not construction_context
+            and str(card_name or "").strip().casefold() not in self._public_cards
+        ):
             return None
         required_any = {
             str(name).strip().casefold()
@@ -72,7 +102,15 @@ class CompetitiveCardRegistry:
             return None
         return row
 
-    def exact_name_query(self, color_filter: str) -> str:
-        names = sorted(self.candidate_names(), key=str.casefold)
+    def exact_name_query(
+        self,
+        color_filter: str,
+        *,
+        construction_context: bool = False,
+    ) -> str:
+        names = sorted(
+            self.candidate_names(construction_context=construction_context),
+            key=str.casefold,
+        )
         exact = " OR ".join(f'!"{name}"' for name in names)
         return f"({exact}) {color_filter} f:commander"

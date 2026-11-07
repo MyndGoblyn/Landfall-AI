@@ -310,6 +310,25 @@ def test_card_type_spread_rewards_scarce_type_and_permanent_engine_penalizes_spe
     assert instant["score"] == 72
     assert "permanent_engine_mismatch" in instant["penalty_tags"]
 
+    construction_planeswalker = apply_invariants_to_suggestion(
+        {
+            "card_name": "Construction Walker",
+            "role_tag": "removal",
+            "score": 82,
+            "confidence": 0.8,
+            "reason": "Removes a permanent.",
+        },
+        {
+            "name": "Construction Walker",
+            "type_line": "Legendary Planeswalker",
+            "oracle_text": "Destroy target creature.",
+        },
+        atraxa,
+        positive_alignment_confidence_cap=0.82,
+    )
+    assert planeswalker["confidence"] == 0.64
+    assert construction_planeswalker["confidence"] == 0.8
+
 
 def test_sacrifice_engine_tracks_components_and_protects_scarce_outlet():
     cards = [

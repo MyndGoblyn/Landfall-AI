@@ -102,3 +102,40 @@ def test_deck_addition_search_is_parallel_but_bounded():
     assert results == []
     assert len(provider.calls) == 7
     assert provider.max_active == 3
+
+
+def test_construction_ramp_search_includes_mana_rocks_without_changing_public_query():
+    public_provider = InjectedProvider()
+    construction_provider = InjectedProvider()
+    public_engine = EnhancedSuggestionEngine(
+        RecordingScryfall(),
+        candidate_provider=public_provider,
+    )
+    construction_engine = EnhancedSuggestionEngine(
+        RecordingScryfall(),
+        candidate_provider=construction_provider,
+    )
+
+    asyncio.run(public_engine._generate_additions(
+        gaps={"roles": {"ramp": {}}},
+        commander=None,
+        color_identity=["U"],
+        current_cards=[],
+        commander_synergies=[],
+        commander_data=None,
+        categories=["ramp"],
+    ))
+    asyncio.run(construction_engine._generate_additions(
+        gaps={"roles": {"ramp": {}}},
+        commander=None,
+        color_identity=["U"],
+        current_cards=[],
+        commander_synergies=[],
+        commander_data=None,
+        categories=["ramp"],
+        construction_context=True,
+    ))
+
+    assert 't:mana' in public_provider.calls[0][0]
+    assert 'o:"add {"' not in public_provider.calls[0][0]
+    assert 'o:"add {"' in construction_provider.calls[0][0]

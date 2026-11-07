@@ -49,6 +49,17 @@ class EvidenceConfidencePolicy:
             score += 0.18
             basis.append("direct commander-plan evidence")
 
+        if "reviewed_commander_plan" in evidence:
+            score += 0.04 if "direct_synergy" in evidence else 0.08
+            basis.append("exact reviewed commander-plan corroboration")
+
+        if "construction_invariant_fit" in evidence:
+            score += 0.05
+            basis.append("verified positive deck-invariant fit")
+        if "construction_role_gap_fit" in evidence:
+            score += 0.05
+            basis.append("measured construction role deficiency")
+
         if "reliable_role_source" in evidence:
             score += 0.14
             basis.append("reliable measured role gain")

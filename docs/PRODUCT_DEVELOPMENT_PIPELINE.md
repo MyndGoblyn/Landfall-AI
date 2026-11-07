@@ -169,7 +169,7 @@ being promoted as ground truth.
 uses the verified local catalog with shareable deterministic filters, reviewed
 and exploratory profile states, current Commander Lab analysis, Track List,
 Discover-similar, and commander-seeded deck creation. The semantic bundle
-contains 13 exact-identity reviewed profiles; every other legal commander keeps
+contains 16 exact-identity reviewed profiles; every other legal commander keeps
 the explicit exploratory path. Release validation passed 235 backend tests,
 the frozen profile evidence benchmark, frontend source smoke and production
 builds, responsive workflow QA, and the Cloudflare deployment dry run.
@@ -290,8 +290,9 @@ fingerprints, selected-card diffs, validation results, and explicit apply
 state. Applying a stale or blocked draft is rejected. The dedicated build
 workspace shows role allocation, hard-gate results, per-card reasoning,
 evidence confidence, verified budget subtotal, revision history, and the Phase
-5 boundary. Production remains capped at 40 proposed slots and protected by
-`BUILD_CONSTRUCTOR_MODE`; complete-draft mode is not promoted.
+5 boundary. The bounded scaffold remains the rollback mode, capped at 40
+proposed slots and protected by `BUILD_CONSTRUCTOR_MODE`. Complete-draft
+promotion is governed by the separate Phase 5 gate below.
 
 Validation passed 257 backend tests, 15 frontend source-smoke groups, the
 optimized production build, and a fresh browser run using a real Meren intent.
@@ -300,9 +301,9 @@ Planner V3 additions, passed all six hard gates, and left 89 main-deck slots
 open rather than inserting filler. Desktop and 390px mobile layouts passed
 visual and horizontal-overflow review.
 
-**Current delivery confidence: 94% for bounded scaffolds.** Confidence for
-complete 100-card drafts remains 84% until the separate Phase 5 golden suite
-and promotion gates pass.
+**Current delivery confidence: 94% for bounded scaffolds and 93% for complete
+drafts on the reviewed Phase 5 matrix.** Complete construction keeps its
+separate runtime flag and rollback path for cases outside the covered matrix.
 
 ## Phase 5 - Builder validation and promotion
 
@@ -346,17 +347,24 @@ serve manual or partial deterministic scaffolds only.
 
 The independent 26-case golden suite, frozen-catalog runner, counterfactual
 contracts, staged candidate-depth construction, exact deck and mana checks,
-and reason/evidence quality gates are implemented. The final calibration passes
-13 of 26 cases, all five negative controls, and all seven explicit
-counterfactual checks. Complete mode remains unpromoted because cEDH, political,
-storm, Voltron, blink, colorless, lands, artifact, and some typal/package pools
-still lack enough evidence-qualified depth. See
-`docs/PHASE5_BUILDER_VALIDATION_REPORT_2026-11-06.md` for the exact decision and
-remaining blockers.
+and reason/evidence quality gates are implemented. The release-candidate
+calibration passes **26 of 26 cases**, all five negative controls, and all seven
+explicit counterfactual expectations without lowering the 0.68 per-card or
+0.72 portfolio confidence floors.
 
-Production stays on the bounded Phase 4 scaffold. Phase 5 work must expand
-reviewed semantic and package evidence; loop-count increases or confidence-floor
-reductions do not satisfy the promotion contract.
+The evidence expansion includes exact-identity reviewed commander-plan
+corroboration, a 120-card construction registry with exact commander gates,
+construction-only ramp retrieval, measured invariant and role-gap evidence,
+and reservation of final slots for unresolved draw, ramp, and interaction
+needs. The public competitive registry remains frozen to its promoted 48-card
+view.
+
+Full validation passes 275 backend tests. The separate 18-deck public V3 suite
+also matches the promoted addition, cut, and swap portfolios exactly, proving
+that complete-construction expansion does not reorder the served analysis
+path. Complete mode now satisfies the controlled-promotion contract and is
+ready for the reversible `BUILD_CONSTRUCTOR_MODE=complete` runtime change. See
+`docs/PHASE5_BUILDER_VALIDATION_REPORT_2026-11-06.md` for the release evidence.
 
 ## Phase 6 - Collection-aware and feedback improvements
 
@@ -388,7 +396,7 @@ commander and builder experience.
 
 ## Overall confidence
 
-**91% confidence that this roadmap will improve versatility, accuracy, and
+**93% confidence that this roadmap will improve versatility, accuracy, and
 user continuity without degrading the current intelligence.**
 
 The confidence comes from reusing the existing intent, invariant, semantic,

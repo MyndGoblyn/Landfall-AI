@@ -1803,6 +1803,7 @@ class EnhancedSuggestionEngine:
         *,
         candidate_pool_depth: int = 20,
         portfolio_limit: Optional[int] = None,
+        use_reviewed_commander_profile: bool = False,
     ) -> Dict:
         """Main analysis entry point with commander synergy and category filtering"""
         analysis_started = time.perf_counter()
@@ -1827,6 +1828,8 @@ class EnhancedSuggestionEngine:
         commander_synergies = []
         commander_constraints = {}
         commander_archetypes = []
+        reviewed_commander_profiles = []
+        reviewed_commander_synergies: Set[str] = set()
         if commander_names:
             commander_cards = [
                 card for card in await asyncio.gather(*(
@@ -1852,6 +1855,25 @@ class EnhancedSuggestionEngine:
                     elif archetype.get('score', 0) > existing.get('score', 0):
                         commander_archetypes.remove(existing)
                         commander_archetypes.append(archetype)
+                if use_reviewed_commander_profile:
+                    (
+                        commander_synergies,
+                        commander_archetypes,
+                        reviewed_profile,
+                    ) = self._merge_reviewed_commander_profile(
+                        card,
+                        commander_synergies,
+                        commander_archetypes,
+                    )
+                    if reviewed_profile:
+                        reviewed_commander_profiles.append(reviewed_profile)
+                        reviewed_commander_synergies.update(
+                            str(value).casefold()
+                            for value in reviewed_profile.get(
+                                'supported_synergies',
+                                [],
+                            )
+                        )
             commander_synergies = self._prioritize_synergies(commander_synergies)
             commander_archetypes.sort(
                 key=lambda row: (-row.get('score', 0), row.get('name', ''))
@@ -1863,6 +1885,19 @@ class EnhancedSuggestionEngine:
                 if color not in color_identity:
                     color_identity.append(color)
         coverage = self._commander_coverage_payload(commander_data, commander_synergies, commander_archetypes)
+        if reviewed_commander_profiles:
+            coverage = dict(coverage)
+            coverage['coverage_signals'] = [
+                *coverage.get('coverage_signals', []),
+                *(
+                    {
+                        'type': 'reviewed_profile',
+                        'label': f"Reviewed commander profile: {profile['name']}",
+                        'strength': profile.get('confidence', 'high'),
+                    }
+                    for profile in reviewed_commander_profiles
+                ),
+            ]
         if coverage['coverage_level'] == 'exploratory' and coverage.get('heuristic_signals'):
             commander_synergies = self._supplement_synergies_from_heuristics(
                 commander_synergies,
@@ -1922,6 +1957,8 @@ class EnhancedSuggestionEngine:
             planner_diagnostics=planner_diagnostics,
             candidate_pool_depth=candidate_pool_depth,
             portfolio_limit=portfolio_limit,
+            reviewed_commander_synergies=reviewed_commander_synergies,
+            construction_context=use_reviewed_commander_profile,
         )
         finish_stage('addition_retrieval_and_ranking')
         suggestions_cut = await self._generate_cuts(
@@ -3568,7 +3605,9 @@ class EnhancedSuggestionEngine:
                                    strategy_profile: Optional[StrategyProfile] = None,
                                    planner_diagnostics: Optional[Dict] = None,
                                    candidate_pool_depth: int = 20,
-                                   portfolio_limit: Optional[int] = None) -> List[Dict]:
+                                   portfolio_limit: Optional[int] = None,
+                                   reviewed_commander_synergies: Optional[Set[str]] = None,
+                                   construction_context: bool = False) -> List[Dict]:
         """Generate enhanced card addition suggestions with commander synergy and categories"""
         current_card_names = {card['name'].lower() for card in current_cards}
         current_card_names.update(
@@ -3591,11 +3630,20 @@ class EnhancedSuggestionEngine:
             )
         deck_context = self._deck_context_summary(current_cards)
         heuristic_signal_notes = heuristic_signal_notes or {}
+        reviewed_commander_synergies = {
+            str(value).casefold()
+            for value in (reviewed_commander_synergies or set())
+        }
         commander_constraints = commander_constraints or {}
         normalized_intent = normalize_intent_profile(intent_profile)
         budget_context = budget_context or build_budget_context(
             current_cards,
             normalized_intent,
+        )
+        ramp_query = (
+            '(o:search o:land OR o:treasure OR o:"add {" OR (o:add o:mana))'
+            if construction_context
+            else '(o:search o:land OR o:treasure OR t:mana)'
         )
         
         # Build prioritized search queries based on categories or gaps
@@ -3605,7 +3653,7 @@ class EnhancedSuggestionEngine:
         if categories:
             color_filter = self._color_identity_filter(color_identity)
             category_map = {
-                'ramp': ('ramp', f"(o:search o:land OR o:treasure OR t:mana) {color_filter} f:commander"),
+                'ramp': ('ramp', f"{ramp_query} {color_filter} f:commander"),
                 'draw': ('draw', f"o:draw {color_filter} f:commander"),
                 'removal': ('removal', f"(o:destroy o:target OR o:exile o:target) {color_filter} f:commander"),
                 'counter': ('counter', f"o:counter o:target o:spell {color_filter} f:commander"),
@@ -3634,7 +3682,8 @@ class EnhancedSuggestionEngine:
                 queries.append((
                     'competitive:registry',
                     self.competitive_registry.exact_name_query(
-                        self._color_identity_filter(color_identity)
+                        self._color_identity_filter(color_identity),
+                        construction_context=construction_context,
                     ),
                 ))
             if (
@@ -3669,7 +3718,7 @@ class EnhancedSuggestionEngine:
             if 'ramp' in gaps['roles']:
                 queries.append((
                     'ramp',
-                    f"(o:search o:land OR o:treasure OR t:mana) {self._color_identity_filter(color_identity)} f:commander"
+                    f"{ramp_query} {self._color_identity_filter(color_identity)} f:commander"
                 ))
             
             if 'protection' in gaps['roles']:
@@ -3803,6 +3852,7 @@ class EnhancedSuggestionEngine:
                             extracted['name'],
                             current_card_names,
                             set(normalized_intent.get('strategy_priorities') or []),
+                            construction_context=construction_context,
                         )
                         if not competitive_row:
                             continue
@@ -3886,6 +3936,7 @@ class EnhancedSuggestionEngine:
                             deck_context,
                             heuristic_signal_notes,
                             preferred_lane=query_display_role,
+                            reviewed_commander_synergies=reviewed_commander_synergies,
                         )
                         if not cross_lane:
                             continue
@@ -3917,6 +3968,12 @@ class EnhancedSuggestionEngine:
                             extracted,
                             display_role,
                             deck_context,
+                        )
+                        quality = self._apply_reviewed_commander_plan_evidence(
+                            quality,
+                            extracted,
+                            requested_synergy,
+                            reviewed_commander_synergies,
                         )
                         if requested_synergy in heuristic_signal_notes:
                             quality = self._mark_quality_as_heuristic(
@@ -4005,6 +4062,7 @@ class EnhancedSuggestionEngine:
                             extracted['name'],
                             current_card_names,
                             set(normalized_intent.get('strategy_priorities') or []),
+                            construction_context=construction_context,
                         )
                     if competitive_row:
                         suggestion = self._attach_competitive_evidence(
@@ -4038,9 +4096,16 @@ class EnhancedSuggestionEngine:
                         suggestion,
                         extracted,
                         deck_invariants or {},
+                        positive_alignment_confidence_cap=(
+                            0.82 if construction_context else 0.64
+                        ),
                     )
                     if suggestion is None:
                         continue
+                    if construction_context:
+                        suggestion = self._attach_construction_evidence(
+                            suggestion
+                        )
                     if self.planner_mode == 'v3':
                         suggestion = self.confidence_policy.apply(
                             suggestion,
@@ -5533,6 +5598,66 @@ class EnhancedSuggestionEngine:
         adjusted['confidence'] = max(self._quality_confidence_value(adjusted), min(0.95, score / 100))
         return adjusted
 
+    def _apply_reviewed_commander_plan_evidence(
+        self,
+        quality: Dict,
+        card_data: Dict,
+        lane: Optional[str],
+        reviewed_commander_synergies: Optional[Set[str]],
+    ) -> Dict:
+        """Corroborate a semantic card match with an exact reviewed profile.
+
+        The profile proves that the lane belongs to this exact commander, but
+        it does not prove that every retrieved card is a fit. The evidence is
+        therefore attached only after the candidate independently matches the
+        same semantic lane.
+        """
+        normalized_lane = str(lane or '').casefold()
+        reviewed = {
+            str(value).casefold()
+            for value in (reviewed_commander_synergies or set())
+        }
+        if (
+            not normalized_lane
+            or normalized_lane not in reviewed
+            or not self._card_matches_synergy(card_data, normalized_lane)
+        ):
+            return quality
+        adjusted = {
+            **quality,
+            'evidence_tags': list(quality.get('evidence_tags', [])),
+            'penalty_tags': list(quality.get('penalty_tags', [])),
+        }
+        if 'reviewed_commander_plan' not in adjusted['evidence_tags']:
+            adjusted['evidence_tags'].append('reviewed_commander_plan')
+        return adjusted
+
+    @staticmethod
+    def _attach_construction_evidence(suggestion: Dict) -> Dict:
+        """Expose already-measured construction facts to confidence scoring."""
+        adjusted = {
+            **suggestion,
+            'evidence_tags': list(suggestion.get('evidence_tags', [])),
+            'penalty_tags': list(suggestion.get('penalty_tags', [])),
+        }
+        evidence = set(adjusted['evidence_tags'])
+        if (
+            adjusted.get('invariant_alignment')
+            and not adjusted.get('invariant_warnings')
+            and (
+                float(adjusted.get('invariant_score_delta') or 0) > 0
+                or 'archetype_invariant' in evidence
+            )
+        ):
+            evidence.add('construction_invariant_fit')
+        if (
+            float(adjusted.get('effective_role_gain') or 0) > 0
+            and evidence & {'needed_role', 'role_gap', 'role_gap_overlap'}
+        ):
+            evidence.add('construction_role_gap_fit')
+        adjusted['evidence_tags'] = sorted(evidence)
+        return adjusted
+
     def _evaluate_candidate_across_plan_lanes(
         self,
         card_data: Dict,
@@ -5544,6 +5669,7 @@ class EnhancedSuggestionEngine:
         deck_context: Dict,
         heuristic_signal_notes: Optional[Dict[str, List[Dict]]] = None,
         preferred_lane: Optional[str] = None,
+        reviewed_commander_synergies: Optional[Set[str]] = None,
     ) -> Optional[Dict]:
         """Evaluate one card against every compatible V3 plan and role lane."""
         heuristic_signal_notes = heuristic_signal_notes or {}
@@ -5594,6 +5720,12 @@ class EnhancedSuggestionEngine:
                 quality,
                 card_data,
                 commander_constraints,
+            )
+            quality = self._apply_reviewed_commander_plan_evidence(
+                quality,
+                card_data,
+                synergy,
+                reviewed_commander_synergies,
             )
             if synergy in heuristic_signal_notes:
                 quality = self._mark_quality_as_heuristic(

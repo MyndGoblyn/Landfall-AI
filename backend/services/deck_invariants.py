@@ -147,6 +147,8 @@ def apply_invariants_to_suggestion(
     suggestion: Mapping,
     card_data: Mapping,
     invariants: Mapping,
+    *,
+    positive_alignment_confidence_cap: float = 0.64,
 ) -> Optional[Dict]:
     result = dict(suggestion)
     traits = card_invariant_traits(card_data, invariants)
@@ -309,8 +311,13 @@ def apply_invariants_to_suggestion(
 
     result["score"] = max(0, int(result.get("score") or 0) + score_delta)
     if score_delta:
+        confidence_cap = (
+            positive_alignment_confidence_cap
+            if score_delta > 0
+            else 0.64
+        )
         result["confidence"] = round(
-            min(float(result.get("confidence") or 0), 0.64),
+            min(float(result.get("confidence") or 0), confidence_cap),
             2,
         )
     result["invariant_traits"] = traits

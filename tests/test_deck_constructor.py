@@ -12,6 +12,7 @@ if str(BACKEND_PATH) not in sys.path:
 
 from services.build_intent import normalize_build_intent
 from services.deck_constructor import ConstructorUnavailable, DeckConstructor
+from services.enhanced_suggestion_engine import EnhancedSuggestionEngine
 
 
 def card(
@@ -198,6 +199,26 @@ class FakeIterativeEngine:
         }
 
 
+class FakeReviewedConstructionEngine:
+    def __init__(self):
+        self.calls = []
+
+    async def _generate_additions(self):
+        return []
+
+    async def analyze_deck(self, _deck, deep=False, **kwargs):
+        assert deep
+        self.calls.append(kwargs)
+        return {
+            "coverage_level": "deep",
+            "strategy_profile": {"lanes": []},
+            "recommendation_planner": {
+                "portfolio_version": "evidence-portfolio-v3",
+            },
+            "suggestions_add": [],
+        }
+
+
 def intent(**updates):
     value = {
         "confirmed": True,
@@ -335,3 +356,70 @@ def test_complete_mode_reanalyzes_after_each_evidence_portfolio():
         if card["source"] == "planner_v3"
     ] == [1, 2]
     assert result["status"] == "ready_partial"
+
+
+def test_complete_mode_enables_reviewed_profiles_without_changing_public_default():
+    engine = FakeReviewedConstructionEngine()
+    complete_constructor = DeckConstructor(
+        engine,
+        FakeScryfall([MEREN, SWAMP, FOREST]),
+        mode="complete",
+    )
+
+    asyncio.run(complete_constructor.construct(
+        {"commander": MEREN["name"], "commanders": [MEREN["name"]], "cards": []},
+        intent(build_mode="complete_draft", build_shape="full_deck"),
+    ))
+
+    assert engine.calls
+    assert all(
+        call["use_reviewed_commander_profile"] is True
+        for call in engine.calls
+    )
+    assert EnhancedSuggestionEngine.analyze_deck.__kwdefaults__[
+        "use_reviewed_commander_profile"
+    ] is False
+
+
+def test_complete_mode_does_not_optimize_through_intentional_jank_constraints():
+    engine = FakeReviewedConstructionEngine()
+    complete_constructor = DeckConstructor(
+        engine,
+        FakeScryfall([MEREN, SWAMP, FOREST]),
+        mode="complete",
+    )
+
+    asyncio.run(complete_constructor.construct(
+        {"commander": MEREN["name"], "commanders": [MEREN["name"]], "cards": []},
+        intent(
+            build_mode="complete_draft",
+            build_shape="full_deck",
+            intentional_constraints=["intentional_jank", "flavor_first"],
+        ),
+    ))
+
+    assert engine.calls
+    assert all(
+        call["use_reviewed_commander_profile"] is False
+        for call in engine.calls
+    )
+
+
+def test_complete_role_reservation_tracks_structural_deficits():
+    records = [
+        {"role": "draw", "qty": 4},
+        {"role": "mana rock", "qty": 2},
+        {"role": "removal", "qty": 3},
+        {"role": "protection", "qty": 2},
+        {"role": "protected package", "qty": 20},
+    ]
+
+    assert DeckConstructor._complete_role_deficits(records) == {
+        "draw": 1,
+        "ramp": 4,
+        "interaction": 3,
+    }
+    assert DeckConstructor._structural_role_group("card velocity") == "draw"
+    assert DeckConstructor._structural_role_group("ramp") == "ramp"
+    assert DeckConstructor._structural_role_group("sweeper") == "interaction"
+    assert DeckConstructor._structural_role_group("landfall") is None

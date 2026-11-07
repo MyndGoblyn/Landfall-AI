@@ -271,6 +271,11 @@ class DeckConstructor:
     # fixes.  Moderate (0.68+) evidence is allowed for the latter, while the
     # independent Phase 5 gate enforces a stronger portfolio-wide average.
     COMPLETE_CONFIDENCE_FLOOR = 0.68
+    COMPLETE_ROLE_FLOORS = {
+        "draw": 5,
+        "ramp": 6,
+        "interaction": 8,
+    }
     COMPLETE_PASS_FOCUS = (
         None,
         "draw",
@@ -308,6 +313,50 @@ class DeckConstructor:
             "max_scaffold_slots": self.max_scaffold_slots,
             "complete_drafts_enabled": self.mode == "complete",
         }
+
+    @classmethod
+    def _complete_role_deficits(
+        cls,
+        records: Sequence[Mapping],
+    ) -> Dict[str, int]:
+        counts = Counter()
+        for record in records:
+            role = _name(record.get("role")).casefold()
+            qty = max(1, _quantity(record.get("qty", 1)))
+            if any(token in role for token in (
+                "draw", "card flow", "card velocity", "advantage",
+            )):
+                counts["draw"] += qty
+            if any(token in role for token in (
+                "ramp", "acceleration", "mana rock",
+            )):
+                counts["ramp"] += qty
+            if any(token in role for token in (
+                "removal", "interaction", "counter", "sweeper", "protection",
+            )):
+                counts["interaction"] += qty
+        return {
+            role: max(0, floor - counts[role])
+            for role, floor in cls.COMPLETE_ROLE_FLOORS.items()
+        }
+
+    @classmethod
+    def _structural_role_group(cls, role: Any) -> Optional[str]:
+        normalized = _name(role).casefold()
+        for group in cls.COMPLETE_ROLE_FLOORS:
+            if group == "draw" and any(token in normalized for token in (
+                "draw", "card flow", "card velocity", "advantage",
+            )):
+                return group
+            if group == "ramp" and any(token in normalized for token in (
+                "ramp", "acceleration", "mana rock",
+            )):
+                return group
+            if group == "interaction" and any(token in normalized for token in (
+                "removal", "interaction", "counter", "sweeper", "protection",
+            )):
+                return group
+        return None
 
     def source_fingerprint(self, deck: Mapping, normalized_build: Mapping) -> str:
         cards = sorted(
@@ -792,6 +841,13 @@ class DeckConstructor:
 
         maximum_passes = self.COMPLETE_PASS_LIMIT if self.mode == "complete" else 1
         supports_focused_passes = hasattr(self.engine, "_generate_additions")
+        intentional_constraints = {
+            _name(value).casefold()
+            for value in intent.get("intentional_constraints") or []
+        }
+        use_construction_evidence = not bool(
+            intentional_constraints & {"intentional_jank", "flavor_first"}
+        )
         discovered_synergies: List[str] = []
         structural_focus_index = 0
         synergy_focus_index = 0
@@ -861,6 +917,11 @@ class DeckConstructor:
                     # left.  Shrinking the optimizer input to the remaining
                     # capacity changes which card wins that final slot.
                     portfolio_limit=10 if pass_index <= 36 else 24,
+                    # Complete construction may use exact-identity reviewed
+                    # commander evidence. Public deck analysis keeps its
+                    # default-off path and therefore retains its promoted V3
+                    # ordering.
+                    use_reviewed_commander_profile=use_construction_evidence,
                 )
             else:
                 analysis = await self.engine.analyze_deck(analysis_deck, deep=True)
@@ -943,6 +1004,28 @@ class DeckConstructor:
                         card_name,
                     )
                     continue
+                if self.mode == "complete":
+                    deficits = self._complete_role_deficits([
+                        *fixed_records,
+                        *selected_records,
+                    ])
+                    candidate_group = self._structural_role_group(
+                        suggestion.get("role_tag")
+                    )
+                    unresolved_deficit_slots = sum(deficits.values())
+                    remaining_slots_after_candidate = max(
+                        0,
+                        candidate_capacity - accepted_this_pass - 1,
+                    )
+                    if (
+                        deficits.get(candidate_group or "", 0) <= 0
+                        and remaining_slots_after_candidate
+                        < unresolved_deficit_slots
+                    ):
+                        # Keep the final nonland slots open for measured deck
+                        # health needs. A later focused pass may spend them;
+                        # theme cards must not crowd those needs out.
+                        continue
                 if not accept_price(card, 1):
                     continue
                 evidence = [

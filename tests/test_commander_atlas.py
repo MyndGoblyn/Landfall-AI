@@ -62,6 +62,28 @@ def test_reviewed_profiles_require_exact_oracle_identity():
     assert registry.count() >= 12
 
 
+def test_phase5_reviewed_profiles_cover_remaining_complete_build_archetypes():
+    registry = CommanderProfileRegistry.load_default()
+    kozilek = registry.match({
+        "oracle_id": "4c1c1537-e519-4e2f-9bc2-d34b289d4487",
+        "name": "Kozilek, the Great Distortion",
+    })
+    sythis = registry.match({
+        "oracle_id": "0fc64fd6-f057-4056-9dca-47accb7ff036",
+        "name": "Sythis, Harvest's Hand",
+    })
+
+    assert kozilek["supported_synergies"] == [
+        "colorless_big_mana",
+        "control_finisher",
+    ]
+    assert sythis["supported_synergies"] == ["enchantment"]
+    assert registry.match({
+        "oracle_id": "wrong-sythis",
+        "name": "Sythis, Harvest's Hand",
+    }) is None
+
+
 def test_reviewed_profile_adds_inspectable_archetype_evidence():
     engine = EnhancedSuggestionEngine(scryfall_service=None)
     card = _card(
@@ -88,6 +110,74 @@ def test_reviewed_profile_adds_inspectable_archetype_evidence():
         "reviewed_commander_profile" in entry["evidence_sources"]
         for entry in archetypes
     )
+
+
+def test_reviewed_plan_evidence_requires_both_profile_and_card_lane_match():
+    engine = EnhancedSuggestionEngine(scryfall_service=None)
+    quality = {
+        "evidence_tags": ["mechanic_core"],
+        "penalty_tags": [],
+    }
+    aura = {
+        "name": "Reviewed Aura",
+        "type_line": "Enchantment — Aura",
+        "oracle_text": "Enchant creature. Enchanted creature gets +2/+2.",
+    }
+
+    corroborated = engine._apply_reviewed_commander_plan_evidence(
+        quality,
+        aura,
+        "enchantment",
+        {"enchantment", "voltron"},
+    )
+    wrong_profile = engine._apply_reviewed_commander_plan_evidence(
+        quality,
+        aura,
+        "enchantment",
+        {"graveyard"},
+    )
+    wrong_card_lane = engine._apply_reviewed_commander_plan_evidence(
+        quality,
+        aura,
+        "graveyard",
+        {"graveyard"},
+    )
+
+    assert "reviewed_commander_plan" in corroborated["evidence_tags"]
+    assert "reviewed_commander_plan" not in wrong_profile["evidence_tags"]
+    assert "reviewed_commander_plan" not in wrong_card_lane["evidence_tags"]
+
+
+def test_construction_evidence_requires_measured_gain_and_positive_invariant():
+    supported = EnhancedSuggestionEngine._attach_construction_evidence({
+        "evidence_tags": ["needed_role", "effective_role_gain"],
+        "penalty_tags": [],
+        "effective_role_gain": 0.7,
+        "invariant_score_delta": 5,
+        "invariant_alignment": ["Strengthens an underrepresented card type"],
+    })
+    unsupported = EnhancedSuggestionEngine._attach_construction_evidence({
+        "evidence_tags": ["needed_role"],
+        "penalty_tags": [],
+        "effective_role_gain": 0,
+        "invariant_score_delta": -5,
+        "invariant_alignment": [],
+    })
+
+    assert "construction_role_gap_fit" in supported["evidence_tags"]
+    assert "construction_invariant_fit" in supported["evidence_tags"]
+    assert "construction_role_gap_fit" not in unsupported["evidence_tags"]
+    assert "construction_invariant_fit" not in unsupported["evidence_tags"]
+
+    preserving = EnhancedSuggestionEngine._attach_construction_evidence({
+        "evidence_tags": ["archetype_invariant"],
+        "penalty_tags": [],
+        "effective_role_gain": 0,
+        "invariant_score_delta": 0,
+        "invariant_alignment": ["Preserves instant/sorcery density"],
+        "invariant_warnings": [],
+    })
+    assert "construction_invariant_fit" in preserving["evidence_tags"]
 
 
 def test_reviewed_profile_benchmark_has_actionable_evidence():
