@@ -4,7 +4,7 @@ import axios from 'axios';
 import { ArrowLeft, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import AppTopbar from '../components/AppTopbar';
-import { CoverageNotice, RecommendedCardsPager, StrategyPager } from '../components/CommanderAnalysisSections';
+import { CoverageNotice, RecommendedCardsPager, StrategyPager, ThemeEvidence } from '../components/CommanderAnalysisSections';
 import { ManaPipRow } from '../components/ManaSymbols';
 import TrackCommanderButton from '../components/TrackCommanderButton';
 import { useAuth } from '../context/AuthContext';
@@ -219,15 +219,7 @@ export default function CommanderProfile() {
               </div>
             </div>
           </section>
-        ) : (
-          <section className="profile-unreviewed-notice">
-            <p className="page-eyebrow">Exploratory profile</p>
-            <h2>This commander does not have a reviewed profile yet.</h2>
-            <p>
-              The analysis below is still deterministic, but it relies on oracle text, registered mechanics, and archetype signals rather than commander-specific reviewed evidence.
-            </p>
-          </section>
-        )}
+        ) : null}
 
         <section className="profile-analysis-grid">
           <div className="glass-panel p-6">
@@ -236,11 +228,7 @@ export default function CommanderProfile() {
           </div>
           <div className="glass-panel p-6 profile-synergy-panel">
             <h2>Synergy themes</h2>
-            <div className="profile-tag-row">
-              {(commander.synergies || []).map((item) => (
-                <span key={item}>{labelize(item)}</span>
-              ))}
-            </div>
+            <ThemeEvidence commanderData={commander} />
           </div>
         </section>
 

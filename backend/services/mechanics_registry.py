@@ -281,6 +281,15 @@ class MechanicsRegistry:
 
     def __init__(self, entries: List[Dict]):
         self.entries = entries
+        self._pattern_specs: Dict[str, tuple[str, Optional[re.Pattern]]] = {}
+        self._requirements_cache: Dict[tuple[str, ...], List[tuple[str, ...]]] = {}
+        for entry in entries:
+            for pattern in [
+                *(entry.get("oracle_patterns") or []),
+                *(entry.get("rules_text_patterns") or []),
+            ]:
+                self._pattern_spec(pattern)
+            self._requirement_options(entry.get("requires") or [])
         self._by_term = self._build_term_index(entries)
 
     @classmethod
@@ -318,36 +327,59 @@ class MechanicsRegistry:
     def count(self) -> int:
         return len(self.entries)
 
-    def _pattern_matches(self, pattern: str, haystack: str, type_line: str) -> bool:
+    def _pattern_spec(self, pattern: str) -> tuple[str, Optional[re.Pattern]]:
+        cached = self._pattern_specs.get(pattern)
+        if cached is not None:
+            return cached
         normalized = self.normalize_text(pattern)
         if not normalized:
-            return False
+            spec = ("never", None)
+        elif normalized in {"tap", "add", "draw", "search", "exile"}:
+            spec = ("word", re.compile(rf"\b{re.escape(normalized)}\b"))
+        elif re.fullmatch(r"[a-z][a-z'-]*", normalized):
+            spec = ("word", re.compile(rf"\b{re.escape(normalized)}\b"))
+        elif re.search(r"[a-z0-9][\w' +/-]*[a-z0-9]", normalized):
+            spec = (normalized, None)
+        else:
+            spec = ("never", None)
+        self._pattern_specs[pattern] = spec
+        return spec
 
-        if normalized in {"tap", "add", "draw", "search", "exile"}:
-            return re.search(rf"\b{re.escape(normalized)}\b", haystack) is not None
+    def _pattern_matches(self, pattern: str, haystack: str, type_line: str) -> bool:
+        del type_line  # The normalized type line is already part of haystack.
+        token, compiled = self._pattern_spec(pattern)
+        if compiled is not None:
+            return compiled.search(haystack) is not None
+        return token != "never" and token in haystack
 
-        if re.fullmatch(r"[a-z][a-z'-]*", normalized):
-            return re.search(rf"\b{re.escape(normalized)}\b", haystack) is not None
-
-        if normalized in type_line:
-            return True
-
-        if re.search(r"[a-z0-9][\w' +/-]*[a-z0-9]", normalized):
-            return normalized in haystack
-
-        return False
+    def _requirement_options(
+        self,
+        requires: Iterable[str],
+    ) -> List[tuple[str, ...]]:
+        key = tuple(str(requirement) for requirement in requires if requirement)
+        cached = self._requirements_cache.get(key)
+        if cached is not None:
+            return cached
+        options = []
+        for requirement in key:
+            normalized = self.normalize_text(requirement)
+            variants = [normalized]
+            variants.extend(
+                self.normalize_text(pattern)
+                for pattern in self.REQUIREMENT_PATTERNS.get(normalized, [])
+            )
+            options.append(tuple(value for value in variants if value))
+        self._requirements_cache[key] = options
+        return options
 
     def _requirements_met(self, requires: Iterable[str], context: str) -> bool:
-        requirements = [self.normalize_text(requirement) for requirement in requires if requirement]
+        requirements = self._requirement_options(requires)
         if not requirements:
             return True
 
-        for requirement in requirements:
-            if requirement in context:
+        for variants in requirements:
+            if any(value in context for value in variants):
                 return True
-            for pattern in self.REQUIREMENT_PATTERNS.get(requirement, []):
-                if self.normalize_text(pattern) in context:
-                    return True
         return False
 
     def _score_entry(self, entry: Dict, matched_patterns: List[str], requirements_met: bool) -> int:

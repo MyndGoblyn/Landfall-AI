@@ -108,6 +108,7 @@ class InMemoryDB:
         self.rate_limits = InMemoryCollection()
         self.scryfall_cards = InMemoryCollection()
         self.scryfall_searches = InMemoryCollection()
+        self.commander_profile_cache = InMemoryCollection()
 
 
 class InMemoryClient:

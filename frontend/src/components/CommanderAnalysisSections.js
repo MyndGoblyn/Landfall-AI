@@ -70,27 +70,61 @@ export function StrategyPager({ commanderData }) {
 
 export function CoverageNotice({ data }) {
   const level = data?.coverage_level;
-  if (!level || level === 'deep') return null;
+  if (level !== 'exploratory') return null;
 
-  const title = level === 'exploratory' ? 'Exploratory Coverage' : 'Partial Coverage';
-  const signals = data?.coverage_signals || [];
+  const note = (data?.coverage_notes || '')
+    .replace(/^Exploratory coverage:\s*/i, '')
+    .replace(/^Exploratory\s*/i, '');
 
   return (
     <div className={`coverage-notice coverage-${level}`} data-testid="coverage-notice">
       <Info className="coverage-notice-icon" />
       <div className="coverage-notice-copy">
-        <div className="coverage-notice-title">{title}</div>
-        <p>{data?.coverage_notes || 'This result is based on limited deterministic coverage.'}</p>
-        {signals.length > 0 && (
-          <div className="coverage-signal-row">
-            {signals.slice(0, 5).map((signal, idx) => (
-              <span key={`${signal.type}-${signal.label}-${idx}`} className="theme-pill">
-                {signal.label}
-              </span>
+        <div className="coverage-notice-title">Limited strategy signal</div>
+        <p>
+          {note || 'The rules text does not identify one clear build-around plan, so the recommendations are intentionally narrower.'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function ThemeEvidence({ commanderData }) {
+  const evidence = (commanderData?.theme_evidence || [])
+    .filter((item) => item.tier === 'primary' || item.tier === 'supporting');
+  const fallback = (commanderData?.synergies || []).map((id) => ({
+    id,
+    label: id.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()),
+    tier: 'primary',
+  }));
+  const themes = evidence.length > 0 ? evidence : fallback;
+  const groups = [
+    { tier: 'primary', label: 'Primary plan' },
+    { tier: 'supporting', label: 'Supporting themes' },
+  ].map((group) => ({
+    ...group,
+    themes: themes.filter((item) => item.tier === group.tier),
+  })).filter((group) => group.themes.length > 0);
+
+  if (groups.length === 0) {
+    return <p className="page-copy">No reliable build-around theme cleared the evidence floor.</p>;
+  }
+
+  return (
+    <div className="space-y-5" data-testid="theme-evidence">
+      {groups.map((group) => (
+        <div key={group.tier}>
+          <p className="page-eyebrow mb-2">{group.label}</p>
+          <div className="grid gap-2">
+            {group.themes.map((theme) => (
+              <div key={theme.id} className="tip-panel p-3">
+                <span className="font-semibold">{theme.label}</span>
+                {theme.reason && <p className="page-copy text-sm mt-1">{theme.reason}</p>}
+              </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -141,16 +175,22 @@ export function RecommendedCardsPager({
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <h4 className="font-semibold text-lg">{card.name}</h4>
-                {card.score && <span className="recommendation-score">{card.score}</span>}
               </div>
               <p className="text-sm page-copy mb-3">{card.reason}</p>
               <div className="flex gap-2 text-xs flex-wrap">
-                {card.fit_tier && <span className="theme-pill">{card.fit_tier}</span>}
+                {card.recommendation_lane && (
+                  <span className="theme-pill">
+                    {card.recommendation_lane === 'plan' ? 'Core plan' : 'Deck support'}
+                  </span>
+                )}
                 <span className="theme-pill">{card.job || card.role}</span>
-                {card.mechanic && <span className="theme-pill">{card.mechanic}</span>}
-                {card.evidence && <span className="theme-pill">{card.evidence}</span>}
                 <span className="theme-pill">Mana Value {card.cmc}</span>
               </div>
+              {card.reason_facts?.limitations?.[0] && (
+                <p className="page-copy text-xs mt-2">
+                  Caveat: {card.reason_facts.limitations[0]}.
+                </p>
+              )}
             </div>
           </div>
         ))}

@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import AppTopbar from '../components/AppTopbar';
-import { CoverageNotice, RecommendedCardsPager, StrategyPager } from '../components/CommanderAnalysisSections';
+import { CoverageNotice, RecommendedCardsPager, StrategyPager, ThemeEvidence } from '../components/CommanderAnalysisSections';
 import { ManaPipRow } from '../components/ManaSymbols';
 import { useAuth } from '../context/AuthContext';
 import { API } from '../lib/api';
@@ -132,8 +132,6 @@ export default function CommanderLookup() {
   const colorText = commanderData?.color_identity?.length
     ? commanderData.color_identity.join('')
     : 'Colorless';
-  const formatSynergy = (synergy) => synergy.replace(/_/g, ' ');
-
   return (
     <div className="app-shell">
       <AppTopbar />
@@ -272,16 +270,10 @@ export default function CommanderLookup() {
               <StrategyPager commanderData={commanderData} />
             </div>
 
-            {commanderData.synergies && commanderData.synergies.length > 0 && (
+            {(commanderData.theme_evidence?.length > 0 || commanderData.synergies?.length > 0) && (
               <div className="glass-panel p-6">
                 <h3 className="text-2xl font-semibold mb-4">Synergy Themes</h3>
-                <div className="flex flex-wrap gap-2">
-                  {commanderData.synergies.map((synergy, idx) => (
-                    <span key={idx} className="theme-pill capitalize">
-                      {formatSynergy(synergy)}
-                    </span>
-                  ))}
-                </div>
+                <ThemeEvidence commanderData={commanderData} />
               </div>
             )}
 

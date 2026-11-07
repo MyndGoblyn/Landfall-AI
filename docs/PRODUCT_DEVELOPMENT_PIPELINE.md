@@ -456,6 +456,39 @@ addition, cut, and swap ordering in all 18 cases. See
 interaction design refinement, not a detected recommendation-quality change.
 The workflow remains bounded to one explicitly confirmed action at a time.
 
+## Phase 8 - Commander intelligence and profile performance
+
+Phase 8 improves the shared commander-profile path without changing the
+promoted imported-deck analysis contract.
+
+- Batch local candidate queries in one popularity-ordered catalog pass.
+- Compile semantic patterns once and expose per-stage server timing.
+- Add process-memory and versioned persistent commander-profile caches.
+- Classify theme evidence as primary, supporting, or incidental.
+- Reserve visible recommendation capacity for the commander's primary plan.
+- Diversify repeated card jobs within a theme.
+- Distinguish repeatable sacrifice outlets from one-shot sacrifice costs.
+- Replace internal ranker/portfolio language with rules-text reasoning.
+- Show a limitation banner only for genuinely exploratory profiles.
+
+### Phase 8 implementation checkpoint — 2026-11-07
+
+The local ten-profile benchmark records a 383 ms median and 592 ms observed
+p95, with no sample above 750 ms. Persistent-cache retrieval is below 1 ms in
+the local harness. The full 3,470-commander audit classifies 2,728 profiles as
+direct-plan, 367 as supporting, and 375 as exploratory while suppressing 1,154
+incidental signals from plan selection.
+
+Release validation passes **287 backend tests**, the frontend production build,
+all **17/17** frontend source-smoke groups, the complete **26/26** constructor
+matrix, and a fresh 18-deck run. Legacy, V2, and V3 additions, cuts, and swaps
+exactly match the Phase 7 release artifact in all 18 cases. See
+`docs/PHASE8_COMMANDER_INTELLIGENCE_PERFORMANCE_REPORT_2026-11-07.md`.
+
+**Release-candidate confidence: 92%.** Production network and Mongo latency
+remain to be measured after deployment; no local deterministic-quality or
+non-regression gate is failing.
+
 ## Recommended build order
 
 | Priority | Work | Why now | Promotion requirement |
@@ -467,6 +500,7 @@ The workflow remains bounded to one explicitly confirmed action at a time.
 | P5 | Partial scaffold constructor | Reuses V3 while limiting global composition risk | Builder golden suite and abstention behavior |
 | P6 | Complete draft constructor | Adds role allocation, package graph, and mana base | All Phase 5 promotion gates |
 | P7 | Collection-aware building | Personalizes candidate availability | Privacy and owned-only hard-gate tests |
+| P8 | Commander intelligence and performance | Improves the most visible discovery/profile output | Latency, theme precision, explanation, and exact deck non-regression gates |
 
 ## Overall confidence
 

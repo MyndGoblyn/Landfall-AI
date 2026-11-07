@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from pathlib import Path
@@ -67,6 +68,12 @@ class LocalCatalogCandidateProvider:
     async def search_cards(self, query: str, limit: int) -> List[Dict]:
         return await self.catalog.search_async(query, limit)
 
+    async def search_many(
+        self,
+        requests: List[tuple[str, int]],
+    ) -> Dict[str, List[Dict]]:
+        return await self.catalog.search_many_async(requests)
+
     def get_status(self) -> Dict:
         return {
             "type": "local_catalog",
@@ -124,6 +131,61 @@ class FallbackCandidateProvider:
         if results:
             self.counters["fallback_hits"] += 1
         return results
+
+    async def search_many(
+        self,
+        requests: List[tuple[str, int]],
+    ) -> Dict[str, List[Dict]]:
+        """Use the local batch path, falling back only for empty queries."""
+        ordered = list(requests)
+        primary_many = getattr(self.primary, "search_many", None)
+        if not callable(primary_many):
+            return {
+                query: rows
+                for (query, _limit), rows in zip(
+                    ordered,
+                    await asyncio.gather(*(
+                        self.search_cards(query, limit)
+                        for query, limit in ordered
+                    )),
+                )
+            }
+
+        try:
+            results = await primary_many(ordered)
+        except Exception as exc:
+            self.counters["primary_errors"] += len(ordered)
+            logger.warning(
+                "Local candidate catalog batch search failed; using Scryfall: %s",
+                exc,
+            )
+            results = {}
+
+        missing = []
+        for query, limit in ordered:
+            if results.get(query):
+                self.counters["primary_hits"] += 1
+            elif self.fallback_on_empty:
+                self.counters["primary_empty"] += 1
+                missing.append((query, limit))
+
+        if not missing:
+            return {query: list(results.get(query) or []) for query, _limit in ordered}
+
+        semaphore = asyncio.Semaphore(3)
+
+        async def live_search(query: str, limit: int):
+            async with semaphore:
+                return await self.fallback.search_cards(query, limit)
+
+        fallback_rows = await asyncio.gather(*(
+            live_search(query, limit) for query, limit in missing
+        ))
+        for (query, _limit), rows in zip(missing, fallback_rows):
+            results[query] = rows
+            if rows:
+                self.counters["fallback_hits"] += 1
+        return {query: list(results.get(query) or []) for query, _limit in ordered}
 
     def get_status(self) -> Dict:
         primary_status = getattr(self.primary, "get_status", lambda: {})()

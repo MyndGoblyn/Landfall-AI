@@ -170,6 +170,60 @@ def classify_card_functions(card: Mapping) -> CardFunctionProfile:
     practical_mana_value = min(mana_value, 2.0) if alternate else mana_value
     functions = set()
 
+    # Sacrifice is not one job.  A repeatable activated outlet, a one-shot
+    # spell cost, expendable material, and a death payoff solve different deck
+    # building needs.  Keeping those facts separate prevents the suggestion
+    # engine from describing cards such as Village Rites as reusable outlets.
+    activated_costs = [
+        match.group(1).strip()
+        for match in re.finditer(r"(?:^|\n)([^:\n]{0,220}):", text)
+    ]
+    sacrifice_costs = [
+        cost
+        for cost in activated_costs
+        if re.search(
+            r"\bsacrifice\s+(?:(?:another|a|one or more|any number of|x)\s+)?"
+            r"(?:creatures?|artifacts?|permanents?|tokens?)\b",
+            cost,
+        )
+    ]
+    if sacrifice_costs:
+        functions.add("repeatable_sacrifice_outlet")
+        if any(
+            not re.search(r"\{(?:\d+|x|[wubrgc](?:/[wubrgp])?)\}", cost)
+            for cost in sacrifice_costs
+        ):
+            functions.add("mana_free_sacrifice_outlet")
+
+    additional_sacrifice_cost = re.search(
+        r"as an additional cost to cast (?:this|that) spell,?\s+sacrifice\s+",
+        text,
+    )
+    one_shot_sacrifice = (
+        additional_sacrifice_cost is not None
+        or (
+            any(card_type in type_line for card_type in ("instant", "sorcery"))
+            and re.search(
+                r"\b(?:you may )?sacrifice\s+(?:a|another|one or more|any number of)\s+"
+                r"(?:creatures?|artifacts?|permanents?|tokens?)\b",
+                text,
+            ) is not None
+        )
+    )
+    if one_shot_sacrifice and not sacrifice_costs:
+        functions.add("one_shot_sacrifice_cost")
+
+    if any(
+        phrase in text
+        for phrase in (
+            "whenever you sacrifice",
+            "whenever a creature dies",
+            "whenever another creature dies",
+            "whenever one or more creatures die",
+        )
+    ):
+        functions.add("death_payoff")
+
     if has_extra_combat(text):
         functions.add("extra_combat")
     if "untap" in text or "vigilance" in text:
@@ -371,6 +425,8 @@ def classify_card_functions(card: Mapping) -> CardFunctionProfile:
         )
     ):
         functions.add("enabler")
+        if "creature token" in text:
+            functions.add("sacrifice_fodder")
 
     payoff_trigger = any(
         phrase in text

@@ -272,8 +272,8 @@ class EnhancedSuggestionEngine:
     def get_semantic_bundle_status(self) -> Dict:
         return dict(self._semantic_bundle_status)
 
-    async def _search_candidate_cards(self, query: str, limit: int) -> List[Dict]:
-        """Retrieve candidates, allowing a local catalog to safely widen the pool."""
+    def _candidate_search_limit(self, limit: int) -> int:
+        """Return the provider-aware retrieval width for one public limit."""
         recommended_limit = getattr(self.candidate_provider, "recommended_limit", None)
         effective_limit = limit
         if callable(recommended_limit):
@@ -281,7 +281,33 @@ class EnhancedSuggestionEngine:
                 effective_limit = max(limit, int(recommended_limit(limit)))
             except (TypeError, ValueError):
                 logger.warning("Candidate provider returned an invalid retrieval limit")
+        return effective_limit
+
+    async def _search_candidate_cards(self, query: str, limit: int) -> List[Dict]:
+        """Retrieve candidates, allowing a local catalog to safely widen the pool."""
+        effective_limit = self._candidate_search_limit(limit)
         return await self.candidate_provider.search_cards(query, effective_limit)
+
+    async def _search_candidate_cards_many(
+        self,
+        requests: List[tuple[str, int]],
+    ) -> Optional[Dict[str, List[Dict]]]:
+        """Use a provider's exact batch path when it can preserve query order."""
+        resolver = getattr(self.candidate_provider, "search_many", None)
+        if not callable(resolver):
+            return None
+        expanded = [
+            (query, self._candidate_search_limit(limit))
+            for query, limit in requests
+        ]
+        try:
+            return await resolver(expanded)
+        except Exception as exc:
+            logger.warning(
+                "Candidate batch search failed; reverting to bounded queries: %s",
+                exc,
+            )
+            return None
 
     def get_ranker_status(self) -> Dict:
         comparisons = self._ranker_stats["comparisons"]
@@ -1137,11 +1163,230 @@ class EnhancedSuggestionEngine:
             }])
         return notes
 
+    def _commander_theme_evidence(
+        self,
+        commander_card: Dict,
+        synergies: List[str],
+        reviewed_profile: Optional[Dict] = None,
+    ) -> List[Dict]:
+        """Classify detected themes by deckbuilding centrality.
+
+        Raw keyword presence remains useful evidence, but it is not enough to
+        make a theme a plan.  This layer distinguishes the repeated action or
+        payoff a commander asks players to build around from a supporting
+        resource and from incidental rules text.
+        """
+        text = self._combined_oracle_text(commander_card)
+        type_line = self._combined_type_line(commander_card)
+        reviewed = set((reviewed_profile or {}).get('supported_synergies') or [])
+        creature_plan = (
+            self._has_creature_spell_text(text)
+            or self._has_creature_card_text(text)
+            or any(phrase in text for phrase in (
+                'creatures you control',
+                'whenever another creature',
+                'whenever a creature enters',
+                'whenever one or more creatures',
+                'each creature you control',
+                'creatures get',
+                'creatures have',
+            ))
+        )
+        graveyard_primary = any(phrase in text for phrase in (
+            'from your graveyard',
+            'in your graveyard',
+            'into your graveyard',
+            'mill ',
+            'surveil',
+            'discard a card',
+            'creature card in your graveyard',
+            'permanent card in your graveyard',
+        ))
+        labels = {
+            'instant_sorcery': 'Instant and sorcery engine',
+            'artifact_tokens': 'Artifact-token engine',
+            'attack_triggers': 'Attack-trigger engine',
+            'combat_damage': 'Combat-damage engine',
+            'extra_combat': 'Additional combats',
+            'target_spells': 'Targeted-spell engine',
+            'colorless_big_mana': 'Colorless big mana',
+            'board_conversion': 'Board conversion',
+            'forced_reanimation': 'Forced reanimation',
+            'temporary_drawback': 'Delayed-drawback timing',
+            'vanilla_creatures': 'No-ability creatures',
+            'hand_size_pressure': 'Hand-size pressure',
+            'control_finisher': 'Control finisher',
+            'flash_control': 'Flash control',
+        }
+        evidence = []
+
+        for theme in dict.fromkeys(synergies or []):
+            tier = 'supporting'
+            score = 68
+            reason = f'{theme.replace("_", " ")} appears in the commander evidence.'
+            is_reviewed = theme in reviewed
+
+            if theme == 'lifegain':
+                if self._has_lifegain_reward_text(text):
+                    tier, score = 'primary', 94
+                    reason = 'The commander rewards gaining life or reaching a life-total condition.'
+                else:
+                    tier, score = 'incidental', 24
+                    reason = 'Life gain is an output of another engine, not a rewarded deckbuilding action.'
+            elif theme == 'creature':
+                if creature_plan:
+                    tier, score = 'supporting', 72
+                    reason = 'Creature cards or creature events supply material for the commander.'
+                else:
+                    tier, score = 'incidental', 20
+                    reason = 'Creature wording does not establish a creature-density plan.'
+            elif theme == 'graveyard':
+                if graveyard_primary:
+                    tier, score = 'primary', 96
+                    reason = 'The commander explicitly uses cards in or moving through your graveyard.'
+                elif self._has_sacrifice_plan_text(text):
+                    tier, score = 'supporting', 70
+                    reason = 'Death events touch the graveyard, but another action is the main engine.'
+                else:
+                    tier, score = 'incidental', 26
+                    reason = 'Graveyard wording is not a repeatable value or recursion plan.'
+            elif theme == 'sacrifice':
+                if self._has_sacrifice_plan_text(text):
+                    tier, score = 'primary', 95
+                    reason = 'The commander rewards sacrifices or creature deaths as a repeated event.'
+                else:
+                    tier, score = 'incidental', 25
+                    reason = 'A sacrifice reference is a cost or side effect rather than the plan.'
+            elif theme == 'counters':
+                counter_plan = self._counter_plan_for_text(text)
+                if counter_plan in {'named_counters', 'zone_counters', 'self_counters'}:
+                    tier, score = 'supporting', 76
+                    reason = 'Counters scale the commander itself or track its engine, but are not a generic counter deck.'
+                elif counter_plan:
+                    tier, score = 'primary', 92
+                    reason = 'Placing, multiplying, or rewarding counters is a repeated commander action.'
+                else:
+                    tier, score = 'incidental', 22
+                    reason = 'Counter wording does not establish a compatible counter resource.'
+            elif theme == 'tokens':
+                if 'token' in text and any(word in text for word in ('create', 'populate', 'copy')):
+                    tier, score = 'primary', 90
+                    reason = 'The commander repeatedly creates or copies creature tokens.'
+                else:
+                    tier, score = 'incidental', 25
+                    reason = 'Token wording does not create a repeatable token plan.'
+            elif theme == 'artifact_tokens':
+                if self._has_artifact_token_text(text):
+                    tier, score = 'primary', 92
+                    reason = 'The commander creates or converts named artifact tokens.'
+                else:
+                    tier, score = 'incidental', 25
+                    reason = 'Artifact-token wording is incidental to another effect.'
+            elif theme == 'instant_sorcery':
+                if self._is_spell_stack_plan(text, type_line):
+                    tier, score = 'primary', 97
+                    reason = 'The commander rewards, discounts, copies, or recurs spells on the stack.'
+                else:
+                    tier, score = 'incidental', 24
+                    reason = 'A spell reference is not a repeated instant-or-sorcery payoff.'
+            elif theme == 'enchantment':
+                if any(term in text for term in ('enchantment', 'aura', 'enchanted', 'enchant ')):
+                    tier, score = 'primary', 92
+                    reason = 'The commander explicitly rewards, finds, or uses enchantments or Auras.'
+                else:
+                    tier, score = 'incidental', 24
+                    reason = 'Enchantment wording does not establish an enchantment package.'
+            elif theme == 'artifact':
+                if any(term in text for term in ('artifact', 'equipment', 'equipped', 'equip ')):
+                    tier, score = 'primary', 92
+                    reason = 'The commander explicitly rewards, recurs, or uses artifacts or Equipment.'
+                else:
+                    tier, score = 'incidental', 24
+                    reason = 'Artifact wording does not establish an artifact package.'
+            elif theme == 'exile':
+                if self._is_exile_value_card(text) and 'blink' not in synergies:
+                    tier, score = 'primary', 91
+                    reason = 'The commander turns exile into repeatable card access or a payoff zone.'
+                else:
+                    tier, score = 'incidental', 25
+                    reason = 'Exile is removal or transport rather than a build-around resource.'
+            elif theme == 'blink':
+                tier, score = 'primary', 93
+                reason = 'The commander repeatedly exiles and returns your permanents for value.'
+            elif theme == 'landfall':
+                tier, score = 'primary', 94
+                reason = 'Land entries, extra land plays, or land recursion repeatedly advance the commander.'
+            elif theme == 'typal':
+                tier, score = 'primary', 94
+                reason = 'The commander names or rewards a specific creature type.'
+            elif theme == 'target_spells':
+                if (
+                    self._has_target_cost_modifier_text(text)
+                    or self._has_target_spell_payoff_text(text)
+                ):
+                    tier, score = 'primary', 96
+                    reason = 'The commander rewards spells for choosing targets or reduces their costs.'
+                else:
+                    tier, score = 'incidental', 24
+                    reason = 'Targeting can support the plan, but the commander does not reward target count or targeted spells directly.'
+            elif theme == 'voltron':
+                tier, score = 'primary', 89
+                reason = 'Auras, Equipment, targeting, or combat text rewards investing in the commander.'
+            elif theme in {
+                'donation', 'forced_reanimation', 'temporary_drawback',
+                'extra_combat', 'attack_triggers', 'combat_damage', 'goad',
+                'topdeck_value', 'colorless_big_mana',
+                'board_conversion', 'vanilla_creatures', 'control_finisher',
+                'hand_size_pressure', 'flash_control',
+            }:
+                tier, score = 'primary', 96
+                reason = 'Specific commander rules text establishes this as a repeatable plan.'
+
+            if is_reviewed and tier != 'incidental':
+                score = min(100, score + 3)
+                reason += ' The reviewed profile confirms this role in the plan.'
+
+            evidence.append({
+                'id': theme,
+                'label': labels.get(theme, theme.replace('_', ' ').title()),
+                'tier': tier,
+                'score': score,
+                'reason': reason,
+                'source': 'reviewed_profile' if is_reviewed else 'oracle_text',
+            })
+
+        tier_rank = {'primary': 0, 'supporting': 1, 'incidental': 2}
+        evidence.sort(key=lambda item: (
+            tier_rank.get(item['tier'], 3),
+            -item['score'],
+            self.synergy_priority.get(item['id'], 100),
+            item['id'],
+        ))
+        return evidence
+
+    def _actionable_commander_themes(
+        self,
+        commander_card: Dict,
+        synergies: List[str],
+        reviewed_profile: Optional[Dict] = None,
+    ) -> tuple[List[str], List[Dict]]:
+        evidence = self._commander_theme_evidence(
+            commander_card,
+            synergies,
+            reviewed_profile=reviewed_profile,
+        )
+        actionable = [
+            item['id'] for item in evidence if item['tier'] != 'incidental'
+        ]
+        return actionable, evidence
+
     def _commander_coverage_payload(
         self,
         commander_card: Optional[Dict],
         synergies: Optional[List[str]],
         archetypes: Optional[List[Dict]],
+        theme_evidence: Optional[List[Dict]] = None,
+        reviewed_profile: Optional[Dict] = None,
     ) -> Dict:
         if not commander_card:
             return {
@@ -1155,12 +1400,81 @@ class EnhancedSuggestionEngine:
         strong_archetypes = self._archetype_matches_above_floor(archetypes or [])
         heuristic_signals = self._heuristic_signals_for_card(commander_card)
 
-        if len(strong_mechanics) >= 2 and strong_archetypes:
+        # Deck analysis retains the promoted Phase 7 coverage contract.  The
+        # structured centrality model is opt-in for commander profiles, which
+        # pass theme_evidence explicitly below.  This prevents profile UX work
+        # from silently changing imported-deck confidence or portfolios.
+        if theme_evidence is None and reviewed_profile is None:
+            if len(strong_mechanics) >= 2 and strong_archetypes:
+                level = 'deep'
+                notes = 'Deep deterministic coverage: multiple registered mechanics and a composite archetype matched the commander text.'
+            elif strong_mechanics or strong_archetypes:
+                level = 'partial'
+                notes = 'Partial deterministic coverage: some registered signals matched, but the deck plan may still need manual interpretation.'
+            else:
+                level = 'exploratory'
+                if heuristic_signals:
+                    labels = ', '.join(signal['label'] for signal in heuristic_signals[:3])
+                    notes = f'Exploratory coverage: no strong registry or archetype match cleared the bar, so recommendations use text-pattern signals such as {labels}.'
+                elif synergies:
+                    notes = 'Exploratory coverage: broad keyword matches were detected, but no strong registry or archetype match cleared the bar.'
+                else:
+                    notes = 'Exploratory coverage: no strong deterministic strategy signal cleared the bar for this commander.'
+            coverage_signals = [
+                {
+                    'type': 'mechanic',
+                    'label': signal.get('name'),
+                    'strength': signal.get('evidence_strength'),
+                }
+                for signal in strong_mechanics[:4]
+            ]
+            coverage_signals.extend([
+                {
+                    'type': 'archetype',
+                    'label': archetype.get('name'),
+                    'strength': archetype.get('confidence'),
+                }
+                for archetype in strong_archetypes[:3]
+            ])
+            if level != 'deep':
+                coverage_signals.extend([
+                    {
+                        'type': 'heuristic',
+                        'label': signal.get('label'),
+                        'strength': signal.get('evidence_strength'),
+                    }
+                    for signal in heuristic_signals[:4]
+                ])
+            return {
+                'coverage_level': level,
+                'coverage_notes': notes,
+                'coverage_signals': coverage_signals,
+                'heuristic_signals': heuristic_signals,
+            }
+
+        theme_evidence = theme_evidence or self._commander_theme_evidence(
+            commander_card,
+            list(synergies or []),
+            reviewed_profile=reviewed_profile,
+        )
+        primary_themes = [
+            item for item in theme_evidence if item.get('tier') == 'primary'
+        ]
+        supporting_themes = [
+            item for item in theme_evidence if item.get('tier') == 'supporting'
+        ]
+
+        if reviewed_profile or primary_themes:
             level = 'deep'
-            notes = 'Deep deterministic coverage: multiple registered mechanics and a composite archetype matched the commander text.'
-        elif strong_mechanics or strong_archetypes:
+            labels = ', '.join(item['label'] for item in primary_themes[:3])
+            notes = (
+                f'The commander has direct deckbuilding evidence for {labels}.'
+                if labels else
+                'The reviewed profile supplies direct commander-plan evidence.'
+            )
+        elif supporting_themes or strong_mechanics or strong_archetypes:
             level = 'partial'
-            notes = 'Partial deterministic coverage: some registered signals matched, but the deck plan may still need manual interpretation.'
+            notes = 'Useful supporting signals were found, but no single build-around action dominates the card text.'
         else:
             level = 'exploratory'
             if heuristic_signals:
@@ -1173,12 +1487,21 @@ class EnhancedSuggestionEngine:
 
         coverage_signals = [
             {
+                'type': 'theme',
+                'label': item.get('label'),
+                'strength': item.get('tier'),
+            }
+            for item in theme_evidence
+            if item.get('tier') != 'incidental'
+        ][:4]
+        coverage_signals.extend([
+            {
                 'type': 'mechanic',
                 'label': signal.get('name'),
                 'strength': signal.get('evidence_strength'),
             }
             for signal in strong_mechanics[:4]
-        ]
+        ])
         coverage_signals.extend([
             {
                 'type': 'archetype',
@@ -2804,6 +3127,36 @@ class EnhancedSuggestionEngine:
         ):
             return True
         return False
+
+    @staticmethod
+    def _has_commander_support_protection_text(
+        oracle_text: str,
+        type_line: str = '',
+    ) -> bool:
+        """Use sentence-scoped grants for commander-profile support cards."""
+        source = str(oracle_text or '').casefold()
+        grant_terms = ('hexproof', 'indestructible', 'protection from', 'ward')
+        protected_subjects = (
+            'target creature', 'target permanent', 'creatures you control',
+            'permanents you control', 'artifacts you control',
+            'enchantments you control', 'equipped creature',
+            'enchanted creature', 'your commander',
+        )
+        for sentence in re.split(r'[.\n]', source):
+            if (
+                any(subject in sentence for subject in protected_subjects)
+                and any(term in sentence for term in grant_terms)
+                and not any(term in sentence for term in (
+                    'lose hexproof', 'loses hexproof',
+                    'lose indestructible', 'loses indestructible',
+                ))
+            ):
+                return True
+        return any(phrase in source for phrase in (
+            'phase out',
+            'counter target spell or ability that targets',
+            'regenerate target',
+        ))
     
     def _identify_gaps(self, stats: Dict, color_identity: List[str], 
                       commander_synergies: List[str]) -> Dict:
@@ -4312,28 +4665,23 @@ class EnhancedSuggestionEngine:
         return result
 
     def _annotate_v2_selection(self, suggestions: List[Dict]) -> None:
-        """Bind displayed selection claims to the evidence ranker assessment."""
+        """Retain rank diagnostics while exposing only user-facing rationale."""
         for position, suggestion in enumerate(suggestions, start=1):
             assessment = self.evidence_ranker.assess(suggestion)
             suggestion['rank_assessment'] = assessment.as_dict()
             suggestion['selection_position'] = position
-            positive = [
-                (name, value)
-                for name, value in assessment.components.items()
-                if value > 0
-            ]
-            strongest = max(positive, key=lambda row: row[1], default=None)
-            if strongest:
-                component = strongest[0].replace('_', ' ')
-                note = (
-                    f"V2 selection: ranked #{position}; its strongest measured "
-                    f"component was {component} ({strongest[1]:g})."
-                )
-                suggestion['reason'] = f"{suggestion.get('reason', '').strip()} {note}".strip()
-                suggestion['selection_reason'] = note
+            job = str(suggestion.get('job') or suggestion.get('role') or 'deck job').replace('_', ' ')
+            evidence_tags = set(suggestion.get('evidence_tags') or [])
+            if 'direct_synergy' in evidence_tags:
+                note = f"It made the list because its rules text directly supports the {job} plan."
+            elif 'archetype_need_match' in evidence_tags:
+                note = f"It made the list because it fills the deck's {job} need with verified rules text."
+            else:
+                note = f"It made the list because it performs the {job} job without duplicating a stronger option."
+            suggestion['selection_reason'] = note
 
     def _annotate_v3_selection(self, suggestions: List[Dict]) -> None:
-        """Explain portfolio inclusion from the same evidence used to select it."""
+        """Explain inclusion without exposing optimizer or scoring terminology."""
         for position, suggestion in enumerate(suggestions, start=1):
             suggestion['selection_position'] = position
             lanes = list(dict.fromkeys(
@@ -4343,25 +4691,22 @@ class EnhancedSuggestionEngine:
             ))
             if len(lanes) > 1:
                 note = (
-                    "Portfolio fit: this one slot covers "
+                    "It made the list because one card supports "
                     + ", ".join(lanes[:-1])
                     + f" and {lanes[-1]}."
                 )
             elif suggestion.get('strategy_balance_gain'):
                 note = (
-                    "Portfolio fit: this supplies the missing "
-                    f"{suggestion['strategy_balance_gain']} side of the measured "
-                    "engine structure."
+                    "It made the list because the deck needs another "
+                    f"{str(suggestion['strategy_balance_gain']).replace('_', ' ')} piece "
+                    "for the engine to work consistently."
                 )
             elif lanes:
-                note = f"Portfolio fit: selected for the measured {lanes[0]} lane."
+                note = f"It made the list because it is a verified option for {lanes[0]}."
             else:
-                note = "Portfolio fit: selected from the highest-evidence nonredundant options."
+                note = "It made the list because it adds a useful job without repeating the other recommendations."
             suggestion['selection_reason'] = note
             suggestion['portfolio_version'] = self.portfolio_optimizer.VERSION
-            suggestion['reason'] = (
-                f"{suggestion.get('reason', '').strip()} {note}"
-            ).strip()
 
     async def _apply_dynamic_candidate_overlay(
         self,
@@ -5244,19 +5589,19 @@ class EnhancedSuggestionEngine:
     def _generate_validated_role_reason(self, card_data: Dict, role: str, quality: Dict) -> str:
         """Explain role fixes without overstating commander synergy."""
         card_name = card_data.get('name', 'This card')
-        action = f"{card_name} is a {role} role fix."
+        action = f"{card_name} covers the deck's {role.replace('_', ' ')} job."
         if role == 'draw':
-            action = f"{card_name} adds card flow."
+            action = f"{card_name} provides card flow so the deck can keep finding action."
         elif role == 'ramp':
-            action = f"{card_name} improves mana development."
+            action = f"{card_name} develops mana so the commander and engine pieces come online sooner."
         elif role in {'removal', 'interaction', 'sweeper'}:
-            action = f"{card_name} gives the deck more interaction."
+            action = f"{card_name} gives the deck another way to answer opposing threats."
         elif role == 'protection':
-            action = f"{card_name} protects key permanents."
+            action = f"{card_name} helps the commander or another key permanent survive removal."
         elif role == 'mana_fixing':
-            action = f"{card_name} improves multicolor mana access."
+            action = f"{card_name} makes the deck's colors easier to cast on time."
 
-        reason = f"{action} It is recommended as a role fix because the analysis found a deck-health need: {quality.get('evidence', role)}."
+        reason = f"{action} This is a support role for deck consistency, not a claim of direct commander synergy."
         penalties = set(quality.get('penalty_tags', []))
         if 'generic_staple' in penalties:
             reason += " This is a role recommendation, not a commander-specific synergy claim."
@@ -7210,7 +7555,8 @@ class EnhancedSuggestionEngine:
         card_data: Dict,
         synergy: str,
         commander_card: Dict,
-        fallback_role: Optional[str] = None
+        fallback_role: Optional[str] = None,
+        precise_sacrifice_roles: bool = False,
     ) -> Dict:
         """Attach deterministic proof, penalty, and tier metadata for recommendations."""
         oracle_text = card_data.get('oracle_text', '').lower()
@@ -7222,6 +7568,7 @@ class EnhancedSuggestionEngine:
         evidence = synergy.replace('_', ' ')
         evidence_tags = []
         penalty_tags = []
+        function_profile = classify_card_functions(card_data)
 
         def add_evidence(tag: str):
             if tag not in evidence_tags:
@@ -7392,19 +7739,52 @@ class EnhancedSuggestionEngine:
                 add_evidence('direct_synergy')
                 add_evidence('payoff')
         elif synergy == 'sacrifice':
-            if 'sacrifice a creature' in oracle_text or 'sacrifice another creature' in oracle_text:
-                job = 'sacrifice outlet'
-                evidence = 'lets you control death triggers'
-                score = 88
+            if not precise_sacrifice_roles:
+                if 'sacrifice a creature' in oracle_text or 'sacrifice another creature' in oracle_text:
+                    job = 'sacrifice outlet'
+                    evidence = 'lets you control death triggers'
+                    score = 88
+                    add_evidence('direct_synergy')
+                    add_evidence('sacrifice_outlet')
+                elif 'whenever you sacrifice' in oracle_text or 'whenever a creature dies' in oracle_text or 'whenever another creature dies' in oracle_text:
+                    job = 'death payoff'
+                    evidence = 'pays off sacrifices and deaths'
+                    score = 84
+                    add_evidence('direct_synergy')
+                    add_evidence('payoff')
+                elif self._creates_own_creature_tokens(oracle_text):
+                    job = 'sacrifice fodder'
+                    evidence = 'creates expendable material'
+                    score = 74
+                    add_evidence('enabler')
+                    add_evidence('creature_token_support')
+            elif function_profile.has('repeatable_sacrifice_outlet'):
+                job = (
+                    'mana-free sacrifice outlet'
+                    if function_profile.has('mana_free_sacrifice_outlet')
+                    else 'repeatable sacrifice outlet'
+                )
+                evidence = 'lets you choose when creatures die, turn after turn'
+                score = 92 if function_profile.has('mana_free_sacrifice_outlet') else 89
                 add_evidence('direct_synergy')
                 add_evidence('sacrifice_outlet')
-            elif 'whenever you sacrifice' in oracle_text or 'whenever a creature dies' in oracle_text or 'whenever another creature dies' in oracle_text:
+                add_evidence('repeatable_engine')
+                if function_profile.has('mana_free_sacrifice_outlet'):
+                    add_evidence('mana_free_outlet')
+            elif function_profile.has('death_payoff'):
                 job = 'death payoff'
                 evidence = 'pays off sacrifices and deaths'
                 score = 84
                 add_evidence('direct_synergy')
                 add_evidence('payoff')
-            elif self._creates_own_creature_tokens(oracle_text):
+            elif function_profile.has('one_shot_sacrifice_cost'):
+                job = 'one-shot sacrifice value'
+                evidence = 'converts one creature into an immediate spell effect'
+                score = 78
+                add_evidence('enabler')
+                add_evidence('one_shot_sacrifice')
+                add_penalty('one_shot_effect')
+            elif function_profile.has('sacrifice_fodder') or self._creates_own_creature_tokens(oracle_text):
                 job = 'sacrifice fodder'
                 evidence = 'creates expendable material'
                 score = 74
@@ -7775,6 +8155,12 @@ class EnhancedSuggestionEngine:
                 evidence = 'changes control or rewards ownership asymmetry'
                 score = 86
                 add_evidence('direct_synergy')
+            elif self._is_donation_payload_card(card_data):
+                job = 'donation payload'
+                evidence = 'creates a liability for the player who controls it'
+                score = 84
+                add_evidence('direct_synergy')
+                add_evidence('payoff')
             elif any(term in oracle_text for term in ['at the beginning of your upkeep', "can't attack", "can't block"]):
                 job = 'donation target'
                 evidence = 'can punish the player who controls it'
@@ -7993,12 +8379,32 @@ class EnhancedSuggestionEngine:
         )
 
         action = f"{card_name} contributes a validated {job} effect."
-        if 'creature_token_support' in evidence_tags:
+        if job == 'graveyard recursion':
+            action = f"{card_name} returns a card from the graveyard or lets the deck use it again."
+        elif job == 'cheap spell fuel':
+            if 'scry' in oracle_text or 'surveil' in oracle_text:
+                action = f"{card_name} is a low-cost spell that improves the next draw while keeping the spell chain moving."
+            else:
+                action = f"{card_name} is a low-cost spell that replaces itself and keeps the spell chain moving."
+        elif job == 'spell payoff':
+            action = f"{card_name} turns repeated instant and sorcery casts into additional value."
+        elif job == 'donation engine':
+            action = f"{card_name} changes who controls a permanent, giving the deck another way to turn ownership into value."
+        elif job == 'donation payload':
+            action = f"{card_name} carries a real drawback for its controller, making it useful to give away rather than keep."
+        elif 'creature_token_support' in evidence_tags:
             action = f"{card_name} creates creature material."
         elif 'board_support' in evidence_tags:
             action = f"{card_name} improves the creatures already on board."
+        elif 'mana_free_outlet' in evidence_tags:
+            action = f"{card_name} is a repeatable sacrifice outlet that does not require mana to activate."
         elif 'sacrifice_outlet' in evidence_tags:
-            action = f"{card_name} gives the deck a real sacrifice outlet."
+            action = f"{card_name} is a repeatable sacrifice outlet, so you choose when creatures die."
+        elif 'one_shot_sacrifice' in evidence_tags:
+            if self._has_card_draw_text(oracle_text):
+                action = f"{card_name} cashes in one creature for cards, but it is a one-shot spell rather than a reusable outlet."
+            else:
+                action = f"{card_name} converts one sacrifice into an immediate effect, but it is not a reusable outlet."
         elif 'counter_scaling' in evidence_tags:
             if named_counter_label and 'proliferate' in oracle_text:
                 action = f"{card_name} can proliferate {named_counter_label}."
@@ -8105,7 +8511,14 @@ class EnhancedSuggestionEngine:
             else:
                 fit = f"That matters for {commander_name} because the card interacts with the same counter plan instead of merely mentioning counters."
         elif synergy == 'sacrifice':
-            fit = f"That matters for {commander_name} because sacrifice decks need outlets, fodder, or payoffs that turn deaths into resources."
+            if 'sacrifice_outlet' in evidence_tags:
+                fit = f"That matters for {commander_name} because controlling the timing of a death trigger makes recursion and death payoffs reliable instead of reactive."
+            elif 'one_shot_sacrifice' in evidence_tags:
+                fit = f"That supports {commander_name} by triggering the graveyard plan once while replacing itself; use it as card flow, not as one of the deck's repeatable outlets."
+            elif 'payoff' in evidence_tags:
+                fit = f"That matters for {commander_name} because it turns each creature death into additional value instead of spending material for no return."
+            else:
+                fit = f"That matters for {commander_name} because sacrifice engines need expendable material as well as ways to cash it in."
         elif synergy == 'blink':
             fit = f"That matters for {commander_name} because blink decks need reusable ETB targets or ways to reset and protect permanents."
         elif synergy == 'enchantment':
@@ -8192,18 +8605,29 @@ class EnhancedSuggestionEngine:
             ) and
             mechanic_name.lower().replace(' ', '_') not in {synergy, job.lower().replace(' ', '_')}
         ):
-            if mechanic_support_only or mechanic_strength == 'texture':
-                mechanic_clause = f" Treat the {mechanic_name} text as support: it {mechanic_reason}."
+            if (
+                synergy == 'instant_sorcery'
+                and mechanic_name.casefold() == 'top of library'
+            ) or (
+                synergy == 'graveyard'
+                and mechanic_name.casefold() == 'discard'
+            ):
+                mechanic_clause = ""
+            elif mechanic_support_only or mechanic_strength == 'texture':
+                mechanic_clause = f" Its {mechanic_name} text is supporting context: it {mechanic_reason}."
             elif 'mechanic_core' in evidence_tags:
-                mechanic_clause = f" The {mechanic_name} text is the concrete evidence: it {mechanic_reason}."
+                mechanic_clause = f" The concrete evidence comes from its {mechanic_name} text: it {mechanic_reason}."
             elif 'mechanic_support' in evidence_tags:
-                mechanic_clause = f" The {mechanic_name} text is concrete evidence for this support role: it {mechanic_reason}."
+                mechanic_clause = f" The concrete evidence also comes from its {mechanic_name} text: it {mechanic_reason}."
 
         caution = ""
         if 'high_mana_value' in penalty_tags:
             caution = " Its mana value means it should be treated as a payoff slot, not early setup."
         elif 'one_shot_effect' in penalty_tags:
-            caution = " Because the effect is temporary, it is best as support rather than a core engine."
+            if 'one_shot_sacrifice' in evidence_tags:
+                caution = " Count it as card flow or a single trigger, not as a repeatable sacrifice engine."
+            else:
+                caution = " Because the effect is temporary, it is best as support rather than a core engine."
         elif 'generic_staple' in penalty_tags:
             caution = " This is recommended only as a role piece, not as commander-specific synergy."
         elif 'support_only_mechanic' in penalty_tags:
@@ -8264,7 +8688,17 @@ class EnhancedSuggestionEngine:
         return [section for section in sections if section['tips']]
 
     def _build_recommended_sections(self, suggested_cards: List[Dict]) -> List[Dict]:
-        """Group recommendations into pages by deterministic quality tier."""
+        """Group commander recommendations by the job they do for the user."""
+        if any(card.get('recommendation_lane') for card in suggested_cards):
+            lane_sections = {
+                'plan': {'id': 'plan', 'label': 'Core plan', 'cards': []},
+                'support': {'id': 'support', 'label': 'Support the plan', 'cards': []},
+            }
+            for card in suggested_cards:
+                lane = card.get('recommendation_lane', 'plan')
+                lane_sections.get(lane, lane_sections['plan'])['cards'].append(card)
+            return [section for section in lane_sections.values() if section['cards']]
+
         section_map = {
             'core': {'id': 'core', 'label': 'Core Fit', 'cards': []},
             'support': {'id': 'support', 'label': 'Strong Support', 'cards': []},
@@ -8781,7 +9215,8 @@ class EnhancedSuggestionEngine:
         quality = self._recommendation_quality_metadata(
             card_extracted,
             synergy,
-            commander_card
+            commander_card,
+            precise_sacrifice_roles=True,
         )
         if heuristic_signal:
             quality = self._mark_quality_as_heuristic(quality, heuristic_signal)
@@ -8811,7 +9246,24 @@ class EnhancedSuggestionEngine:
             'mechanic': quality.get('mechanic'),
             'evidence_tags': quality['evidence_tags'],
             'penalty_tags': quality['penalty_tags'],
+            'recommendation_lane': 'plan',
             'matched_plan_lanes': [synergy],
+            'reason_facts': {
+                'card_job': quality['job'],
+                'commander_theme': synergy,
+                'rules_text_evidence': quality['evidence'],
+                'limitations': [
+                    label
+                    for tag, label in {
+                        'high_mana_value': 'high mana value',
+                        'one_shot_effect': 'one-shot effect',
+                        'generic_staple': 'general support rather than commander-specific synergy',
+                        'support_only_mechanic': 'supporting mechanic only',
+                        'uncorroborated_mechanic': 'needs more deck evidence',
+                    }.items()
+                    if tag in quality['penalty_tags']
+                ],
+            },
             'evidence_confidence': round(
                 min(
                     0.96,
@@ -8827,6 +9279,50 @@ class EnhancedSuggestionEngine:
             'image_url': image_data['front'],
             'image_url_back': image_data['back']
         }
+
+    def _select_commander_portfolio(
+        self,
+        plan_cards: List[Dict],
+        support_cards: List[Dict],
+        max_cards: int,
+    ) -> List[Dict]:
+        """Reserve the recommendation surface for the commander's actual plan.
+
+        Generic support remains useful, but it may not displace verified engine
+        cards.  The lane quota is intentionally simple and deterministic so the
+        same evidence produces the same user-facing portfolio.
+        """
+        if max_cards <= 0:
+            return []
+
+        plan_limit = min(len(plan_cards), max_cards)
+        if plan_limit >= 4 and max_cards >= 5 and support_cards:
+            plan_limit = 4
+        primary_plan = [
+            card for card in plan_cards if card.get('theme_tier') == 'primary'
+        ]
+        supporting_plan = [
+            card for card in plan_cards if card.get('theme_tier') != 'primary'
+        ]
+        selected_plan = [dict(item) for item in self.portfolio_optimizer.select(
+            primary_plan,
+            min(plan_limit, len(primary_plan)),
+            kind='commander',
+        )]
+        if len(selected_plan) < plan_limit:
+            selected_plan.extend(dict(item) for item in self.portfolio_optimizer.select(
+                supporting_plan,
+                plan_limit - len(selected_plan),
+                kind='commander',
+            ))
+        remaining = max_cards - len(selected_plan)
+        selected_support = [dict(item) for item in self.portfolio_optimizer.select(
+            support_cards,
+            remaining,
+            kind='commander',
+        )] if remaining else []
+
+        return [*selected_plan, *selected_support]
 
     def _recommendation_base_rank(self, recommendation: Dict) -> float:
         """Local rank for deterministic recommendation ordering after Scryfall retrieval."""
@@ -8890,6 +9386,34 @@ class EnhancedSuggestionEngine:
             recommendation.get('name', ''),
         )
 
+    @staticmethod
+    def _diverse_recommendation_shortlist(
+        candidates: List[Dict],
+        limit: int,
+        sort_key,
+    ) -> List[Dict]:
+        """Keep the strongest distinct jobs before filling repeated jobs."""
+        ordered = sorted(candidates, key=sort_key)
+        selected = []
+        selected_ids = set()
+        seen_jobs = set()
+        for card in ordered:
+            job = str(card.get('job') or card.get('role') or '').casefold()
+            if job in seen_jobs:
+                continue
+            selected.append(card)
+            selected_ids.add(id(card))
+            seen_jobs.add(job)
+            if len(selected) >= limit:
+                return selected
+        for card in ordered:
+            if id(card) in selected_ids:
+                continue
+            selected.append(card)
+            if len(selected) >= limit:
+                break
+        return selected
+
     def _recommendation_selection_score(self, recommendation: Dict, selected: List[Dict]) -> float:
         """Apply a soft diversity tax so one job does not crowd every slot."""
         score = self._recommendation_base_rank(recommendation)
@@ -8946,6 +9470,7 @@ class EnhancedSuggestionEngine:
         concurrency: int = 3,
         per_query_timeout: Optional[float] = None,
         heuristic_signal_notes: Optional[Dict[str, List[Dict]]] = None,
+        theme_tiers: Optional[Dict[str, str]] = None,
     ) -> List[Dict]:
         """Search Scryfall in bounded parallel and keep only commander-specific cards."""
         extracted = self.scryfall.extract_card_data(commander_card)
@@ -8962,6 +9487,11 @@ class EnhancedSuggestionEngine:
 
         if not search_specs:
             return []
+
+        batched = await self._search_candidate_cards_many([
+            (query, query_limit)
+            for _synergy_index, _synergy, query in search_specs
+        ])
 
         semaphore = asyncio.Semaphore(max(1, concurrency))
 
@@ -8984,9 +9514,15 @@ class EnhancedSuggestionEngine:
                     logger.warning("Scryfall recommendation query failed for %s: %s", synergy, exc)
                     return synergy_index, synergy, []
 
-        search_results = await asyncio.gather(
-            *(run_search(synergy_index, synergy, query) for synergy_index, synergy, query in search_specs)
-        )
+        if batched is not None:
+            search_results = [
+                (synergy_index, synergy, list(batched.get(query) or []))
+                for synergy_index, synergy, query in search_specs
+            ]
+        else:
+            search_results = await asyncio.gather(
+                *(run_search(synergy_index, synergy, query) for synergy_index, synergy, query in search_specs)
+            )
 
         legacy_candidates_by_name = {}
         v2_candidates_by_name = {}
@@ -9031,6 +9567,16 @@ class EnhancedSuggestionEngine:
                 if not recommendation:
                     continue
 
+                theme_tier = (theme_tiers or {}).get(synergy)
+                if theme_tier:
+                    recommendation['theme_tier'] = theme_tier
+                    recommendation['reason_facts']['theme_tier'] = theme_tier
+                    if theme_tier == 'primary':
+                        recommendation['evidence_tags'] = list(dict.fromkeys([
+                            *recommendation.get('evidence_tags', []),
+                            'commander_theme_match',
+                        ]))
+
                 recommendation['_order'] = order
                 recommendation['_source_rank'] = source_rank
                 recommendation['_synergy_index'] = synergy_index
@@ -9042,17 +9588,19 @@ class EnhancedSuggestionEngine:
                 synergy_candidates.append(recommendation)
                 order += 1
 
-            legacy_shortlist = sorted(
+            legacy_shortlist = self._diverse_recommendation_shortlist(
                 synergy_candidates,
-                key=self._recommendation_sort_key,
-            )[:per_synergy_limit]
-            v2_shortlist = sorted(
+                per_synergy_limit,
+                self._recommendation_sort_key,
+            )
+            v2_shortlist = self._diverse_recommendation_shortlist(
                 synergy_candidates,
-                key=lambda item: self.evidence_ranker.sort_key(
+                per_synergy_limit,
+                lambda item: self.evidence_ranker.sort_key(
                     item,
                     name_field='name',
                 ),
-            )[:per_synergy_limit]
+            )
 
             for recommendation in legacy_shortlist:
                 name_key = recommendation['name'].lower()
@@ -9079,14 +9627,28 @@ class EnhancedSuggestionEngine:
                 ):
                     v2_candidates_by_name[name_key] = recommendation
 
-        legacy_candidates = self._select_ranked_recommendations_legacy(
+        def select_by_theme_tier(pool: List[Dict], selector) -> List[Dict]:
+            if not theme_tiers:
+                return selector(pool, max_cards)
+            primary = [card for card in pool if card.get('theme_tier') == 'primary']
+            supporting = [card for card in pool if card.get('theme_tier') != 'primary']
+            selected = selector(primary, min(max_cards, len(primary)))
+            remaining = max_cards - len(selected)
+            if remaining:
+                selected.extend(selector(supporting, remaining))
+            return selected
+
+        legacy_candidates = select_by_theme_tier(
             list(legacy_candidates_by_name.values()),
-            max_cards,
+            self._select_ranked_recommendations_legacy,
         )
-        v2_candidates = [dict(item) for item in self.evidence_ranker.select(
+        v2_candidates = [dict(item) for item in select_by_theme_tier(
             list(v2_candidates_by_name.values()),
-            max_cards,
-            kind='commander',
+            lambda pool, limit: self.evidence_ranker.select(
+                pool,
+                limit,
+                kind='commander',
+            ),
         )]
         self._annotate_v2_selection(v2_candidates)
         self._record_ranker_comparison('commander', legacy_candidates, v2_candidates)
@@ -9126,10 +9688,16 @@ class EnhancedSuggestionEngine:
         if not specs:
             return []
 
-        results = await asyncio.gather(*(
-            self._search_candidate_cards(query, limit=20)
-            for _role, query in specs
-        ))
+        batched = await self._search_candidate_cards_many([
+            (query, 20) for _role, query in specs
+        ])
+        if batched is not None:
+            results = [list(batched.get(query) or []) for _role, query in specs]
+        else:
+            results = await asyncio.gather(*(
+                self._search_candidate_cards(query, limit=20)
+                for _role, query in specs
+            ))
         candidates = {}
         fake_gaps = {'roles': {role: 1 for role, _query in specs}}
         for query_index, ((role, _query), cards) in enumerate(zip(specs, results)):
@@ -9143,6 +9711,14 @@ class EnhancedSuggestionEngine:
                 if self._is_land_card(extracted):
                     continue
                 if not self._card_matches_role(extracted, role):
+                    continue
+                if (
+                    role == 'protection'
+                    and not self._has_commander_support_protection_text(
+                        extracted.get('oracle_text', ''),
+                        extracted.get('type_line', ''),
+                    )
+                ):
                     continue
                 if not self._passes_deck_plan_role_floor(
                     extracted,
@@ -9179,9 +9755,9 @@ class EnhancedSuggestionEngine:
                     quality,
                 )
                 reason += (
-                    f" {commander_card.get('name', 'This commander')}'s detected "
-                    f"archetype lists {role.replace('_', ' ')} as a primary support "
-                    "need; this is not being claimed as direct commander text synergy."
+                    f" In {commander_card.get('name', 'this deck')}, that keeps the "
+                    f"{role.replace('_', ' ')} job covered without pretending it is "
+                    "part of the commander's core engine."
                 )
                 recommendation = {
                     'name': extracted['name'],
@@ -9195,6 +9771,14 @@ class EnhancedSuggestionEngine:
                     'evidence_tags': evidence_tags,
                     'penalty_tags': quality.get('penalty_tags', []),
                     'reason': reason,
+                    'recommendation_lane': 'support',
+                    'reason_facts': {
+                        'card_job': quality.get('job', f'{role} support'),
+                        'commander_theme': None,
+                        'support_role': role,
+                        'rules_text_evidence': quality.get('evidence'),
+                        'limitations': ['general deck support rather than a core commander interaction'],
+                    },
                     'matched_plan_lanes': list(dict.fromkeys([
                         role,
                         *matching_synergies,
@@ -9232,6 +9816,7 @@ class EnhancedSuggestionEngine:
         recommendation_concurrency: int = 3,
     ) -> Dict:
         """Analyze a commander and provide strategy tips"""
+        analysis_started = time.perf_counter()
         search_budget = recommendation_search_budget if recommendation_search_budget is not None else (5 if deep else 3)
         per_synergy_limit = 4 if deep else 3
         query_limit = recommendation_query_limit if recommendation_query_limit is not None else (24 if deep else 16)
@@ -9247,7 +9832,25 @@ class EnhancedSuggestionEngine:
         )
         cached = self._commander_analysis_cache_get(cache_key)
         if cached is not None:
+            cached_performance = dict(cached.get('performance') or {})
+            cached_performance.update({
+                'cache_hit': True,
+                'response_ms': round(
+                    (time.perf_counter() - analysis_started) * 1000,
+                    2,
+                ),
+            })
+            cached['performance'] = cached_performance
             return cached
+
+        stage_started = analysis_started
+        stage_timings_ms: Dict[str, float] = {}
+
+        def mark_stage(name: str) -> None:
+            nonlocal stage_started
+            now = time.perf_counter()
+            stage_timings_ms[name] = round((now - stage_started) * 1000, 2)
+            stage_started = now
 
         extracted = self.scryfall.extract_card_data(commander_card)
 
@@ -9263,7 +9866,18 @@ class EnhancedSuggestionEngine:
                 commander_archetypes,
             )
         )
-        coverage = self._commander_coverage_payload(commander_card, synergies, commander_archetypes)
+        synergies, theme_evidence = self._actionable_commander_themes(
+            commander_card,
+            synergies,
+            reviewed_profile=reviewed_profile,
+        )
+        coverage = self._commander_coverage_payload(
+            commander_card,
+            synergies,
+            commander_archetypes,
+            theme_evidence=theme_evidence,
+            reviewed_profile=reviewed_profile,
+        )
         if reviewed_profile:
             coverage = dict(coverage)
             coverage["coverage_signals"] = [
@@ -9290,9 +9904,13 @@ class EnhancedSuggestionEngine:
             if coverage['coverage_level'] == 'exploratory'
             else {}
         )
+        theme_tiers = {
+            item['id']: item['tier'] for item in theme_evidence
+        }
         tips = self._generate_commander_strategy_tips(commander_card, synergies, commander_constraints)
         if deep:
             tips.extend(self._generate_deep_commander_strategy_tips(commander_card, synergies, commander_constraints))
+        mark_stage('profile_semantics')
 
         exploratory_search = coverage['coverage_level'] == 'exploratory' and bool(heuristic_notes)
         suggested_cards = await self._search_commander_recommendations(
@@ -9308,6 +9926,7 @@ class EnhancedSuggestionEngine:
             concurrency=recommendation_concurrency,
             per_query_timeout=recommendation_timeout,
             heuristic_signal_notes=heuristic_notes if exploratory_search else None,
+            theme_tiers=theme_tiers,
         )
         if exploratory_search and not suggested_cards and synergies:
             suggested_cards = await self._search_commander_recommendations(
@@ -9323,6 +9942,7 @@ class EnhancedSuggestionEngine:
                 concurrency=recommendation_concurrency,
                 per_query_timeout=recommendation_timeout,
                 heuristic_signal_notes=heuristic_notes,
+                theme_tiers=theme_tiers,
             )
         if deep and not suggested_cards and synergies:
             suggested_cards = await self._search_commander_recommendations(
@@ -9338,7 +9958,32 @@ class EnhancedSuggestionEngine:
                 concurrency=recommendation_concurrency,
                 per_query_timeout=recommendation_timeout,
                 heuristic_signal_notes=heuristic_notes if exploratory_search else None,
+                theme_tiers=theme_tiers,
             )
+        if (
+            not exploratory_search
+            and sum(
+                1 for card in suggested_cards
+                if card.get('theme_tier') == 'primary'
+            ) < 4
+            and synergies
+            and callable(getattr(self.candidate_provider, 'search_many', None))
+        ):
+            suggested_cards = await self._search_commander_recommendations(
+                commander_card=commander_card,
+                synergies=synergies,
+                color_identity=color_identity,
+                commander_constraints=commander_constraints,
+                max_cards=5,
+                search_budget=min(max(search_budget, 3), 6),
+                per_synergy_limit=max(per_synergy_limit, 4),
+                query_limit=max(query_limit, 32),
+                minimum_score=82,
+                concurrency=recommendation_concurrency,
+                per_query_timeout=recommendation_timeout,
+                theme_tiers=theme_tiers,
+            )
+        mark_stage('theme_candidates')
 
         commander_planner = {
             'mode': self.planner_mode,
@@ -9361,11 +10006,12 @@ class EnhancedSuggestionEngine:
                     str(card.get('name') or '') for card in suggested_cards
                 },
             )
-            v3_cards = [dict(item) for item in self.portfolio_optimizer.select(
-                [*suggested_cards, *support_cards],
+            mark_stage('support_candidates')
+            v3_cards = self._select_commander_portfolio(
+                suggested_cards,
+                support_cards,
                 5 if not exploratory_search else 3,
-                kind='commander',
-            )]
+            )
             self._annotate_v3_selection(v3_cards)
             v3_cards = [
                 self.confidence_policy.apply(
@@ -9383,6 +10029,9 @@ class EnhancedSuggestionEngine:
                 ),
             })
             suggested_cards = v3_cards
+        else:
+            stage_timings_ms['support_candidates'] = 0.0
+        mark_stage('portfolio_selection')
         
         # Generate combos
         combos = self._generate_combo_suggestions(extracted['name'], synergies, [])
@@ -9398,6 +10047,7 @@ class EnhancedSuggestionEngine:
             'toughness': commander_card.get('toughness'),
             'image_url': self._get_card_image(commander_card),
             'synergies': synergies,
+            'theme_evidence': theme_evidence,
             'archetypes': commander_archetypes,
             'mechanics': self._top_registry_mechanics(commander_card, limit=6, include_texture=False),
             'coverage_level': coverage['coverage_level'],
@@ -9414,6 +10064,23 @@ class EnhancedSuggestionEngine:
             'analysis_depth': 'deep' if deep else 'fast',
             'reviewed_profile': reviewed_profile,
         }
+        mark_stage('result_assembly')
+        total_ms = round((time.perf_counter() - analysis_started) * 1000, 2)
+        result['performance'] = {
+            'version': 'commander-profile-timing-v1',
+            'cache_hit': False,
+            'response_ms': total_ms,
+            'stage_timings_ms': stage_timings_ms,
+            'batched_catalog_search': callable(
+                getattr(self.candidate_provider, 'search_many', None)
+            ),
+        }
+        logger.info(
+            "Commander profile timing name=%s total_ms=%.2f stages=%s",
+            extracted['name'],
+            total_ms,
+            stage_timings_ms,
+        )
         return self._commander_analysis_cache_set(cache_key, result)
 
     async def find_more_commander_recommendations(
@@ -9428,7 +10095,25 @@ class EnhancedSuggestionEngine:
         color_identity = extracted['color_identity']
         commander_constraints = self._get_commander_constraints(commander_card)
         commander_archetypes = self._detect_commander_archetypes(commander_card)
-        coverage = self._commander_coverage_payload(commander_card, synergies, commander_archetypes)
+        synergies, commander_archetypes, reviewed_profile = (
+            self._merge_reviewed_commander_profile(
+                commander_card,
+                synergies,
+                commander_archetypes,
+            )
+        )
+        synergies, theme_evidence = self._actionable_commander_themes(
+            commander_card,
+            synergies,
+            reviewed_profile=reviewed_profile,
+        )
+        coverage = self._commander_coverage_payload(
+            commander_card,
+            synergies,
+            commander_archetypes,
+            theme_evidence=theme_evidence,
+            reviewed_profile=reviewed_profile,
+        )
         exploratory_search = coverage['coverage_level'] == 'exploratory'
         if exploratory_search:
             synergies = self._supplement_synergies_from_heuristics(synergies, coverage['heuristic_signals'])
@@ -9437,6 +10122,9 @@ class EnhancedSuggestionEngine:
             if exploratory_search
             else {}
         )
+        theme_tiers = {
+            item['id']: item['tier'] for item in theme_evidence
+        }
         excluded = {name.lower() for name in (exclude_names or [])}
 
         more_cards = await self._search_commander_recommendations(
@@ -9452,6 +10140,7 @@ class EnhancedSuggestionEngine:
             exclude_names=excluded,
             concurrency=3,
             heuristic_signal_notes=heuristic_notes if exploratory_search else None,
+            theme_tiers=theme_tiers,
         )
 
         for card in more_cards:
@@ -9465,6 +10154,7 @@ class EnhancedSuggestionEngine:
             'coverage_level': coverage['coverage_level'],
             'coverage_notes': coverage['coverage_notes'],
             'coverage_signals': coverage['coverage_signals'],
+            'theme_evidence': theme_evidence,
             'page': page,
             'has_more': len(more_cards) >= 8,
         }

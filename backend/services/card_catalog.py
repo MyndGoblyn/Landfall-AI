@@ -8,6 +8,7 @@ import math
 import re
 import threading
 from collections import OrderedDict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Sequence
 
@@ -195,6 +196,14 @@ _ORACLE_TAG_TERMS = {
 
 
 Predicate = Callable[[Dict], bool]
+
+
+@dataclass(frozen=True)
+class _QueryCacheEntry:
+    """A popularity-ordered prefix, or the complete result, for one query."""
+
+    cards: Sequence[Dict]
+    complete: bool
 
 
 class _QueryParser:
@@ -392,10 +401,11 @@ class LocalCardCatalog:
         self._lock = threading.RLock()
         self._signature: Optional[tuple] = None
         self._cards: Sequence[Dict] = ()
+        self._cards_by_popularity: Sequence[Dict] = ()
         self._name_index: Dict[str, Dict] = {}
         self._catalog_version: Optional[str] = None
         self._source_updated_at: Optional[str] = None
-        self._query_cache: OrderedDict[str, Sequence[Dict]] = OrderedDict()
+        self._query_cache: OrderedDict[str, _QueryCacheEntry] = OrderedDict()
 
     @property
     def available(self) -> bool:
@@ -458,6 +468,7 @@ class LocalCardCatalog:
                 raise CatalogValidationError("Catalog contains no valid card records")
 
             self._cards = tuple(unique_cards.values())
+            self._cards_by_popularity = tuple(sorted(self._cards, key=_popularity_key))
             self._name_index = {
                 str(card.get("name") or "").casefold(): card
                 for card in self._cards
@@ -473,26 +484,77 @@ class LocalCardCatalog:
             self._signature = signature
             self._query_cache.clear()
 
+    def search_many(self, requests: Sequence[tuple[str, int]]) -> Dict[str, List[Dict]]:
+        """Resolve several queries in one popularity-ordered catalog pass.
+
+        The previous implementation scanned and sorted all 39k cards once per
+        query.  Walking a catalog that is sorted once at load time preserves the
+        exact public order and lets retrieval stop as soon as every requested
+        prefix is full.
+        """
+        normalized: Dict[str, int] = {}
+        for query, raw_limit in requests:
+            limit = max(0, int(raw_limit))
+            if query and limit > 0:
+                normalized[query] = max(limit, normalized.get(query, 0))
+        if not normalized:
+            return {str(query): [] for query, _limit in requests}
+
+        self._ensure_loaded()
+        resolved: Dict[str, Sequence[Dict]] = {}
+        pending: Dict[str, int] = {}
+        with self._lock:
+            for query, limit in normalized.items():
+                cached = self._query_cache.get(query)
+                if cached is not None and (
+                    cached.complete or len(cached.cards) >= limit
+                ):
+                    self._query_cache.move_to_end(query)
+                    resolved[query] = cached.cards[:limit]
+                else:
+                    pending[query] = limit
+
+        if pending:
+            predicates = {
+                query: compile_catalog_query(query)
+                for query in pending
+            }
+            matches: Dict[str, List[Dict]] = {
+                query: [] for query in pending
+            }
+            active = set(pending)
+            scanned_all = True
+            for card in self._cards_by_popularity:
+                for query in tuple(active):
+                    if predicates[query](card):
+                        matches[query].append(card)
+                        if len(matches[query]) >= pending[query]:
+                            active.remove(query)
+                if not active:
+                    scanned_all = False
+                    break
+
+            with self._lock:
+                for query, cards in matches.items():
+                    entry = _QueryCacheEntry(
+                        cards=tuple(cards),
+                        complete=scanned_all and query in active,
+                    )
+                    self._query_cache[query] = entry
+                    self._query_cache.move_to_end(query)
+                    resolved[query] = entry.cards
+                while len(self._query_cache) > self.query_cache_size:
+                    self._query_cache.popitem(last=False)
+
+        return {
+            query: [_public_card(card) for card in resolved.get(query, ())[:limit]]
+            for query, limit in normalized.items()
+        }
+
     def search(self, query: str, limit: int) -> List[Dict]:
         if limit <= 0:
             return []
-        self._ensure_loaded()
-
-        with self._lock:
-            cached = self._query_cache.get(query)
-            if cached is not None:
-                self._query_cache.move_to_end(query)
-                return [_public_card(card) for card in cached[:limit]]
-
-        predicate = compile_catalog_query(query)
-        matches = tuple(sorted((card for card in self._cards if predicate(card)), key=_popularity_key))
-
-        with self._lock:
-            self._query_cache[query] = matches
-            self._query_cache.move_to_end(query)
-            while len(self._query_cache) > self.query_cache_size:
-                self._query_cache.popitem(last=False)
-        return [_public_card(card) for card in matches[:limit]]
+        return self.search_many([(query, limit)]).get(query, [])
 
     def load(self) -> Dict:
         """Eagerly validate and load the current snapshot."""
@@ -504,6 +566,13 @@ class LocalCardCatalog:
 
     async def search_async(self, query: str, limit: int) -> List[Dict]:
         return await asyncio.to_thread(self.search, query, limit)
+
+    async def search_many_async(
+        self,
+        requests: Sequence[tuple[str, int]],
+    ) -> Dict[str, List[Dict]]:
+        ordered = list(requests)
+        return await asyncio.to_thread(self.search_many, ordered)
 
     def resolve(self, name: str) -> Optional[Dict]:
         """Resolve a canonical card or face name from the frozen snapshot."""

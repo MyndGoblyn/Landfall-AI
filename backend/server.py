@@ -8,6 +8,7 @@ import os
 import logging
 import asyncio
 import hashlib
+import json
 import secrets
 import smtplib
 import re
@@ -190,6 +191,8 @@ async def prepare_database():
             await db.scryfall_cards.create_index('fetched_at', expireAfterSeconds=2592000)
             await db.scryfall_searches.create_index('query_key', unique=True)
             await db.scryfall_searches.create_index('fetched_at', expireAfterSeconds=604800)
+            await db.commander_profile_cache.create_index('cache_key', unique=True)
+            await db.commander_profile_cache.create_index('expires_at', expireAfterSeconds=0)
         except Exception as exc:
             logger.warning("Could not ensure database indexes: %s", exc)
     logger.warning(
@@ -2892,16 +2895,165 @@ async def browse_commander_atlas(
     )
 
 
+def _set_commander_server_timing(response: Response, analysis: Mapping) -> None:
+    """Expose coarse deterministic stages without leaking recommendation data."""
+    performance = analysis.get("performance") or {}
+    stages = performance.get("stage_timings_ms") or {}
+    metrics = []
+    for name, duration in stages.items():
+        safe_name = re.sub(r"[^a-zA-Z0-9_-]", "_", str(name))
+        try:
+            metrics.append(f"{safe_name};dur={float(duration):.2f}")
+        except (TypeError, ValueError):
+            continue
+    try:
+        metrics.append(f"total;dur={float(performance.get('response_ms')):.2f}")
+    except (TypeError, ValueError):
+        pass
+    if metrics:
+        response.headers["Server-Timing"] = ", ".join(metrics)
+    response.headers["X-Landfall-Profile-Cache"] = (
+        str(performance.get("cache_layer") or (
+            "memory" if performance.get("cache_hit") else "miss"
+        ))
+    )
+
+
+COMMANDER_PROFILE_CACHE_VERSION = "commander-profile-phase8-v1"
+COMMANDER_PROFILE_CACHE_ENABLED = os.environ.get(
+    "COMMANDER_PROFILE_CACHE_ENABLED",
+    "true",
+).lower() == "true"
+COMMANDER_PROFILE_CACHE_TTL_DAYS = max(
+    1,
+    int(os.environ.get("COMMANDER_PROFILE_CACHE_TTL_DAYS", "30")),
+)
+COMMANDER_PROFILE_CACHE_TIMEOUT_SECONDS = max(
+    0.05,
+    float(os.environ.get("COMMANDER_PROFILE_CACHE_TIMEOUT_SECONDS", "0.4")),
+)
+
+
+def _commander_profile_cache_key(commander_card: Mapping, deep: bool) -> str:
+    provider_status = getattr(candidate_provider, "get_status", lambda: {})()
+    catalog_status = _local_catalog_status(provider_status)
+    semantic_status = suggestion_engine.get_semantic_bundle_status()
+    payload = {
+        "version": COMMANDER_PROFILE_CACHE_VERSION,
+        "oracle_id": commander_card.get("oracle_id"),
+        "name": commander_card.get("name"),
+        "oracle_text": commander_card.get("oracle_text"),
+        "deep": bool(deep),
+        "catalog_version": catalog_status.get("catalog_version"),
+        "catalog_updated_at": catalog_status.get("source_updated_at"),
+        "semantic_version": semantic_status.get("semantic_version"),
+        "ranker_version": suggestion_engine.evidence_ranker.VERSION,
+        "ranker_mode": suggestion_engine.ranker_mode,
+        "planner_version": suggestion_engine.portfolio_optimizer.VERSION,
+        "planner_mode": suggestion_engine.planner_mode,
+    }
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def _default_commander_memory_cache_key(commander_card: Mapping, deep: bool) -> tuple:
+    return suggestion_engine._commander_analysis_cache_key(
+        dict(commander_card),
+        bool(deep),
+        5 if deep else 3,
+        4 if deep else 3,
+        24 if deep else 16,
+        84,
+        None,
+    )
+
+
+async def _store_commander_profile_cache(cache_key: str, analysis: Mapping) -> None:
+    now = datetime.now(timezone.utc)
+    try:
+        await asyncio.wait_for(
+            db.commander_profile_cache.update_one(
+                {"cache_key": cache_key},
+                {"$set": {
+                    "cache_key": cache_key,
+                    "version": COMMANDER_PROFILE_CACHE_VERSION,
+                    "analysis": dict(analysis),
+                    "updated_at": now,
+                    "expires_at": now + timedelta(days=COMMANDER_PROFILE_CACHE_TTL_DAYS),
+                }},
+                upsert=True,
+            ),
+            timeout=COMMANDER_PROFILE_CACHE_TIMEOUT_SECONDS,
+        )
+    except Exception as exc:
+        logger.warning("Could not persist commander profile cache: %s", exc)
+
+
+async def _analyze_commander_cached(commander_card: Mapping, deep: bool = False) -> Dict[str, Any]:
+    """Use process memory first, then Mongo, then deterministic computation."""
+    started = asyncio.get_running_loop().time()
+    memory_key = _default_commander_memory_cache_key(commander_card, deep)
+    memory_hit = suggestion_engine._commander_analysis_cache_get(memory_key)
+    if memory_hit is not None:
+        elapsed_ms = round((asyncio.get_running_loop().time() - started) * 1000, 2)
+        performance = dict(memory_hit.get("performance") or {})
+        performance.update({
+            "cache_hit": True,
+            "cache_layer": "memory",
+            "response_ms": elapsed_ms,
+            "stage_timings_ms": {"cache_lookup": elapsed_ms},
+        })
+        memory_hit["performance"] = performance
+        return memory_hit
+
+    cache_key = _commander_profile_cache_key(commander_card, deep)
+    if COMMANDER_PROFILE_CACHE_ENABLED:
+        try:
+            cached = await asyncio.wait_for(
+                db.commander_profile_cache.find_one(
+                    {"cache_key": cache_key},
+                    {"_id": 0},
+                ),
+                timeout=COMMANDER_PROFILE_CACHE_TIMEOUT_SECONDS,
+            )
+        except Exception as exc:
+            cached = None
+            logger.warning("Could not read commander profile cache: %s", exc)
+        if cached and isinstance(cached.get("analysis"), dict):
+            analysis = dict(cached["analysis"])
+            elapsed_ms = round((asyncio.get_running_loop().time() - started) * 1000, 2)
+            performance = dict(analysis.get("performance") or {})
+            performance.update({
+                "cache_hit": True,
+                "cache_layer": "persistent",
+                "response_ms": elapsed_ms,
+                "stage_timings_ms": {"cache_lookup": elapsed_ms},
+            })
+            analysis["performance"] = performance
+            suggestion_engine._commander_analysis_cache_set(memory_key, analysis)
+            return analysis
+
+    analysis = await suggestion_engine.analyze_commander(dict(commander_card), deep=deep)
+    performance = dict(analysis.get("performance") or {})
+    performance.setdefault("cache_layer", "compute")
+    analysis["performance"] = performance
+    if COMMANDER_PROFILE_CACHE_ENABLED:
+        asyncio.create_task(_store_commander_profile_cache(cache_key, analysis))
+    return analysis
+
+
 @api_router.get("/commander-atlas/{commander_oracle_id}/profile")
 async def get_commander_atlas_profile(
     commander_oracle_id: str,
+    response: Response,
     current_user: Dict = Depends(get_current_user),
 ):
     del current_user
     match = await commander_atlas.get(commander_oracle_id)
     if not match:
         raise HTTPException(status_code=404, detail="Commander profile not found")
-    analysis = await suggestion_engine.analyze_commander(match["card"])
+    analysis = await _analyze_commander_cached(match["card"])
+    _set_commander_server_timing(response, analysis)
     status = commander_atlas.get_status()
     return {
         "catalog_entry": match["catalog_entry"],
@@ -2970,7 +3122,11 @@ async def search_commanders(
     return {"query": query, "candidates": candidates}
 
 @api_router.post("/commander/lookup")
-async def lookup_commander(request: CommanderLookupRequest, current_user: Dict = Depends(get_current_user)):
+async def lookup_commander(
+    request: CommanderLookupRequest,
+    response: Response,
+    current_user: Dict = Depends(get_current_user),
+):
     """Lookup a specific commander and provide strategy analysis"""
     try:
         # Search for commander
@@ -2983,7 +3139,8 @@ async def lookup_commander(request: CommanderLookupRequest, current_user: Dict =
             raise HTTPException(status_code=400, detail="Card is not a legal commander")
         
         # Analyze commander
-        result = await suggestion_engine.analyze_commander(commander_card)
+        result = await _analyze_commander_cached(commander_card)
+        _set_commander_server_timing(response, result)
         
         return result
     except HTTPException:
@@ -2993,7 +3150,11 @@ async def lookup_commander(request: CommanderLookupRequest, current_user: Dict =
         raise HTTPException(status_code=500, detail=f"Lookup failed: {str(e)}")
 
 @api_router.post("/commander/lookup/deep")
-async def deep_lookup_commander(request: CommanderLookupRequest, current_user: Dict = Depends(get_current_user)):
+async def deep_lookup_commander(
+    request: CommanderLookupRequest,
+    response: Response,
+    current_user: Dict = Depends(get_current_user),
+):
     """Lookup a commander with a larger recommendation search budget."""
     try:
         commander_card = await scryfall_service.search_card(request.commander_name)
@@ -3003,7 +3164,8 @@ async def deep_lookup_commander(request: CommanderLookupRequest, current_user: D
         if not suggestion_engine._is_commander_eligible(commander_card):
             raise HTTPException(status_code=400, detail="Card is not a legal commander")
 
-        result = await suggestion_engine.analyze_commander(commander_card, deep=True)
+        result = await _analyze_commander_cached(commander_card, deep=True)
+        _set_commander_server_timing(response, result)
         return result
     except HTTPException:
         raise
