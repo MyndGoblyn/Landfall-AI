@@ -339,9 +339,9 @@ single swap does not prove a good 100-card portfolio.
 - Shadow comparisons and fresh real-build reviews pass before the constructor
   mode can be promoted.
 
-**Promotion confidence after these gates: 92%.** This is the target confidence
-for enabling complete drafts in production. Until then, Guided Build should
-serve manual or partial deterministic scaffolds only.
+**Promotion confidence after these gates: 92%.** The reviewed matrix exceeded
+this target at 93% delivery confidence, and complete drafts were promoted in
+production on 2026-11-06 through the independent constructor runtime flag.
 
 ### Phase 5 implementation checkpoint — 2026-11-06
 
@@ -362,8 +362,10 @@ view.
 Full validation passes 275 backend tests. The separate 18-deck public V3 suite
 also matches the promoted addition, cut, and swap portfolios exactly, proving
 that complete-construction expansion does not reorder the served analysis
-path. Complete mode now satisfies the controlled-promotion contract and is
-ready for the reversible `BUILD_CONSTRUCTOR_MODE=complete` runtime change. See
+path. Complete mode satisfies the controlled-promotion contract and is live
+with the reversible `BUILD_CONSTRUCTOR_MODE=complete` runtime setting. The
+production semantic bundle is `semantic:4d7560cdb28bd3015e8b0e09f9337efd8bbfe221c3c712fb47c16f408aa4b482`
+with 120 construction-registry cards and 16 reviewed commander profiles. See
 `docs/PHASE5_BUILDER_VALIDATION_REPORT_2026-11-06.md` for the release evidence.
 
 ## Phase 6 - Collection-aware and feedback improvements

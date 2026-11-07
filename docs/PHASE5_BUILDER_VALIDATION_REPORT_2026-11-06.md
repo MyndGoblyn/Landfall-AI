@@ -105,9 +105,15 @@ Counterfactual results:
 - Complete-constructor matrix: **26/26 passed**, with no failed or missing
   counterfactual result.
 
-## Promotion boundary
+## Production promotion
 
-The code and validation evidence are ready for the controlled runtime change
-from `BUILD_CONSTRUCTOR_MODE=scaffold` to
-`BUILD_CONSTRUCTOR_MODE=complete`. The flag remains independently reversible;
-changing it does not alter the served deck-analysis recommendation path.
+The controlled runtime change from `BUILD_CONSTRUCTOR_MODE=scaffold` to
+`BUILD_CONSTRUCTOR_MODE=complete` was completed on 2026-11-06. Production
+loaded and verified semantic bundle
+`semantic:4d7560cdb28bd3015e8b0e09f9337efd8bbfe221c3c712fb47c16f408aa4b482`
+with 120 construction-registry cards and 16 reviewed commander profiles. The
+public API reports `complete_drafts_enabled: true`, and both the API health
+check and Cloudflare-hosted frontend return successfully.
+
+The flag remains independently reversible; changing it does not alter the
+served deck-analysis recommendation path.
