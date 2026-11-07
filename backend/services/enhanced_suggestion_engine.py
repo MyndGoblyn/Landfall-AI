@@ -1795,7 +1795,15 @@ class EnhancedSuggestionEngine:
             'cards of each card type',
         ])
     
-    async def analyze_deck(self, deck: Dict, categories: Optional[List[str]] = None, deep: bool = False) -> Dict:
+    async def analyze_deck(
+        self,
+        deck: Dict,
+        categories: Optional[List[str]] = None,
+        deep: bool = False,
+        *,
+        candidate_pool_depth: int = 20,
+        portfolio_limit: Optional[int] = None,
+    ) -> Dict:
         """Main analysis entry point with commander synergy and category filtering"""
         analysis_started = time.perf_counter()
         stage_started = analysis_started
@@ -1912,6 +1920,8 @@ class EnhancedSuggestionEngine:
             commander_zone_names=self._commander_zone_names(deck, commander_data),
             strategy_profile=strategy_profile,
             planner_diagnostics=planner_diagnostics,
+            candidate_pool_depth=candidate_pool_depth,
+            portfolio_limit=portfolio_limit,
         )
         finish_stage('addition_retrieval_and_ranking')
         suggestions_cut = await self._generate_cuts(
@@ -1930,8 +1940,13 @@ class EnhancedSuggestionEngine:
             color_identity,
             intent_profile,
         )
+        result_limit = (
+            max(1, min(40, int(portfolio_limit)))
+            if portfolio_limit is not None
+            else (15 if deep else 10)
+        )
         if mana_repair:
-            suggestions_add = [mana_repair] + suggestions_add[:9]
+            suggestions_add = [mana_repair] + suggestions_add[:result_limit - 1]
         swap_pairs = self._pair_additions_with_safe_cuts(
             suggestions_add,
             suggestions_cut,
@@ -1972,7 +1987,7 @@ class EnhancedSuggestionEngine:
         )
         
         return {
-            'suggestions_add': suggestions_add[:15 if deep else 10],
+            'suggestions_add': suggestions_add[:result_limit],
             'suggestions_cut': suggestions_cut[:12 if deep else 10],
             'swap_pairs': swap_pairs[:12 if deep else 10],
             'stats': stats,
@@ -3551,7 +3566,9 @@ class EnhancedSuggestionEngine:
                                    commander_zone_names: Optional[Set[str]] = None,
                                    search_concurrency: int = 3,
                                    strategy_profile: Optional[StrategyProfile] = None,
-                                   planner_diagnostics: Optional[Dict] = None) -> List[Dict]:
+                                   planner_diagnostics: Optional[Dict] = None,
+                                   candidate_pool_depth: int = 20,
+                                   portfolio_limit: Optional[int] = None) -> List[Dict]:
         """Generate enhanced card addition suggestions with commander synergy and categories"""
         current_card_names = {card['name'].lower() for card in current_cards}
         current_card_names.update(
@@ -3599,9 +3616,19 @@ class EnhancedSuggestionEngine:
                 'interaction': ('interaction', f"o:counter {color_filter} f:commander"),
             }
             for cat in categories:
-                if cat.lower() in category_map:
-                    role, query = category_map[cat.lower()]
+                normalized_category = cat.lower()
+                if normalized_category in category_map:
+                    role, query = category_map[normalized_category]
                     queries.append((role, query))
+                    continue
+                if normalized_category in commander_synergies:
+                    query = self._build_query_for_synergy(
+                        normalized_category,
+                        color_identity,
+                        commander_constraints,
+                    )
+                    if query:
+                        queries.append((f'synergy:{normalized_category}', query))
         else:
             if normalized_intent.get('optimization_mode') == 'competitive':
                 queries.append((
@@ -3703,10 +3730,13 @@ class EnhancedSuggestionEngine:
         selected_queries = [(spec.key, spec.query) for spec in selected_specs]
         semaphore = asyncio.Semaphore(max(1, search_concurrency))
 
+        search_depth = max(20, min(100, int(candidate_pool_depth or 20)))
+        selection_limit = max(1, min(40, int(portfolio_limit or 10)))
+
         async def run_search(role: str, query: str) -> List[Dict]:
             async with semaphore:
                 try:
-                    return await self._search_candidate_cards(query, limit=20)
+                    return await self._search_candidate_cards(query, limit=search_depth)
                 except Exception as exc:
                     logger.error("Error searching additions for %s: %s", role, exc)
                     return []
@@ -4059,16 +4089,16 @@ class EnhancedSuggestionEngine:
 
         legacy_suggestions = self._select_ranked_deck_suggestions_legacy(
             list(legacy_candidates_by_name.values()),
-            10,
+            selection_limit,
         )
         v2_suggestions = [dict(item) for item in self.evidence_ranker.select(
             list(v2_candidates_by_name.values()),
-            10,
+            selection_limit,
             kind='deck',
         )]
         v3_suggestions = [dict(item) for item in self.portfolio_optimizer.select(
             list(v2_candidates_by_name.values()),
-            10,
+            selection_limit,
             kind='deck',
         )]
         self._annotate_v2_selection(v2_suggestions)

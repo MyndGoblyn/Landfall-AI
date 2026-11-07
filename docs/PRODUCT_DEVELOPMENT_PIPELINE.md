@@ -342,6 +342,22 @@ single swap does not prove a good 100-card portfolio.
 for enabling complete drafts in production. Until then, Guided Build should
 serve manual or partial deterministic scaffolds only.
 
+### Phase 5 implementation checkpoint — 2026-11-06
+
+The independent 26-case golden suite, frozen-catalog runner, counterfactual
+contracts, staged candidate-depth construction, exact deck and mana checks,
+and reason/evidence quality gates are implemented. The final calibration passes
+13 of 26 cases, all five negative controls, and all seven explicit
+counterfactual checks. Complete mode remains unpromoted because cEDH, political,
+storm, Voltron, blink, colorless, lands, artifact, and some typal/package pools
+still lack enough evidence-qualified depth. See
+`docs/PHASE5_BUILDER_VALIDATION_REPORT_2026-11-06.md` for the exact decision and
+remaining blockers.
+
+Production stays on the bounded Phase 4 scaffold. Phase 5 work must expand
+reviewed semantic and package evidence; loop-count increases or confidence-floor
+reductions do not satisfy the promotion contract.
+
 ## Phase 6 - Collection-aware and feedback improvements
 
 - Add card collection storage only after the core builder works without it.

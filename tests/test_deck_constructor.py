@@ -163,6 +163,41 @@ class FakeEngine:
         }
 
 
+class FakeIterativeEngine:
+    def __init__(self):
+        self.calls = 0
+
+    async def analyze_deck(self, deck, deep=False):
+        assert deep
+        self.calls += 1
+        present = {value["name"] for value in deck.get("cards") or []}
+        next_card = next(
+            (value for value in (VISCERA, VICTIMIZE) if value["name"] not in present),
+            None,
+        )
+        suggestions = []
+        if next_card:
+            suggestions.append({
+                "card_name": next_card["name"],
+                "role_tag": "engine",
+                "reason": "The next evidence pass fills a measured engine slot.",
+                "score": 95,
+                "confidence": 0.9,
+                "evidence_tags": ["direct_synergy"],
+                "matched_plan_lanes": ["engine"],
+                "selection_position": 1,
+                "portfolio_version": "evidence-portfolio-v3",
+            })
+        return {
+            "coverage_level": "deep",
+            "strategy_profile": {"lanes": []},
+            "recommendation_planner": {
+                "portfolio_version": "evidence-portfolio-v3",
+            },
+            "suggestions_add": suggestions,
+        }
+
+
 def intent(**updates):
     value = {
         "confirmed": True,
@@ -267,3 +302,36 @@ def test_complete_drafts_remain_behind_the_promotion_mode():
 
     with pytest.raises(ConstructorUnavailable, match="Phase 5"):
         asyncio.run(constructor().construct(deck, intent(build_mode="complete_draft")))
+
+
+def test_complete_mode_reanalyzes_after_each_evidence_portfolio():
+    engine = FakeIterativeEngine()
+    complete_constructor = DeckConstructor(
+        engine,
+        FakeScryfall([
+            MEREN,
+            VISCERA,
+            VICTIMIZE,
+            SWAMP,
+            FOREST,
+        ]),
+        mode="complete",
+    )
+    deck = {"commander": MEREN["name"], "commanders": [MEREN["name"]], "cards": []}
+
+    result = asyncio.run(complete_constructor.construct(
+        deck,
+        intent(build_mode="complete_draft", build_shape="full_deck"),
+    ))
+
+    assert engine.calls == 3
+    assert [
+        row["accepted_count"]
+        for row in result["evidence"]["construction_passes"]
+    ] == [1, 1, 0]
+    assert [
+        card["construction_pass"]
+        for card in result["selected_cards"]
+        if card["source"] == "planner_v3"
+    ] == [1, 2]
+    assert result["status"] == "ready_partial"

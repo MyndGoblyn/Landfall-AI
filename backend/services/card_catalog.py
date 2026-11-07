@@ -392,6 +392,7 @@ class LocalCardCatalog:
         self._lock = threading.RLock()
         self._signature: Optional[tuple] = None
         self._cards: Sequence[Dict] = ()
+        self._name_index: Dict[str, Dict] = {}
         self._catalog_version: Optional[str] = None
         self._source_updated_at: Optional[str] = None
         self._query_cache: OrderedDict[str, Sequence[Dict]] = OrderedDict()
@@ -457,6 +458,16 @@ class LocalCardCatalog:
                 raise CatalogValidationError("Catalog contains no valid card records")
 
             self._cards = tuple(unique_cards.values())
+            self._name_index = {
+                str(card.get("name") or "").casefold(): card
+                for card in self._cards
+                if card.get("name")
+            }
+            for card in self._cards:
+                for face in card.get("card_faces") or []:
+                    face_name = str(face.get("name") or "").casefold()
+                    if face_name:
+                        self._name_index.setdefault(face_name, card)
             self._catalog_version = catalog_version
             self._source_updated_at = source_updated_at
             self._signature = signature
@@ -493,6 +504,31 @@ class LocalCardCatalog:
 
     async def search_async(self, query: str, limit: int) -> List[Dict]:
         return await asyncio.to_thread(self.search, query, limit)
+
+    def resolve(self, name: str) -> Optional[Dict]:
+        """Resolve a canonical card or face name from the frozen snapshot."""
+        self._ensure_loaded()
+        card = self._name_index.get(str(name or "").strip().casefold())
+        return _public_card(card) if card else None
+
+    def resolve_many(self, names: Iterable[str]) -> List[Optional[Dict]]:
+        """Resolve exact names in caller order without live network access."""
+        self._ensure_loaded()
+        return [
+            (
+                _public_card(card)
+                if (card := self._name_index.get(str(name or "").strip().casefold()))
+                else None
+            )
+            for name in names
+        ]
+
+    async def resolve_async(self, name: str) -> Optional[Dict]:
+        return await asyncio.to_thread(self.resolve, name)
+
+    async def resolve_many_async(self, names: Iterable[str]) -> List[Optional[Dict]]:
+        ordered = list(names)
+        return await asyncio.to_thread(self.resolve_many, ordered)
 
     def get_status(self) -> Dict:
         return {

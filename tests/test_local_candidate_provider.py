@@ -101,6 +101,25 @@ def test_catalog_applies_boolean_identity_legality_exclusion_and_popularity(tmp_
     assert catalog.get_status()["card_count"] == 5
 
 
+def test_catalog_resolves_canonical_and_face_names_in_caller_order(tmp_path):
+    path = tmp_path / "catalog.json"
+    double_faced = card("Front // Back", type_line="Creature", color_identity=["G"])
+    double_faced["card_faces"] = [
+        {"name": "Front", "type_line": "Creature", "oracle_text": ""},
+        {"name": "Back", "type_line": "Land", "oracle_text": ""},
+    ]
+    write_catalog(path, [card("Mana Rock"), double_faced])
+    catalog = LocalCardCatalog(path)
+
+    resolved = catalog.resolve_many(["Back", "Mana Rock", "Missing"])
+
+    assert [value["name"] if value else None for value in resolved] == [
+        "Front // Back",
+        "Mana Rock",
+        None,
+    ]
+
+
 def test_golden_candidate_retrieval_cases_clear_recall_and_rejection_gates(tmp_path):
     payload = json.loads(RETRIEVAL_FIXTURE_PATH.read_text(encoding="utf-8"))
     assert payload["schema_version"] == 1

@@ -57,6 +57,14 @@ def _name(value: Any) -> str:
 def _price(card: Mapping) -> Optional[float]:
     prices = card.get("prices") or {}
     value = prices.get("usd") if isinstance(prices, Mapping) else None
+    if value in {None, ""} and "basic land" in str(
+        card.get("type_line") or ""
+    ).casefold():
+        # Oracle snapshots frequently omit a representative price for basics.
+        # Treat the replaceable bulk basic itself as zero instead of making a
+        # strict-budget deck impossible; the reason ledger still discloses the
+        # basic-land baseline separately from priced nonbasics.
+        return 0.0
     try:
         return round(float(value), 2) if value not in {None, ""} else None
     except (TypeError, ValueError):
@@ -183,8 +191,100 @@ def _largest_remainder(weights: Mapping[str, float], total: int) -> Dict[str, in
     return {key: count for key, count in result.items() if count > 0}
 
 
+def _construction_quality(records: Sequence[Mapping]) -> Dict:
+    """Summarize composition without converting it into a self-scored pass."""
+    role_counts = Counter()
+    source_counts = Counter()
+    curve = Counter()
+    nonland_slots = 0
+    mana_value_total = 0.0
+    reasoned_slots = 0
+    evidenced_slots = 0
+    planner_confidences = []
+    for record in records:
+        qty = max(1, _quantity(record.get("qty", 1)))
+        source_counts[str(record.get("source") or "unknown")] += qty
+        role = _name(record.get("role"))
+        if role:
+            role_counts[role] += qty
+        if _name(record.get("reason")):
+            reasoned_slots += qty
+        if record.get("evidence"):
+            evidenced_slots += qty
+        if record.get("source") == "planner_v3":
+            try:
+                planner_confidences.append(float(record.get("confidence")))
+            except (TypeError, ValueError):
+                pass
+        if "land" in str(record.get("type_line") or "").casefold():
+            continue
+        nonland_slots += qty
+        try:
+            mana_value = float(record.get("cmc") or 0)
+        except (TypeError, ValueError):
+            mana_value = 0.0
+        mana_value_total += mana_value * qty
+        if mana_value <= 1:
+            bucket = "0-1"
+        elif mana_value <= 2:
+            bucket = "2"
+        elif mana_value <= 3:
+            bucket = "3"
+        elif mana_value <= 4:
+            bucket = "4"
+        else:
+            bucket = "5+"
+        curve[bucket] += qty
+
+    total_slots = sum(source_counts.values())
+    return {
+        "role_counts": dict(sorted(role_counts.items())),
+        "source_counts": dict(sorted(source_counts.items())),
+        "distinct_non_mana_roles": len({
+            role.casefold()
+            for role in role_counts
+            if role.casefold() != "mana base"
+        }),
+        "average_nonland_mana_value": (
+            round(mana_value_total / nonland_slots, 3) if nonland_slots else None
+        ),
+        "curve": {
+            bucket: curve.get(bucket, 0) for bucket in ("0-1", "2", "3", "4", "5+")
+        },
+        "reason_ledger_coverage": (
+            round(reasoned_slots / total_slots, 3) if total_slots else 1.0
+        ),
+        "evidence_ledger_coverage": (
+            round(evidenced_slots / total_slots, 3) if total_slots else 1.0
+        ),
+        "average_planner_confidence": (
+            round(sum(planner_confidences) / len(planner_confidences), 3)
+            if planner_confidences else None
+        ),
+    }
+
+
 class DeckConstructor:
-    VERSION = "deterministic-scaffold-v1"
+    VERSION = "deterministic-constructor-v2"
+    COMPLETE_PASS_LIMIT = 60
+    # Complete decks need both direct plan cards and generic structural role
+    # fixes.  Moderate (0.68+) evidence is allowed for the latter, while the
+    # independent Phase 5 gate enforces a stronger portfolio-wide average.
+    COMPLETE_CONFIDENCE_FLOOR = 0.68
+    COMPLETE_PASS_FOCUS = (
+        None,
+        "draw",
+        "ramp",
+        None,
+        "removal",
+        "protection",
+        None,
+        "sweeper",
+        "interaction",
+        None,
+        "recursion",
+        "tutor",
+    )
 
     def __init__(
         self,
@@ -644,94 +744,256 @@ class DeckConstructor:
             selected_facts.append({**card, "qty": 1})
             selected_names.add(str(card.get("name")).casefold())
 
-        analysis = {
+        empty_analysis = {
             "suggestions_add": [],
             "strategy_profile": {"lanes": []},
             "coverage_level": "unavailable",
             "recommendation_planner": {},
         }
-        can_analyze = commander_cards and intent.get("build_shape") != "mana_base"
-        if can_analyze and len(selected_records) < request_limit:
+        analysis = dict(empty_analysis)
+        analysis_passes: List[Dict] = []
+        can_analyze = bool(
+            commander_cards and intent.get("build_shape") != "mana_base"
+        )
+        allow_mana = intent.get("build_shape") in {
+            "full_deck",
+            "missing_slots",
+            "mana_base",
+        }
+        fixed_land_count = sum(
+            _quantity(card.get("qty", 1))
+            for card in hydrated_fixed
+            if _is_land(card)
+        )
+        rejected_keys = {
+            (item.get("code"), _name(item.get("card_name")).casefold())
+            for item in rejected
+        }
+
+        def reject_once(code: str, message: str, card_name: str) -> None:
+            key = (code, _name(card_name).casefold())
+            if key in rejected_keys:
+                return
+            rejected_keys.add(key)
+            rejected.append(_issue(code, message, card_name=card_name))
+
+        def selected_slot_count() -> int:
+            return sum(_quantity(record.get("qty", 1)) for record in selected_records)
+
+        def selected_land_count() -> int:
+            return sum(
+                _quantity(card.get("qty", 1))
+                for card in selected_facts
+                if _is_land(card)
+            )
+
+        def working_cards() -> List[Dict]:
+            return [*hydrated_fixed, *selected_facts]
+
+        maximum_passes = self.COMPLETE_PASS_LIMIT if self.mode == "complete" else 1
+        supports_focused_passes = hasattr(self.engine, "_generate_additions")
+        discovered_synergies: List[str] = []
+        structural_focus_index = 0
+        synergy_focus_index = 0
+        for pass_index in range(1, maximum_passes + 1):
+            if not can_analyze:
+                break
+            provisional_land_reserve = 0
+            if allow_mana:
+                provisional_target = self._mana_target(
+                    commander_cards,
+                    working_cards(),
+                    intent,
+                )
+                provisional_land_reserve = max(
+                    0,
+                    provisional_target - fixed_land_count - selected_land_count(),
+                )
+            candidate_capacity = max(
+                0,
+                request_limit - selected_slot_count() - provisional_land_reserve,
+            )
+            if candidate_capacity <= 0:
+                break
             analysis_deck = {
                 "commander": commander_cards[0].get("name"),
                 "commanders": [card.get("name") for card in commander_cards],
-                "cards": [_deck_card(card, _quantity(card.get("qty", 1))) for card in hydrated_fixed],
-                "color_identity": color_identity,
+                "cards": [
+                    _deck_card(card, _quantity(card.get("qty", 1)))
+                    for card in working_cards()
+                ],
+                "color_identity": list(color_identity),
                 "intent_profile": normalized["deck_intent_profile"],
             }
-            analysis = await self.engine.analyze_deck(analysis_deck, deep=True)
-
-        suggestions = [
-            suggestion for suggestion in analysis.get("suggestions_add") or []
-            if suggestion.get("card_name") and not suggestion.get("action_only")
-        ]
-        suggestion_facts = await self._resolve(
-            suggestion["card_name"] for suggestion in suggestions
-        )
-        collection_mode = intent.get("collection_mode")
-
-        def suggestion_key(suggestion: Mapping) -> tuple:
-            card_key = _name(suggestion.get("card_name")).casefold()
-            owned_bonus = 6 if collection_mode == "prefer_owned" and card_key in owned else 0
-            return (
-                -(float(suggestion.get("score") or 0) + owned_bonus),
-                int(suggestion.get("selection_position") or 999),
-                card_key,
-            )
-
-        for suggestion in sorted(suggestions, key=suggestion_key):
-            if len(selected_records) >= request_limit:
-                break
-            card_name = _name(suggestion.get("card_name"))
-            key = card_name.casefold()
-            if key in selected_names or key in excluded:
-                continue
-            if collection_mode == "owned_only" and key not in owned:
-                rejected.append(_issue(
-                    "owned_only_rejection",
-                    f"{card_name} is outside the owned-only candidate pool.",
-                    card_name=card_name,
-                ))
-                continue
-            card = suggestion_facts.get(key)
-            if not card:
-                rejected.append(_issue(
-                    "candidate_unresolved",
-                    f"{card_name} could not be re-verified before construction.",
-                    card_name=card_name,
-                ))
-                continue
-            legality = self._card_legality_errors(card, color_identity)
-            if legality:
-                rejected.append(_issue(
-                    "candidate_illegal",
-                    f"{card.get('name')} {' and '.join(legality)}.",
-                    card_name=card.get("name"),
-                ))
-                continue
-            if not accept_price(card, 1):
-                continue
-            evidence = [
-                *list(suggestion.get("evidence_tags") or []),
-                *list(suggestion.get("matched_plan_lanes") or []),
+            focus = None
+            if self.mode == "complete" and supports_focused_passes:
+                if pass_index <= 36:
+                    focus = self.COMPLETE_PASS_FOCUS[
+                        (pass_index - 1) % len(self.COMPLETE_PASS_FOCUS)
+                    ]
+                else:
+                    phase = (pass_index - 37) % 3
+                    if phase == 1 and discovered_synergies:
+                        focus = discovered_synergies[
+                            synergy_focus_index % len(discovered_synergies)
+                        ]
+                        synergy_focus_index += 1
+                    elif phase == 2:
+                        structural_focuses = [
+                            value for value in self.COMPLETE_PASS_FOCUS if value
+                        ]
+                        focus = structural_focuses[
+                            structural_focus_index % len(structural_focuses)
+                        ]
+                        structural_focus_index += 1
+            if supports_focused_passes:
+                analysis = await self.engine.analyze_deck(
+                    analysis_deck,
+                    categories=[focus] if focus else None,
+                    deep=True,
+                    # Preserve the already calibrated public-depth portfolio
+                    # for the first construction stage.  Only incomplete
+                    # complete drafts expand their frozen candidate reservoir;
+                    # this prevents deeper retrieval from reordering a proven
+                    # high-confidence shell before it has been exhausted.
+                    candidate_pool_depth=20 if pass_index <= 36 else 80,
+                    # Rank the complete portfolio even when only one slot is
+                    # left.  Shrinking the optimizer input to the remaining
+                    # capacity changes which card wins that final slot.
+                    portfolio_limit=10 if pass_index <= 36 else 24,
+                )
+            else:
+                analysis = await self.engine.analyze_deck(analysis_deck, deep=True)
+            for synergy in analysis.get("commander_synergies") or []:
+                normalized_synergy = _name(synergy).casefold()
+                if normalized_synergy and normalized_synergy not in discovered_synergies:
+                    discovered_synergies.append(normalized_synergy)
+            suggestions = [
+                suggestion
+                for suggestion in analysis.get("suggestions_add") or []
+                if suggestion.get("card_name") and not suggestion.get("action_only")
             ]
-            selected_records.append(self._record(
-                card,
-                qty=1,
-                source="planner_v3",
-                role=suggestion.get("role_tag"),
-                reason=suggestion.get("reason") or "Selected by the evidence portfolio.",
-                evidence=list(dict.fromkeys(evidence)),
-                confidence=suggestion.get("confidence"),
-            ))
-            selected_records[-1]["selection_reason"] = suggestion.get("selection_reason")
-            selected_records[-1]["portfolio_version"] = suggestion.get("portfolio_version")
-            selected_facts.append({**card, "qty": 1})
-            selected_names.add(str(card.get("name")).casefold())
+            suggestion_facts = await self._resolve(
+                suggestion["card_name"] for suggestion in suggestions
+            )
+            collection_mode = intent.get("collection_mode")
 
-        fixed_land_count = sum(
-            _quantity(card.get("qty", 1)) for card in hydrated_fixed if _is_land(card)
-        )
+            def suggestion_key(suggestion: Mapping) -> tuple:
+                card_key = _name(suggestion.get("card_name")).casefold()
+                owned_bonus = (
+                    6
+                    if collection_mode == "prefer_owned" and card_key in owned
+                    else 0
+                )
+                return (
+                    -(float(suggestion.get("score") or 0) + owned_bonus),
+                    int(suggestion.get("selection_position") or 999),
+                    card_key,
+                )
+
+            accepted_this_pass = 0
+            for suggestion in sorted(suggestions, key=suggestion_key):
+                if accepted_this_pass >= candidate_capacity:
+                    break
+                card_name = _name(suggestion.get("card_name"))
+                key = card_name.casefold()
+                if key in selected_names or key in excluded:
+                    continue
+                if collection_mode == "owned_only" and key not in owned:
+                    reject_once(
+                        "owned_only_rejection",
+                        f"{card_name} is outside the owned-only candidate pool.",
+                        card_name,
+                    )
+                    continue
+                card = suggestion_facts.get(key)
+                if not card:
+                    reject_once(
+                        "candidate_unresolved",
+                        f"{card_name} could not be re-verified before construction.",
+                        card_name,
+                    )
+                    continue
+                legality = self._card_legality_errors(card, color_identity)
+                if legality:
+                    reject_once(
+                        "candidate_illegal",
+                        f"{card.get('name')} {' and '.join(legality)}.",
+                        str(card.get("name")),
+                    )
+                    continue
+                raw_confidence = suggestion.get("confidence")
+                if not isinstance(raw_confidence, (int, float)):
+                    raw_confidence = suggestion.get("evidence_confidence")
+                try:
+                    confidence_value = float(raw_confidence)
+                except (TypeError, ValueError):
+                    confidence_value = None
+                if self.mode == "complete" and (
+                    confidence_value is None
+                    or confidence_value < self.COMPLETE_CONFIDENCE_FLOOR
+                ):
+                    reject_once(
+                        "complete_evidence_floor",
+                        (
+                            f"{card_name} did not clear the "
+                            f"{self.COMPLETE_CONFIDENCE_FLOOR:.2f} complete-draft evidence floor "
+                            f"(observed {confidence_value if confidence_value is not None else 'unrated'})."
+                        ),
+                        card_name,
+                    )
+                    continue
+                if not accept_price(card, 1):
+                    continue
+                evidence = [
+                    *list(suggestion.get("evidence_tags") or []),
+                    *list(suggestion.get("matched_plan_lanes") or []),
+                ]
+                selected_records.append(self._record(
+                    card,
+                    qty=1,
+                    source="planner_v3",
+                    role=suggestion.get("role_tag"),
+                    reason=(
+                        suggestion.get("reason")
+                        or "Selected by the evidence portfolio."
+                    ),
+                    evidence=list(dict.fromkeys(evidence)),
+                    confidence=(
+                        confidence_value
+                        if confidence_value is not None
+                        else suggestion.get("confidence")
+                    ),
+                ))
+                selected_records[-1]["selection_reason"] = suggestion.get(
+                    "selection_reason"
+                )
+                selected_records[-1]["portfolio_version"] = suggestion.get(
+                    "portfolio_version"
+                )
+                selected_records[-1]["construction_pass"] = pass_index
+                selected_facts.append({**card, "qty": 1})
+                selected_names.add(str(card.get("name")).casefold())
+                accepted_this_pass += 1
+
+            analysis_passes.append({
+                "pass": pass_index,
+                "candidate_count": len(suggestions),
+                "accepted_count": accepted_this_pass,
+                "remaining_candidate_capacity": max(
+                    0,
+                    candidate_capacity - accepted_this_pass,
+                ),
+                "coverage_level": analysis.get("coverage_level"),
+                "portfolio_version": (
+                    analysis.get("recommendation_planner") or {}
+                ).get("portfolio_version"),
+                "focus": focus or "balanced portfolio",
+            })
+            if accepted_this_pass == 0:
+                if self.mode != "complete" or not supports_focused_passes:
+                    break
+
         land_target = self._mana_target(
             commander_cards,
             [*hydrated_fixed, *selected_facts],
@@ -740,7 +1002,64 @@ class DeckConstructor:
         land_needed = max(0, land_target - fixed_land_count - sum(
             _quantity(card.get("qty", 1)) for card in selected_facts if _is_land(card)
         ))
-        allow_mana = intent.get("build_shape") in {"full_deck", "missing_slots", "mana_base"}
+        # A pass can raise the land target (for example by selecting a more
+        # expensive curve). Reclaim the lowest-marginal planner slots before
+        # mana allocation rather than silently underfunding the final draft.
+        overcommitted = max(
+            0,
+            selected_slot_count() + land_needed - request_limit,
+        )
+        while overcommitted:
+            removable_index = next(
+                (
+                    index
+                    for index in range(len(selected_records) - 1, -1, -1)
+                    if selected_records[index].get("source") == "planner_v3"
+                    and "land" not in str(
+                        selected_records[index].get("type_line") or ""
+                    ).casefold()
+                ),
+                None,
+            )
+            if removable_index is None:
+                errors.append(_issue(
+                    "mana_reserve_conflict",
+                    "Protected and fixed nonland cards leave too few slots for the measured mana requirement.",
+                ))
+                break
+            removed = selected_records.pop(removable_index)
+            removed_name = str(removed.get("name") or "")
+            removed_key = removed_name.casefold()
+            removed_price = removed.get("price_usd")
+            if removed_price is not None:
+                running_price = max(
+                    fixed_price,
+                    running_price - float(removed_price) * _quantity(removed.get("qty", 1)),
+                )
+            selected_names.discard(removed_key)
+            fact_index = next(
+                (
+                    index
+                    for index in range(len(selected_facts) - 1, -1, -1)
+                    if str(selected_facts[index].get("name") or "").casefold()
+                    == removed_key
+                ),
+                None,
+            )
+            if fact_index is not None:
+                selected_facts.pop(fact_index)
+            warnings.append(_issue(
+                "mana_reserve_rebalanced",
+                f"{removed_name} was returned to the open pool so the measured mana floor remains funded.",
+                card_name=removed_name,
+            ))
+            overcommitted -= _quantity(removed.get("qty", 1))
+
+        land_needed = max(0, land_target - fixed_land_count - sum(
+            _quantity(card.get("qty", 1))
+            for card in selected_facts
+            if _is_land(card)
+        ))
         mana_capacity = max(0, request_limit - sum(record["qty"] for record in selected_records))
         mana_slots = min(land_needed, mana_capacity) if allow_mana else 0
         mana_allocation: Dict[str, int] = {}
@@ -755,6 +1074,16 @@ class DeckConstructor:
             for color in sorted(mana_allocation, key=lambda value: "WUBRGC".index(value)):
                 qty = mana_allocation[color]
                 basic_name = BASIC_LANDS[color]
+                if (
+                    intent.get("collection_mode") == "owned_only"
+                    and basic_name.casefold() not in owned
+                ):
+                    reject_once(
+                        "owned_only_mana_rejection",
+                        f"{basic_name} is outside the owned-only candidate pool, so {qty} mana slots remain unresolved.",
+                        basic_name,
+                    )
+                    continue
                 card = basic_cards.get(basic_name.casefold())
                 if not card:
                     warnings.append(_issue(
@@ -827,7 +1156,14 @@ class DeckConstructor:
             ))
 
         proposed_main_deck = [record["deck_card"] for record in [*fixed_records, *selected_records]]
-        status = "blocked" if errors else "ready_partial" if remaining_mainboard else "ready_complete"
+        construction_quality = _construction_quality([*fixed_records, *selected_records])
+        status = (
+            "blocked"
+            if errors
+            else "ready_partial"
+            if remaining_mainboard or unresolved_slots
+            else "ready_complete"
+        )
         if not selected_records and not errors:
             status = "abstained"
         confidence_values = [
@@ -864,6 +1200,7 @@ class DeckConstructor:
             "proposed_main_deck": proposed_main_deck,
             "role_allocation": role_allocation,
             "covered_roles": dict(covered_lanes),
+            "quality": construction_quality,
             "mana_base": {
                 "target_lands": land_target,
                 "fixed_lands": fixed_land_count,
@@ -887,6 +1224,14 @@ class DeckConstructor:
                     ),
                     "collection": not any("owned" in issue["code"] for issue in errors),
                     "deck_count": proposed_slots <= target_mainboard,
+                    "mana_sources": (
+                        fixed_land_count
+                        + sum(
+                            _quantity(card.get("qty", 1))
+                            for card in selected_facts
+                            if _is_land(card)
+                        )
+                    ) >= land_target,
                 },
             },
             "budget": {
@@ -900,6 +1245,7 @@ class DeckConstructor:
                 "coverage_level": analysis.get("coverage_level"),
                 "average_selected_confidence": evidence_confidence,
                 "planner": analysis.get("recommendation_planner") or {},
+                "construction_passes": analysis_passes,
             },
         }
 

@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "suite_version": "phase-5-builder-v1",
+  "minimum_cases": 24,
+  "source_annotation": "Reviewed intent matrix seeded from the August 4 real-deck validation set plus explicit Phase 5 edge and negative controls.",
+  "counterfactuals": [
+    {"baseline_case_id": "B02", "variant_case_id": "B01", "expectation": "lower_budget"},
+    {"baseline_case_id": "B01", "variant_case_id": "B02", "expectation": "different_portfolio"},
+    {"baseline_case_id": "B01", "variant_case_id": "B02", "expectation": "stable_portfolio"},
+    {"baseline_case_id": "B03", "variant_case_id": "B04", "expectation": "different_portfolio"},
+    {"baseline_case_id": "B03", "variant_case_id": "B04", "expectation": "stable_portfolio"},
+    {"baseline_case_id": "B05", "variant_case_id": "B06", "expectation": "different_portfolio"},
+    {"baseline_case_id": "B22", "variant_case_id": "B21", "expectation": "lower_budget"}
+  ],
+  "cases": [
+    {
+      "case_id": "B01",
+      "label": "Budget Meren graveyard value",
+      "commander": "Meren of Clan Nel Toth",
+      "source_case_id": "03",
+      "coverage": ["value", "graveyard", "budget"],
+      "counterfactual_group": "meren-power",
+      "intent_overrides": {"budget_mode": "strict", "budget_limit_usd": 100, "max_card_price_usd": 5},
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B02",
+      "label": "High-power Meren combo",
+      "commander": "Meren of Clan Nel Toth",
+      "source_case_id": "03",
+      "coverage": ["combo", "graveyard", "high_power"],
+      "counterfactual_group": "meren-power",
+      "intent_overrides": {"target_bracket": 4, "playstyle": "combo", "budget_mode": "unrestricted"},
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B03",
+      "label": "Budget Yuriko tempo",
+      "commander": "Yuriko, the Tiger's Shadow",
+      "source_case_id": "01",
+      "coverage": ["aggro", "typal", "budget"],
+      "counterfactual_group": "yuriko-power",
+      "intent_overrides": {"budget_mode": "target", "budget_limit_usd": 50, "max_card_price_usd": 3},
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B04",
+      "label": "cEDH Yuriko tempo combo",
+      "commander": "Yuriko, the Tiger's Shadow",
+      "source_case_id": "12",
+      "coverage": ["combo", "typal", "cedh"],
+      "counterfactual_group": "yuriko-power",
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B05",
+      "label": "Political Zedruu",
+      "commander": "Zedruu the Greathearted",
+      "source_case_id": "06",
+      "coverage": ["politics", "control", "budget"],
+      "counterfactual_group": "zedruu-intent",
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B06",
+      "label": "Intentional jank Zedruu",
+      "commander": "Zedruu the Greathearted",
+      "source_case_id": "14",
+      "coverage": ["politics", "intentional_jank"],
+      "counterfactual_group": "zedruu-intent",
+      "expected_outcome": "abstain"
+    },
+    {
+      "case_id": "B07",
+      "label": "Budget Vadrik storm",
+      "commander": "Vadrik, Astral Archmage",
+      "source_case_id": "10",
+      "coverage": ["combo", "spellslinger", "budget", "high_power"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B08",
+      "label": "Tournament Najeela",
+      "commander": "Najeela, the Blade-Blossom",
+      "source_case_id": "13",
+      "coverage": ["aggro", "combo", "five_color", "cedh", "unusual_mana_base"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B09",
+      "label": "Optimized Muldrotha",
+      "commander": "Muldrotha, the Gravetide",
+      "source_case_id": "11",
+      "coverage": ["control", "value", "graveyard", "high_power", "expensive_commander"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B10",
+      "label": "Light-Paws aura Voltron",
+      "commander": "Light-Paws, Emperor's Voice",
+      "source_case_id": "04",
+      "coverage": ["voltron", "enchantments", "budget"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B11",
+      "label": "Talrand draw-go",
+      "commander": "Talrand, Sky Summoner",
+      "source_case_id": "05",
+      "coverage": ["control", "spellslinger", "budget"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B12",
+      "label": "Lathril Elf typal",
+      "commander": "Lathril, Blade of the Elves",
+      "source_case_id": "02",
+      "coverage": ["aggro", "typal", "budget"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B13",
+      "label": "Krenko high-power Goblins",
+      "commander": "Krenko, Mob Boss",
+      "source_case_id": "07",
+      "coverage": ["aggro", "typal", "combo", "high_power"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B14",
+      "label": "Wilhelt Zombie aristocrats",
+      "commander": "Wilhelt, the Rotcleaver",
+      "source_case_id": "09",
+      "coverage": ["typal", "graveyard", "budget"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B15",
+      "label": "Atraxa four-color blink",
+      "commander": "Atraxa, Grand Unifier",
+      "source_case_id": "08",
+      "coverage": ["value", "control", "unusual_mana_base"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B16",
+      "label": "Kozilek colorless big mana",
+      "commander": "Kozilek, the Great Distortion",
+      "coverage": ["colorless", "expensive_commander", "unusual_mana_base"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B17",
+      "label": "Wilson background pair",
+      "commander": "Wilson, Refined Grizzly",
+      "partner": "Noble Heritage",
+      "coverage": ["partner_background", "voltron"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B18",
+      "label": "Sythis enchantress",
+      "commander": "Sythis, Harvest's Hand",
+      "coverage": ["enchantments", "value"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B19",
+      "label": "Tatyova lands value",
+      "commander": "Tatyova, Benthic Druid",
+      "coverage": ["lands", "value"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B20",
+      "label": "Breya artifact combo",
+      "commander": "Breya, Etherium Shaper",
+      "coverage": ["artifacts", "combo", "unusual_mana_base"],
+      "expected_outcome": "complete"
+    },
+    {
+      "case_id": "B21",
+      "label": "Strict budget counterfactual",
+      "commander": "Meren of Clan Nel Toth",
+      "coverage": ["budget", "negative_control"],
+      "counterfactual_group": "meren-budget",
+      "expected_outcome": "abstain",
+      "intent_overrides": {"budget_mode": "strict", "budget_limit_usd": 5, "max_card_price_usd": 0.1}
+    },
+    {
+      "case_id": "B22",
+      "label": "Flexible budget counterfactual",
+      "commander": "Meren of Clan Nel Toth",
+      "coverage": ["budget", "value"],
+      "counterfactual_group": "meren-budget",
+      "expected_outcome": "complete",
+      "intent_overrides": {"budget_mode": "flexible", "budget_limit_usd": 75, "max_card_price_usd": 5}
+    },
+    {
+      "case_id": "B23",
+      "label": "Insufficient owned pool",
+      "commander": "Talrand, Sky Summoner",
+      "coverage": ["spellslinger", "negative_control"],
+      "expected_outcome": "abstain",
+      "intent_overrides": {"collection_mode": "owned_only", "owned_card_names": ["Opt", "Island"]}
+    },
+    {
+      "case_id": "B24",
+      "label": "Impossible protected color identity",
+      "commander": "Talrand, Sky Summoner",
+      "coverage": ["negative_control"],
+      "expected_outcome": "blocked",
+      "intent_overrides": {"protected_cards": ["Swords to Plowshares"]}
+    },
+    {
+      "case_id": "B25",
+      "label": "Illegal commander request",
+      "commander": "Black Lotus",
+      "coverage": ["negative_control"],
+      "expected_outcome": "blocked"
+    },
+    {
+      "case_id": "B26",
+      "label": "Protected package exceeds strict budget",
+      "commander": "Muldrotha, the Gravetide",
+      "coverage": ["graveyard", "negative_control"],
+      "expected_outcome": "blocked",
+      "intent_overrides": {
+        "budget_mode": "strict",
+        "budget_limit_usd": 20,
+        "max_card_price_usd": 2,
+        "protected_cards": ["Force of Will"]
+      }
+    }
+  ]
+}
