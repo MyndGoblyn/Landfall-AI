@@ -51,6 +51,13 @@ from services.deck_constructor import (
 from services.enhanced_suggestion_engine import EnhancedSuggestionEngine
 from services.feedback_policy import feedback_policy_status
 from services.in_memory_db import InMemoryClient, InMemoryDB
+from services.recommendation_actions import (
+    ACTION_WORKFLOW_VERSION,
+    RecommendationActionError,
+    apply_recommendation_action,
+    deck_source_fingerprint,
+    recommendation_reference,
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -120,6 +127,7 @@ RESET_ACCOUNT_COLLECTIONS = [
     "build_drafts",
     "card_collection",
     "recommendation_feedback",
+    "deck_revisions",
     "auth_tokens",
     "rate_limits",
 ]
@@ -164,6 +172,13 @@ async def prepare_database():
                 'event_key', unique=True
             )
             await db.recommendation_feedback.create_index(
+                [('user_id', 1), ('deck_id', 1), ('created_at', -1)]
+            )
+            await db.deck_revisions.create_index(
+                [('user_id', 1), ('deck_id', 1), ('revision', 1)],
+                unique=True,
+            )
+            await db.deck_revisions.create_index(
                 [('user_id', 1), ('deck_id', 1), ('created_at', -1)]
             )
             await db.auth_tokens.create_index('token_hash', unique=True)
@@ -426,6 +441,7 @@ class Deck(BaseModel):
     input_assessment: Dict[str, Any] = {}
     last_build_draft_id: Optional[str] = None
     build_draft_revision: Optional[int] = None
+    deck_revision: int = Field(default=0, ge=0)
     build_intent: Optional[BuildIntent] = None
     intent_profile: DeckIntentProfile = Field(default_factory=DeckIntentProfile)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -601,6 +617,76 @@ class RecommendationFeedback(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+
+RecommendationAction = Literal["add", "cut", "swap"]
+
+
+class RecommendationActionApplyRequest(BaseModel):
+    analysis_id: str = Field(min_length=1, max_length=80)
+    action: RecommendationAction
+    add_card_name: Optional[str] = Field(default=None, max_length=200)
+    cut_card_name: Optional[str] = Field(default=None, max_length=200)
+    confirmed: bool
+
+    @field_validator("add_card_name", "cut_card_name")
+    @classmethod
+    def clean_action_card(cls, value: Optional[str]) -> Optional[str]:
+        return _clean_card_name(value) if value else None
+
+    @field_validator("confirmed")
+    @classmethod
+    def require_action_confirmation(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError("Applying a recommendation requires explicit confirmation")
+        return value
+
+
+class DeckRevisionRestoreRequest(BaseModel):
+    snapshot: Literal["before", "after"] = "before"
+    confirmed: bool
+
+    @field_validator("confirmed")
+    @classmethod
+    def require_restore_confirmation(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError("Restoring a revision requires explicit confirmation")
+        return value
+
+
+class DeckRevision(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    deck_id: str
+    revision: int = Field(ge=1)
+    workflow_version: str = ACTION_WORKFLOW_VERSION
+    action: str
+    analysis_id: Optional[str] = None
+    restored_from_revision_id: Optional[str] = None
+    source_fingerprint: str
+    result_fingerprint: str
+    change_summary: Dict[str, Any] = Field(default_factory=dict)
+    recommendation_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    deck_context: Dict[str, Any] = Field(default_factory=dict)
+    before_cards: List[DeckCard] = Field(default_factory=list)
+    after_cards: List[DeckCard] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class DeckRevisionSummary(BaseModel):
+    id: str
+    deck_id: str
+    revision: int
+    workflow_version: str
+    action: str
+    analysis_id: Optional[str] = None
+    restored_from_revision_id: Optional[str] = None
+    source_fingerprint: str
+    result_fingerprint: str
+    change_summary: Dict[str, Any] = Field(default_factory=dict)
+    recommendation_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime
+
 class Suggestion(BaseModel):
     card_name: str
     reason: str
@@ -673,6 +759,7 @@ class AnalysisRun(BaseModel):
     strategy_profile: Dict[str, Any] = Field(default_factory=dict)
     recommendation_planner: Dict[str, Any] = Field(default_factory=dict)
     performance: Dict[str, Any] = Field(default_factory=dict)
+    deck_source_fingerprint: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # ==================== AUTH HELPERS ====================
@@ -1669,7 +1756,8 @@ async def get_deck_cards_with_images(deck_id: str, current_user: Dict = Depends(
             [deck.get('commander')] if deck.get('commander') else []
         ),
         'cards': cards_with_images,
-        'total_cards': sum(c.get('qty', 1) for c in deck.get('cards', []))
+        'total_cards': sum(c.get('qty', 1) for c in deck.get('cards', [])),
+        'deck_revision': int(deck.get('deck_revision') or 0),
     }
 
 @api_router.post("/decks/{deck_id}/import")
@@ -1721,6 +1809,10 @@ async def delete_deck(deck_id: str, current_user: Dict = Depends(get_current_use
         "user_id": current_user['id'],
     })
     await db.recommendation_feedback.delete_many({
+        "deck_id": deck_id,
+        "user_id": current_user['id'],
+    })
+    await db.deck_revisions.delete_many({
         "deck_id": deck_id,
         "user_id": current_user['id'],
     })
@@ -2278,6 +2370,7 @@ async def run_deck_analysis(
         )
     
     try:
+        source_fingerprint = deck_source_fingerprint(deck)
         result = await suggestion_engine.analyze_deck(deck, categories=categories, deep=deep)
         result = apply_recommendation_restraint(result, input_assessment)
         
@@ -2305,6 +2398,7 @@ async def run_deck_analysis(
             strategy_profile=result.get('strategy_profile', {}),
             recommendation_planner=result.get('recommendation_planner', {}),
             performance=result.get('performance', {}),
+            deck_source_fingerprint=source_fingerprint,
         )
         
         analysis_dict = analysis.model_dump()
@@ -2375,6 +2469,308 @@ async def get_deck_analyses(deck_id: str, current_user: Dict = Depends(get_curre
         if isinstance(analysis.get('created_at'), str):
             analysis['created_at'] = datetime.fromisoformat(analysis['created_at'])
     return analyses
+
+
+# ==================== RECOMMENDATION ACTIONS AND DECK REVISIONS ====================
+
+def _deck_revision_context(deck: Mapping) -> Dict[str, Any]:
+    commanders = deck.get("commanders") or (
+        [deck.get("commander")] if deck.get("commander") else []
+    )
+    return {
+        "commanders": [str(name) for name in commanders if name],
+        "color_identity": sorted(deck.get("color_identity") or []),
+        "intent_profile": deck.get("intent_profile") or {},
+        "build_intent": deck.get("build_intent") or {},
+    }
+
+
+def _deck_revision_summary(value: Mapping | DeckRevision) -> DeckRevisionSummary:
+    payload = value.model_dump() if isinstance(value, DeckRevision) else dict(value)
+    payload.pop("_id", None)
+    payload.pop("user_id", None)
+    payload.pop("deck_context", None)
+    payload.pop("before_cards", None)
+    payload.pop("after_cards", None)
+    if payload.get("created_at") is not None:
+        payload["created_at"] = parse_stored_datetime(payload["created_at"])
+    return DeckRevisionSummary.model_validate(payload)
+
+
+def _revision_card_diff(before_cards, after_cards) -> Dict[str, Any]:
+    def quantities(cards):
+        values: Dict[str, Dict[str, Any]] = {}
+        for card in cards or []:
+            name = str(card.get("name") or "").strip()
+            if not name:
+                continue
+            key = name.casefold()
+            entry = values.setdefault(key, {"name": name, "qty": 0})
+            entry["qty"] += max(0, int(card.get("qty", 1)))
+        return values
+
+    before = quantities(before_cards)
+    after = quantities(after_cards)
+    added = []
+    removed = []
+    for key in sorted(set(before) | set(after)):
+        delta = after.get(key, {"qty": 0})["qty"] - before.get(key, {"qty": 0})["qty"]
+        if delta > 0:
+            added.append({"name": after[key]["name"], "qty": delta})
+        elif delta < 0:
+            removed.append({"name": before[key]["name"], "qty": -delta})
+    return {
+        "added": added,
+        "removed": removed,
+        "mainboard_before": sum(value["qty"] for value in before.values()),
+        "mainboard_after": sum(value["qty"] for value in after.values()),
+    }
+
+
+async def _next_deck_revision_number(user_id: str, deck_id: str) -> int:
+    documents = await db.deck_revisions.find(
+        {"user_id": user_id, "deck_id": deck_id},
+        {"_id": 0},
+    ).sort("revision", -1).to_list(1)
+    return int(documents[0].get("revision", 0)) + 1 if documents else 1
+
+
+@api_router.get(
+    "/decks/{deck_id}/revisions",
+    response_model=List[DeckRevisionSummary],
+)
+async def get_deck_revisions(
+    deck_id: str,
+    current_user: Dict = Depends(get_current_user),
+):
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    )
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    documents = await db.deck_revisions.find(
+        {"deck_id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    ).sort("revision", -1).to_list(50)
+    return [_deck_revision_summary(document) for document in documents]
+
+
+@api_router.post("/decks/{deck_id}/recommendation-actions/apply")
+async def apply_analysis_recommendation(
+    deck_id: str,
+    request_data: RecommendationActionApplyRequest,
+    current_user: Dict = Depends(get_current_user),
+):
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    )
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    analysis = await db.analysis_runs.find_one({
+        "id": request_data.analysis_id,
+        "deck_id": deck_id,
+        "user_id": current_user["id"],
+    }, {"_id": 0})
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    if request_data.action == "add" and not request_data.add_card_name:
+        raise HTTPException(status_code=400, detail="An addition card is required")
+    if request_data.action == "cut" and not request_data.cut_card_name:
+        raise HTTPException(status_code=400, detail="A cut card is required")
+    if request_data.action == "swap" and (
+        not request_data.add_card_name or not request_data.cut_card_name
+    ):
+        raise HTTPException(status_code=400, detail="A complete add-and-cut pair is required")
+
+    analyzed_fingerprint = analysis.get("deck_source_fingerprint")
+    current_fingerprint = deck_source_fingerprint(deck)
+    if not analyzed_fingerprint:
+        raise HTTPException(
+            status_code=409,
+            detail="This analysis predates safe deck actions. Run a fresh analysis first.",
+        )
+    if analyzed_fingerprint != current_fingerprint:
+        raise HTTPException(
+            status_code=409,
+            detail="The deck or its intent changed after this analysis. Run a fresh analysis before applying a recommendation.",
+        )
+
+    try:
+        reference = recommendation_reference(
+            analysis,
+            request_data.action,
+            add_card_name=request_data.add_card_name,
+            cut_card_name=request_data.cut_card_name,
+        )
+        resolved_add = None
+        if reference.get("add"):
+            resolved_add = await scryfall_service.search_card(
+                reference["add"]["card_name"],
+                fuzzy=False,
+            )
+        after_cards, change_summary = apply_recommendation_action(
+            deck,
+            request_data.action,
+            reference,
+            resolved_add_card=resolved_add,
+        )
+    except RecommendationActionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    latest_deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    )
+    if not latest_deck or deck_source_fingerprint(latest_deck) != current_fingerprint:
+        raise HTTPException(
+            status_code=409,
+            detail="The deck changed while the card was being verified. Run a fresh analysis before applying it.",
+        )
+    deck = latest_deck
+    next_revision = await _next_deck_revision_number(current_user["id"], deck_id)
+    after_deck = {**deck, "cards": after_cards}
+    input_assessment = assess_deck_input(after_deck)
+    result_fingerprint = deck_source_fingerprint(after_deck)
+    now = datetime.now(timezone.utc)
+    revision = DeckRevision(
+        user_id=current_user["id"],
+        deck_id=deck_id,
+        revision=next_revision,
+        action=request_data.action,
+        analysis_id=request_data.analysis_id,
+        source_fingerprint=current_fingerprint,
+        result_fingerprint=result_fingerprint,
+        change_summary=change_summary,
+        recommendation_snapshot={
+            "add": reference.get("add"),
+            "cut": reference.get("cut"),
+            "reason": reference.get("reason"),
+            "planner": analysis.get("recommendation_planner") or {},
+        },
+        deck_context=_deck_revision_context(deck),
+        before_cards=deck.get("cards") or [],
+        after_cards=after_cards,
+        created_at=now,
+    )
+    revision_document = revision.model_dump()
+    revision_document["created_at"] = now.isoformat()
+    await db.deck_revisions.insert_one(revision_document)
+    await db.decks.update_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"$set": {
+            "cards": after_cards,
+            "input_assessment": input_assessment,
+            "deck_revision": next_revision,
+        }},
+    )
+    updated = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    )
+
+    feedback_action = {
+        "add": "accept_add",
+        "cut": "accept_cut",
+        "swap": "accept_swap",
+    }[request_data.action]
+    feedback_card = request_data.add_card_name or request_data.cut_card_name
+    paired_card = request_data.cut_card_name if request_data.action == "swap" else None
+    try:
+        await record_recommendation_feedback(
+            deck_id,
+            RecommendationFeedbackCreate(
+                analysis_id=request_data.analysis_id,
+                action=feedback_action,
+                card_name=feedback_card,
+                paired_card_name=paired_card,
+                reason_code="fit",
+            ),
+            current_user=current_user,
+        )
+    except Exception as exc:
+        logging.warning("Could not mirror applied recommendation to feedback history: %s", exc)
+
+    if isinstance(updated.get("created_at"), str):
+        updated["created_at"] = datetime.fromisoformat(updated["created_at"])
+    return {"deck": Deck.model_validate(updated), "revision": _deck_revision_summary(revision)}
+
+
+@api_router.post("/decks/{deck_id}/revisions/{revision_id}/restore")
+async def restore_deck_revision(
+    deck_id: str,
+    revision_id: str,
+    request_data: DeckRevisionRestoreRequest,
+    current_user: Dict = Depends(get_current_user),
+):
+    deck = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    )
+    if not deck:
+        raise HTTPException(status_code=404, detail="Deck not found")
+    source_revision = await db.deck_revisions.find_one({
+        "id": revision_id,
+        "deck_id": deck_id,
+        "user_id": current_user["id"],
+    }, {"_id": 0})
+    if not source_revision:
+        raise HTTPException(status_code=404, detail="Deck revision not found")
+    if _deck_revision_context(deck) != (source_revision.get("deck_context") or {}):
+        raise HTTPException(
+            status_code=409,
+            detail="The commander, color identity, or deck intent changed after this revision. Restore is blocked to protect the current plan.",
+        )
+
+    snapshot_field = "before_cards" if request_data.snapshot == "before" else "after_cards"
+    restored_cards = source_revision.get(snapshot_field) or []
+    current_fingerprint = deck_source_fingerprint(deck)
+    restored_deck = {**deck, "cards": restored_cards}
+    result_fingerprint = deck_source_fingerprint(restored_deck)
+    next_revision = await _next_deck_revision_number(current_user["id"], deck_id)
+    now = datetime.now(timezone.utc)
+    revision = DeckRevision(
+        user_id=current_user["id"],
+        deck_id=deck_id,
+        revision=next_revision,
+        action="restore",
+        restored_from_revision_id=revision_id,
+        source_fingerprint=current_fingerprint,
+        result_fingerprint=result_fingerprint,
+        change_summary={
+            **_revision_card_diff(deck.get("cards") or [], restored_cards),
+            "snapshot": request_data.snapshot,
+        },
+        recommendation_snapshot={
+            "restored_action": source_revision.get("action"),
+            "restored_revision": source_revision.get("revision"),
+        },
+        deck_context=_deck_revision_context(deck),
+        before_cards=deck.get("cards") or [],
+        after_cards=restored_cards,
+        created_at=now,
+    )
+    document = revision.model_dump()
+    document["created_at"] = now.isoformat()
+    await db.deck_revisions.insert_one(document)
+    input_assessment = assess_deck_input(restored_deck)
+    await db.decks.update_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"$set": {
+            "cards": restored_cards,
+            "input_assessment": input_assessment,
+            "deck_revision": next_revision,
+        }},
+    )
+    updated = await db.decks.find_one(
+        {"id": deck_id, "user_id": current_user["id"]},
+        {"_id": 0},
+    )
+    if isinstance(updated.get("created_at"), str):
+        updated["created_at"] = datetime.fromisoformat(updated["created_at"])
+    return {"deck": Deck.model_validate(updated), "revision": _deck_revision_summary(revision)}
 
 @api_router.get("/analysis/{analysis_id}/export")
 async def export_analysis(analysis_id: str, current_user: Dict = Depends(get_current_user)):
@@ -2689,6 +3085,12 @@ async def root():
         },
         "deck_constructor": deck_constructor.get_status(),
         "feedback": feedback_policy_status(),
+        "recommendation_actions": {
+            "version": ACTION_WORKFLOW_VERSION,
+            "stale_analysis_guard": True,
+            "restorable_revisions": True,
+            "ranking_influence": False,
+        },
     }
 
 logging.basicConfig(

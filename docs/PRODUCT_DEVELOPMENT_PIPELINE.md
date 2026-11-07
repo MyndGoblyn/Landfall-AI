@@ -419,6 +419,43 @@ product adoption and collection-data quality, not a detected recommendation
 regression. Behavioral feedback remains non-influential until a separate,
 reviewed semantic release explicitly earns promotion.
 
+## Phase 7 - Reversible recommendation decisions
+
+Phase 7 closes the gap between reviewing a recommendation and safely using it.
+It does not add a second ranking path or treat acceptance as proof that a card
+is universally correct.
+
+- New analyses record a deterministic fingerprint of the cards, commanders,
+  color identity, build intent, and deck intent they evaluated.
+- Adds, cuts, and swaps can be applied only when they exactly match the frozen
+  analysis and the deck still matches that fingerprint.
+- Additions are resolved canonically at action time and rechecked for current
+  Commander legality, color identity, singleton rules, and main-deck count.
+- Every action stores private before/after snapshots, the recommendation
+  evidence, Planner provenance, and an explicit change summary.
+- A restore creates another revision instead of deleting history. Restore is
+  blocked when commander, color identity, or intent context has changed.
+- Applying one action makes the remaining analysis visibly stale and requires
+  a new analysis before another change can be applied.
+
+### Phase 7 implementation checkpoint — 2026-11-07
+
+The authenticated action API, stale-analysis guard, canonical legality gate,
+compact revision-history API, restore flow, automatic private acceptance
+record, and analysis/deck UI controls are implemented. Revision snapshots stay
+server-side; normal history views return only compact provenance and diffs.
+
+Release validation passes **281 backend tests**, **17 frontend source-smoke
+groups**, and a production frontend build. The complete-constructor matrix
+passes **26/26** cases with every counterfactual satisfied. A fresh 18-deck
+public V3 run passes integrity and input checks and exactly matches the promoted
+addition, cut, and swap ordering in all 18 cases. See
+`docs/PHASE7_REVERSIBLE_RECOMMENDATIONS_REPORT_2026-11-07.md`.
+
+**Delivery confidence: 94%.** The remaining risk is user adoption and future
+interaction design refinement, not a detected recommendation-quality change.
+The workflow remains bounded to one explicitly confirmed action at a time.
+
 ## Recommended build order
 
 | Priority | Work | Why now | Promotion requirement |
@@ -438,6 +475,6 @@ user continuity without degrading the current intelligence.**
 
 The confidence comes from reusing the existing intent, invariant, semantic,
 ranking, and planning systems instead of creating a second recommendation
-stack. The remaining uncertainty is concentrated in full-deck construction,
-which is intentionally isolated behind its own validation suite, runtime mode,
-and promotion gate.
+stack. Complete construction and recommendation execution remain independently
+validated, provenance-bearing workflows with explicit abstention, stale-state,
+and rollback gates.

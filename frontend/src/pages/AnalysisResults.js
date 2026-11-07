@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
   AlertTriangle,
+  Check,
   Download,
   ExternalLink,
   Shield,
@@ -259,7 +260,16 @@ function CardImages({ suggestion, compact = false }) {
   );
 }
 
-function RecommendationCard({ suggestion, type = 'add', index, feedbackAction, onFeedback }) {
+function RecommendationCard({
+  suggestion,
+  type = 'add',
+  index,
+  feedbackAction,
+  onFeedback,
+  onApply,
+  applying,
+  applyDisabled,
+}) {
   const isAdd = type === 'add';
 
   return (
@@ -325,6 +335,26 @@ function RecommendationCard({ suggestion, type = 'add', index, feedbackAction, o
             </p>
           )}
         </div>
+        <div className="recommendation-apply-row">
+          <button
+            type="button"
+            className="recommendation-apply-button"
+            disabled={applyDisabled || applying}
+            onClick={() => onApply(
+              isAdd ? 'add' : 'cut',
+              isAdd ? suggestion.card_name : null,
+              isAdd ? null : suggestion.card_name,
+            )}
+          >
+            <Check aria-hidden="true" />
+            {applying
+              ? 'Applying...'
+              : isAdd
+                ? 'Add to this deck'
+                : 'Remove from this deck'}
+          </button>
+          <span>{applyDisabled ? 'Run a fresh analysis to change the deck.' : 'Creates a restorable deck revision.'}</span>
+        </div>
         <div className="recommendation-feedback" aria-label={`Private feedback for ${suggestion.card_name}`}>
           <span>Was this useful?</span>
           <button
@@ -349,7 +379,17 @@ function RecommendationCard({ suggestion, type = 'add', index, feedbackAction, o
   );
 }
 
-function SwapCard({ add, cut, index, rationale, feedbackAction, onFeedback }) {
+function SwapCard({
+  add,
+  cut,
+  index,
+  rationale,
+  feedbackAction,
+  onFeedback,
+  onApply,
+  applying,
+  applyDisabled,
+}) {
   return (
     <article className="swap-card">
       <div className="swap-column">
@@ -384,6 +424,17 @@ function SwapCard({ add, cut, index, rationale, feedbackAction, onFeedback }) {
         )}
       </div>
       {rationale && <p className="swap-rationale">{rationale}</p>}
+      {add && cut && (
+        <button
+          type="button"
+          className="swap-apply-button"
+          disabled={applyDisabled || applying}
+          onClick={() => onApply('swap', add.card_name, cut.card_name)}
+        >
+          <Check aria-hidden="true" />
+          {applying ? 'Applying reviewed swap...' : 'Apply this swap'}
+        </button>
+      )}
       {add && cut && (
         <button
           type="button"
@@ -525,6 +576,8 @@ export default function AnalysisResults() {
   const [loading, setLoading] = useState(true);
   const [deepLoading, setDeepLoading] = useState(false);
   const [feedbackByKey, setFeedbackByKey] = useState({});
+  const [applyingKey, setApplyingKey] = useState(null);
+  const [deckChanged, setDeckChanged] = useState(false);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
   const deepStatus = useRotatingStatus(deepLoading, DEEP_STATUS_MESSAGES);
@@ -621,6 +674,49 @@ export default function AnalysisResults() {
       toast.success('Saved privately. This does not automatically tune ranking.');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Could not save feedback');
+    }
+  };
+
+  const handleApplyRecommendation = async (action, addCardName = null, cutCardName = null) => {
+    if (!deck?.id || deckChanged) return;
+    const description = action === 'swap'
+      ? `Replace ${cutCardName} with ${addCardName}?`
+      : action === 'add'
+        ? `Add ${addCardName} to this deck?`
+        : `Remove one copy of ${cutCardName} from this deck?`;
+    if (!window.confirm(`${description} LandFall will save the current list as a restorable revision first.`)) return;
+
+    const key = `${action}:${addCardName || cutCardName}`;
+    setApplyingKey(key);
+    try {
+      const response = await axios.post(
+        `${API}/decks/${deck.id}/recommendation-actions/apply`,
+        {
+          analysis_id: analysisId,
+          action,
+          add_card_name: addCardName,
+          cut_card_name: cutCardName,
+          confirmed: true,
+        },
+        { headers: getAuthHeaders() }
+      );
+      setDeck(response.data.deck);
+      setDeckChanged(true);
+      const acceptedAction = action === 'add'
+        ? 'accept_add'
+        : action === 'cut'
+          ? 'accept_cut'
+          : 'accept_swap';
+      const feedbackCard = addCardName || cutCardName;
+      setFeedbackByKey((current) => ({
+        ...current,
+        [`${action}:${feedbackCard.toLowerCase()}`]: acceptedAction,
+      }));
+      toast.success('Deck updated. The previous list is available in revision history.');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Could not apply this recommendation');
+    } finally {
+      setApplyingKey(null);
     }
   };
 
@@ -788,6 +884,18 @@ export default function AnalysisResults() {
         />
         <CoverageNotice data={analysis} />
 
+        {deckChanged && (
+          <section className="analysis-change-banner" role="status">
+            <div>
+              <strong>Deck updated from this analysis.</strong>
+              <p>Remaining recommendations describe the previous list. Run a fresh analysis before applying another change.</p>
+            </div>
+            <button className="btn-secondary" onClick={() => navigate(`/deck/${deck.id}/view`)}>
+              View deck and revision history
+            </button>
+          </section>
+        )}
+
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="analysis-tabs">
             <TabsTrigger data-testid="overview-tab" value="overview">
@@ -821,6 +929,9 @@ export default function AnalysisResults() {
                   index={idx}
                   feedbackAction={feedbackByKey[`add:${suggestion.card_name.toLowerCase()}`]}
                   onFeedback={handleFeedback}
+                  onApply={handleApplyRecommendation}
+                  applying={applyingKey === `add:${suggestion.card_name}`}
+                  applyDisabled={deckChanged || !analysis?.deck_source_fingerprint}
                 />
               ))}
             </div>
@@ -844,6 +955,9 @@ export default function AnalysisResults() {
                     index={idx}
                     feedbackAction={feedbackByKey[`cut:${suggestion.card_name.toLowerCase()}`]}
                     onFeedback={handleFeedback}
+                    onApply={handleApplyRecommendation}
+                    applying={applyingKey === `cut:${suggestion.card_name}`}
+                    applyDisabled={deckChanged || !analysis?.deck_source_fingerprint}
                   />
                 ))
               ) : (
@@ -870,6 +984,9 @@ export default function AnalysisResults() {
                   rationale={pair.reason}
                   feedbackAction={pair.add ? feedbackByKey[`swap:${pair.add.card_name.toLowerCase()}`] : null}
                   onFeedback={handleFeedback}
+                  onApply={handleApplyRecommendation}
+                  applying={Boolean(pair.add && applyingKey === `swap:${pair.add.card_name}`)}
+                  applyDisabled={deckChanged || !analysis?.deck_source_fingerprint}
                 />
               ))}
             </div>

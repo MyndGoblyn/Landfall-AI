@@ -103,6 +103,7 @@ class InMemoryDB:
         self.build_drafts = InMemoryCollection()
         self.card_collection = InMemoryCollection()
         self.recommendation_feedback = InMemoryCollection()
+        self.deck_revisions = InMemoryCollection()
         self.auth_tokens = InMemoryCollection()
         self.rate_limits = InMemoryCollection()
         self.scryfall_cards = InMemoryCollection()

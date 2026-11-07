@@ -195,6 +195,20 @@ const checks = [
       'invariants.dependencies.limitations',
       '/feedback',
       'Saved privately. This does not automatically tune ranking.',
+      '/recommendation-actions/apply',
+      'Creates a restorable deck revision.',
+      'View deck and revision history',
+    ],
+  },
+  {
+    name: 'Deck viewer exposes reversible recommendation history',
+    file: 'src/pages/DeckViewer.js',
+    tokens: [
+      '/revisions',
+      "snapshot: 'before'",
+      'data-testid="deck-revision-history"',
+      'Restorable deck revisions',
+      'Restore prior list',
     ],
   },
   {

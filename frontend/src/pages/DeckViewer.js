@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, History, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import AppTopbar from '../components/AppTopbar';
 import { API } from '../lib/api';
@@ -12,6 +12,8 @@ export default function DeckViewer() {
   const [deckData, setDeckData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [revisions, setRevisions] = useState([]);
+  const [restoringId, setRestoringId] = useState(null);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
 
@@ -21,16 +23,45 @@ export default function DeckViewer() {
 
   const fetchDeckCards = async () => {
     try {
-      const response = await axios.get(`${API}/decks/${deckId}/cards`, {
-        headers: getAuthHeaders()
-      });
-      setDeckData(response.data);
+      const [cardsResponse, revisionsResponse] = await Promise.all([
+        axios.get(`${API}/decks/${deckId}/cards`, { headers: getAuthHeaders() }),
+        axios.get(`${API}/decks/${deckId}/revisions`, { headers: getAuthHeaders() }),
+      ]);
+      setDeckData(cardsResponse.data);
+      setRevisions(revisionsResponse.data);
     } catch (error) {
       toast.error('Failed to load deck cards');
       navigate('/dashboard');
     } finally {
       setLoading(false);
     }
+  };
+
+  const restoreRevision = async (revision) => {
+    if (!window.confirm(
+      `Restore the deck list from before revision ${revision.revision}? The current list will also be saved as a new revision.`
+    )) return;
+    setRestoringId(revision.id);
+    try {
+      await axios.post(
+        `${API}/decks/${deckId}/revisions/${revision.id}/restore`,
+        { snapshot: 'before', confirmed: true },
+        { headers: getAuthHeaders() }
+      );
+      toast.success('Previous list restored. The list you replaced remains in revision history.');
+      await fetchDeckCards();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Could not restore this revision');
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
+  const revisionLabel = (revision) => {
+    if (revision.action === 'swap') return 'Reviewed swap';
+    if (revision.action === 'add') return 'Reviewed addition';
+    if (revision.action === 'cut') return 'Reviewed cut';
+    return 'Restored list';
   };
 
   const filterCards = (cards) => {
@@ -83,6 +114,46 @@ export default function DeckViewer() {
             </button>
           ))}
         </div>
+
+        <section className="deck-revision-panel" data-testid="deck-revision-history">
+          <div className="deck-revision-heading">
+            <div>
+              <p className="page-eyebrow">Decision history</p>
+              <h2>Restorable deck revisions</h2>
+              <p>Recommendation actions never overwrite the only copy of your list.</p>
+            </div>
+            <div className="deck-revision-count"><History aria-hidden="true" /> {revisions.length} saved</div>
+          </div>
+          {revisions.length ? (
+            <div className="deck-revision-list">
+              {revisions.map((revision) => (
+                <article key={revision.id} className="deck-revision-row">
+                  <div className="deck-revision-index">{revision.revision}</div>
+                  <div className="deck-revision-copy">
+                    <strong>{revisionLabel(revision)}</strong>
+                    <span>{new Date(revision.created_at).toLocaleString()}</span>
+                    <p>
+                      {(revision.change_summary?.added || []).map((card) => `Added ${card.qty}× ${card.name}`).join(' · ') || 'No cards added'}
+                      {' · '}
+                      {(revision.change_summary?.removed || []).map((card) => `Removed ${card.qty}× ${card.name}`).join(' · ') || 'No cards removed'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="deck-revision-restore"
+                    disabled={restoringId === revision.id}
+                    onClick={() => restoreRevision(revision)}
+                  >
+                    <RotateCcw aria-hidden="true" />
+                    {restoringId === revision.id ? 'Restoring...' : 'Restore prior list'}
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="deck-revision-empty">Apply a reviewed recommendation to create the first restorable revision.</div>
+          )}
+        </section>
 
         <div data-testid="card-grid" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {filteredCards.map((card, idx) => (
